@@ -375,26 +375,54 @@ function OpenMenuItem_Callback(hObject, eventdata, handles)
 %    handles.mydir = uigetdir(handles.mydir);
 %end
 
+%	List of supported file types + descriptions/names
+File_types	=	{'MT';'WAV';'GSI';'ADI';'DAT';'MDAT';'MAT'};
+File_descs	=	{'MT files';...
+					 'WAV files';...
+					 'GSI files';...
+					 'ADI files';...
+					 'DAT files';...
+					 'MDAT files';...
+					 'Simulations'};
 
-mydir=pwd;
-handles.filetype=get(get(handles.uipanel_type,'SelectedObject'),'String');
-if ~strcmp(handles.filetype,'Simulation')
-    menustr={['*.' lower(handles.filetype)];['*.' (handles.filetype)];'*.*';['*1004*.' lower(handles.filetype)]};
-else
-    menustr={'*.mat'};
+
+mydir	=	pwd;
+%handles.filetype	=	get(get(handles.uipanel_type,'SelectedObject'),'String');
+%if ~strcmp(handles.filetype,'Simulation')
+%    menustr={['*.' lower(handles.filetype)];['*.' (handles.filetype)];'*.*';['*1004*.' lower(handles.filetype)]};
+%else
+%    menustr={'*.mat'};
+%end
+
+menustr		=	cell(length(File_types),1);
+for	ff = 1:length(File_types)
+	ftype	=	File_types{ff};
+	%fdesc	=	File_descs{ff};
+	
+	menustr{ff,1}	=	['*.' lower(ftype), ', *.' upper(ftype)];
+	%menustr{ff,2}	=	fdesc;
 end
+
+
+
 if ~isempty(handles.mydir),
     disp(handles.mydir);
     try
         cd(handles.mydir);
     end
 end
-[filename, pathname, filterindex] = uigetfile(menustr, 'Select a file:');
+[filename, pathname, filterindex]	=	uigetfile(menustr, 'Select a file:');
 
-handles.mydir = pathname;
-handles.myfile=filename;
+handles.mydir	=	pathname;
+handles.myfile	=	filename;
+handles.myfind	=	filterindex;
+if	~(filterindex == 0)
+	handles.filetype	=	File_types{filterindex};
+	handles.filedesc	=	File_descs{filterindex};
+end
+
 %yes_wav=get(handles.togglebutton_getwav,'value');
-[handles,errorflag]=set_slider_controls(handles,handles.filetype);
+[handles,errorflag]		=	set_slider_controls(handles, handles.filetype);
 set(handles.text_filename,'String',[handles.mydir '/' handles.myfile]);
 cd(mydir);
 
