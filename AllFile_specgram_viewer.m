@@ -87,7 +87,7 @@ mydir=pwd;
 try
     cd(handles.mydir);
 end
-handles.filetype='MT';
+handles.filetype='mt';
 [handles,errorflag]=set_slider_controls(handles,handles.filetype);
 %Make GSIbearing button and CSDM invisible
 set(handles.pushbutton_GSIbearing,'Vis','off');
@@ -335,7 +335,7 @@ handles.x=x;
 handles.Fs=Fs;
 %tmp=ginput(2)
 
-if strcmp(lower(handles.filetype),'gsi')
+if strcmpi(handles.filetype,'gsi')
     set(handles.pushbutton_GSIbearing,'vis','on');
     set(handles.pushbutton_GSI_localization,'vis','on');
 else
@@ -343,7 +343,7 @@ else
     set(handles.pushbutton_GSI_localization,'vis','off');
 end
 
-if strcmp(lower(handles.filetype),'mdat')||strcmp(lower(handles.filetype),'wav')||strcmp(lower(handles.filetype),'simulation')
+if strcmpi(handles.filetype,'mdat')||strcmpi(handles.filetype,'wav')||strcmpi(handles.filetype,'mat')
     set(handles.pushbutton_CSDM,'vis','on');
     set(handles.pushbutton_Mode,'vis','on');
     set(handles.pushbutton_tilt,'vis','on');
@@ -933,7 +933,7 @@ function pushbutton_print_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-if strcmp(handles.filetype,'MDAT')
+if strcmpi(handles.filetype,'MDAT')
     mychc=menu('Which print option?','Single phone','all phones');
     
     if mychc==2  %%Multiphone data...
@@ -1557,8 +1557,9 @@ t=[];
 tmin=[];
 tmax=[];
 head=[];
+filetype	=	upper(filetype);
 switch filetype
-    case 'Simulation'
+    case 'MAT'
         
         simulated=load([mydir '/' myfile]);
         Fs=simulated.fs;
