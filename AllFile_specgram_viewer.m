@@ -376,59 +376,72 @@ function OpenMenuItem_Callback(hObject, eventdata, handles)
 %end
 
 %	List of supported file types + descriptions/names
-File_types	=	{'MT';'WAV';'GSI';'ADI';'DAT';'MDAT';'MAT'};
-File_descs	=	{'MT files';...
-					 'WAV files';...
-					 'GSI files';...
-					 'ADI files';...
-					 'DAT files';...
-					 'MDAT files';...
-					 'Simulations'};
+File_types	=	{'*';'MT';'WAV';'GSI';'ADI';'DAT';'MDAT';'MAT'};
+File_descs	=	{	'All files';...
+					'MT files';...
+					'WAV files';...
+					'GSI files';...
+					'ADI files';...
+					'DAT files';...
+					'MDAT files';...
+					'Simulations'};
 
-
-mydir	=	pwd;
-%handles.filetype	=	get(get(handles.uipanel_type,'SelectedObject'),'String');
-%if ~strcmp(handles.filetype,'Simulation')
-%    menustr={['*.' lower(handles.filetype)];['*.' (handles.filetype)];'*.*';['*1004*.' lower(handles.filetype)]};
-%else
-%    menustr={'*.mat'};
-%end
-
+%	 Setup menu file extensions
 menustr		=	cell(length(File_types),1);
 for	ff = 1:length(File_types)
 	ftype	=	File_types{ff};
-	%fdesc	=	File_descs{ff};
-	
+	fdesc	=	File_descs{ff};
 	menustr{ff,1}	=	['*.' lower(ftype), ', *.' upper(ftype)];
-	%menustr{ff,2}	=	fdesc;
+	menustr{ff,2}	=	[fdesc ' (' menustr{ff,1} ')'];
 end
 
 
-
-if ~isempty(handles.mydir),
+%	Specify default file
+default_file	=	[];
+if ~isempty(handles.mydir)
     disp(handles.mydir);
-    try
-        cd(handles.mydir);
-    end
+    default_file	=	handles.mydir;
+	try
+		default_file	=	fullfile(default_file, handles.myfile);
+	end
 end
-[filename, pathname, filterindex]	=	uigetfile(menustr, 'Select a file:');
 
-handles.mydir	=	pathname;
-handles.myfile	=	filename;
-handles.myfind	=	filterindex;
-if	~(filterindex == 0)
-	handles.filetype	=	File_types{filterindex};
-	handles.filedesc	=	File_descs{filterindex};
+%	Open dialog box
+[filename, pathname, ~]	=	...
+						uigetfile(menustr, 'Select a file:', default_file);
+
+%	Parse selected file name
+if	isnumeric(filename) || isnumeric(pathname)
+	return;
 end
+
+[~,~,myext]		=	fileparts(filename);
+
+if	~isempty(myext)
+	myext	=	myext(2:end);
+	file_ind=	find(strcmpi(myext,File_types));
+end
+
+if	isempty(myext) || isempty(file_ind)
+	disp([myext ' File type not supported']);
+	return;
+end
+
+%	Assume valid data type at this point
+handles.mydir		=	pathname;
+handles.myfile		=	filename;
+handles.myext		=	myext;
+handles.filetype	=	File_types{file_ind};
+handles.filedesc	=	File_descs{file_ind};
 
 %yes_wav=get(handles.togglebutton_getwav,'value');
-[handles,errorflag]		=	set_slider_controls(handles, handles.filetype);
-set(handles.text_filename,'String',[handles.mydir '/' handles.myfile]);
-cd(mydir);
+[handles,~]		=	set_slider_controls(handles, handles.filetype);
+set(handles.text_filename,'String',fullfile(handles.mydir, handles.myfile));
+set(handles.text_filetype,'String',handles.filetype);
 
+% Update handles structure
 guidata(hObject, handles);
 end
-% Update handles structure
 
 % --------------------------------------------------------------------
 function PrintMenuItem_Callback(hObject, eventdata, handles)
