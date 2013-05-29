@@ -29,7 +29,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 12-Dec-2012 12:47:40
+% Last Modified by GUIDE v2.5 29-May-2013 13:49:11
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -97,6 +97,11 @@ set(handles.pushbutton_Mode,'Vis','off');
 set(handles.pushbutton_tilt,'Vis','off');
 set(handles.pushbutton_modalfiltering,'Vis','off');
 
+%	Set prev/next buttons inactive initiall
+set(handles.pushbutton_next,'Enable','off');
+set(handles.pushbutton_prev,'Enable','off');
+
+
 set(handles.edit_maxfreq,'String','0');
 set(handles.edit_minfreq,'String','0');
 cd(mydir);
@@ -145,6 +150,9 @@ function pushbutton_update_Callback(hObject, eventdata, handles)
 
 load_and_display_spectrogram(hObject,eventdata,handles);
 
+%	Set prev/next buttons active
+set(handles.pushbutton_next,'Enable','on');
+set(handles.pushbutton_prev,'Enable','on');
 
 
 end
@@ -438,6 +446,9 @@ handles.filedesc	=	File_descs{file_ind};
 [handles,~]		=	set_slider_controls(handles, handles.filetype);
 set(handles.text_filename,'String',fullfile(handles.mydir, handles.myfile));
 set(handles.text_filetype,'String',handles.filetype);
+%	Set prev/next buttons inactive initially, requre Update first
+set(handles.pushbutton_next,'Enable','off');
+set(handles.pushbutton_prev,'Enable','off');
 
 % Update handles structure
 guidata(hObject, handles);
@@ -486,19 +497,19 @@ function edit_datestr_Callback(hObject, eventdata, handles)
 % hObject    handle to edit_datestr (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-myval=get(handles.slider_datestr,'Value');
+myval	=	get(handles.slider_datestr,'Value');
 
 %tmin=datenum(get(handles.text_mintime,'String'));
 %tmax=datenum(get(handles.text_maxtime,'string'));
-tmin=handles.min_time;
-tmax=handles.max_time;
+tmin	=	handles.min_time;
+tmax	=	handles.max_time;
 
-olddate=tmin+myval*(tmax-tmin);
+olddate	=	tmin + myval*(tmax-tmin);
 
 try
-    handles.tdate_start=datenum(get(hObject,'String'));
+    handles.tdate_start	=	datenum(get(hObject,'String'));
     set(handles.text_datestr_demo,'String',get(hObject,'String'));
-    newval=(handles.tdate_start-tmin)/(tmax-tmin);
+    newval	=	(handles.tdate_start-tmin)/(tmax-tmin);
     set(handles.slider_datestr,'Value',newval);
 catch
     errordlg('Incorrect datestr');
@@ -6289,4 +6300,43 @@ function checkbox_teager_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_teager
+end
+
+
+% --- Executes on button press in pushbutton_next.
+function pushbutton_next_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_next (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%	increment start date
+tdate_start		=	datenum(get(handles.edit_datestr,'String'));
+tlen			=	str2double(get(handles.edit_windowlength,'String'));
+tlen			=	tlen/60/60/24;	%	convert to fractional days
+tdate_start		=	tdate_start + tlen;
+set(handles.edit_datestr,'String', datestr(tdate_start));
+%	Trigger callback to update/check other GUI elements
+edit_datestr_Callback(handles.edit_datestr, eventdata, handles)
+
+load_and_display_spectrogram(hObject,eventdata,handles);
+
+end
+
+% --- Executes on button press in pushbutton_prev.
+function pushbutton_prev_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_prev (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%	decrement start date
+tdate_start		=	datenum(get(handles.edit_datestr,'String'));
+tlen			=	str2double(get(handles.edit_windowlength,'String'));
+tlen			=	tlen/60/60/24;	%	convert to fractional days
+tdate_start		=	tdate_start - tlen;
+set(handles.edit_datestr,'String', datestr(tdate_start));
+%	Trigger callback to update/check other GUI elements
+edit_datestr_Callback(handles.edit_datestr, eventdata, handles)
+
+load_and_display_spectrogram(hObject,eventdata,handles);
+
 end
