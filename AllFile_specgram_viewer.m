@@ -29,7 +29,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 29-May-2013 13:49:11
+% Last Modified by GUIDE v2.5 30-May-2013 11:10:56
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -1132,27 +1132,31 @@ function pushbutton_annotate_Callback(hObject, eventdata, handles)
 disp('Click on two points defining a rectangle: ');
 tmp=ginput(2);
 
-start_time=datenum(get(handles.edit_datestr,'String'))+datenum(0,0,0,0,0,min(tmp(:,1)));
-min_freq=num2str(1000*min(tmp(:,2)));
-max_freq=num2str(1000*max(tmp(:,2)));
-duration=num2str(abs(tmp(2,1)-tmp(1,1)));
+start_time	=	datenum(get(handles.edit_datestr,'String'))+datenum(0,0,0,0,0,min(tmp(:,1)));
+min_freq	=	num2str(1000*min(tmp(:,2)));
+max_freq	=	num2str(1000*max(tmp(:,2)));
+duration	=	num2str(abs(tmp(2,1)-tmp(1,1)));
 
-call_types={'Pulsive','FM modulated'};
-Icall=menu('Signal type?',call_types);
-call_type=call_types{Icall};
+call_types	=	{'Pulsive','FM modulated'};
+Icall		=	menu('Signal type?',call_types);
+call_type	=	call_types{Icall};
 
-prompt={'File name','pulse or FM?','Call Type','Min Freq(Hz)','Max Freq(Hz)','Duration(sec)','Number_pulses','Number_harmonics','modulation (Hz)'};
+prompt={'File name','pulse or FM?','Call Type','Min Freq(Hz)','Max Freq(Hz)',...
+	'Duration(sec)','Number_pulses','Number_harmonics','modulation (Hz)', 'Notes'};
 if Icall==1  %Pulsive
-    def={handles.annotation_file,'pulse','S1',min_freq,max_freq,duration,'10','-1','0'};
+    def={handles.annotation_file,'pulse','S1',min_freq,max_freq,duration,'10','-1','0',''};
 else
-    def={handles.annotation_file,'FM','moan',min_freq,max_freq,duration,'-1','1','0'};
+    def={handles.annotation_file,'FM','moan',min_freq,max_freq,duration,'-1','1','0',''};
 end
-dlgTitle=sprintf('Annotation for event at %s',datestr(start_time));
-lineNo=1;
-answer1=inputdlg(prompt,dlgTitle,lineNo,def);
+dlgTitle	=	sprintf('Annotation for event at %s',datestr(start_time));
+lineNo		=	ones(size(prompt));
+lineNo(end) =	5;
+answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
 
-
-fid=fopen(answer1{1},'a');
+if	isempty(answer)
+	return;
+end
+fid=fopen(answer{1},'a');
 if ftell(fid)==0
     fprintf(fid,'%s','Start Date and Time,');
     for I=2:length(prompt)
@@ -1163,7 +1167,7 @@ end
 
 fprintf(fid,'%s,',datestr(start_time,0));
 for I=2:length(prompt)
-    fprintf(fid,'%s, ',answer1{I});
+    fprintf(fid,'%s, ',answer{I});
 end
 fprintf(fid,'\n');
 fclose(fid);
