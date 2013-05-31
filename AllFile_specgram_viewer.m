@@ -787,18 +787,30 @@ function pushbutton_playufsound_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+Fs	=	handles.Fs;
+x	=	handles.x;
 
-if handles.Fs>48000
-    n=ceil(handles.Fs/48000);
-    disp('Resampling sound');
-    
-    soundsc(downsample(handles.x,n),handles.Fs/n);
-elseif handles.Fs==6250
-    
-    soundsc(handles.x,6200);
-else
-    soundsc(handles.x,handles.Fs);
+%	Resample if not within generic sound-card limits
+valid_audio_Fs	=	[5000,8000,11025,22050,44100,48000];
+if ~ismember(Fs, valid_audio_Fs)
+	[~, ii]		=	min(abs(valid_audio_Fs - Fs));
+	ii	=	ii(1);
+	newFs	=	valid_audio_Fs(ii);
+
+	disp('Resampling sound');
+	x	=	resample(x, newFs, Fs);
+	Fs	=	newFs;
 end
+%	Floating point data must be scaled to -1:+1
+x	=	x - mean(x);
+x	=	x ./ max(abs(x));
+
+player	=	audioplayer(x, Fs);
+play(player);
+
+handles.audioplayer		=	player;
+guidata(hObject, handles);
+
 end
 
 % --- Executes on button press in pushbutton_recomputeFilter.
