@@ -29,7 +29,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 02-Jun-2013 19:46:02
+% Last Modified by GUIDE v2.5 03-Jun-2013 12:03:44
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -326,8 +326,8 @@ end
 
 
 % --- Executes during object creation, after setting all properties.
-function edit_windowlength_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit_windowlength (see GCBO)
+function edit_winlen_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_winlen (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -341,13 +341,13 @@ end
 
 end
 
-function edit_windowlength_Callback(hObject, eventdata, handles)
-% hObject    handle to edit_windowlength (see GCBO)
+function edit_winlen_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_winlen (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit_windowlength as text
-%        str2double(get(hObject,'String')) returns contents of edit_windowlength as a double
+% Hints: get(hObject,'String') returns contents of edit_winlen as text
+%        str2double(get(hObject,'String')) returns contents of edit_winlen as a double
 tlen=str2num(get(hObject,'String'));
 if tlen<=240
     maxx=get(handles.slider_datestr,'max');
@@ -764,7 +764,7 @@ function pushbutton_save_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_windowlength,'String'));
+tlen=str2num(get(handles.edit_winlen,'String'));
 %yes_wav=get(handles.togglebutton_getwav,'value');
 
 mydir=pwd;
@@ -813,7 +813,7 @@ if strcmpi(handles.filetype,'MDAT')
         
         figure;
         tdate_start=datenum(get(handles.edit_datestr,'String'));
-        tlen=str2num(get(handles.edit_windowlength,'String'));
+        tlen=str2num(get(handles.edit_winlen,'String'));
         contents=get(handles.popupmenu_Nfft,'String');
         Nfft=str2num(contents{get(handles.popupmenu_Nfft,'Value')});
         
@@ -931,7 +931,7 @@ else
     figure(chcc(figchc));
 end
 tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_windowlength,'String'));
+tlen=str2num(get(handles.edit_winlen,'String'));
 chan=get(handles.edit_chan,'String');
 Idot=findstr(handles.myfile,'.')-1;
 save_name=sprintf('soundsamp_%s_%s_%s',handles.myfile(1:Idot),datestr(tdate_start,30),chan);
@@ -1168,7 +1168,7 @@ function pushbutton_binary_Callback(hObject, eventdata, handles)
 
 
 tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_windowlength,'String'));
+tlen=str2num(get(handles.edit_winlen,'String'));
 %yes_wav=get(handles.togglebutton_getwav,'value');
 
 mydir=pwd;
@@ -1300,7 +1300,7 @@ thet=-1;  %Start with failed result
 kappa=-1;
 tsec=-1;
 tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_windowlength,'String'));
+tlen=str2num(get(handles.edit_winlen,'String'));
 %yes_wav=get(handles.togglebutton_getwav,'value');
 
 mydir=pwd;
@@ -1419,7 +1419,7 @@ function pushbutton_CSDM_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_windowlength,'String'));
+tlen=str2num(get(handles.edit_winlen,'String'));
 mydir=pwd;
 Ichan='all';  %Hardwire first channel
 [x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.min_time , tdate_start,tlen,Ichan,handles);
@@ -1681,7 +1681,7 @@ twant=tmp(1);
 
 
 tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_windowlength,'String'));
+tlen=str2num(get(handles.edit_winlen,'String'));
 %for Ichan=1:8
 [x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.min_time , tdate_start,tlen,'all',handles);
 if size(x,2)>1
@@ -1797,7 +1797,7 @@ function pushbutton_tilt_Callback(hObject, eventdata, handles)
 
 
 tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_windowlength,'String'));
+tlen=str2num(get(handles.edit_winlen,'String'));
 %for Ichan=1:8
 [x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.min_time , tdate_start,tlen,'all',handles);
 
@@ -1906,7 +1906,7 @@ if ~isempty(figss(Iclose))
     close(figss(Iclose));
 end
 tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_windowlength,'String'));
+tlen=str2num(get(handles.edit_winlen,'String'));
 %for Ichan=1:8
 [data.x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.min_time , tdate_start,tlen,'all',handles);
 
@@ -2766,7 +2766,7 @@ function pushbutton_next_Callback(hObject, eventdata, handles)
 
 %	increment start date
 tdate_start		=	datenum(get(handles.edit_datestr,'String'));
-tlen			=	str2double(get(handles.edit_windowlength,'String'));
+tlen			=	str2double(get(handles.edit_winlen,'String'));
 tlen			=	tlen/60/60/24;	%	convert to fractional days
 tdate_start		=	tdate_start + tlen;
 set(handles.edit_datestr,'String', datestr(tdate_start));
@@ -2785,7 +2785,7 @@ function pushbutton_prev_Callback(hObject, eventdata, handles)
 
 %	decrement start date
 tdate_start		=	datenum(get(handles.edit_datestr,'String'));
-tlen			=	str2double(get(handles.edit_windowlength,'String'));
+tlen			=	str2double(get(handles.edit_winlen,'String'));
 tlen			=	tlen/60/60/24;	%	convert to fractional days
 tdate_start		=	tdate_start - tlen;
 set(handles.edit_datestr,'String', datestr(tdate_start));
@@ -2804,13 +2804,13 @@ function load_and_display_spectrogram(hObject,eventdata,handles)
 cla;
 
 tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_windowlength,'String'));
+tlen=str2num(get(handles.edit_winlen,'String'));
 mydir=pwd;
 Ichan=str2num(get(handles.edit_chan,'String'));  %Hardwire first channel
 
 [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.min_time , tdate_start,tlen,Ichan,handles);
 if max(t)<tlen
-    set(handles.edit_windowlength,'String',num2str(max(t)));
+    set(handles.edit_winlen,'String',num2str(max(t)));
 end
 
 if size(x,2)>1
@@ -3050,7 +3050,7 @@ handles.max_time=maxx;
 
 set(handles.edit_fmax,'String',Fs/2000);
 set(handles.edit_fmin,'String',0);
-%slider_step(1) = datenum(0,0,0,0,0,str2num(get(handles.edit_windowlength,'String')))/(maxx-minn);
+%slider_step(1) = datenum(0,0,0,0,0,str2num(get(handles.edit_winlen,'String')))/(maxx-minn);
 %slider_step(2) = min([datenum(0,0,0,0,5,0) 0.1*(maxx-minn)])/(maxx-minn);
 %set(handles.slider_datestr,'sliderstep',slider_step)
 % keyboard
