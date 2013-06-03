@@ -255,7 +255,7 @@ set(handles.pushbutton_prev,'Enable','off');
 set(handles.pushbutton_notes_select, 'Enable', 'on');
 %	set notes file name and dir accordingly
 if	isempty(handles.notes.folder)
-	handles.notes.folder	=	pathname;
+	handles.notes.folder_name	=	pathname;
 end
 handles.notes.filename	=	[fname '-notes' '.mat'];
 
@@ -2830,7 +2830,7 @@ function pushbutton_notes_select_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to pushbutton_notes_select (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-handles.notes.folder	=	[];
+handles.notes.folder_name	=	[];
 guidata(hObject, handles);
 end
 
@@ -2845,8 +2845,8 @@ start_path		=	handles.notes.folder;
 folder_name		=	uigetdir(start_path, dialog_title);
 
 if ~isnumeric(folder_name)
-	handles.notes.folder	=	folder_name;
-	handles.notes.filepath	=	fullfile(handles.notes.foldername,...
+	handles.notes.folder_name	=	folder_name;
+	handles.notes.filepath		=	fullfile(handles.notes.folder_name,...
 									handles.notes.filename);
 	guidata(hObject, handles);
 end
