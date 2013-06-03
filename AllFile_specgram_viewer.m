@@ -29,7 +29,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 03-Jun-2013 12:03:44
+% Last Modified by GUIDE v2.5 03-Jun-2013 14:00:25
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -223,7 +223,7 @@ if	isnumeric(filename) || isnumeric(pathname)
 	return;
 end
 
-[~,~,myext]		=	fileparts(filename);
+[~,fname,myext]		=	fileparts(filename);
 
 if	~isempty(myext)
 	myext	=	myext(2:end);
@@ -246,10 +246,18 @@ handles.filedesc	=	File_descs{file_ind};
 [handles,~]		=	set_slider_controls(handles, handles.filetype);
 set(handles.text_filename,'String',fullfile(handles.mydir, handles.myfile));
 set(handles.text_filetype,'String',handles.filetype);
+
 %	Set prev/next buttons inactive initially, requre Update first
 set(handles.pushbutton_next,'Enable','off');
 set(handles.pushbutton_prev,'Enable','off');
 
+%	Enable notes folder selection, in case it's not already enabled
+set(handles.pushbutton_notes_select, 'Enable', 'on');
+%	set notes file name and dir accordingly
+if	isempty(handles.notes.folder)
+	handles.notes.folder	=	pathname;
+end
+handles.notes.filename	=	[fname '-notes' '.mat'];
 
 % Update handles structure
 guidata(hObject, handles);
@@ -2796,6 +2804,79 @@ pushbutton_update_Callback(hObject,eventdata,handles);
 
 end
 
+% --- Executes on button press in pushbutton_notes_next.
+function pushbutton_notes_next_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_notes_next (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+end
+
+% --- Executes on button press in pushbutton_notes_prev.
+function pushbutton_notes_prev_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_notes_prev (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+end
+
+% --- Executes on button press in pushbutton_notes_save.
+function pushbutton_notes_save_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_notes_save (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+end
+
+% --- Executes during object creation, after setting all properties.
+function pushbutton_notes_select_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pushbutton_notes_select (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+handles.notes.folder	=	[];
+guidata(hObject, handles);
+end
+
+% --- Executes on button press in pushbutton_notes_select.
+function pushbutton_notes_select_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_notes_select (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+dialog_title	=	'Select location for Annotation files';
+start_path		=	handles.notes.folder;
+folder_name		=	uigetdir(start_path, dialog_title);
+
+if ~isnumeric(folder_name)
+	handles.notes.folder	=	folder_name;
+	handles.notes.filepath	=	fullfile(handles.notes.foldername,...
+									handles.notes.filename);
+	guidata(hObject, handles);
+end
+
+end
+
+% --- Executes on button press in checkbox_notes_readonly.
+function checkbox_notes_readonly_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_notes_readonly (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_notes_readonly
+end
+
+% --- Executes on button press in checkbox_notes_show.
+function checkbox_notes_show_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_notes_show (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_notes_show
+end
+
+% --- Executes on button press in pushbutton_notes_new.
+function pushbutton_notes_new_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_notes_new (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+end
 
 
 %%	Supporting functions, i.e. not auto-generated callbacks
