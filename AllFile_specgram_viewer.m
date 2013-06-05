@@ -29,7 +29,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 04-Jun-2013 19:53:01
+% Last Modified by GUIDE v2.5 05-Jun-2013 13:36:51
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -159,8 +159,10 @@ set(handles.pushbutton_next, 'Enable', 'off');
 set(handles.pushbutton_prev, 'Enable', 'off');
 
 %	Call actual function to produce figure
-load_and_display_spectrogram(hObject,eventdata,handles);
+handles		=	load_and_display_spectrogram(handles);
 
+%	Audio object is no longer valid
+handles.audio_stale		=	true;
 
 %	Renable buttons
 set(handles.pushbutton_update, 'Enable', 'off');
@@ -171,6 +173,8 @@ set(handles.pushbutton_prev, 'Enable', 'on');
 set(handles.pushbutton_playsound,'Enable','on');
 set(handles.pushbutton_pausesound,'Enable','off');
 
+
+guidata(hObject, handles);
 end
 
 % --------------------------------------------------------------------
@@ -1381,7 +1385,7 @@ for Idasar=1:NDasar
     handles.myfile(5)=strr(Idasar);
     disp(sprintf('Directory %s contains %s',handles));
     try
-        load_and_display_spectrogram(hObject,eventdata,handles);
+        handles		=	load_and_display_spectrogram(handles);
         [theta(Idasar),kappa(Idasar),tsec]=get_GSI_bearing(hObject,eventdata,handles);
     catch
         disp(sprintf('Directory does not exist'));
@@ -2917,6 +2921,7 @@ function checkbox_notes_show_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of checkbox_notes_show
 
 handles.notes.show	=	get(hObject, 'Value');
+handles				=	plot_events(handles);
 guidata(hObject, handles);
 end
 
@@ -2963,10 +2968,10 @@ end
 sig_type	=	sig_types{choice};
 
 %	Get existing notes
-Notes	=	handles.notes;
+Data	=	handles.notes.Data;
 
 %	Default values if none already present
-if	isempty(Notes.Data)
+if	isempty(Data)
 	%	Default prompt
 	Description	=	{'Start Time',...
 					'Author',...
@@ -2997,15 +3002,19 @@ if	isempty(Notes.Data)
 	Event.modulation	=	0;
 	Event.comments		=	'';
 
-	Notes.Data.Description	=	Description;
-	Notes.Data.Template		=	Event;
-	Notes.Data.Events		=	[];
+	Data.Description	=	Description;
+	Data.Template		=	Event;
+	Data.Events		=	[];
 else
-	Description	=	Notes.Data.Description;
-	if	~isempty(Notes.i_sel)
-		Event	=	Notes.Data.Events(i_sel);
+	Description	=	Data.Description;
+	if	~isempty(Data.Events)
+		if	~isempty(Data.i_sel)
+			Event	=	Data.Events(i_sel);
+		else
+			Event	=	Data.Events(end);
+		end
 	else
-		Event	=	Notes.Data.Template;
+		Event	=	Data.Template;
 	end
 end
 
@@ -3025,10 +3034,11 @@ end
 %!! Separate here for use with Edit too
 Event	=	edit_event(Event, Description);
 
+delete(hrec);
 if	~isempty(Event)
-	Notes			=	add_event(Notes, Event);
-	handles.notes	=	Notes;
-	handles			=	plot_events(handles);
+	Data.Events			=	add_event(Data.Events, Event);
+	handles.notes.Data	=	Data;
+	handles				=	plot_events(handles);
 	guidata(hObject, handles);
 end
 end
@@ -3064,7 +3074,7 @@ end
 
 
 
-function load_and_display_spectrogram(hObject,eventdata,handles)
+function	handles	=	load_and_display_spectrogram(handles)
 
 cla;
 
@@ -3270,8 +3280,6 @@ else
     set(handles.pushbutton_modalfiltering,'vis','off');
 end
 
-handles.audio_stale		=	true;
-guidata(hObject, handles);
 end
 
 function [handles,errorflag]=set_slider_controls(handles,filetype)
@@ -6769,4 +6777,3 @@ else
 end
 
 end
-
