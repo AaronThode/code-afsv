@@ -299,7 +299,7 @@ delete(handles.figure1)
 end
 
 % --- Executes during object creation, after setting all properties.
-function edit_datestr_CreateFcn(hObject, eventdata, handles)
+function edit_datestr_CreateFcn(hObject, eventdata, handles) %#ok<*DEFNU,*INUSD>
 % hObject    handle to edit_datestr (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -314,7 +314,7 @@ end
 
 end
 
-function edit_datestr_Callback(hObject, eventdata, handles)
+function edit_datestr_Callback(hObject, eventdata, handles) %#ok<*INUSL>
 % hObject    handle to edit_datestr (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
