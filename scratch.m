@@ -1,0 +1,13 @@
+	Event.start_time	=	1997;
+	Event.author		=	'Your name';
+	Event.sig_type		=	'pulse';
+	Event.call_type		=	'S1';
+	Event.min_freq		=	1000;
+	Event.max_freq		=	2000;
+	Event.duration		=	10;
+	Event.noise_db		=	24;
+	Event.peak_db		=	50;
+	Event.num_pulses	=	10;
+	Event.num_harmonics	=	-1;
+	Event.modulation	=	0;
+	Event.comments		=	'';
