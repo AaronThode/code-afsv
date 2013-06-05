@@ -29,7 +29,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 03-Jun-2013 14:00:25
+% Last Modified by GUIDE v2.5 04-Jun-2013 19:53:01
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -148,11 +148,17 @@ function pushbutton_update_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-if	isfield(handles,'audioplayer')
+%	Stop audio playback if it's running
+if	~isempty(handles.audioplayer) && isplaying(handles.audioplayer)
 	stop(handles.audioplayer);
 end
 
+%	Disable update buttones while loading/processing
+set(handles.pushbutton_update, 'Enable', 'off');
+set(handles.pushbutton_next, 'Enable', 'off');
+set(handles.pushbutton_prev, 'Enable', 'off');
 
+%	Call actual function to produce figure
 load_and_display_spectrogram(hObject,eventdata,handles);
 
 
