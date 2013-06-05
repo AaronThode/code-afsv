@@ -162,10 +162,12 @@ set(handles.pushbutton_prev, 'Enable', 'off');
 load_and_display_spectrogram(hObject,eventdata,handles);
 
 
-%	Set relevant buttons active
-set(handles.pushbutton_next,'Enable','on');
-set(handles.pushbutton_prev,'Enable','on');
+%	Renable buttons
+set(handles.pushbutton_update, 'Enable', 'off');
+set(handles.pushbutton_next, 'Enable', 'on');
+set(handles.pushbutton_prev, 'Enable', 'on');
 
+%	enable audio controls, now that x exists
 set(handles.pushbutton_playsound,'Enable','on');
 set(handles.pushbutton_pausesound,'Enable','off');
 
@@ -226,7 +228,7 @@ end
 
 %	Parse selected file name
 if	isnumeric(filename) || isnumeric(pathname)
-	return;
+	return;		%	window canceled
 end
 
 [~,fname,myext]		=	fileparts(filename);
@@ -260,10 +262,10 @@ set(handles.pushbutton_prev,'Enable','off');
 %	Enable notes folder selection, in case it's not already enabled
 set(handles.pushbutton_notes_select, 'Enable', 'on');
 %	set notes file name and dir accordingly
-if	isempty(handles.notes.folder)
+if	isempty(handles.notes.folder_name)
 	handles.notes.folder_name	=	pathname;
 end
-handles.notes.filename	=	[fname '-notes' '.mat'];
+handles.notes.file_name	=	[fname '-notes' '.mat'];
 
 % Update handles structure
 guidata(hObject, handles);
@@ -1234,6 +1236,7 @@ function pushbutton_playsound_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to pushbutton_playsound (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
+handles.audioplayer		=	[];
 
 end
 function uipanel_type_SelectionChangeFcn(hObject,eventdata,handles)
@@ -2829,6 +2832,32 @@ function pushbutton_notes_save_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_notes_save (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+%	Shouldn't be able to click this button anyway, but can't hurt to check
+readonly	=	get(handles.checkbox_notes_readonly, 'Value');
+if readonly
+	warning('Readonly flag set, file not saved');
+	return;
+end
+
+%	The following should never be empty, but...
+Data		=	handles.notes.Data;
+if	isempty(Data)
+	warning('Notes data empty, nothing to save');
+	return;
+end
+
+file_path	=	handles.notes.file_path;
+if	isempty(file_path)
+	warning('Notes file/folder not set, file not saved');
+	return;
+end
+
+%	Save whole data structure, allows implicit expansion of named variables
+save(file_path, Data);
+
+%	Disable button, till data is changed
+set(hObject, 'Enable', 'off');
 end
 
 % --- Executes during object creation, after setting all properties.
@@ -2837,6 +2866,8 @@ function pushbutton_notes_select_CreateFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 handles.notes.folder_name	=	[];
+handles.notes.file_name		=	[];
+handles.notes.file_path		=	[];
 guidata(hObject, handles);
 end
 
@@ -2847,15 +2878,15 @@ function pushbutton_notes_select_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 dialog_title	=	'Select location for Annotation files';
-start_path		=	handles.notes.folder;
+start_path		=	handles.notes.folder_name;
 folder_name		=	uigetdir(start_path, dialog_title);
 
 if ~isnumeric(folder_name)
 	handles.notes.folder_name	=	folder_name;
-	handles.notes.filepath		=	fullfile(handles.notes.folder_name,...
-									handles.notes.filename);
-	guidata(hObject, handles);
 end
+
+handles		=	load_notes_file(handles);
+guidata(hObject, handles);
 
 end
 
@@ -2866,6 +2897,15 @@ function checkbox_notes_readonly_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_notes_readonly
+read_only	=	get(hObject, 'Value');
+is_changed	=	handles.notes.changed;
+if	read_only || ~is_changed
+	enable_save		=	'off';
+else
+	enable_save		=	'on';
+end
+set(handles.pushbutton_notes_save, 'Enable', enable_save);
+
 end
 
 % --- Executes on button press in checkbox_notes_show.
@@ -2875,6 +2915,9 @@ function checkbox_notes_show_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_notes_show
+
+handles.notes.show	=	get(hObject, 'Value');
+guidata(hObject, handles);
 end
 
 % --- Executes on button press in pushbutton_notes_new.
@@ -2882,10 +2925,132 @@ function pushbutton_notes_new_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_notes_new (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+disp('Click on two points defining a rectangle on the figure: ');
+[Times, Freq, Buttons]		=	ginput(2);
+
+%	Check if user tried to terminate input early
+if	(length(Buttons) < 2) || any(Buttons > 3)
+	disp('Input cancelled');
+	return;
+end
+
+%	Initial signal type selection
+sig_types	=	{'Pulsive','FM'};
+choice		=	menu('Signal type?',sig_types);
+if	choice == 0
+	disp('Input cancelled');
+	return;
+end
+sig_type	=	sig_types{choice};
+
+%	Parameters taken from plot
+start_time	=	datenum(get(handles.edit_datestr,'String'))...
+				+	datenum(0,0,0,0,0,min(Times));
+min_freq	=	(1000*min(Freq));
+max_freq	=	(1000*max(Freq));
+duration	=	(abs(Times(2) - Times(1)));
+
+%	Parameters taken from underlying data
+noise_db	=	0;
+peak_db		=	0;
+
+
+%	Get existing notes
+Notes	=	handles.notes;
+
+%	Default prompt
+if	isempty(Notes.Data)
+	Description	=	{'Start Time',...
+					'Author',...
+					'Pulse or FM?',...
+					'Call Type',...
+					'Min Freq (Hz)',...
+					'Max Freq (Hz)',...
+					'Duration (s)',...
+					'Noise (dB)',...
+					'Peak (dB)',...
+					'# of pulses',...
+					'# of harmonics',...
+					'Modulation (Hz)',...
+					'Comments'};
+
+	%	Default values (for pulsive)
+	Event.start_time	=	start_time;
+	Event.author		=	'Your name';
+	Event.sig_type		=	sig_type;
+	Event.call_type		=	'S1';
+	Event.min_freq		=	min_freq;
+	Event.max_freq		=	max_freq;
+	Event.duration		=	duration;
+	Event.noise_db		=	noise_db;
+	Event.peak_db		=	peak_db;
+	Event.num_pulses	=	10;
+	Event.num_harmonics	=	-1;
+	Event.modulation	=	0;
+	Event.comments		=	'';
+
+	%	modified defualts for other signal types
+	switch sig_type
+		case	'Pulsive'
+			%	do nothing, defaults defined above
+		case	'FM'
+			Event.call_type		=	'moan';
+			Event.num_pulses	=	-1;
+			Event.num_harmonics	=	1;
+		otherwise
+			warning('Signal type not recognized');
+	end
+	Notes.Data.Description	=	Description;
+	Notes.Data.Template		=	Event;
+else
+	Description	=	Notes.Data.Description;
+	if	~isempty(Notes.selected)
+		Event	=	Notes.Data.Events{selected};
+	else
+		Event	=	Notes.Data.Template;
+	end
+end
+
+%!! Separate here for use with Edit too
+Event	=	edit_event(Event, Description);
+
+if	~isempty(Event)
+	Notes	=	add_event(Notes, Event);
+	handles.notes	=	Notes;
+	guidata(hObject, handles);
+end
+end
+
+% --- Executes on button press in pushbutton_notes_edit.
+function pushbutton_notes_edit_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_notes_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+end
+
+% --- Executes on button press in checkbox_notes_delete.
+function checkbox_notes_delete_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_notes_delete (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_notes_delete
+delete_on	=	get(hObject, 'Value');
+
+if	delete_on
+	set(handles.pushbutton_notes_edit, 'String', 'Delete');
+else
+	set(handles.pushbutton_notes_edit, 'String', 'Edit');
+end
+
 end
 
 
 %%	Supporting functions, i.e. not auto-generated callbacks
+
+
+
 function load_and_display_spectrogram(hObject,eventdata,handles)
 
 cla;
@@ -3118,18 +3283,15 @@ catch %no file selected
 end
 
 
-set(handles.edit_datestr,'String',datestr(minn,0));
+%set(handles.edit_datestr,'String',datestr(minn,0));
 %set(handles.slider_datestr,'Max',maxx);
 set(handles.slider_datestr,'Max',1);
-
 %set(handles.slider_datestr,'Min',minn);
 set(handles.slider_datestr,'Min',0);
-
-set(handles.text_mintime,'String',datestr(minn,0));
-
 set(handles.slider_datestr,'Value',0.5);
 set(handles.edit_datestr,'String',datestr(0.5*(minn+maxx),0));
 
+set(handles.text_mintime,'String',datestr(minn,0));
 set(handles.text_maxtime,'String',datestr(maxx,0));
 
 handles.min_time=minn;
@@ -6492,4 +6654,80 @@ if strcmp(player.Running, 'on')
 	set(hline,'XData',x/Fs*[1 1]);
 	drawnow expose;
 end
+end
+
+%	Checks Notes folder for existing files and loads them
+function	handles		=	load_notes_file(handles)
+
+folder_name	=	handles.notes.folder_name;
+file_name	=	handles.notes.file_name;
+
+if ~(isempty(folder_name) || isempty(file_name))
+	file_path		=	fullfile(folder_name, file_name);
+	handles.notes.file_path	=	file_path;
+	
+	%	if file already exists, load data and enable show by defualt
+	if	exist(file_path, 'file')
+		LS	=	load(file_path);
+		handles.notes.Data	=	LS;
+		handles.notes.show	=	true;
+		enable				=	'on';
+	else
+		handles.notes.Data	=	[];
+		handles.notes.show	=	false;
+		enable				=	'off';
+	end
+	set(handles.checkbox_notes_show, 'Value', handles.notes.show);
+	set(handles.checkbox_notes_show, 'Enable', enable);
+end
+end
+
+%	Pops up window to edit event data
+function	Event	=	edit_event(Event, Description)
+
+%	Start time included in window title, should not be part of input
+start_time		=	Event.start_time;
+Event			=	rmfield(Event, 'start_time');
+Description(1)	=	[];
+
+%	Generate default strings from field values
+names		=	fieldnames(Event);
+N_fields	=	length(names);
+defaults	=	cell(N_fields,1);
+tf_numeric	=	false(N_fields,1);
+for	ii	=	1:N_fields
+	value	=	Event.(names{ii});
+	if	~ischar(value)
+		value	=	num2str(value);
+		tf_numeric(ii)	=	true;
+	end
+	defaults{ii}	=	value;
+end
+
+%	Size of each prompt field
+num_lines		=	ones(N_fields,1);
+num_lines(end)	=	5;
+
+%	title for window
+dlgTitle	=	['Annotation for event at ' datestr(start_time)];
+
+%	Create input dialogbox
+answer		=	inputdlg(Description, dlgTitle, num_lines, defaults);
+
+if	isempty(answer)
+	Event	=	[];
+	return;
+end
+
+%	to avoid double conversion precision issues
+Event.start_time		=	start_time;
+for	ii	=	1:N_fields
+	value	=	answer{ii};
+	if	tf_numeric(ii)
+		value	=	str2double(value);
+	end
+	Event.(names{ii})	=	value;
+end
+
+
 end
