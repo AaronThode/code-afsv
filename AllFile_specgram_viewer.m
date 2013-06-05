@@ -2935,15 +2935,6 @@ if	(length(Buttons) < 2) || any(Buttons > 3)
 	return;
 end
 
-%	Initial signal type selection
-sig_types	=	{'Pulsive','FM'};
-choice		=	menu('Signal type?',sig_types);
-if	choice == 0
-	disp('Input cancelled');
-	return;
-end
-sig_type	=	sig_types{choice};
-
 %	Parameters taken from plot
 start_time	=	datenum(get(handles.edit_datestr,'String'))...
 				+	datenum(0,0,0,0,0,min(Times));
@@ -2955,12 +2946,28 @@ duration	=	(abs(Times(2) - Times(1)));
 noise_db	=	0;
 peak_db		=	0;
 
+%	Draw square on plot
+axes(handles.axes1);
+hrec	=	rectangle('Position',[min(Times),min_freq,duration,max_freq-min_freq],...
+					'Curvature',[0.2],...
+					'LineWidth',2,'LineStyle','r');
+				
+%	Initial signal type selection
+sig_types	=	{'Pulsive','FM'};
+choice		=	menu('Signal type?',sig_types);
+if	choice == 0
+	disp('Input cancelled');
+	delete(hrec);
+	return;
+end
+sig_type	=	sig_types{choice};
 
 %	Get existing notes
 Notes	=	handles.notes;
 
-%	Default prompt
+%	Default values if none already present
 if	isempty(Notes.Data)
+	%	Default prompt
 	Description	=	{'Start Time',...
 					'Author',...
 					'Pulse or FM?',...
@@ -2990,34 +2997,38 @@ if	isempty(Notes.Data)
 	Event.modulation	=	0;
 	Event.comments		=	'';
 
-	%	modified defualts for other signal types
-	switch sig_type
-		case	'Pulsive'
-			%	do nothing, defaults defined above
-		case	'FM'
-			Event.call_type		=	'moan';
-			Event.num_pulses	=	-1;
-			Event.num_harmonics	=	1;
-		otherwise
-			warning('Signal type not recognized');
-	end
 	Notes.Data.Description	=	Description;
 	Notes.Data.Template		=	Event;
+	Notes.Data.Events		=	[];
 else
 	Description	=	Notes.Data.Description;
-	if	~isempty(Notes.selected)
-		Event	=	Notes.Data.Events{selected};
+	if	~isempty(Notes.i_sel)
+		Event	=	Notes.Data.Events(i_sel);
 	else
 		Event	=	Notes.Data.Template;
 	end
 end
 
+%	modified defualts for other signal types
+switch sig_type
+	case	'Pulsive'
+		%	do nothing, defaults defined above
+	case	'FM'
+		Event.call_type		=	'moan';
+		Event.num_pulses	=	-1;
+		Event.num_harmonics	=	1;
+	otherwise
+		warning('Signal type not recognized for defaults');
+end
+
+
 %!! Separate here for use with Edit too
 Event	=	edit_event(Event, Description);
 
 if	~isempty(Event)
-	Notes	=	add_event(Notes, Event);
+	Notes			=	add_event(Notes, Event);
 	handles.notes	=	Notes;
+	handles			=	plot_events(handles);
 	guidata(hObject, handles);
 end
 end
@@ -3045,6 +3056,8 @@ else
 end
 
 end
+
+
 
 
 %%	Supporting functions, i.e. not auto-generated callbacks
@@ -6683,7 +6696,7 @@ end
 end
 
 %	Pops up window to edit event data
-function	Event	=	edit_event(Event, Description)
+function	NewEvent	=	edit_event(Event, Description)
 
 %	Start time included in window title, should not be part of input
 start_time		=	Event.start_time;
@@ -6715,19 +6728,45 @@ dlgTitle	=	['Annotation for event at ' datestr(start_time)];
 answer		=	inputdlg(Description, dlgTitle, num_lines, defaults);
 
 if	isempty(answer)
-	Event	=	[];
+	NewEvent	=	[];
 	return;
 end
 
-%	to avoid double conversion precision issues
-Event.start_time		=	start_time;
+%	start_time is always first field
+NewEvent.start_time		=	start_time;
 for	ii	=	1:N_fields
 	value	=	answer{ii};
 	if	tf_numeric(ii)
 		value	=	str2double(value);
 	end
-	Event.(names{ii})	=	value;
+	NewEvent.(names{ii})	=	value;
 end
 
 
 end
+
+%	Adds new event to notes structure and re-sorts chronologically
+function	[Event_set, ii]			=	add_event(Event_set, Event)
+
+	%	If new set, just return the single event
+if	isempty(Event_set)
+	Event_set	=	Event;
+	ii			=	1;
+else
+	%	Append new event
+	Event_set(end+1)	=	Event;
+	Start_times			=	cell2mat({Event_set.start_time});
+	N					=	length(Start_times);
+	%	Check if already sorted, i.e. sequential additions
+	if	issorted(Start_times)
+		ii	=	N;		%	index of inserted item
+	else
+		[~,I]		=	sort(Start_times);
+		Event_set	=	Event_set(I);
+		%	Find new index of inserted event
+		ii			=	find(I == N);
+	end
+end
+
+end
+
