@@ -161,6 +161,9 @@ set(handles.pushbutton_prev, 'Enable', 'off');
 %	Call actual function to produce figure
 handles		=	load_and_display_spectrogram(handles);
 
+%	Update static date text
+set(handles.text_datestr_demo,'String',datestr(handles.tdate_start));
+
 %	Audio object is no longer valid
 handles.audio_stale		=	true;
 
@@ -318,26 +321,33 @@ function edit_datestr_Callback(hObject, eventdata, handles) %#ok<*INUSL>
 % hObject    handle to edit_datestr (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-myval	=	get(handles.slider_datestr,'Value');
 
 %tmin=datenum(get(handles.text_mintime,'String'));
 %tmax=datenum(get(handles.text_maxtime,'string'));
-tmin	=	handles.min_time;
-tmax	=	handles.max_time;
-
-olddate	=	tmin + myval*(tmax-tmin);
+tmin	=	handles.tdate_min;
+tmax	=	handles.tdate_max;
 
 try
-    handles.tdate_start	=	datenum(get(hObject,'String'));
-    set(handles.text_datestr_demo,'String',get(hObject,'String'));
-    newval	=	(handles.tdate_start-tmin)/(tmax-tmin);
-    set(handles.slider_datestr,'Value',newval);
+    new_date	=	datenum(get(hObject,'String'));
 catch
     errordlg('Incorrect datestr');
-    set(hObject,'String',get(handles.text_datestr_demo,'String'));
-    set(handles.slider_datestr,'Value',myval);
+	new_date =	[];
 end
-guidata(hObject, handles);
+
+if	~isempty(new_date)
+	if		new_date < tmin
+		new_date	=	tmin;
+	elseif	new_date > tmax
+		new_date	=	tmax;
+	end
+    newval	=	(new_date-tmin)/(tmax-tmin);
+	handles.tdate_start		=	new_date;
+	set(hObject,'String', datestr(new_date));
+    set(handles.slider_datestr,'Value',newval);
+	guidata(hObject, handles);
+end
+
+
 
 % Hints: get(hObject,'String') returns contents of edit_datestr as text
 %        str2double(get(hObject,'String')) returns contents of edit_datestr as a double
@@ -368,12 +378,12 @@ function edit_winlen_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit_winlen as text
 %        str2double(get(hObject,'String')) returns contents of edit_winlen as a double
-tlen=str2num(get(hObject,'String'));
-if tlen<=240
-    maxx=get(handles.slider_datestr,'max');
-    minn=get(handles.slider_datestr,'min');
-    slider_step=get(handles.slider_datestr,'sliderstep');
-    slider_step(1)=datenum(0,0,0,0,0,tlen)/(maxx-minn);
+tlen	=	str2num(get(hObject,'String'));
+if tlen <= 240
+    maxx		=	get(handles.slider_datestr,'max');
+    minn		=	get(handles.slider_datestr,'min');
+    slider_step	=	get(handles.slider_datestr,'sliderstep');
+    slider_step(1)	=datenum(0,0,0,0,0,tlen)/(maxx-minn);
     set(handles.slider_datestr,'sliderstep',slider_step)
 else
     errordlg('window length greater than 240 sec');
@@ -470,16 +480,12 @@ myval=get(hObject,'Value');
 %tmin=datenum(get(handles.text_mintime,'String'));
 %tmax=datenum(get(handles.text_maxtime,'string'));
 
-tmin=handles.min_time;
-tmax=handles.max_time;
+tmin	=	handles.tdate_min;
+tmax	=	handles.tdate_max;
 
-dT_min=(tmax-tmin)*24*60;
-set(hObject,'sliderstep',[(20/60)/dT_min 1/dT_min]); % 20sec and 1min increments
-
-datenumm=tmin+myval*(tmax-tmin);
+datenumm	=	tmin + myval*(tmax-tmin);
+handles.tdate_start		=	datenumm;
 set(handles.edit_datestr,'String',datestr(datenumm,0));
-set(handles.text_datestr_demo,'String',datestr(datenumm,0));
-
 
 end
 % --- Executes during object creation, after setting all properties.
@@ -789,7 +795,7 @@ tlen=str2num(get(handles.edit_winlen,'String'));
 
 mydir=pwd;
 Ichan='all';
-[x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.min_time,tdate_start,tlen,Ichan,handles);
+[x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
 
 if ~isempty(findstr(lower(computer),'mac'))
     Islash=findstr(handles.mydir,'/');
@@ -844,8 +850,8 @@ if strcmpi(handles.filetype,'MDAT')
         figure(1)
         set(gcf,'pos',[291         628        1513         991]);
         Iplot=0;
-        %[x,t,Fs,tstart,junk1,head]=load_data(handles.filetype,handles.min_time , tdate_start,tlen,'all',handles);
-        [x,t,Fs,tstart,junk1,head]=load_data(handles.filetype,handles.min_time , tdate_start,tlen,'all',handles);
+        %[x,t,Fs,tstart,junk1,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
+        [x,t,Fs,tstart,junk1,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
         
         for Ichan=1:head.Nchan
             
@@ -1044,25 +1050,37 @@ function pushbutton_fileread_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 %Assumes datenumber is first part of line
-tline=fgetl(handles.fid);
+tline	=	fgetl(handles.fid);
 %Remove leading blanks;
-tline=fliplr(deblank(fliplr(tline)));
+tline	=	fliplr(deblank(fliplr(tline)));
 disp(tline);
-Idash=findstr('-',tline);
-Icolon=findstr(':',tline);
-newtime=tline(1:(max(Icolon)+2));
-if tline~=-1,
-    try
-        handles.tdate_start=datenum(newtime);
-        set(handles.edit_datestr,'String',newtime);
-        set(handles.text_datestr_demo,'String',newtime);
-        set(handles.slider_datestr,'Value',handles.tdate_start);
-    catch
-        errordlg('Incorrect datestr');
-        set(hObject,'String',get(handles.text_datestr_demo,'String'));
-    end
-    
-    guidata(hObject, handles);
+Idash	=	findstr('-',tline);
+Icolon	=	findstr(':',tline);
+newtime	=	tline(1:(max(Icolon)+2));
+
+
+if	tline ~= -1
+	tmin	=	handles.tdate_min;
+	tmax	=	handles.tdate_max;
+	try
+		new_date	=	datenum(newtime);
+	catch
+		errordlg('Incorrect datestr');
+		new_date =	[];
+	end
+	
+	if	~isempty(new_date)
+		if		new_date < tmin
+			new_date	=	tmin;
+		elseif	new_date > tmax
+			new_date	=	tmax;
+		end
+		newval	=	(new_date-tmin)/(tmax-tmin);
+		handles.tdate_start		=	new_date;
+		set(hObject,'String', datestr(new_date));
+		set(handles.slider_datestr,'Value',newval);
+		guidata(hObject, handles);
+	end
 else
     disp('End of file reached');
     fclose(handles.fid);
@@ -1195,7 +1213,7 @@ mydir=pwd;
 
 %Ichan='all';  %Hardwire first channel
 Ichan=str2num(get(handles.edit_chan,'String'));
-[x,t,Fs,tstart]=load_data(handles.filetype,handles.min_time,tdate_start,tlen,Ichan,handles);
+[x,t,Fs,tstart]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
 
 Nmax=(2^16)-1;
 Fs_want=125000;  %Actual playback rate
@@ -1328,7 +1346,7 @@ mydir=pwd;
 
 %Ichan='all';  %Hardwire first channel
 %Ichan=str2num(get(handles.edit_chan,'String'));
-[x,t,Fs,tstart,tend,head]=load_data(handles.filetype,handles.min_time,tdate_start,tlen,'all',handles);
+[x,t,Fs,tstart,tend,head]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,'all',handles);
 
 disp('Click on two extreme corners, click below axis twice to reject:');
 tmp=ginput(2);
@@ -1443,7 +1461,7 @@ tdate_start=datenum(get(handles.edit_datestr,'String'));
 tlen=str2num(get(handles.edit_winlen,'String'));
 mydir=pwd;
 Ichan='all';  %Hardwire first channel
-[x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.min_time , tdate_start,tlen,Ichan,handles);
+[x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,Ichan,handles);
 x=x.';
 
 %%For MDAT file, channel 1 is already shallowest channel, so remove data below...
@@ -1704,7 +1722,7 @@ twant=tmp(1);
 tdate_start=datenum(get(handles.edit_datestr,'String'));
 tlen=str2num(get(handles.edit_winlen,'String'));
 %for Ichan=1:8
-[x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.min_time , tdate_start,tlen,'all',handles);
+[x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
 if size(x,2)>1
     x=x';
 end
@@ -1820,7 +1838,7 @@ function pushbutton_tilt_Callback(hObject, eventdata, handles)
 tdate_start=datenum(get(handles.edit_datestr,'String'));
 tlen=str2num(get(handles.edit_winlen,'String'));
 %for Ichan=1:8
-[x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.min_time , tdate_start,tlen,'all',handles);
+[x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
 
 %x(1) is shallowest element...
 if size(x,2)>1
@@ -1929,7 +1947,7 @@ end
 tdate_start=datenum(get(handles.edit_datestr,'String'));
 tlen=str2num(get(handles.edit_winlen,'String'));
 %for Ichan=1:8
-[data.x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.min_time , tdate_start,tlen,'all',handles);
+[data.x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
 
 %xall{Ichan}=x;
 %end
@@ -3078,12 +3096,13 @@ function	handles	=	load_and_display_spectrogram(handles)
 
 cla;
 
-tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_winlen,'String'));
-mydir=pwd;
-Ichan=str2num(get(handles.edit_chan,'String'));  %Hardwire first channel
+%tdate_start		=	datenum(get(handles.edit_datestr,'String'));
+tlen	=	str2num(get(handles.edit_winlen,'String'));
+mydir	=	pwd;
+Ichan	=	str2num(get(handles.edit_chan,'String'));  %Hardwire first channel
 
-[x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.min_time , tdate_start,tlen,Ichan,handles);
+[x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,...
+									handles.tdate_start,tlen,Ichan,handles);
 if max(t)<tlen
     set(handles.edit_winlen,'String',num2str(max(t)));
 end
@@ -3284,18 +3303,18 @@ end
 
 function [handles,errorflag]=set_slider_controls(handles,filetype)
 %%Set min, max and other times associated with slider controls
-mydir=pwd;
-errorflag=0;
-handles.min_time=-1;
-handles.max_time=-1;
-
-if isempty(handles.mydir)
-    handles.mydir=pwd;
-end
+mydir			=	pwd;
+errorflag		=	0;
+handles.tdate_min=	-1;
+handles.tdate_max=	-1;
+% 
+% if isempty(handles.mydir)
+%     handles.mydir=pwd;
+% end
 %cd(handles.mydir);
 
 try
-    [x,t,Fs,minn,maxx]=load_data(filetype,-1,-1,1,1,handles);
+    [x,t,Fs,tmin,tmax]=load_data(filetype,-1,-1,1,1,handles);
 catch %no file selected
     %errordlg(sprintf('No %s file selected',filetype));
     errorflag=1;
@@ -3304,19 +3323,21 @@ catch %no file selected
 end
 
 
-%set(handles.edit_datestr,'String',datestr(minn,0));
-%set(handles.slider_datestr,'Max',maxx);
-set(handles.slider_datestr,'Max',1);
-%set(handles.slider_datestr,'Min',minn);
 set(handles.slider_datestr,'Min',0);
+set(handles.slider_datestr,'Max',1);
+
+%	20sec and 1min increments
+dT_min	=	(tmax-tmin)*24*60;
+set(handles.slider_datestr,'sliderstep',[(20/60)/dT_min 1/dT_min]);
+
 set(handles.slider_datestr,'Value',0.5);
-set(handles.edit_datestr,'String',datestr(0.5*(minn+maxx),0));
+handles.tdate_start		=	0.5*(tmin+tmax);
+set(handles.edit_datestr,'String',datestr(handles.tdate_start,0));
 
-set(handles.text_mintime,'String',datestr(minn,0));
-set(handles.text_maxtime,'String',datestr(maxx,0));
-
-handles.min_time=minn;
-handles.max_time=maxx;
+set(handles.text_mintime,'String',datestr(tmin,0));
+set(handles.text_maxtime,'String',datestr(tmax,0));
+handles.tdate_min	=	tmin;
+handles.tdate_max	=	tmax;
 
 set(handles.edit_fmax,'String',Fs/2000);
 set(handles.edit_fmin,'String',0);
@@ -6775,5 +6796,28 @@ else
 		ii			=	find(I == N);
 	end
 end
+
+end
+
+%	Overlays events within current window
+function		handles				=	plot_events(handles)
+
+Events	=	handles.notes.Data.Events;
+if	isempty(Events) || ~handles.notes.show
+	return;
+end
+
+h_axes			=	handles.axes1;
+%	Window limits
+Times			=	xlim(h_axes);
+
+
+Start_Times		=	cell2mat({Events.start_time});
+
+
+
+
+axes(h_axes);
+
 
 end
