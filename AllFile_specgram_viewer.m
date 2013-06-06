@@ -1,7 +1,10 @@
 
 
 function varargout = AllFile_specgram_viewer(varargin)
-%Test comment
+%Edited considerably by Jit Sarkar
+%	Version history is in associated GIT repository
+%
+%
 % AllFile_SPECGRAM_VIEWER M-file for AllFile_specgram_viewer.fig
 %      AllFile_SPECGRAM_VIEWER, by itself, creates a new AllFile_SPECGRAM_VIEWER or raises the existing
 %      singleton*.
@@ -29,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 05-Jun-2013 16:46:29
+% Last Modified by GUIDE v2.5 05-Jun-2013 21:56:24
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -266,6 +269,7 @@ set(handles.text_filetype,'String',handles.filetype);
 
 %	Disable buttons that require an initial update
 toggle_initial_buttons(handles, 'off');
+set(handles.pushbutton_update, 'Enable', 'on');
 
 %	Enable notes folder selection, in case it's not already enabled
 set(handles.pushbutton_notes_select, 'Enable', 'on');
@@ -393,7 +397,7 @@ else
 end
 
 
-
+handles.tlen	=	tlen;
 guidata(hObject, handles);
 
 end
@@ -793,7 +797,7 @@ function pushbutton_save_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 tdate_start=handles.tdate_start;
-tlen=str2double(get(handles.edit_winlen,'String'));
+tlen=handles.tlen;
 %yes_wav=get(handles.togglebutton_getwav,'value');
 
 mydir=pwd;
@@ -842,7 +846,7 @@ if strcmpi(handles.filetype,'MDAT')
         
         figure;
         tdate_start=handles.tdate_start;
-        tlen=str2double(get(handles.edit_winlen,'String'));
+        tlen=handles.tlen;
         contents=get(handles.popupmenu_Nfft,'String');
         Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
         
@@ -960,7 +964,7 @@ else
     figure(chcc(figchc));
 end
 tdate_start=handles.tdate_start;
-tlen=str2double(get(handles.edit_winlen,'String'));
+tlen=handles.tlen;
 chan=get(handles.edit_chan,'String');
 Idot=findstr(handles.myfile,'.')-1;
 save_name=sprintf('soundsamp_%s_%s_%s',handles.myfile(1:Idot),datestr(tdate_start,30),chan);
@@ -1113,7 +1117,7 @@ function checkbox_restart_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_restart
 if get(hObject,'Value')==1,
-    try,
+    try
         fclose(handles.fid);
         mydir=pwd;
         cd(handles.inputdir);
@@ -1209,7 +1213,7 @@ function pushbutton_binary_Callback(hObject, eventdata, handles)
 
 
 tdate_start=handles.tdate_start;
-tlen=str2double(get(handles.edit_winlen,'String'));
+tlen=handles.tlen;
 %yes_wav=get(handles.togglebutton_getwav,'value');
 
 mydir=pwd;
@@ -1342,7 +1346,7 @@ thet=-1;  %Start with failed result
 kappa=-1;
 tsec=-1;
 tdate_start=handles.tdate_start;
-tlen=str2double(get(handles.edit_winlen,'String'));
+tlen=handles.tlen;
 %yes_wav=get(handles.togglebutton_getwav,'value');
 
 mydir=pwd;
@@ -1461,7 +1465,7 @@ function pushbutton_CSDM_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 tdate_start=handles.tdate_start;
-tlen=str2double(get(handles.edit_winlen,'String'));
+tlen=handles.tlen;
 mydir=pwd;
 Ichan='all';  %Hardwire first channel
 [x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,Ichan,handles);
@@ -1723,7 +1727,7 @@ twant=tmp(1);
 
 
 tdate_start=handles.tdate_start;
-tlen=str2double(get(handles.edit_winlen,'String'));
+tlen=handles.tlen;
 %for Ichan=1:8
 [x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
 if size(x,2)>1
@@ -1839,7 +1843,7 @@ function pushbutton_tilt_Callback(hObject, eventdata, handles)
 
 
 tdate_start=handles.tdate_start;
-tlen=str2double(get(handles.edit_winlen,'String'));
+tlen=handles.tlen;
 %for Ichan=1:8
 [x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
 
@@ -1948,7 +1952,7 @@ if ~isempty(figss(Iclose))
     close(figss(Iclose));
 end
 tdate_start=handles.tdate_start;
-tlen=str2double(get(handles.edit_winlen,'String'));
+tlen=handles.tlen;
 %for Ichan=1:8
 [data.x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
 
@@ -2808,7 +2812,7 @@ function pushbutton_next_Callback(hObject, eventdata, handles)
 
 %	increment start date
 tdate_start		=	handles.tdate_start;
-tlen			=	str2double(get(handles.edit_winlen,'String'));
+tlen			=	handles.tlen;
 tlen			=	tlen/60/60/24;	%	convert to fractional days
 tdate_start		=	tdate_start + tlen;
 set(handles.edit_datestr,'String', datestr(tdate_start));
@@ -2827,7 +2831,7 @@ function pushbutton_prev_Callback(hObject, eventdata, handles)
 
 %	decrement start date
 tdate_start		=	handles.tdate_start;
-tlen			=	str2double(get(handles.edit_winlen,'String'));
+tlen			=	handles.tlen;
 tlen			=	tlen/60/60/24;	%	convert to fractional days
 tdate_start		=	tdate_start - tlen;
 set(handles.edit_datestr,'String', datestr(tdate_start));
@@ -2843,6 +2847,26 @@ function pushbutton_notes_next_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_notes_next (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+i_sel	=	handles.notes.i_sel;
+N		=	length(handles.notes.Data.Events);
+
+if	isempty(i_sel) || (i_sel == 0) || (N == 0)
+	warning('Selection index is not valid');
+	return;
+end
+
+i_sel	=	i_sel + 1;
+if	i_sel > N
+	i_sel	=	1;
+end
+handles.notes.i_sel		=	i_sel;
+
+handles		=	update_events(handles);
+
+%	this might be redundant
+guidata(hObject, handles);
+
 end
 
 % --- Executes on button press in pushbutton_notes_prev.
@@ -2850,7 +2874,28 @@ function pushbutton_notes_prev_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_notes_prev (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+i_sel	=	handles.notes.i_sel;
+N		=	length(handles.notes.Data.Events);
+
+if	isempty(i_sel) || (i_sel == 0) || (N == 0)
+	warning('Selection index is not valid');
+	return;
 end
+
+i_sel	=	i_sel - 1;
+if	i_sel < 1
+	i_sel	=	N;
+end
+handles.notes.i_sel		=	i_sel;
+
+handles		=	update_events(handles);
+
+%	this might be redundant
+guidata(hObject, handles);
+
+end
+
 
 % --- Executes during object creation, after setting all properties.
 function pushbutton_notes_save_CreateFcn(hObject, eventdata, handles)
@@ -2891,6 +2936,7 @@ end
 %	Only save if changed
 if	~handles.notes.saved
 	save(file_path, Data);
+	set(hObject,'Enable','off');
 	handles.notes.saved	=	true;
 	guidata(hObject, handles)
 end
@@ -2948,13 +2994,13 @@ function checkbox_notes_readonly_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_notes_readonly
 read_only	=	get(hObject, 'Value');
-saved	=	handles.notes.saved;
+saved		=	handles.notes.saved;
 if	read_only || saved
-	enable_save		=	'off';
+	opt		=	'off';
 else
-	enable_save		=	'on';
+	opt		=	'on';
 end
-set(handles.pushbutton_notes_save, 'Enable', enable_save);
+set(handles.pushbutton_notes_save, 'Enable', opt);
 
 handles.notes.readonly	=	read_only;
 
@@ -2969,8 +3015,8 @@ function checkbox_notes_show_CreateFcn(hObject, eventdata, handles)
 
 handles.notes.show	=	false;
 handles.notes.i_show=	[];
-handles.notes.i_sel =	[];
 handles.notes.h_show=	[];
+handles.notes.i_sel =	[];
 
 guidata(hObject, handles);
 end
@@ -3102,11 +3148,13 @@ try %#ok<*TRYNC>
 end
 
 if	~isempty(Event)
+	%	Add new event to data store
 	[Data.Events, ii]	=	add_event(Data.Events, Event);
 	handles.notes.Data	=	Data;
+	
 	%	Set new note as currently selected one and replot if enabled
 	handles.notes.i_sel	=	ii;
-	handles				=	plot_events(handles);
+	handles		=	plot_events(handles);
 	guidata(hObject, handles);
 end
 end
@@ -3116,6 +3164,46 @@ function pushbutton_notes_edit_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_notes_edit (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+if	isempty(handles.notes.i_sel)
+	warning('No event selected');
+	return;
+else
+	i_sel	=	handles.notes.i_sel;
+end
+
+if	isempty(handles.notes.Data) || isempty(handles.notes.Data.Events)
+	warning('No events data');
+	return;
+end
+
+%	Delete entry if enabled
+delete_on	=	get(handles.checkbox_notes_delete, 'Value');
+if	delete_on
+	handles.notes.Data.Events(i_sel)	=	[];
+	N	=	length(handles.notes.Data.Events);
+	if	N == 0
+		i_sel	=	[];
+	elseif	i_sel > N
+		i_sel	=	1;
+	end
+	handles.notes.Data.i_sel	=	i_sel;
+	
+%	Otherwise open edit window with existing values
+else
+	Event	=	handles.notes.Data.Events(i_sel);
+	Event	=	edit_event(Event, handles.notes.Data.Description);
+	if	isempty(Event)
+		return;
+	else
+		handles.notes.Data.Events(i_sel)	=	Event;
+	end	
+end
+
+%	Replot events, next one should be highlighted if it's on same screen
+handles		=	plot_events(handles);
+guidata(hObject,handles);
+
 end
 
 % --- Executes on button press in checkbox_notes_delete.
@@ -3147,14 +3235,16 @@ function	handles	=	load_and_display_spectrogram(handles)
 cla;
 
 %tdate_start		=	handles.tdate_start;
-tlen	=	str2double(get(handles.edit_winlen,'String'));
+tlen	=	handles.tlen;
 mydir	=	pwd;
 Ichan	=	str2double(get(handles.edit_chan,'String'));  %Hardwire first channel
 
 [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,...
 									handles.tdate_start,tlen,Ichan,handles);
 if max(t)<tlen
-    set(handles.edit_winlen,'String',num2str(max(t)));
+	tlen	=	max(t);
+	handles.tlen	=	max(t);
+    set(handles.edit_winlen,'String',num2str(tlen));
 end
 
 if size(x,2)>1
@@ -3391,7 +3481,7 @@ handles.tdate_max	=	tmax;
 
 set(handles.edit_fmax,'String',Fs/2000);
 set(handles.edit_fmin,'String',0);
-%slider_step(1) = datenum(0,0,0,0,0,str2double(get(handles.edit_winlen,'String')))/(maxx-minn);
+%slider_step(1) = datenum(0,0,0,0,0,handles.tlen)/(maxx-minn);
 %slider_step(2) = min([datenum(0,0,0,0,5,0) 0.1*(maxx-minn)])/(maxx-minn);
 %set(handles.slider_datestr,'sliderstep',slider_step)
 % keyboard
@@ -6767,7 +6857,7 @@ set(handles.checkbox_notes_delete, 'Enable', option);
 
 %	! This case should never actually happen
 if isempty(folder_name) || isempty(file_name)
-
+	warning('No folder or file name set for notes');
 	return;
 else
 	file_path		=	fullfile(folder_name, file_name);
@@ -6874,6 +6964,14 @@ if	isempty(handles.notes.Data) || isempty(handles.notes.Data.Events)...
 		|| ~handles.notes.show
 	set(handles.pushbutton_notes_edit,'Enable','off');
 	set(handles.checkbox_notes_delete,'Enable','off');
+	%	Disable prev/next buttons
+	set(handles.pushbutton_notes_prev,'Enable','off');
+	set(handles.pushbutton_notes_next,'Enable','off');
+	
+	%	Try deleting existing events from window
+	try
+		delete(handles.notes.h_show);
+	end
 	return;
 end
 Events	=	handles.notes.Data.Events;
@@ -6881,14 +6979,13 @@ Events	=	handles.notes.Data.Events;
 h_axes	=	handles.axes;
 %	Window limits
 Times	=	xlim(h_axes);
-Times	=	handles.tdate_start...
-				+	datenum(0,0,0,0,0,Times);
+Times	=	handles.tdate_start + datenum(0,0,0,0,0,Times);
 
 %	Event times
 Start_Times	=	cell2mat({Events.start_time});
 
 %	Find events that lie within window
-i_show	=	find((Times(1) <= Start_Times)&(Start_Times <= Times(2)));
+i_show	=	find((Times(1) <= Start_Times) & (Start_Times <= Times(2)));
 
 %	Plot rectangles for visible events
 axes(h_axes);
@@ -6897,7 +6994,7 @@ sel_vis	=	false;
 for	ii	=	1:length(i_show)
 	ie		=	i_show(ii);
 	event	=	Events(ie);
-	x		=	event.start_time - Times(1);
+	x		=	event.start_time - Times(1);	x	=	x*24*60*60;
 	y		=	event.min_freq/1000;
 	width	=	event.duration;
 	height	=	(event.max_freq - event.min_freq)/1000;
@@ -6905,13 +7002,23 @@ for	ii	=	1:length(i_show)
 	h_show(ii)	=	rectangle('Position',[x,y,width,height],...
 				'Curvature',[0.3],...
 				'LineWidth',2,'LineStyle','-',...
-				'EdgeColor','w');
+				'EdgeColor','w'); %#ok<AGROW>
 	
 	%	Highlight selected event with a different color
 	if	ie == handles.notes.i_sel
 		set(h_show(ii),'EdgeColor', 'm');
 		sel_vis		=	true;
 	end
+end
+
+handles.notes.i_show	=	i_show;
+handles.notes.h_show	=	h_show;
+guidata(h_axes, handles);
+
+%	Enable prev/next buttons
+if	length(Events) > 1
+	set(handles.pushbutton_notes_prev,'Enable','on');
+	set(handles.pushbutton_notes_next,'Enable','on');
 end
 
 %	Enable edit/delete, if selected event is visible
@@ -6933,9 +7040,30 @@ set(handles.pushbutton_playsound,'Enable',opt);
 set(handles.pushbutton_pausesound,'Enable','off'); %always off at first
 
 %	enable new note button
-set(handles.pushbutton_notes_new,'Enable',opt);
+if	~isempty(handles.notes.file_path)
+	set(handles.pushbutton_notes_new,'Enable',opt);
+end
 
 %	enable next/prev window increment
 set(handles.pushbutton_next,'Enable',opt);
 set(handles.pushbutton_prev,'Enable',opt);
+end
+
+%	updates whole figure window according to selected event
+function	handles		=	update_events(handles)
+
+i_sel		=	handles.notes.i_sel;
+start_time	=	handles.notes.Data.Events(i_sel);
+tlen		=	datenum(0,0,0,0,0,handles.tlen);
+
+%	New start date for window
+new_date	=	start_time - tlen/2;
+set(handles.edit_datestr, 'String', datestr(new_date));
+edit_datestr_Callback(handles.edit_datestr, [], handles)
+handles		=	guidata(handles.edit_datestr);
+
+%	update figure window
+pushbutton_update_Callback(handles.pushbutton_update, [], handles);
+handles		=	guidata(handles.pushbutton_update);
+
 end
