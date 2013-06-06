@@ -29,7 +29,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 05-Jun-2013 13:36:51
+% Last Modified by GUIDE v2.5 05-Jun-2013 16:46:29
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -39,7 +39,7 @@ gui_State = struct('gui_Name',       mfilename, ...
     'gui_OutputFcn',  @AllFile_specgram_viewer_OutputFcn, ...
     'gui_LayoutFcn',  [] , ...
     'gui_Callback',   []);
-if nargin & isstr(varargin{1})
+if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
 
@@ -153,7 +153,7 @@ if	~isempty(handles.audioplayer) && isplaying(handles.audioplayer)
 	stop(handles.audioplayer);
 end
 
-%	Disable update buttones while loading/processing
+%	Disable update buttons while loading/processing
 set(handles.pushbutton_update, 'Enable', 'off');
 set(handles.pushbutton_next, 'Enable', 'off');
 set(handles.pushbutton_prev, 'Enable', 'off');
@@ -161,20 +161,22 @@ set(handles.pushbutton_prev, 'Enable', 'off');
 %	Call actual function to produce figure
 handles		=	load_and_display_spectrogram(handles);
 
+%	Call helper function to overlay event notes
+handles				=	plot_events(handles);
+
 %	Update static date text
 set(handles.text_datestr_demo,'String',datestr(handles.tdate_start));
 
 %	Audio object is no longer valid
 handles.audio_stale		=	true;
 
+%	Turn on buttons that required Update
+toggle_initial_buttons(handles, 'on');
+
 %	Renable buttons
-set(handles.pushbutton_update, 'Enable', 'off');
+set(handles.pushbutton_update, 'Enable', 'on');
 set(handles.pushbutton_next, 'Enable', 'on');
 set(handles.pushbutton_prev, 'Enable', 'on');
-
-%	enable audio controls, now that x exists
-set(handles.pushbutton_playsound,'Enable','on');
-set(handles.pushbutton_pausesound,'Enable','off');
 
 
 guidata(hObject, handles);
@@ -262,9 +264,8 @@ handles.filedesc	=	File_descs{file_ind};
 set(handles.text_filename,'String',fullfile(handles.mydir, handles.myfile));
 set(handles.text_filetype,'String',handles.filetype);
 
-%	Set prev/next buttons inactive initially, requre Update first
-set(handles.pushbutton_next,'Enable','off');
-set(handles.pushbutton_prev,'Enable','off');
+%	Disable buttons that require an initial update
+toggle_initial_buttons(handles, 'off');
 
 %	Enable notes folder selection, in case it's not already enabled
 set(handles.pushbutton_notes_select, 'Enable', 'on');
@@ -273,6 +274,8 @@ if	isempty(handles.notes.folder_name)
 	handles.notes.folder_name	=	pathname;
 end
 handles.notes.file_name	=	[fname '-notes' '.mat'];
+handles		=	load_notes_file(handles);
+
 
 % Update handles structure
 guidata(hObject, handles);
@@ -378,7 +381,7 @@ function edit_winlen_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit_winlen as text
 %        str2double(get(hObject,'String')) returns contents of edit_winlen as a double
-tlen	=	str2num(get(hObject,'String'));
+tlen	=	str2double(get(hObject,'String'));
 if tlen <= 240
     maxx		=	get(handles.slider_datestr,'max');
     minn		=	get(handles.slider_datestr,'min');
@@ -407,7 +410,7 @@ if ispc
 else
     set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
 end
-contents=get(hObject,'String');
+%contents=get(hObject,'String');
 set(hObject,'Value',4);
 
 end
@@ -434,7 +437,7 @@ if ispc
 else
     set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
 end
-contents=get(hObject,'String');
+%contents=get(hObject,'String');
 set(hObject,'Value',4);
 end
 
@@ -512,7 +515,7 @@ function edit_mindB_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of edit_mindB as text
 %        str2double(get(hObject,'String')) returns contents of edit_mindB as a double
 climm=get(handles.axes1,'clim');
-climm=str2num(get(hObject,'String'))+[0 diff(climm)];
+climm=str2double(get(hObject,'String'))+[0 diff(climm)];
 caxis(climm);colorbar
 
 end
@@ -540,7 +543,7 @@ function edit_dBspread_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of edit_dBspread as text
 %        str2double(get(hObject,'String')) returns contents of edit_dBspread as a double
 climm=get(handles.axes1,'clim');
-climm(2)=str2num(get(hObject,'String'))+climm(1);
+climm(2)=str2double(get(hObject,'String'))+climm(1);
 caxis(climm);colorbar
 
 end
@@ -789,8 +792,8 @@ function pushbutton_save_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_winlen,'String'));
+tdate_start=handles.tdate_start;
+tlen=str2double(get(handles.edit_winlen,'String'));
 %yes_wav=get(handles.togglebutton_getwav,'value');
 
 mydir=pwd;
@@ -838,13 +841,13 @@ if strcmpi(handles.filetype,'MDAT')
     if mychc==2  %%Multiphone data...
         
         figure;
-        tdate_start=datenum(get(handles.edit_datestr,'String'));
-        tlen=str2num(get(handles.edit_winlen,'String'));
+        tdate_start=handles.tdate_start;
+        tlen=str2double(get(handles.edit_winlen,'String'));
         contents=get(handles.popupmenu_Nfft,'String');
-        Nfft=str2num(contents{get(handles.popupmenu_Nfft,'Value')});
+        Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
         
         contents=get(handles.popupmenu_ovlap,'String');
-        ovlap=str2num(contents{get(handles.popupmenu_ovlap,'Value')})/100;
+        ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
         
         mydir=pwd;
         figure(1)
@@ -870,8 +873,8 @@ if strcmpi(handles.filetype,'MDAT')
             %axes(handles.axes1);
             imagesc(TT,FF,10*log10(B));%
             axis('xy')
-            fmax=str2num(get(handles.edit_fmax,'String'));
-            fmin=str2num(get(handles.edit_fmin,'String'));
+            fmax=str2double(get(handles.edit_fmax,'String'));
+            fmin=str2double(get(handles.edit_fmin,'String'));
             if fmax==0,
                 ylim([0 Fs/2]);
                 set(handles.edit_fmax,'String',num2str(Fs/2));
@@ -879,8 +882,8 @@ if strcmpi(handles.filetype,'MDAT')
                 ylim([fmin fmax]*1000);
             end
             %ylim([0 1]);axis('xy')
-            climm(1)=str2num(get(handles.edit_mindB,'String'));
-            climm(2)=climm(1)+str2num(get(handles.edit_dBspread,'String'));
+            climm(1)=str2double(get(handles.edit_mindB,'String'));
+            climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
             caxis(climm);
             if get(handles.checkbox_grayscale,'Value')==1,
                 colormap(flipud(gray));
@@ -956,8 +959,8 @@ else
     figchc=menu('Select a figure number:',tmp);
     figure(chcc(figchc));
 end
-tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_winlen,'String'));
+tdate_start=handles.tdate_start;
+tlen=str2double(get(handles.edit_winlen,'String'));
 chan=get(handles.edit_chan,'String');
 Idot=findstr(handles.myfile,'.')-1;
 save_name=sprintf('soundsamp_%s_%s_%s',handles.myfile(1:Idot),datestr(tdate_start,30),chan);
@@ -979,7 +982,7 @@ function pushbutton_annotate_Callback(hObject, eventdata, handles)
 disp('Click on two points defining a rectangle: ');
 tmp=ginput(2);
 
-start_time	=	datenum(get(handles.edit_datestr,'String'))+datenum(0,0,0,0,0,min(tmp(:,1)));
+start_time	=	handles.tdate_start+datenum(0,0,0,0,0,min(tmp(:,1)));
 min_freq	=	num2str(1000*min(tmp(:,2)));
 max_freq	=	num2str(1000*max(tmp(:,2)));
 duration	=	num2str(abs(tmp(2,1)-tmp(1,1)));
@@ -1029,11 +1032,11 @@ function pushbutton_selectpoints_Callback(hObject, eventdata, handles)
 
 prompt={'Number of selections'};
 def={'3'};
-start_time=datenum(get(handles.edit_datestr,'String'));
+start_time=handles.tdate_start;
 dlgTitle=sprintf('Selecting points at %s',datestr(start_time));
 lineNo=1;
 answer=inputdlg(prompt,dlgTitle,lineNo,def);
-tmp=ginput(str2num(answer{1}));
+tmp=ginput(str2double(answer{1}));
 disp('Absolute times:')
 disp(datestr(start_time+datenum(0,0,0,0,0,tmp(:,1))));
 disp('Relative times and frequencies:');
@@ -1159,8 +1162,8 @@ function edit_fmax_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit_fmax as text
 %        str2double(get(hObject,'String')) returns contents of edit_fmax as a double
-fmin=str2num(get(handles.edit_fmin,'String'));
-fmax=str2num(get(hObject,'String'));
+fmin=str2double(get(handles.edit_fmin,'String'));
+fmax=str2double(get(hObject,'String'));
 ylim([fmin fmax]);
 end
 function edit_fmin_CreateFcn(hObject, eventdata, handles)
@@ -1186,8 +1189,8 @@ function edit_fmin_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of edit_fmax as text
 %        str2double(get(hObject,'String')) returns contents of edit_fmax as a double
 
-fmin=str2num(get(hObject,'String'));
-fmax=str2num(get(handles.edit_fmax,'String'));
+fmin=str2double(get(hObject,'String'));
+fmax=str2double(get(handles.edit_fmax,'String'));
 ylim([fmin fmax]);
 
 %%%%%%%%%gui_startup_information.m%%%%%%%%%%%%%%%%
@@ -1205,14 +1208,14 @@ function pushbutton_binary_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
-tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_winlen,'String'));
+tdate_start=handles.tdate_start;
+tlen=str2double(get(handles.edit_winlen,'String'));
 %yes_wav=get(handles.togglebutton_getwav,'value');
 
 mydir=pwd;
 
 %Ichan='all';  %Hardwire first channel
-Ichan=str2num(get(handles.edit_chan,'String'));
+Ichan=str2double(get(handles.edit_chan,'String'));
 [x,t,Fs,tstart]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
 
 Nmax=(2^16)-1;
@@ -1338,14 +1341,14 @@ function [thet,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles)
 thet=-1;  %Start with failed result
 kappa=-1;
 tsec=-1;
-tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_winlen,'String'));
+tdate_start=handles.tdate_start;
+tlen=str2double(get(handles.edit_winlen,'String'));
 %yes_wav=get(handles.togglebutton_getwav,'value');
 
 mydir=pwd;
 
 %Ichan='all';  %Hardwire first channel
-%Ichan=str2num(get(handles.edit_chan,'String'));
+%Ichan=str2double(get(handles.edit_chan,'String'));
 [x,t,Fs,tstart,tend,head]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,'all',handles);
 
 disp('Click on two extreme corners, click below axis twice to reject:');
@@ -1358,7 +1361,7 @@ n=round(Fs*sort(tmp(:,1)));
 
 freq=1000*sort(tmp(:,2));
 contents=get(handles.popupmenu_Nfft,'String');
-Nfft=str2num(contents{get(handles.popupmenu_Nfft,'Value')});
+Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
 
 [thet0,kappa,sd]=extract_bearings(x(n(1):n(2),:),0.25,Nfft,Fs,freq(1),freq(2),50);
 
@@ -1417,7 +1420,7 @@ dlgTitle1='Parameters for GSI localization...';
 def1={'/Volumes/ThodePortable2/2010_Beaufort_Shell_DASAR/DASAR_locations_2010.mat', '5','[4.174860699660919e+05 7.817274204098196e+06]'};
 answer=inputdlg(prompt1,dlgTitle1,1,def1);
 locs=load(answer{1});
-Isite=str2num(answer{2});
+Isite=str2double(answer{2});
 Ikeep=find(~isnan(theta)&theta>0);  %Remove absent or unselected DASARs
 Igood=find(~isnan(theta)&theta>-2);  %Remove absent DASARS (used to compute center of array)
 %theta=theta(Ikeep);
@@ -1435,7 +1438,7 @@ figure
 Ikeep=find(~isnan(theta(Igood))&theta(Igood)>0);
 [Dn,xg,yg]=plot_location(DASAR_coords(Igood,:),theta(Igood),Ikeep,VM,A,B,ANG);
 hold on
-VA_cords=str2num(answer{3})/1000;
+VA_cords=str2double(answer{3})/1000;
 tmp=(VA_cords-[xg yg]);
 plot(tmp(1),tmp(2),'o');
 range=sqrt(sum((VA_cords-VM/1000).^2));
@@ -1443,7 +1446,7 @@ title(sprintf('Range of source from chosen location: %6.2f km',range));
 yes=menu('Print?','Yes','No');
 if yes==1
     orient landscape
-    tstart=datestr(datenum(0,0,0,0,0,tsec)+datenum(get(handles.edit_datestr,'String')),30);
+    tstart=datestr(datenum(0,0,0,0,0,tsec)+handles.tdate_start,30);
     figure(1);
     print(1,'-djpeg',sprintf('Localization_G_%s.jpg',tstart));
     print('-djpeg',sprintf('Spectrogram_G_%s.jpg',tstart));
@@ -1457,8 +1460,8 @@ function pushbutton_CSDM_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_winlen,'String'));
+tdate_start=handles.tdate_start;
+tlen=str2double(get(handles.edit_winlen,'String'));
 mydir=pwd;
 Ichan='all';  %Hardwire first channel
 [x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,Ichan,handles);
@@ -1471,12 +1474,12 @@ x=x.';
 Fs=round(Fs);
 %disp(sprintf('Fs=%i',Fs));
 contents=get(handles.popupmenu_Nfft,'String');
-Nfft=str2num(contents{get(handles.popupmenu_Nfft,'Value')});
+Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
 
 contents=get(handles.popupmenu_ovlap,'String');
-ovlap=str2num(contents{get(handles.popupmenu_ovlap,'Value')})/100;
-fmin=str2num(get(handles.edit_fmin,'String'));
-fmax=str2num(get(handles.edit_fmax,'String'));
+ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
+fmin=str2double(get(handles.edit_fmin,'String'));
+fmax=str2double(get(handles.edit_fmax,'String'));
 chann=input('Enter channel indicies (remember that channels have been flipped, 1 is now shallowest) (1:Nchan):');
 if isempty(chann)
     chann=1:head.Nchan; %For 2008 short-term vertical array
@@ -1581,13 +1584,13 @@ if yes>1
             def1={MFP_replica_file{1}, default_tilt{1},range_str{1},'1:1:55','0','2048',['[' num2str(default_SNR{1}) ']'],'yes',num2str(head.rd)};
             answer=inputdlg(prompt1,dlgTitle1,1,def1);
             model_name=answer{1};
-            tilt_offset=str2num(answer{2});
-            ranges=str2num(answer{3});
-            depths=str2num(answer{4});
-            plot_chc=str2num(answer{5});
-            Nfft2=str2num(answer{6});
-            SNRmin=str2num(answer{7});  %May also be frequency
-            head.rd=str2num(answer{9});
+            tilt_offset=str2double(answer{2});
+            ranges=str2double(answer{3});
+            depths=str2double(answer{4});
+            plot_chc=str2double(answer{5});
+            Nfft2=str2double(answer{6});
+            SNRmin=str2double(answer{7});  %May also be frequency
+            head.rd=str2double(answer{9});
             Ksout.Nfft=Nfft;
             Ksout.ovlap=ovlap;
             
@@ -1719,8 +1722,8 @@ twant=tmp(1);
 %fwant=tmp(2)*1000; %in Hz
 
 
-tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_winlen,'String'));
+tdate_start=handles.tdate_start;
+tlen=str2double(get(handles.edit_winlen,'String'));
 %for Ichan=1:8
 [x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
 if size(x,2)>1
@@ -1732,10 +1735,10 @@ end
 Fs=round(Fs);
 %disp(sprintf('Fs=%i',Fs));
 contents=get(handles.popupmenu_Nfft,'String');
-Nfft=str2num(contents{get(handles.popupmenu_Nfft,'Value')});
+Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
 
 contents=get(handles.popupmenu_ovlap,'String');
-ovlap=str2num(contents{get(handles.popupmenu_ovlap,'Value')})/100;
+ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
 
 handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
 for Ichan=1:head.Nchan
@@ -1835,8 +1838,8 @@ function pushbutton_tilt_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
-tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_winlen,'String'));
+tdate_start=handles.tdate_start;
+tlen=str2double(get(handles.edit_winlen,'String'));
 %for Ichan=1:8
 [x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
 
@@ -1850,10 +1853,10 @@ end
 Fs=round(Fs);
 %disp(sprintf('Fs=%i',Fs));
 contents=get(handles.popupmenu_Nfft,'String');
-Nfft=str2num(contents{get(handles.popupmenu_Nfft,'Value')});
+Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
 
 contents=get(handles.popupmenu_ovlap,'String');
-ovlap=str2num(contents{get(handles.popupmenu_ovlap,'Value')})/100;
+ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
 
 handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
 
@@ -1944,8 +1947,8 @@ Iclose=find(figss-floor(figss)==0);
 if ~isempty(figss(Iclose))
     close(figss(Iclose));
 end
-tdate_start=datenum(get(handles.edit_datestr,'String'));
-tlen=str2num(get(handles.edit_winlen,'String'));
+tdate_start=handles.tdate_start;
+tlen=str2double(get(handles.edit_winlen,'String'));
 %for Ichan=1:8
 [data.x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
 
@@ -1955,10 +1958,10 @@ tlen=str2num(get(handles.edit_winlen,'String'));
 Fs=round(Fs);
 %disp(sprintf('Fs=%i',Fs));
 contents=get(handles.popupmenu_Nfft,'String');
-Nfft=str2num(contents{get(handles.popupmenu_Nfft,'Value')});
+Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
 
 contents=get(handles.popupmenu_ovlap,'String');
-ovlap=str2num(contents{get(handles.popupmenu_ovlap,'Value')})/100;
+ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
 
 handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
 
@@ -2004,15 +2007,15 @@ if length(MFP_scenario)>1  %Multiple runs..
     dlgTitle1='Parameters for modal beamforming...';
     def1={range_str{1},'0.1','0.025','0','2048','1:1:55',default_tilt{1},'3'};
     answer=inputdlg(prompt1,dlgTitle1,1,def1);
-    range_guess=str2num(answer{1});
-    maxdelay(1)=str2num(answer{2});
+    range_guess=str2double(answer{1});
+    maxdelay(1)=str2double(answer{2});
     maxdelay(2)=maxdelay(1);
-    maxdelay(3)=str2num(answer{3});
-    plot_chc=str2num(answer{4});
-    Nfft2=str2num(answer{5});
-    depths=str2num(answer{6});
-    tilt_offset=str2num(answer{7});
-    Maxmodes=str2num(answer{8});
+    maxdelay(3)=str2double(answer{3});
+    plot_chc=str2double(answer{4});
+    Nfft2=str2double(answer{5});
+    depths=str2double(answer{6});
+    tilt_offset=str2double(answer{7});
+    Maxmodes=str2double(answer{8});
     
     
 end
@@ -2035,20 +2038,20 @@ for Imodel=1:length(MFP_scenario)
         answer=inputdlg(prompt1,dlgTitle1,1,def1);
         model=load(answer{1});
         disp(sprintf('Loaded %s',answer{1}));
-        tilt_offset=str2num(answer{2});
-        range_guess=str2num(answer{3});
-        maxdelay(1)=str2num(answer{4});
+        tilt_offset=str2double(answer{2});
+        range_guess=str2double(answer{3});
+        maxdelay(1)=str2double(answer{4});
         maxdelay(2)=maxdelay(1);
-        maxdelay(3)=str2num(answer{5});
-        plot_chc=str2num(answer{6});
-        Nfft2=str2num(answer{7});
-        depths=str2num(answer{8});
-        Maxmodes=str2num(answer{9});
+        maxdelay(3)=str2double(answer{5});
+        plot_chc=str2double(answer{6});
+        Nfft2=str2double(answer{7});
+        depths=str2double(answer{8});
+        Maxmodes=str2double(answer{9});
     else
         
         model=load(MFP_scenario{Imodel});
         disp(sprintf('Loaded %s',MFP_scenario{Imodel}));
-        %tilt_offset=str2num(default_tilt{Imodel});
+        %tilt_offset=str2double(default_tilt{Imodel});
         
     end
     maxdelay(4:Maxmodes)=maxdelay(3);
@@ -2804,7 +2807,7 @@ function pushbutton_next_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 %	increment start date
-tdate_start		=	datenum(get(handles.edit_datestr,'String'));
+tdate_start		=	handles.tdate_start;
 tlen			=	str2double(get(handles.edit_winlen,'String'));
 tlen			=	tlen/60/60/24;	%	convert to fractional days
 tdate_start		=	tdate_start + tlen;
@@ -2823,7 +2826,7 @@ function pushbutton_prev_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 %	decrement start date
-tdate_start		=	datenum(get(handles.edit_datestr,'String'));
+tdate_start		=	handles.tdate_start;
 tlen			=	str2double(get(handles.edit_winlen,'String'));
 tlen			=	tlen/60/60/24;	%	convert to fractional days
 tdate_start		=	tdate_start - tlen;
@@ -2849,6 +2852,15 @@ function pushbutton_notes_prev_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 end
 
+% --- Executes during object creation, after setting all properties.
+function pushbutton_notes_save_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pushbutton_notes_save (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+handles.notes.saved	=	true;
+guidata(hObject, handles);
+end
+
 % --- Executes on button press in pushbutton_notes_save.
 function pushbutton_notes_save_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_notes_save (see GCBO)
@@ -2856,7 +2868,7 @@ function pushbutton_notes_save_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 %	Shouldn't be able to click this button anyway, but can't hurt to check
-readonly	=	get(handles.checkbox_notes_readonly, 'Value');
+readonly	=	handles.notes.readonly;
 if readonly
 	warning('Readonly flag set, file not saved');
 	return;
@@ -2876,10 +2888,16 @@ if	isempty(file_path)
 end
 
 %	Save whole data structure, allows implicit expansion of named variables
-save(file_path, Data);
+%	Only save if changed
+if	~handles.notes.saved
+	save(file_path, Data);
+	handles.notes.saved	=	true;
+	guidata(hObject, handles)
+end
 
 %	Disable button, till data is changed
 set(hObject, 'Enable', 'off');
+
 end
 
 % --- Executes during object creation, after setting all properties.
@@ -2890,6 +2908,7 @@ function pushbutton_notes_select_CreateFcn(hObject, eventdata, handles)
 handles.notes.folder_name	=	[];
 handles.notes.file_name		=	[];
 handles.notes.file_path		=	[];
+
 guidata(hObject, handles);
 end
 
@@ -2912,6 +2931,15 @@ guidata(hObject, handles);
 
 end
 
+% --- Executes during object creation, after setting all properties.
+function checkbox_notes_readonly_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to checkbox_notes_readonly (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+handles.notes.readonly	=	false;
+guidata(hObject, handles);
+end
+
 % --- Executes on button press in checkbox_notes_readonly.
 function checkbox_notes_readonly_Callback(hObject, eventdata, handles)
 % hObject    handle to checkbox_notes_readonly (see GCBO)
@@ -2920,14 +2948,31 @@ function checkbox_notes_readonly_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_notes_readonly
 read_only	=	get(hObject, 'Value');
-is_changed	=	handles.notes.changed;
-if	read_only || ~is_changed
+saved	=	handles.notes.saved;
+if	read_only || saved
 	enable_save		=	'off';
 else
 	enable_save		=	'on';
 end
 set(handles.pushbutton_notes_save, 'Enable', enable_save);
 
+handles.notes.readonly	=	read_only;
+
+guidata(hObject, handles);
+end
+
+% --- Executes during object creation, after setting all properties.
+function checkbox_notes_show_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to checkbox_notes_show (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+handles.notes.show	=	false;
+handles.notes.i_show=	[];
+handles.notes.i_sel =	[];
+handles.notes.h_show=	[];
+
+guidata(hObject, handles);
 end
 
 % --- Executes on button press in checkbox_notes_show.
@@ -2959,7 +3004,7 @@ if	(length(Buttons) < 2) || any(Buttons > 3)
 end
 
 %	Parameters taken from plot
-start_time	=	datenum(get(handles.edit_datestr,'String'))...
+start_time	=	handles.tdate_start...
 				+	datenum(0,0,0,0,0,min(Times));
 min_freq	=	(1000*min(Freq));
 max_freq	=	(1000*max(Freq));
@@ -3052,10 +3097,15 @@ end
 %!! Separate here for use with Edit too
 Event	=	edit_event(Event, Description);
 
-delete(hrec);
+try %#ok<*TRYNC>
+	delete(hrec);
+end
+
 if	~isempty(Event)
-	Data.Events			=	add_event(Data.Events, Event);
+	[Data.Events, ii]	=	add_event(Data.Events, Event);
 	handles.notes.Data	=	Data;
+	%	Set new note as currently selected one and replot if enabled
+	handles.notes.i_sel	=	ii;
 	handles				=	plot_events(handles);
 	guidata(hObject, handles);
 end
@@ -3096,10 +3146,10 @@ function	handles	=	load_and_display_spectrogram(handles)
 
 cla;
 
-%tdate_start		=	datenum(get(handles.edit_datestr,'String'));
-tlen	=	str2num(get(handles.edit_winlen,'String'));
+%tdate_start		=	handles.tdate_start;
+tlen	=	str2double(get(handles.edit_winlen,'String'));
 mydir	=	pwd;
-Ichan	=	str2num(get(handles.edit_chan,'String'));  %Hardwire first channel
+Ichan	=	str2double(get(handles.edit_chan,'String'));  %Hardwire first channel
 
 [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,...
 									handles.tdate_start,tlen,Ichan,handles);
@@ -3121,10 +3171,10 @@ if mymaxfreq==0||mymaxfreq>Fs/2
 end
 %disp(sprintf('Fs=%i',Fs));
 contents=get(handles.popupmenu_Nfft,'String');
-Nfft=str2num(contents{get(handles.popupmenu_Nfft,'Value')});
+Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
 
 contents=get(handles.popupmenu_ovlap,'String');
-ovlap=str2num(contents{get(handles.popupmenu_ovlap,'Value')})/100;
+ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
 
 handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
 
@@ -3153,8 +3203,8 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
     end
     grid on
     axis('xy')
-    fmax=str2num(get(handles.edit_fmax,'String'));
-    fmin=str2num(get(handles.edit_fmin,'String'));
+    fmax=str2double(get(handles.edit_fmax,'String'));
+    fmin=str2double(get(handles.edit_fmin,'String'));
     if fmax==0,
         ylim([0 Fs/2000]);
         set(handles.edit_fmax,'String',num2str(Fs/2000));
@@ -3162,8 +3212,8 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
         ylim([fmin fmax]);
     end
     %ylim([0 1]);axis('xy')
-    climm(1)=str2num(get(handles.edit_mindB,'String'));
-    climm(2)=climm(1)+str2num(get(handles.edit_dBspread,'String'));
+    climm(1)=str2double(get(handles.edit_mindB,'String'));
+    climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
     %%If switching from correlogram, reset to suggested values
     if climm(1)==0&climm(2)<1
         climm=[40 70];
@@ -3213,8 +3263,8 @@ elseif strcmp(handles.display_view,'Time Series') %%Time series
     plot(t,y);grid on;
     xlabel('Time (sec)');ylabel('Amplitude');
 elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
-    fmax=1000*str2num(get(handles.edit_fmax,'String'));
-    fmin=1000*str2num(get(handles.edit_fmin,'String'));
+    fmax=1000*str2double(get(handles.edit_fmax,'String'));
+    fmin=1000*str2double(get(handles.edit_fmin,'String'));
     param.ovlap=ovlap;
     param.Nfft=Nfft;
     prompt1={'ICI range (s)','Correlation sample time (s)','Teager-Kaiser treatment?','Incoherent=1, Coherent=0 ?'};
@@ -3222,9 +3272,9 @@ elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
     def1={'[0.01 .25]', '0.25','0','1'};
     answer=inputdlg(prompt1,dlgTitle1,1,def1);
     param.ici_range=eval(answer{1});
-    param.time_sample=str2num(answer{2});
-    param.teager=str2num(answer{3});
-    alg_chc=str2num(answer{4});
+    param.time_sample=str2double(answer{2});
+    param.teager=str2double(answer{3});
+    alg_chc=str2double(answer{4});
     
     if alg_chc==1
         [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
@@ -3246,8 +3296,8 @@ elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
     %colorbar('east','ycolor','w');
     axis('xy')
     % title(sprintf('mean correlation value extracted between %6.2f and %6.2f Hz, %6.2f overlap',freq(Ifreq),freq(Ifreq+1),param.ovlap));
-    climm(1)=str2num(get(handles.edit_mindB,'String'));
-    climm(2)=climm(1)+str2num(get(handles.edit_dBspread,'String'));
+    climm(1)=str2double(get(handles.edit_mindB,'String'));
+    climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
     
     if climm(1)>1
         climm(1)=0;
@@ -3341,7 +3391,7 @@ handles.tdate_max	=	tmax;
 
 set(handles.edit_fmax,'String',Fs/2000);
 set(handles.edit_fmin,'String',0);
-%slider_step(1) = datenum(0,0,0,0,0,str2num(get(handles.edit_winlen,'String')))/(maxx-minn);
+%slider_step(1) = datenum(0,0,0,0,0,str2double(get(handles.edit_winlen,'String')))/(maxx-minn);
 %slider_step(2) = min([datenum(0,0,0,0,5,0) 0.1*(maxx-minn)])/(maxx-minn);
 %set(handles.slider_datestr,'sliderstep',slider_step)
 % keyboard
@@ -3370,12 +3420,12 @@ fname_bounds=sort([fname_bounds Idot(1)]);
 nm=[];
 if mt_style_flag==1,
     Isound=findstr(data,'Sound')+6;
-    yr=str2num(data(Isound:(Isound+3)));
-    mo=str2num(data((Isound+5):(Isound+6)));
-    dy=str2num(data((Isound+7):(Isound+8)));
-    hr=str2num(data((Isound+9):(Isound+10)));
-    mn=str2num(data((Isound+11):(Isound+12)));
-    %sec=str2num(data((Isound+13):(Isound+14)));
+    yr=str2double(data(Isound:(Isound+3)));
+    mo=str2double(data((Isound+5):(Isound+6)));
+    dy=str2double(data((Isound+7):(Isound+8)));
+    hr=str2double(data((Isound+9):(Isound+10)));
+    mn=str2double(data((Isound+11):(Isound+12)));
+    %sec=str2double(data((Isound+13):(Isound+14)));
     tstart=datenum(yr,mo,dy,hr,mn,0);
     
 else
@@ -3390,12 +3440,12 @@ else
             end
         end
         if ~isempty(nm)
-            yr=str2num(nm(1:4));
-            mo=str2num(nm(5:6));
-            dy=str2num(nm(7:8));
-            hr=str2num(nm(10:11));
-            mn=str2num(nm(12:13));
-            sec=str2num(nm(14:15));
+            yr=str2double(nm(1:4));
+            mo=str2double(nm(5:6));
+            dy=str2double(nm(7:8));
+            hr=str2double(nm(10:11));
+            mn=str2double(nm(12:13));
+            sec=str2double(nm(14:15));
             
             tstart=datenum(yr,mo,dy,hr,mn,sec);
         end
@@ -4174,7 +4224,7 @@ if fid>0,
     head.seconds=read_num(fid,3);
     head.msec=read_num(fid,4);
     head.sampling_period=read_char(fid,15);
-    head.Fs=round(1./str2num(head.sampling_period));
+    head.Fs=round(1./str2double(head.sampling_period));
     head.samplebits=read_num(fid,3);
     head.wordsize=read_num(fid,2);
     head.typemark=read_char(fid,1);
@@ -4202,7 +4252,7 @@ fclose(fid);
 end
 
 function nhout=read_num(fid,N)
-nhout=str2num(char(fread(fid,N,'char')'));
+nhout=str2double(char(fread(fid,N,'char')'));
 end
 
 function chout=read_char(fid,N)
@@ -4459,16 +4509,16 @@ while 1
         if isempty(Iend)
             Iend=findstr(tline,'0');
         end
-        fs=str2num(tline(Idot:Iend(end)));
+        fs=str2double(tline(Idot:Iend(end)));
         
     elseif findstr(tline,'Sensitivity:')>0,
         Idot=1+findstr(tline,':');
         Iend=findstr(tline,'dB')-1;
-        sens=str2num(tline(Idot:Iend));
+        sens=str2double(tline(Idot:Iend));
         sensitivity_flag=1;
     elseif findstr(tline,'seconds')
         Is=findstr(tline,'seconds')-1;
-        secs=str2num(tline(1:Is));
+        secs=str2double(tline(1:Is));
         if sec_flag==1
             tfs=tfs+datenum(0,0,0,0,0,secs);
         elseif sec_flag==2
@@ -4544,35 +4594,35 @@ while 1
     if ~ischar(tline),break,end
     if findstr(tline,'Channels:')>0,
         Idot=1+findstr(tline,':');
-        nc=str2num(tline(Idot:end));
+        nc=str2double(tline(Idot:end));
     elseif findstr(tline,'Sample rate:')>0,
         Idot=1+findstr(tline,':');
         Iend=findstr(tline,'Hz')-1;
-        fs=str2num(tline(Idot:Iend));
+        fs=str2double(tline(Idot:Iend));
     elseif findstr(tline,'Sensitivity:')>0,
         Idot=1+findstr(tline,':');
         Iend=findstr(tline,'dB')-1;
-        sensitivity=str2num(tline(Idot:Iend));
+        sensitivity=str2double(tline(Idot:Iend));
     elseif findstr(tline,'Start time')>0,
         Idot=findstr(tline,'=');
         tfs=parse_date(tline(Idot:end));
         tline=fgetl(fid);
         Iend=findstr(tline,'seconds')-1;
-        tfs=tfs+datenum(0,0,0,0,0,str2num(tline(1:Iend)));
+        tfs=tfs+datenum(0,0,0,0,0,str2double(tline(1:Iend)));
     elseif findstr(tline,'Stop time')>0,
         Idot=findstr(tline,'=');
         tfe=parse_date(tline(Idot:end));
         tline=fgetl(fid);
         Iend=findstr(tline,'seconds')-1;
-        tfe=tfe+datenum(0,0,0,0,0,str2num(tline(1:Iend)));
+        tfe=tfe+datenum(0,0,0,0,0,str2double(tline(1:Iend)));
     elseif findstr(tline,'Tilt-X')>0,
         Idot=findstr(tline,':')+1;
         Iend=findstr(tline,'Tilt-Y')-1;
-        tiltx=str2num(tline(Idot:Iend));
+        tiltx=str2double(tline(Idot:Iend));
         
         Idot=Iend+8;
         Iend=findstr(tline,'degrees')-1;
-        tilty=str2num(tline(Idot:Iend));
+        tilty=str2double(tline(Idot:Iend));
         
     end
     
@@ -4585,9 +4635,9 @@ end
 function tabs=parse_date(str)
 
 Istart=findstr(str,'=');
-year=str2num(str((end-4):end));
+year=str2double(str((end-4):end));
 tm=datenum(str((end-13):(end-5)),14)-datenum('00:00:00',14);
-day=str2num(str((end-15):(end-14)));
+day=str2double(str((end-15):(end-14)));
 month=(str((end-19):(end-16)));
 switch deblank(month),
     case 'Jan'
@@ -6568,7 +6618,7 @@ Islash=1+max(findstr(fname,'/'));
 if ~isempty(Islash)
     fname=fname(Islash:end);
 end
-site=str2num(fname(2));
+site=str2double(fname(2));
 dasar=lower(fname(5));
 Icol=double(dasar)-96;
 
@@ -6704,23 +6754,40 @@ function	handles		=	load_notes_file(handles)
 folder_name	=	handles.notes.folder_name;
 file_name	=	handles.notes.file_name;
 
-if ~(isempty(folder_name) || isempty(file_name))
+
+%	New notes file disables these buttons until otherwise activated
+option		=	'off';
+set(handles.pushbutton_notes_save, 'Enable', option);
+set(handles.pushbutton_notes_new, 'Enable', option);
+set(handles.pushbutton_notes_edit, 'Enable', option);
+set(handles.pushbutton_notes_next, 'Enable', option);
+set(handles.pushbutton_notes_prev, 'Enable', option);
+set(handles.checkbox_notes_show, 'Enable', option);
+set(handles.checkbox_notes_delete, 'Enable', option);
+
+%	! This case should never actually happen
+if isempty(folder_name) || isempty(file_name)
+
+	return;
+else
 	file_path		=	fullfile(folder_name, file_name);
 	handles.notes.file_path	=	file_path;
 	
 	%	if file already exists, load data and enable show by defualt
 	if	exist(file_path, 'file')
 		LS	=	load(file_path);
-		handles.notes.Data	=	LS;
+		handles.notes.Data	=	LS.Data;
 		handles.notes.show	=	true;
-		enable				=	'on';
+		option				=	'on';
 	else
 		handles.notes.Data	=	[];
 		handles.notes.show	=	false;
-		enable				=	'off';
+		option				=	'off';
 	end
+	set(handles.pushbutton_notes_next, 'Enable', option);
+	set(handles.pushbutton_notes_prev, 'Enable', option);
 	set(handles.checkbox_notes_show, 'Value', handles.notes.show);
-	set(handles.checkbox_notes_show, 'Enable', enable);
+	set(handles.checkbox_notes_show, 'Enable', option);
 end
 end
 
@@ -6800,24 +6867,75 @@ end
 end
 
 %	Overlays events within current window
-function		handles				=	plot_events(handles)
+function		handles	=	plot_events(handles)
 
-Events	=	handles.notes.Data.Events;
-if	isempty(Events) || ~handles.notes.show
+%	Disable edit, next/prev buttons if nothing is shown
+if	isempty(handles.notes.Data) || isempty(handles.notes.Data.Events)...
+		|| ~handles.notes.show
+	set(handles.pushbutton_notes_edit,'Enable','off');
+	set(handles.checkbox_notes_delete,'Enable','off');
 	return;
 end
+Events	=	handles.notes.Data.Events;
 
-h_axes			=	handles.axes1;
+h_axes	=	handles.axes;
 %	Window limits
-Times			=	xlim(h_axes);
+Times	=	xlim(h_axes);
+Times	=	handles.tdate_start...
+				+	datenum(0,0,0,0,0,Times);
 
+%	Event times
+Start_Times	=	cell2mat({Events.start_time});
 
-Start_Times		=	cell2mat({Events.start_time});
+%	Find events that lie within window
+i_show	=	find((Times(1) <= Start_Times)&(Start_Times <= Times(2)));
 
-
-
-
+%	Plot rectangles for visible events
 axes(h_axes);
+h_show	=	[];
+sel_vis	=	false;
+for	ii	=	1:length(i_show)
+	ie		=	i_show(ii);
+	event	=	Events(ie);
+	x		=	event.start_time - Times(1);
+	y		=	event.min_freq/1000;
+	width	=	event.duration;
+	height	=	(event.max_freq - event.min_freq)/1000;
 
+	h_show(ii)	=	rectangle('Position',[x,y,width,height],...
+				'Curvature',[0.3],...
+				'LineWidth',2,'LineStyle','-',...
+				'EdgeColor','w');
+	
+	%	Highlight selected event with a different color
+	if	ie == handles.notes.i_sel
+		set(h_show(ii),'EdgeColor', 'm');
+		sel_vis		=	true;
+	end
+end
 
+%	Enable edit/delete, if selected event is visible
+if sel_vis
+	set(handles.pushbutton_notes_edit,'Enable','on');
+	set(handles.checkbox_notes_delete,'Enable','on');
+else
+	set(handles.pushbutton_notes_edit,'Enable','off');
+	set(handles.checkbox_notes_delete,'Enable','off');
+end
+
+end
+
+%	enable/disable any buttons that require an intial update first
+function	toggle_initial_buttons(handles, opt)
+
+%	enable audio controls, now that x exists
+set(handles.pushbutton_playsound,'Enable',opt);
+set(handles.pushbutton_pausesound,'Enable','off'); %always off at first
+
+%	enable new note button
+set(handles.pushbutton_notes_new,'Enable',opt);
+
+%	enable next/prev window increment
+set(handles.pushbutton_next,'Enable',opt);
+set(handles.pushbutton_prev,'Enable',opt);
 end
