@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 05-Jun-2013 21:56:24
+% Last Modified by GUIDE v2.5 05-Jun-2013 22:26:34
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -172,6 +172,7 @@ set(handles.text_datestr_demo,'String',datestr(handles.tdate_start));
 
 %	Audio object is no longer valid
 handles.audio_stale		=	true;
+handles.fig_updated		=	true;
 
 %	Turn on buttons that required Update
 toggle_initial_buttons(handles, 'on');
@@ -270,6 +271,7 @@ set(handles.text_filetype,'String',handles.filetype);
 %	Disable buttons that require an initial update
 toggle_initial_buttons(handles, 'off');
 set(handles.pushbutton_update, 'Enable', 'on');
+handles.fig_updated		=	false;
 
 %	Enable notes folder selection, in case it's not already enabled
 set(handles.pushbutton_notes_select, 'Enable', 'on');
@@ -279,6 +281,7 @@ if	isempty(handles.notes.folder_name)
 end
 handles.notes.file_name	=	[fname '-notes' '.mat'];
 handles		=	load_notes_file(handles);
+
 
 
 % Update handles structure
@@ -376,6 +379,9 @@ else
     set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
 end
 
+tlen	=	str2double(get(hObject,'String'));
+handles.tlen	=	tlen;
+guidata(hObject, handles);
 end
 
 function edit_winlen_Callback(hObject, eventdata, handles)
@@ -494,6 +500,7 @@ datenumm	=	tmin + myval*(tmax-tmin);
 handles.tdate_start		=	datenumm;
 set(handles.edit_datestr,'String',datestr(datenumm,0));
 
+guidata(hObject, handles);
 end
 % --- Executes during object creation, after setting all properties.
 function edit_mindB_CreateFcn(hObject, eventdata, handles)
@@ -1244,7 +1251,8 @@ function pushbutton_update_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to pushbutton_update (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-
+handles.fig_updated		=	false;
+guidata(hObject, handles);
 end
 % --- Executes during object creation, after setting all properties.
 function pushbutton_annotate_CreateFcn(hObject, eventdata, handles)
@@ -1266,6 +1274,7 @@ function pushbutton_playsound_CreateFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 handles.audioplayer		=	[];
+guidata(hObject, handles);
 
 end
 function uipanel_type_SelectionChangeFcn(hObject,eventdata,handles)
@@ -1338,59 +1347,6 @@ function pushbutton_GSIbearing_Callback(hObject, eventdata, handles)
 
 get_GSI_bearing(hObject,eventdata,handles);
 
-end
-
-function [thet,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles)
-%tsec: seconds into time series that data are selected...
-thet=-1;  %Start with failed result
-kappa=-1;
-tsec=-1;
-tdate_start=handles.tdate_start;
-tlen=handles.tlen;
-%yes_wav=get(handles.togglebutton_getwav,'value');
-
-mydir=pwd;
-
-%Ichan='all';  %Hardwire first channel
-%Ichan=str2double(get(handles.edit_chan,'String'));
-[x,t,Fs,tstart,tend,head]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,'all',handles);
-
-disp('Click on two extreme corners, click below axis twice to reject:');
-tmp=ginput(2);
-if (isempty(tmp)||any(tmp(:,2)<0))
-    return
-end
-tsec=min(tmp(:,1));
-n=round(Fs*sort(tmp(:,1)));
-
-freq=1000*sort(tmp(:,2));
-contents=get(handles.popupmenu_Nfft,'String');
-Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
-
-[thet0,kappa,sd]=extract_bearings(x(n(1):n(2),:),0.25,Nfft,Fs,freq(1),freq(2),50);
-
-if ~isempty(findstr('T2007',handles.myfile))
-    cal07flag=1;
-    handles.calibration_DASAR2007_dir='/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/RawData';
-    
-    brefa_table=calibrate_bearing_Shell2007(handles.calibration_DASAR2007_dir,handles.myfile);
-else
-    cal07flag=0;
-end
-
-if cal07flag==0
-    thet=bnorm(thet0+head.brefa);
-else
-    [junk,Icol]=calibrate_bearing_Shell2007(handles.calibration_DASAR2007_dir,handles.myfile,1);
-    thet= interp1(0:360,brefa_table(:,Icol),bnorm(thet0));
-end
-
-%handles.bearing=thet;
-%guidata(hObject, handles);
-%titlestr=get(handles.text_filename,'String');
-%Iend=findstr(titlestr,'.gsi')-1;
-set(handles.text_filename,'String',sprintf('%s/%s %6.2f degrees... ',handles.mydir,handles.myfile,thet));
-%keyboard;
 end
 
 % --- Executes on button press in pushbutton_GSI_localization.
@@ -2811,15 +2767,16 @@ function pushbutton_next_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 %	increment start date
-tdate_start		=	handles.tdate_start;
+new_date		=	handles.tdate_start;
 tlen			=	handles.tlen;
 tlen			=	tlen/60/60/24;	%	convert to fractional days
-tdate_start		=	tdate_start + tlen;
-set(handles.edit_datestr,'String', datestr(tdate_start));
+new_date		=	new_date + tlen;
 %	Trigger callback to update/check other GUI elements
-edit_datestr_Callback(handles.edit_datestr, eventdata, handles)
+set(handles.edit_datestr, 'String', datestr(new_date));
+edit_datestr_Callback(handles.edit_datestr, [], handles)
+handles		=	guidata(handles.edit_datestr);
 
-pushbutton_update_Callback(hObject,eventdata,handles);
+pushbutton_update_Callback(handles.pushbutton_update,eventdata,handles);
 
 end
 
@@ -2830,17 +2787,22 @@ function pushbutton_prev_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 %	decrement start date
-tdate_start		=	handles.tdate_start;
+new_date		=	handles.tdate_start;
 tlen			=	handles.tlen;
 tlen			=	tlen/60/60/24;	%	convert to fractional days
-tdate_start		=	tdate_start - tlen;
-set(handles.edit_datestr,'String', datestr(tdate_start));
+new_date		=	new_date - tlen;
 %	Trigger callback to update/check other GUI elements
-edit_datestr_Callback(handles.edit_datestr, eventdata, handles)
+set(handles.edit_datestr, 'String', datestr(new_date));
+edit_datestr_Callback(handles.edit_datestr, [], handles)
+handles		=	guidata(handles.edit_datestr);
 
-pushbutton_update_Callback(hObject,eventdata,handles);
+pushbutton_update_Callback(handles.pushbutton_update,eventdata,handles);
 
 end
+
+
+%%	new annotation stuff
+
 
 % --- Executes on button press in pushbutton_notes_next.
 function pushbutton_notes_next_Callback(hObject, eventdata, handles)
@@ -2851,12 +2813,16 @@ function pushbutton_notes_next_Callback(hObject, eventdata, handles)
 i_sel	=	handles.notes.i_sel;
 N		=	length(handles.notes.Data.Events);
 
-if	isempty(i_sel) || (i_sel == 0) || (N == 0)
-	warning('Selection index is not valid');
-	return;
+if	(N == 0)
+	error('What happened?');
 end
 
-i_sel	=	i_sel + 1;
+if	isempty(i_sel)
+	i_sel	=	1;
+else
+	i_sel	=	i_sel + 1;
+end
+
 if	i_sel > N
 	i_sel	=	1;
 end
@@ -2896,7 +2862,6 @@ guidata(hObject, handles);
 
 end
 
-
 % --- Executes during object creation, after setting all properties.
 function pushbutton_notes_save_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to pushbutton_notes_save (see GCBO)
@@ -2935,14 +2900,11 @@ end
 %	Save whole data structure, allows implicit expansion of named variables
 %	Only save if changed
 if	~handles.notes.saved
-	save(file_path, Data);
+	save(file_path, 'Data');
 	set(hObject,'Enable','off');
 	handles.notes.saved	=	true;
 	guidata(hObject, handles)
 end
-
-%	Disable button, till data is changed
-set(hObject, 'Enable', 'off');
 
 end
 
@@ -2968,9 +2930,11 @@ dialog_title	=	'Select location for Annotation files';
 start_path		=	handles.notes.folder_name;
 folder_name		=	uigetdir(start_path, dialog_title);
 
-if ~isnumeric(folder_name)
-	handles.notes.folder_name	=	folder_name;
+if isnumeric(folder_name)
+	return;
 end
+
+handles.notes.folder_name	=	folder_name;
 
 handles		=	load_notes_file(handles);
 guidata(hObject, handles);
@@ -3061,11 +3025,16 @@ noise_db	=	0;
 peak_db		=	0;
 
 %	Draw square on plot
+x		=	min(Times);
+y		=	min_freq/1000;
+width	=	duration;
+height	=	(max_freq - min_freq)/1000;
 axes(handles.axes1);
-hrec	=	rectangle('Position',[min(Times),min_freq,duration,max_freq-min_freq],...
-					'Curvature',[0.2],...
-					'LineWidth',2,'LineStyle','r');
-				
+hrec	=	rectangle('Position',[x,y,width,height],...
+				'Curvature',[0.3],...
+				'LineWidth',2,'LineStyle','-',...
+				'EdgeColor','r');
+
 %	Initial signal type selection
 sig_types	=	{'Pulsive','FM'};
 choice		=	menu('Signal type?',sig_types);
@@ -3078,6 +3047,7 @@ sig_type	=	sig_types{choice};
 
 %	Get existing notes
 Data	=	handles.notes.Data;
+i_sel	=	handles.notes.i_sel;
 
 %	Default values if none already present
 if	isempty(Data)
@@ -3096,41 +3066,54 @@ if	isempty(Data)
 					'Modulation (Hz)',...
 					'Comments'};
 
-	%	Default values (for pulsive)
-	Event.start_time	=	start_time;
-	Event.author		=	'Your name';
-	Event.sig_type		=	sig_type;
-	Event.call_type		=	'S1';
-	Event.min_freq		=	min_freq;
-	Event.max_freq		=	max_freq;
-	Event.duration		=	duration;
-	Event.noise_db		=	noise_db;
-	Event.peak_db		=	peak_db;
-	Event.num_pulses	=	10;
-	Event.num_harmonics	=	-1;
-	Event.modulation	=	0;
-	Event.comments		=	'';
+	%	Default values
+	Template.start_time		=	0;
+	Template.author			=	'Your name';
+	Template.sig_type		=	sig_type;
+	Template.call_type		=	'S1';
+	Template.min_freq		=	0;
+	Template.max_freq		=	5000;
+	Template.duration		=	10;
+	Template.noise_db		=	0;
+	Template.peak_db		=	27;
+	Template.num_pulses		=	2;
+	Template.num_harmonics	=	-1;
+	Template.modulation		=	0;
+	Template.comments		=	'';
 
 	Data.Description	=	Description;
-	Data.Template		=	Event;
-	Data.Events		=	[];
-else
-	Description	=	Data.Description;
-	if	~isempty(Data.Events)
-		if	~isempty(Data.i_sel)
-			Event	=	Data.Events(i_sel);
-		else
-			Event	=	Data.Events(end);
-		end
-	else
-		Event	=	Data.Template;
-	end
+	Data.Template		=	Template;
+	Data.Events			=	[];
 end
+
+
+if	~isempty(Data.Events)
+	if	~isempty(i_sel)
+		Event	=	Data.Events(i_sel);
+	else
+		Event	=	Data.Events(end);
+	end
+else
+	Event	=	Data.Template;
+end
+
+
+%	Insert current values
+Event.start_time	=	start_time;
+Event.sig_type		=	sig_type;
+Event.min_freq		=	min_freq;
+Event.max_freq		=	max_freq;
+Event.duration		=	duration;
+Event.noise_db		=	noise_db;
+Event.peak_db		=	peak_db;
+
 
 %	modified defualts for other signal types
 switch sig_type
 	case	'Pulsive'
-		%	do nothing, defaults defined above
+		Event.call_type		=	'S1';
+		Event.num_pulses	=	10;
+		Event.num_harmonics	=	-1;
 	case	'FM'
 		Event.call_type		=	'moan';
 		Event.num_pulses	=	-1;
@@ -3141,7 +3124,7 @@ end
 
 
 %!! Separate here for use with Edit too
-Event	=	edit_event(Event, Description);
+Event	=	edit_event(Event, Data.Description);
 
 try %#ok<*TRYNC>
 	delete(hrec);
@@ -3151,6 +3134,10 @@ if	~isempty(Event)
 	%	Add new event to data store
 	[Data.Events, ii]	=	add_event(Data.Events, Event);
 	handles.notes.Data	=	Data;
+	
+	handles.notes.saved	=	false;
+	checkbox_notes_readonly_Callback(handles.checkbox_notes_readonly, [], handles);
+	set(handles.checkbox_notes_show, 'Enable', 'on');
 	
 	%	Set new note as currently selected one and replot if enabled
 	handles.notes.i_sel	=	ii;
@@ -3187,7 +3174,7 @@ if	delete_on
 	elseif	i_sel > N
 		i_sel	=	1;
 	end
-	handles.notes.Data.i_sel	=	i_sel;
+	handles.notes.i_sel	=	i_sel;
 	
 %	Otherwise open edit window with existing values
 else
@@ -3200,6 +3187,8 @@ else
 	end	
 end
 
+handles.notes.saved	=	false;
+checkbox_notes_readonly_Callback(handles.checkbox_notes_readonly, [], handles);
 %	Replot events, next one should be highlighted if it's on same screen
 handles		=	plot_events(handles);
 guidata(hObject,handles);
@@ -4023,6 +4012,59 @@ elseif findstr(rawfile,'.gsi')
     end
 end
 
+end
+
+function [thet,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles)
+%tsec: seconds into time series that data are selected...
+thet=-1;  %Start with failed result
+kappa=-1;
+tsec=-1;
+tdate_start=handles.tdate_start;
+tlen=handles.tlen;
+%yes_wav=get(handles.togglebutton_getwav,'value');
+
+mydir=pwd;
+
+%Ichan='all';  %Hardwire first channel
+%Ichan=str2double(get(handles.edit_chan,'String'));
+[x,t,Fs,tstart,tend,head]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,'all',handles);
+
+disp('Click on two extreme corners, click below axis twice to reject:');
+tmp=ginput(2);
+if (isempty(tmp)||any(tmp(:,2)<0))
+    return
+end
+tsec=min(tmp(:,1));
+n=round(Fs*sort(tmp(:,1)));
+
+freq=1000*sort(tmp(:,2));
+contents=get(handles.popupmenu_Nfft,'String');
+Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
+
+[thet0,kappa,sd]=extract_bearings(x(n(1):n(2),:),0.25,Nfft,Fs,freq(1),freq(2),50);
+
+if ~isempty(findstr('T2007',handles.myfile))
+    cal07flag=1;
+    handles.calibration_DASAR2007_dir='/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/RawData';
+    
+    brefa_table=calibrate_bearing_Shell2007(handles.calibration_DASAR2007_dir,handles.myfile);
+else
+    cal07flag=0;
+end
+
+if cal07flag==0
+    thet=bnorm(thet0+head.brefa);
+else
+    [junk,Icol]=calibrate_bearing_Shell2007(handles.calibration_DASAR2007_dir,handles.myfile,1);
+    thet= interp1(0:360,brefa_table(:,Icol),bnorm(thet0));
+end
+
+%handles.bearing=thet;
+%guidata(hObject, handles);
+%titlestr=get(handles.text_filename,'String');
+%Iend=findstr(titlestr,'.gsi')-1;
+set(handles.text_filename,'String',sprintf('%s/%s %6.2f degrees... ',handles.mydir,handles.myfile,thet));
+%keyboard;
 end
 
 function [omi,t,head]=readgsi(fn,ctstart,tlen,formatt)
@@ -6846,14 +6888,14 @@ file_name	=	handles.notes.file_name;
 
 
 %	New notes file disables these buttons until otherwise activated
-option		=	'off';
-set(handles.pushbutton_notes_save, 'Enable', option);
-set(handles.pushbutton_notes_new, 'Enable', option);
-set(handles.pushbutton_notes_edit, 'Enable', option);
-set(handles.pushbutton_notes_next, 'Enable', option);
-set(handles.pushbutton_notes_prev, 'Enable', option);
-set(handles.checkbox_notes_show, 'Enable', option);
-set(handles.checkbox_notes_delete, 'Enable', option);
+opt		=	'off';
+set(handles.pushbutton_notes_new, 'Enable', opt);
+set(handles.pushbutton_notes_save, 'Enable', opt);
+set(handles.pushbutton_notes_edit, 'Enable', opt);
+set(handles.pushbutton_notes_next, 'Enable', opt);
+set(handles.pushbutton_notes_prev, 'Enable', opt);
+set(handles.checkbox_notes_show, 'Enable', opt);
+set(handles.checkbox_notes_delete, 'Enable', opt);
 
 %	! This case should never actually happen
 if isempty(folder_name) || isempty(file_name)
@@ -6868,16 +6910,19 @@ else
 		LS	=	load(file_path);
 		handles.notes.Data	=	LS.Data;
 		handles.notes.show	=	true;
-		option				=	'on';
+		opt				=	'on';
 	else
 		handles.notes.Data	=	[];
 		handles.notes.show	=	false;
-		option				=	'off';
+		opt				=	'off';
 	end
-	set(handles.pushbutton_notes_next, 'Enable', option);
-	set(handles.pushbutton_notes_prev, 'Enable', option);
+	set(handles.pushbutton_notes_next, 'Enable', opt);
+	set(handles.pushbutton_notes_prev, 'Enable', opt);
 	set(handles.checkbox_notes_show, 'Value', handles.notes.show);
-	set(handles.checkbox_notes_show, 'Enable', option);
+	set(handles.checkbox_notes_show, 'Enable', opt);
+	if	handles.fig_updated
+		set(handles.pushbutton_notes_new, 'Enable', 'on');
+	end
 end
 end
 
@@ -6957,7 +7002,13 @@ end
 end
 
 %	Overlays events within current window
-function		handles	=	plot_events(handles)
+function	handles	=	plot_events(handles)
+
+%	Try deleting existing events from window
+try
+	delete(handles.notes.h_show);
+end
+
 
 %	Disable edit, next/prev buttons if nothing is shown
 if	isempty(handles.notes.Data) || isempty(handles.notes.Data.Events)...
@@ -6967,16 +7018,11 @@ if	isempty(handles.notes.Data) || isempty(handles.notes.Data.Events)...
 	%	Disable prev/next buttons
 	set(handles.pushbutton_notes_prev,'Enable','off');
 	set(handles.pushbutton_notes_next,'Enable','off');
-	
-	%	Try deleting existing events from window
-	try
-		delete(handles.notes.h_show);
-	end
 	return;
 end
 Events	=	handles.notes.Data.Events;
 
-h_axes	=	handles.axes;
+h_axes	=	handles.axes1;
 %	Window limits
 Times	=	xlim(h_axes);
 Times	=	handles.tdate_start + datenum(0,0,0,0,0,Times);
@@ -7019,6 +7065,10 @@ guidata(h_axes, handles);
 if	length(Events) > 1
 	set(handles.pushbutton_notes_prev,'Enable','on');
 	set(handles.pushbutton_notes_next,'Enable','on');
+else
+	%	Disable prev/next buttons
+	set(handles.pushbutton_notes_prev,'Enable','off');
+	set(handles.pushbutton_notes_next,'Enable','off');
 end
 
 %	Enable edit/delete, if selected event is visible
@@ -7053,7 +7103,7 @@ end
 function	handles		=	update_events(handles)
 
 i_sel		=	handles.notes.i_sel;
-start_time	=	handles.notes.Data.Events(i_sel);
+start_time	=	handles.notes.Data.Events(i_sel).start_time;
 tlen		=	datenum(0,0,0,0,0,handles.tlen);
 
 %	New start date for window
@@ -7066,4 +7116,13 @@ handles		=	guidata(handles.edit_datestr);
 pushbutton_update_Callback(handles.pushbutton_update, [], handles);
 handles		=	guidata(handles.pushbutton_update);
 
+end
+
+
+% --- If Enable == 'on', executes on mouse press in 5 pixel border.
+% --- Otherwise, executes on mouse press in 5 pixel border or over slider_datestr.
+function	slider_datestr_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to slider_datestr (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
 end
