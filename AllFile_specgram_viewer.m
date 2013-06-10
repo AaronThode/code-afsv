@@ -91,7 +91,7 @@ try
     cd(handles.mydir);
 end
 handles.filetype='mt';
-[handles,errorflag]=set_slider_controls(handles,handles.filetype);
+[handles,errorflag]=set_slider_controls(handles,handles.filetype); %#ok<*NASGU>
 %Make GSIbearing button and CSDM invisible
 set(handles.pushbutton_GSIbearing,'Vis','off');
 set(handles.pushbutton_GSI_localization,'Vis','off');
@@ -339,7 +339,7 @@ tmax	=	handles.tdate_max;
 
 try
     new_date	=	datenum(get(hObject,'String'));
-catch
+catch %#ok<*CTCH>
     errordlg('Incorrect datestr');
 	new_date =	[];
 end
@@ -473,7 +473,7 @@ usewhitebg = 1;
 if usewhitebg
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 else
-    set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
+    set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor')); %#ok<UNRCH>
 end
 
 end
@@ -809,24 +809,25 @@ tlen=handles.tlen;
 
 mydir=pwd;
 Ichan='all';
-[x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
+%[x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
+[x,~,Fs,~,~,hdr]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
 
-if ~isempty(findstr(lower(computer),'mac'))
-    Islash=findstr(handles.mydir,'/');
+if ~isempty(strfind(lower(computer),'mac'))
+    Islash=strfind(handles.mydir,'/');
 else
-    Islash=findstr(handles.mydir,'\');
+    Islash=strfind(handles.mydir,'\');
 end
 chan=get(handles.edit_chan,'String');
 
 save_name=sprintf('soundsamp%s_%s',handles.mydir((Islash(end)+1):end),datestr(tdate_start,30));
-disp(sprintf('Saving %s ...',save_name));
+disp(['Saving ...' save_name]);
 
 try
     if size(x,2)>size(x,1)
         x=x';
     end
     for Ichan=1:size(x,2)
-        xfilt(:,Ichan)=filter(handles.b,1,x(:,Ichan));
+        xfilt(:,Ichan)=filter(handles.b,1,x(:,Ichan)); 
     end
     wavwrite(xfilt/(1.1*max(max(abs(xfilt)))),Fs,save_name);
 
@@ -865,7 +866,7 @@ if strcmpi(handles.filetype,'MDAT')
         set(gcf,'pos',[291         628        1513         991]);
         Iplot=0;
         %[x,t,Fs,tstart,junk1,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
-        [x,t,Fs,tstart,junk1,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
+        [x,~,Fs,~,~,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
         
         for Ichan=1:head.Nchan
             
@@ -879,7 +880,7 @@ if strcmpi(handles.filetype,'MDAT')
             end
             subplot(4,2,Iplot);
             
-            [S,FF,TT,B] = spectrogram(x(Ichan,:),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
+            [~,FF,TT,B] = spectrogram(x(Ichan,:),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
             %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
             %axes(handles.axes1);
             imagesc(TT,FF,10*log10(B));%
@@ -929,10 +930,10 @@ if strcmpi(handles.filetype,'MDAT')
             %             end
             %xall(Ichan,:)=x;
         end
-        if ~isempty(findstr(lower(computer),'mac'))
-            Islash=findstr(handles.mydir,'/')+1;
+        if ~isempty(strfind(lower(computer),'mac'))
+            Islash=strfind(handles.mydir,'/')+1;
         else
-            Islash=findstr(handles.mydir,'\')+1;
+            Islash=strfind(handles.mydir,'\')+1;
         end
         save_name=sprintf('soundNfft%i_%s.%s_%s_%s',Nfft,handles.mydir((Islash(end-1)):(end-1)),handles.myfile,datestr(tdate_start,30),'all_channels');
         pause
@@ -940,7 +941,7 @@ if strcmpi(handles.filetype,'MDAT')
         for I=1:2
             if any(get(0,'child')==I)
                 save_name1=sprintf('%s_%i',save_name,I);
-                disp(sprintf('Printing %s ...',save_name1));
+                disp(['Printing %s ...' save_name1]);
                 figure(I)
                 orient landscape
                 print(I,'-djpeg',[save_name1 '.jpg']);
@@ -962,10 +963,10 @@ if ~strcmp(handles.display_view,'New Fig')
 else
     figure(gcf);
     chcc=get(0,'child');
-    Igoodd=find(chcc-round(chcc)==0);
+    Igoodd	=	(chcc-round(chcc)==0);
     chcc=chcc(Igoodd);
     for III=1:length(chcc)
-        tmp{III}=chcc(III);
+        tmp{III}=chcc(III); 
     end
     figchc=menu('Select a figure number:',tmp);
     figure(chcc(figchc));
@@ -973,9 +974,9 @@ end
 tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 chan=get(handles.edit_chan,'String');
-Idot=findstr(handles.myfile,'.')-1;
+Idot=strfind(handles.myfile,'.')-1;
 save_name=sprintf('soundsamp_%s_%s_%s',handles.myfile(1:Idot),datestr(tdate_start,30),chan);
-disp(sprintf('Printing %s ...',save_name));
+disp(['Printing %s ...' save_name]);
 
 orient landscape
 print(figchc,'-djpeg',save_name);
@@ -1068,8 +1069,8 @@ tline	=	fgetl(handles.fid);
 %Remove leading blanks;
 tline	=	fliplr(deblank(fliplr(tline)));
 disp(tline);
-Idash	=	findstr('-',tline);
-Icolon	=	findstr(':',tline);
+Idash	=	strfind('-',tline);
+Icolon	=	strfind(':',tline);
 newtime	=	tline(1:(max(Icolon)+2));
 
 
@@ -1227,7 +1228,7 @@ mydir=pwd;
 
 %Ichan='all';  %Hardwire first channel
 Ichan=str2double(get(handles.edit_chan,'String'));
-[x,t,Fs,tstart]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
+[x,~,Fs,tstart]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
 
 Nmax=(2^16)-1;
 Fs_want=125000;  %Actual playback rate
@@ -1242,7 +1243,7 @@ Istart=input('Enter an integer for filename: ');
 
 fid=fopen(['PLAY.' int2str(Istart)],'w','ieee-be');
 COUNT = fwrite(fid,y_scale,'uint16');
-fclose(fid)
+fclose(fid);
 
 end
 
@@ -1364,12 +1365,12 @@ for Idasar=1:NDasar
     handles.mydir(end-2)=strr(Idasar);
     %%S510G0T20100831T000000.gsi form
     handles.myfile(5)=strr(Idasar);
-    disp(sprintf('Directory %s contains %s',handles));
+    disp(['Directory %s contains %s',handles]);
     try
         handles		=	load_and_display_spectrogram(handles);
         [theta(Idasar),kappa(Idasar),tsec]=get_GSI_bearing(hObject,eventdata,handles);
     catch
-        disp(sprintf('Directory does not exist'));
+        disp('Directory does not exist');
     end
     
     
@@ -1388,15 +1389,15 @@ Igood=find(~isnan(theta)&theta>-2);  %Remove absent DASARS (used to compute cent
 %Note that the Site contains all DASAR locations,
 %  whether they collected data or not
 DASAR_coords=[locs.Site{Isite}.easting locs.Site{Isite}.northing];
-[VM,Qhat,w0,outcome] = vmmle_r(theta(Ikeep)',DASAR_coords(Ikeep,:),'h',kappa(Ikeep)');
+[VM,Qhat,~,outcome] = vmmle_r(theta(Ikeep)',DASAR_coords(Ikeep,:),'h',kappa(Ikeep)');
 mean_coords=mean(DASAR_coords(Igood,:));
 CRITVAL=4.60517; %chi2inv(0.90,2);
 
-[AREA,A,B,ANG,Baxis] = ellipsparms(Qhat,CRITVAL,mean_coords,VM);
+[~,A,B,ANG,Baxis] = ellipsparms(Qhat,CRITVAL,mean_coords,VM);
 
 figure
 Ikeep=find(~isnan(theta(Igood))&theta(Igood)>0);
-[Dn,xg,yg]=plot_location(DASAR_coords(Igood,:),theta(Igood),Ikeep,VM,A,B,ANG);
+[~,xg,yg]=plot_location(DASAR_coords(Igood,:),theta(Igood),Ikeep,VM,A,B,ANG);
 hold on
 VA_cords=str2double(answer{3})/1000;
 tmp=(VA_cords-[xg yg]);
@@ -1424,7 +1425,7 @@ tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 mydir=pwd;
 Ichan='all';  %Hardwire first channel
-[x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,Ichan,handles);
+[x,~,Fs,~,~,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,Ichan,handles);
 x=x.';
 
 %%For MDAT file, channel 1 is already shallowest channel, so remove data below...
@@ -1487,7 +1488,7 @@ elseif Ichc==2  %extractKsexact
     disp('Select two frequencies from image:')
     ftmp=ginput(2);
     frange=sort(ftmp(:,2)*1000);
-    disp(sprintf('frange: %6.2f to %6.2f Hz',frange));
+    fprintf('frange: %6.2f to %6.2f Hz\n',frange);
     threshold=input('Enter threshold in dB:');
     if isempty(threshold)
         threshold=-Inf;
@@ -1685,7 +1686,7 @@ twant=tmp(1);
 tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 %for Ichan=1:8
-[x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
+[x,~,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles); %#ok<*ASGLU>
 if size(x,2)>1
     x=x';
 end
@@ -1706,7 +1707,7 @@ for Ichan=1:head.Nchan
     %%Test 1
     [S,FF,TT,B] = spectrogram(x(:,Ichan)-mean(x(:,Ichan)),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
     [junk,Iwant]=min(abs(twant-TT));
-    Bslice(:,Ichan)=B(:,Iwant);
+    Bslice(:,Ichan)=B(:,Iwant); %#ok<*AGROW>
     
     
     %Sign test
@@ -1936,7 +1937,7 @@ Bfilt = firpm(N,Fo,Ao,W);
 
 Nchan=size(data.x,1);
 y=zeros(size(data.x));
-for I=1:Nchan
+for I=1:Nchan 
     try
         y(I,:)=filtfilt(Bfilt,1,data.x(I,:)-mean(data.x(I,:)));
         %[B(:,:,I),FF,TT] = specgram(y(I,:),Nfft,Fs,Nfft2,round(0.9*Nfft2)); %B(freq,time,element);
@@ -1960,9 +1961,9 @@ if length(MFP_scenario)>1  %Multiple runs..
     prompt1={'range guesses (m)', 'maxdelay for mode 1:2 range estimation (s)[-1 to automatically select]:', ...
         'maxdelay for mode 1:N range estimation (s): [-1 to automatically select]','plot intermediate images?', ...
         'Nfft for plotting:','depths','tilt','max modes'};
-    for J=1:length(default_tilt)
-        Islash=max(findstr(MFP_scenario{J},'/'))+1;
-        disp(sprintf('tilt: %s File: %s ',default_tilt{J},MFP_scenario{J}(Islash:end)));
+    for J=1:length(default_tilt) 
+        Islash=max(strfind(MFP_scenario{J},'/'))+1;
+        fprintf('tilt: %s File: %s \n',default_tilt{J},MFP_scenario{J}(Islash:end));
     end
     dlgTitle1='Parameters for modal beamforming...';
     def1={range_str{1},'0.1','0.025','0','2048','1:1:55',default_tilt{1},'3'};
@@ -1997,7 +1998,7 @@ for Imodel=1:length(MFP_scenario)
         
         answer=inputdlg(prompt1,dlgTitle1,1,def1);
         model=load(answer{1});
-        disp(sprintf('Loaded %s',answer{1}));
+        disp(['Loaded ',answer{1}]);
         tilt_offset=str2double(answer{2});
         range_guess=str2double(answer{3});
         maxdelay(1)=str2double(answer{4});
@@ -2010,7 +2011,7 @@ for Imodel=1:length(MFP_scenario)
     else
         
         model=load(MFP_scenario{Imodel});
-        disp(sprintf('Loaded %s',MFP_scenario{Imodel}));
+        disp(sprintf('Loaded %s',MFP_scenario{Imodel})); %#ok<*DSPS>
         %tilt_offset=str2double(default_tilt{Imodel});
         
     end
@@ -2026,14 +2027,14 @@ for Imodel=1:length(MFP_scenario)
     %model.rd=model.rd(Igood);
     %model.U=model.U(Igood,:,:);
     
-    Igood=zeros(1,length(head.rd));
-    for I=1:length(head.rd)
-        [junk,Igood(I)]=min(abs(model.rd-head.rd(I)));
+    Igood	=	zeros(1,length(head.rd));
+    for I = 1:length(head.rd) 
+        [junk, Igood(I)]		=	min(abs(model.rd-head.rd(I)));
     end
     
     %%depths are desired modeled source depths.
     Igood_source=zeros(1,length(depths));
-    for I=1:length(depths)
+    for I=1:length(depths) %#ok<*FXUP>
         [junk,Igood_source(I)]=min(abs(model.rd-depths(I)));
     end
     
@@ -2226,7 +2227,7 @@ for Imodel=1:length(MFP_scenario)
     plot_range_estimates;
     
     if plot_chc==1
-        if exist('MM');
+        if exist('MM', 'var');
             movie2avi(MM,'tiltTest');
         end
         keyboard
@@ -2559,7 +2560,7 @@ end %Imodel
 
 %%Inner function for plotting
     function tltchk=plot_mode_filtering
-        persistent timmes_signal timmes_noise pwrr yes
+        persistent timmes_signal timmes_noise pwrr yes %#ok<NUSED>
         
         if Itilt==1
             %yes=menu('What intermediate data do you want?','Filtered spectrograms','SNR estimate');
@@ -2644,7 +2645,7 @@ end %Imodel
             %%Estimate SNR of signal...
             
             [tmp,lags]=xcov(yout(:,1),y(1,:)');
-            [junk,Imax]=max(abs(tmp));
+            [~,Imax]=max(abs(tmp));
             Imax=lags(Imax);
             
             figure(10);
@@ -3294,7 +3295,7 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
     climm(1)=str2double(get(handles.edit_mindB,'String'));
     climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
     %%If switching from correlogram, reset to suggested values
-    if climm(1)==0&climm(2)<1
+    if climm(1)==0&&climm(2)<1
         climm=[40 70];
         set(handles.edit_mindB,'String',num2str(climm(1)));
         set(handles.edit_dBspread,'String',num2str(climm(2)));
@@ -3319,7 +3320,7 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
 elseif strcmp(handles.display_view,'Time Series') %%Time series
     
     %%Check that we are looking at acoustic data
-    if isempty(findstr(handles.myfile,'Press'))
+    if isempty(strfind(handles.myfile,'Press'))
         disp('Enter min and max frequency:');
         tmp=ginput(2);
         if ~isempty(tmp)&&size(tmp,1)==2
@@ -3487,18 +3488,18 @@ function tstart=convert_date(data,delimiter)
 %%Start intelligent search for a timestamp in string name...
 
 
-mt_style_flag=~isempty(findstr('Sound',data));
-fname_bounds=findstr(data,delimiter);
+mt_style_flag=~isempty(strfind('Sound',data));
+fname_bounds=strfind(data,delimiter);
 
 if length(fname_bounds)==1,
     fname_bounds(2)=length(data)+1;
 end
-Idot=findstr(data,'.');
+Idot=strfind(data,'.');
 fname_bounds=sort([fname_bounds Idot(1)]);
 
 nm=[];
 if mt_style_flag==1,
-    Isound=findstr(data,'Sound')+6;
+    Isound=strfind(data,'Sound')+6;
     yr=str2double(data(Isound:(Isound+3)));
     mo=str2double(data((Isound+5):(Isound+6)));
     dy=str2double(data((Isound+7):(Isound+8)));
@@ -3557,7 +3558,7 @@ if strcmp(local_machine,'macmussel.ucsd.edu')
     %%Name of default multipath storage file
     startup_info.multipath_filename='gui_multipath_selections.mat';
     startup_info.calibration_DASAR2007_dir='';
-elseif findstr(local_machine,'Jan-Straleys')
+elseif strfind(local_machine,'Jan-Straleys')
     
     startup_info.base_directory='/Users/janstraley/SEASWAP_2011';
     
@@ -3572,7 +3573,7 @@ elseif findstr(local_machine,'Jan-Straleys')
     %%Name of default multipath storage file
     startup_info.multipath_filename='gui_multipath_selections.mat';
     startup_info.calibration_DASAR2007_dir='';
-elseif findstr(local_machine,'Janice')
+elseif strfind(local_machine,'Janice')
     
     startup_info.base_directory='~/Desktop/MATLAB/AllFile_specgram_viewer';
     
@@ -3602,7 +3603,7 @@ elseif strcmp(local_machine,'KatsMacPro.local')  %KatMacGSI
     startup_info.multipath_filename='gui_multipath_selections.mat';
     
     
-elseif ~isempty(findstr('dgrebner',local_machine))
+elseif ~isempty(strfind('dgrebner',local_machine))
     
     startup_info.base_directory='/Users/dgrebner/Desktop/';
     startup_info.default_directory=startup_info.base_directory;
@@ -3614,7 +3615,7 @@ elseif ~isempty(findstr('dgrebner',local_machine))
     
     %%Name of default multipath storage file
     startup_info.multipath_filename='gui_multipath_selections.mat';
-elseif ~isempty(findstr('thode',local_machine))
+elseif ~isempty(strfind('thode',local_machine))
     
     startup_info.base_directory='/Users/thode/Projects/Arctic_2010/Data/Bottom_Unit';
     startup_info.default_directory=startup_info.base_directory;
@@ -3799,7 +3800,7 @@ switch filetype
         
     case 'MDAT'
         
-        if findstr(mydir,'Arctic_2010')  %%If we have two arrays to be merged together
+        if strfind(mydir,'Arctic_2010')  %%If we have two arrays to be merged together
             merge_two_mdat_files;
         else
             if strcmp(Ichan,'all')
@@ -3919,7 +3920,7 @@ if teager
     x=x(:,2:end-1).^2-x(:,1:end-2).*x(:,3:end);
 end
     function merge_two_mdat_files
-        if ~findstr(mydir,'Bottom_Unit')
+        if ~strfind(mydir,'Bottom_Unit')
             errordlg('Need to select a bottom unit');
             return
         end
@@ -3985,12 +3986,12 @@ function [y,t,head]=readGSIfile(rawfile,cbegin,tlen,nchan,formatt,calibrate)
 % formatt = Describes time input, string 'ctime' or 'datenum';
 % calibrate = String 'calibrate' to convert Volts to microP;
 
-if findstr(rawfile,'.sio')
+if strfind(rawfile,'.sio')
     
     [y,t,head]=readsiof(rawfile,cbegin,tlen,formatt);
     y=y-0.5*(2^16);  %Remove DC bias in A/D converter
     
-elseif findstr(rawfile,'.gsi')
+elseif strfind(rawfile,'.gsi')
     [y,t,head]=readgsi(rawfile,cbegin,tlen,formatt);
     if isempty(y)  %request time is befine file start
         dt=cbegin-head.ctbc;
@@ -4043,7 +4044,7 @@ Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
 
 [thet0,kappa,sd]=extract_bearings(x(n(1):n(2),:),0.25,Nfft,Fs,freq(1),freq(2),50);
 
-if ~isempty(findstr('T2007',handles.myfile))
+if ~isempty(strfind('T2007',handles.myfile))
     cal07flag=1;
     handles.calibration_DASAR2007_dir='/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/RawData';
     
@@ -4062,7 +4063,7 @@ end
 %handles.bearing=thet;
 %guidata(hObject, handles);
 %titlestr=get(handles.text_filename,'String');
-%Iend=findstr(titlestr,'.gsi')-1;
+%Iend=strfind(titlestr,'.gsi')-1;
 set(handles.text_filename,'String',sprintf('%s/%s %6.2f degrees... ',handles.mydir,handles.myfile,thet));
 %keyboard;
 end
@@ -4085,7 +4086,7 @@ if nargin<4,
     formatt='ctime';
 end
 
-if strcmp(formatt,'datenum')&ctstart>0,
+if strcmp(formatt,'datenum') && ctstart>0,
     %tfile_start=datenum(1970,1,1,0,0,head.ctbc);
     ctstart=86400*(ctstart-datenum(1970,1,1,0,0,0));
     
@@ -4094,7 +4095,7 @@ end
 fs=head.Fs*(1+head.tdrift/86400);
 fid = fopen(char(fn),'r','ieee-be');
 
-if head.ctbc>ctstart&ctstart>0,
+if head.ctbc>ctstart && ctstart>0,
     disp('Start time less than file start');
     return;
 end
@@ -4141,7 +4142,7 @@ function head=readgsif_header(fn)
 % head=readsiof_header(fn);
 %fid = fopen(char(fn),'r','ieee-le');
 fid = fopen(char(fn),'r','ieee-be'); %for s1sT
-head.dlabel(1:10) = char(fread(fid,10,'uchar'));
+head.dlabel(1:10) = char(fread(fid,10,'uchar')); %#ok<*FREAD>
 %head.nc=fread(fid,1,'uchar');
 head.contents=char(fread(fid,4,'uchar'));
 
@@ -4167,7 +4168,7 @@ head.tabs_start=datenum(1970,1,1,0,0,head.ctbc);
 fclose(fid);
 end
 
-function [x,t,Fs]=load_mt_mult(folders,tdate_start,tlength,tshift,ftype);
+function [x,t,Fs]=load_mt_mult(folders,tdate_start,tlength,tshift,ftype)
 %%%%%%%%%%%%%load_mt_mult.m%%%%%%%%%%%%
 %[x,t,Fs]=load_mt_mult(folders,tdate_start,tlength,tshift,ftype);
 %Load time series from two recorders, adjusting for initial clock
@@ -4191,7 +4192,7 @@ function [x,t,Fs]=load_mt_mult(folders,tdate_start,tlength,tshift,ftype);
 %  are contiguous...now have 'samples expected' vs. 'samples got'.
 Nel=size(folders,1);
 goodel=1:Nel;
-if ~exist('ftype'),
+if ~exist('ftype', 'var'),
     ftype='Sound';
 end
 
@@ -4230,7 +4231,7 @@ for Idir=1:Nel,
     for Ifile=1:length(dirs_all{Idir}),
         head=read_mt_header(dirs_all{Idir}(Ifile).name);
         %%Identify data file where data start
-        if tdate_start_file>=head.tstart&tdate_start_file<head.tend,  %All in one location...
+        if tdate_start_file>=head.tstart && tdate_start_file<head.tend,  %All in one location...
             %dirs{Idir}.startfile=dirs_all{Idir}(Ifile);
             telapsed=datevec(tdate_start_file-head.tstart);
             starttime=3600*telapsed(4)+60*telapsed(5)+telapsed(6);
@@ -4238,14 +4239,14 @@ for Idir=1:Nel,
             disp(sprintf('Element:%s start file: %s start time in file:%6.2f',folders(Idir,:),dirs_all{Idir}(Ifile).name,starttime));
         end
         %%Identify data file where data end
-        if tdate_end_file>=head.tstart&tdate_end_file<=head.tend,
+        if tdate_end_file>=head.tstart&&tdate_end_file<=head.tend,
             %dirs{Idir}.endfile=dirs_all{Idir}(Ifile);
             telapsed=datevec(tdate_end_file-head.tstart);
             endtime=3600*telapsed(4)+60*telapsed(5)+telapsed(6);
             readflag=1;
             disp(sprintf('   end file: %s start time in file:%6.2f',dirs_all{Idir}(Ifile).name,endtime));
         end
-        if head.tstart>tdate_start_file&head.tend<tdate_end_file,
+        if head.tstart>tdate_start_file&&head.tend<tdate_end_file,
             readflag=1;
             disp(sprintf('   mid file: %s ',dirs_all{Idir}(Ifile).name));
         end
@@ -4255,8 +4256,8 @@ for Idir=1:Nel,
             [xxx,tttt,head]=load_mt(dirs_all{Idir}(Ifile).name,starttime,endtime-starttime); %Note initial time offset
             %Safety check--is the size of xxx what we expect it to be?
             tleft=datevec(head.tend-tdate_start);
-            samples_expected=round(head.Fs*(tleft(:,6)+60*tleft(:,5)+3600*tleft(:,4)))
-            samples_got=length(xxx)
+            samples_expected=round(head.Fs*(tleft(:,6)+60*tleft(:,5)+3600*tleft(:,4)));
+            samples_got=length(xxx);
             if isinf(endtime)&&(samples_expected>samples_got)
                 disp('Trying to read to end of file, but samples are missing...');
                 xx=[xx; xxx; zeros(samples_expected-samples_got,1)];
@@ -4285,7 +4286,7 @@ function [x,t,head,tdate]=load_mt(fname,tstart,tsec,uncal_chc)
 % uncal_chc; If exists, return uncalibrated values.
 % All times in seconds
 
-if isempty(findstr(fname,'.mt')),
+if isempty(strfind(fname,'.mt')),
     fname=[fname '.mt'];
 end
 head=read_mt_header(fname);
@@ -4313,7 +4314,7 @@ x=fread(fid,floor(tsec*Fs)+1,dattype);
 fclose(fid);
 %Optional calibration...
 N=(2.^head.samplebits)-1;
-if ~exist('uncal_chc'),
+if ~exist('uncal_chc', 'var'),
     switch head.signing,
         case 'S',
             calmean=0.5*(head.calmin+head.calmax);
@@ -4336,7 +4337,7 @@ function head=read_mt_header(fname)
 
 % Nov 21, 2004: Changed head.Fs so that result is rounded to nearest
 % value...
-if isempty(findstr(fname,'.mt')),
+if isempty(strfind(fname,'.mt')),
     fname=[fname '.mt'];
 end
 %fname='aa_Sound_2003_08120945.mt';
@@ -4597,24 +4598,24 @@ function [x,tfs,tfe,fs,x_raw]=read_adi_file(dirname,fname,fs,tstart,ns,units_vol
 %   tfe: datenumber of the end of the file
 % Created Feb. 17, 2012
 
-if ~exist('units_voltage'),
+if ~exist('units_voltage', 'var'),
     units_voltage=0;
 end
 %fs=50000;
 x_raw=[];
 VREF=3.3;
 nc=1;
-if ~exist('sens')
+if ~exist('sens', 'var')
     sens=-172; %dB re 1uPa/V
 end
 %Get start time of file from .log file...
 mydir=pwd;
 cd(dirname);
-fpre=findstr(fname,'.ADI')-1;
+fpre=strfind(fname,'.ADI')-1;
 log_name=[fname(1:fpre) '.log'];
-if ~exist(log_name)
+if ~exist(log_name, 'file')
     log_name=[fname(1:fpre) '.LOG'];
-    if ~exist(log_name)
+    if ~exist(log_name, 'file')
         error('read_adi_file: %s does not exist in same directory as %s',log_name,fname);
     end
 end
@@ -4627,29 +4628,29 @@ sensitivity_flag=0;
 while 1
     tline = fgetl(fid);
     if ~ischar(tline), break, end
-    if findstr(tline,'Start time')
+    if strfind(tline,'Start time')
         line.start=tline;
         tfs=parse_date(line.start);
         sec_flag=1;
-    elseif findstr(tline,'End time')
+    elseif strfind(tline,'End time')
         line.end=tline;
         tfe=parse_date(line.end);
         sec_flag=2;
-    elseif findstr(tline,'Sample rate:')>0,
-        Idot=1+findstr(tline,':');
-        Iend=findstr(tline,'Hz')-1;
+    elseif strfind(tline,'Sample rate:')>0,
+        Idot=1+strfind(tline,':');
+        Iend=strfind(tline,'Hz')-1;
         if isempty(Iend)
-            Iend=findstr(tline,'0');
+            Iend=strfind(tline,'0');
         end
         fs=str2double(tline(Idot:Iend(end)));
         
-    elseif findstr(tline,'Sensitivity:')>0,
-        Idot=1+findstr(tline,':');
-        Iend=findstr(tline,'dB')-1;
+    elseif strfind(tline,'Sensitivity:')>0,
+        Idot=1+strfind(tline,':');
+        Iend=strfind(tline,'dB')-1;
         sens=str2double(tline(Idot:Iend));
         sensitivity_flag=1;
-    elseif findstr(tline,'seconds')
-        Is=findstr(tline,'seconds')-1;
+    elseif strfind(tline,'seconds')
+        Is=strfind(tline,'seconds')-1;
         secs=str2double(tline(1:Is));
         if sec_flag==1
             tfs=tfs+datenum(0,0,0,0,0,secs);
@@ -4663,7 +4664,7 @@ fclose(fid);
 np=ns*fs;
 
 
-if tfs==0|tfe==0
+if tfs==0||tfe==0
     disp(sprintf('Could not understand %s',log_name));
 end
 if sensitivity_flag==0
@@ -4716,7 +4717,7 @@ end
 
 function [tfs,tfe,fs,nc,tiltx,tilty,sensitivity]=load_mdat_header(dirname,fname)
 cd(dirname);
-fpre=findstr(lower(fname),'.mdat')-1;
+fpre=strfind(lower(fname),'.mdat')-1;
 log_name=[fname(1:fpre) '.LOG'];
 fid=fopen(log_name,'r');
 sensitivity=-160; %dB re V/uPa default
@@ -4724,36 +4725,36 @@ sensitivity=-160; %dB re V/uPa default
 while 1
     tline=fgetl(fid);
     if ~ischar(tline),break,end
-    if findstr(tline,'Channels:')>0,
-        Idot=1+findstr(tline,':');
+    if strfind(tline,'Channels:')>0,
+        Idot=1+strfind(tline,':');
         nc=str2double(tline(Idot:end));
-    elseif findstr(tline,'Sample rate:')>0,
-        Idot=1+findstr(tline,':');
-        Iend=findstr(tline,'Hz')-1;
+    elseif strfind(tline,'Sample rate:')>0,
+        Idot=1+strfind(tline,':');
+        Iend=strfind(tline,'Hz')-1;
         fs=str2double(tline(Idot:Iend));
-    elseif findstr(tline,'Sensitivity:')>0,
-        Idot=1+findstr(tline,':');
-        Iend=findstr(tline,'dB')-1;
+    elseif strfind(tline,'Sensitivity:')>0,
+        Idot=1+strfind(tline,':');
+        Iend=strfind(tline,'dB')-1;
         sensitivity=str2double(tline(Idot:Iend));
-    elseif findstr(tline,'Start time')>0,
-        Idot=findstr(tline,'=');
+    elseif strfind(tline,'Start time')>0,
+        Idot=strfind(tline,'=');
         tfs=parse_date(tline(Idot:end));
         tline=fgetl(fid);
-        Iend=findstr(tline,'seconds')-1;
+        Iend=strfind(tline,'seconds')-1;
         tfs=tfs+datenum(0,0,0,0,0,str2double(tline(1:Iend)));
-    elseif findstr(tline,'Stop time')>0,
-        Idot=findstr(tline,'=');
+    elseif strfind(tline,'Stop time')>0,
+        Idot=strfind(tline,'=');
         tfe=parse_date(tline(Idot:end));
         tline=fgetl(fid);
-        Iend=findstr(tline,'seconds')-1;
+        Iend=strfind(tline,'seconds')-1;
         tfe=tfe+datenum(0,0,0,0,0,str2double(tline(1:Iend)));
-    elseif findstr(tline,'Tilt-X')>0,
-        Idot=findstr(tline,':')+1;
-        Iend=findstr(tline,'Tilt-Y')-1;
+    elseif strfind(tline,'Tilt-X')>0,
+        Idot=strfind(tline,':')+1;
+        Iend=strfind(tline,'Tilt-Y')-1;
         tiltx=str2double(tline(Idot:Iend));
         
         Idot=Iend+8;
-        Iend=findstr(tline,'degrees')-1;
+        Iend=strfind(tline,'degrees')-1;
         tilty=str2double(tline(Idot:Iend));
         
     end
@@ -4766,7 +4767,7 @@ end
 
 function tabs=parse_date(str)
 
-Istart=findstr(str,'=');
+Istart=strfind(str,'=');
 year=str2double(str((end-4):end));
 tm=datenum(str((end-13):(end-5)),14)-datenum('00:00:00',14);
 day=str2double(str((end-15):(end-14)));
@@ -4825,7 +4826,7 @@ function [x,fparms]=read_mdat_file(dirname,fname,tstart,ns,calibrate_acoustic)
 % acquisition--for this deployment every five minutes acoustic data not
 % acquired for 4 seconds (plus some time to power up).  Thus I use
 %   a drift formula of 48 sec/hour..
-if ~exist('calibrate_acoustic')
+if ~exist('calibrate_acoustic', 'var')
     calibrate_acoustic=2;
 end
 %fs=50000;
@@ -4902,7 +4903,7 @@ function x=calibrate_GSI_signal(xin, keyword,RawFileName)
 % using sensitivity of 150 dB re 1uPa/V
 % and peak A/D voltage of 2.5 V
 %keyboard
-if strcmp(keyword,'short')||~isempty(findstr(keyword,'DASAR2007'))
+if strcmp(keyword,'short')||~isempty(strfind(keyword,'DASAR2007'))
     [numd,dend] = DASAR_Shell_2007_equalization(1000,0);
     filt.a=dend;
     filt.b=numd;
@@ -4915,7 +4916,7 @@ if strcmp(keyword,'short')||~isempty(findstr(keyword,'DASAR2007'))
         x(:,I) = amp_Scale*filter(filt.b,filt.a,xt);
         %x(:,I) = amp_Scale*filter(filt.a,filt.b,xt);
     end
-elseif strcmp(keyword,'short')||~isempty(findstr(keyword,'DASARC'))
+elseif strcmp(keyword,'short')||~isempty(strfind(keyword,'DASARC'))
     %     x=xin.*(2.5/(2^16-1));  %x in Volts
     Nchan=size(xin,2);
     %      %%This is a 10 Hz high pass filter
@@ -4930,7 +4931,7 @@ elseif strcmp(keyword,'short')||~isempty(findstr(keyword,'DASARC'))
     end
 elseif strcmp(keyword,'filter')
     error('calibrate_GSI_signal: filter no longer a valid keyword...')
-elseif ~isempty(findstr(keyword,'NorthStar08')),
+elseif ~isempty(strfind(keyword,'NorthStar08')),
     
     %%This has a 10 Hz high pass filter
     filt.a=[1.000000000000000e+00    -2.911197067426073e+00     2.826172902227507e+00    -9.149758348014339e-01];
@@ -4938,7 +4939,7 @@ elseif ~isempty(findstr(keyword,'NorthStar08')),
     
     %     % oml = oml - mean(oml); % uPa     get rid of DC. not needed, filter has zero @ DC
     % x = (2.5/65535)* (10^(134/20))*filter(filt.b,filt.a,xin); % uPa     equalize
-    if ~isempty(findstr(RawFileName,'NS08A0'))|~isempty(findstr(RawFileName,'NA08Cx'))
+    if ~isempty(strfind(RawFileName,'NS08A0'))||~isempty(strfind(RawFileName,'NA08Cx'))
         amp_Scale = (2.5/65535)*(10^(134/20));
     else
         amp_Scale = (2.5/65535)*(10^(148.8/20));
@@ -4995,7 +4996,7 @@ elseif ~isempty(findstr(keyword,'NorthStar08')),
     % a = [1.00000000000000  -2.99111429220165   2.98226788807059  -0.99115359586894]; % 11/13/2005
     % % oml = oml - mean(oml); % uPa     get rid of DC. not needed, filter has zero @ DC
     % oml =  filter(b,a,oml); % uPa     equalize
-elseif ~isempty(findstr(keyword,'Liberty08')>0)
+elseif ~isempty(strfind(keyword,'Liberty08')>0)
     %om = xin * 2.5/65535; % convert from counts to V
     %om = (10^(134/20))*om; % uPa    convert from V to uPa
     %
@@ -5287,7 +5288,7 @@ end
 %toc
 end
 
-function [mux,Rbar,kappa] = vm_ests_uneq(x,options,flag)
+function [mux,Rbar,kappa] = vm_ests_uneq(x,options,flag) %#ok<STOUT>
 %VM_ESTS_UNEQ Maximum likelihood estimates of Von Mises parameters from data.
 %  [MUX,RBAR,KAPPA] = VM_ESTS_UNEQ(X,OPTIONS,FLAG) estimates the mean vector (MUX),
 %  the length of the mean vector (RBAR), and the concentration parameter (KAPPA)
@@ -5303,7 +5304,7 @@ function [mux,Rbar,kappa] = vm_ests_uneq(x,options,flag)
 %n1 = size(x,1);
 
 lx = sqrt(sum(x.^2,2));                % Get length of each vector
-idx = find(lx);                        % Get rid of 0-length vectors
+idx = lx;                        % Get rid of 0-length vectors
 %n = length(idx);
 %if n<n1,
 x = x(idx,:);
@@ -5450,7 +5451,7 @@ function [Ksout,Ns,EE_sort,VV]=extractKsbest_contour(x,ovlap,Nfft,chann, frange,
 % April 1, 2004-normalize by Fs*Nfft to put units as power spectral density
 EE_sort=[];VV=[];
 figure;
-if ~exist('nowin'),
+if ~exist('nowin', 'var'),
     nowin=0;
 elseif  nowin==1
     nowin=1;
@@ -5459,7 +5460,7 @@ else
 end
 
 Nel=length(chann);
-if ~exist('M')|M<0, M=Nfft;end
+if ~exist('M', 'var')||M<0, M=Nfft;end
 
 %Compute number of time snapshots
 Ns=floor(((size(x,1)/M)-ovlap)/(1-ovlap));
@@ -5520,7 +5521,7 @@ for I=0:(Ns-1),
     Xh=fft(xh,Nfft);
     Pwr=abs(Xh).^2;
     Pt=sum(Pwr,2);
-    if length(fbad)>0
+    if ~isempty(fbad)
         Pt(findexjunk)=0; %Remove bad freqencies.
         Pt(findexjunk+1)=0;
         Pt(findexjunk-1)=0;
@@ -5556,7 +5557,7 @@ end
 %%Collapse Kstot to non-zero components if desired
 Igood=find(fcount>0);
 
-if exist('keep_zeros') %%Keep all frequency bins, even if no power...
+if exist('keep_zeros', 'var') %%Keep all frequency bins, even if no power...
     %Igood=[min(Igood):max(Igood)];
     Igood=1:length(fcount);
 end
@@ -5678,7 +5679,7 @@ else
 end
 power=zeros(Ns,1);
 Nf=length(findex);
-if Isnap<0|~exist('Isnap'),
+if	~exist('Isnap', 'var')|| Isnap<0
     Isnap=0:Ns-1; %average all
 end
 
@@ -5792,7 +5793,7 @@ for If=1:length(freq)
         
         w=w/norm(w);
         K=squeeze(Ks(:,:,If));
-        if exist('yesnorm')
+        if exist('yesnorm', 'var')
             K=K/norm(K);
         end
         B(If,Iang)=real(w'*K*w);
@@ -5815,11 +5816,11 @@ end
 for If=1:length(freq),
     for Iang=1:length(angles)
         % lambda=1500/freq(If);
-        w=exp((i*2*pi*Lz*freq(If)/c)*sin(angles(Iang)*pi/180));
+        w=exp((1i*2*pi*Lz*freq(If)/c)*sin(angles(Iang)*pi/180));
         
         %B(If,Iang)=real(w'*Ks{If}*w)/(norm(Ks{If})*norm(w).^2);
         w=w/norm(w);
-        B(If,Iang)=1./real(w'*inv(squeeze(Ks(:,:,If)))*w);
+        B(If,Iang)=1./real(w'*(squeeze(Ks(:,:,If))\w));
         
     end
     
@@ -6003,7 +6004,7 @@ for Itilt=1:length(tilt_offset)
             
             phase = diag( 1.0 ./ sqrt( ck ) ) * exp( 1i * ck * ranges ) * diag( sqrt( 2 * pi ./ ranges ) );
             
-            Ibad = find(isnan(real(phase)));
+            Ibad = isnan(real(phase));
             phase(Ibad)=0;
             
             p0 = phi * phase;  % [rd Nm] x [Nm ranges] = [rd ranges]
@@ -6336,7 +6337,7 @@ DASAR_coords=DASAR_coords/1000;
 A=A/1000;
 B=B/1000;
 
-if ~exist('linel')
+if ~exist('linel', 'var')
     linel=35; %length of bearing lines in km
 end
 %subplot(3,1,LL);
@@ -6465,7 +6466,7 @@ rb=rb(:);
 ang=ang(:);
 Nb=Nb(:);
 
-if isstr(C),C=C(:);end;
+if ischar(C),C=C(:);end;
 
 if length(ra)~=length(rb),
     error('length(ra)~=length(rb)');
@@ -6507,7 +6508,7 @@ for k=1:maxk
         ypos=y0(k);
         radm=ra(k);
         radn=rb(k);
-        an=ang(k)
+        an=ang(k);
     else
         rada=ra(fix((k-1)/size(x0,1))+1);
         radb=rb(fix((k-1)/size(x0,1))+1);
@@ -6571,7 +6572,7 @@ function [area,a,b,ang,angax] = ellipsparms(S,critval,MD,VM)
 dp = VM-MD;
 theta = atan2(dp(2),dp(1));     % 4-quadrant inverse tangent: angle from MD to VM
 detS = det(S);
-if isnan(S(1)) | (detS<=0) | min(diag(S))<0,
+if isnan(S(1)) || (detS<=0) || min(diag(S))<0,
     area = nan;  a = nan;  b = nan;  ang = nan;  angax = nan;
 else
     area = pi*sqrt(detS)*critval;
@@ -6585,11 +6586,11 @@ else
         angax = angax+pi;           %    math convention (0 radians = 90 degrees, East;
     end                           %    pi radians = 270 degrees, West).
     ang = angax;
-    if ((theta>-pi/2) & (theta<pi/2)  & (ang>(pi/2+theta))), % Adjust angle for
+    if ((theta>-pi/2) && (theta<pi/2)  && (ang>(pi/2+theta))), % Adjust angle for
         ang = ang-pi;                                          %   estimated position
-    elseif ((theta>=pi/2) & (ang<(theta-pi/2))),             %   relative to center
+    elseif ((theta>=pi/2) && (ang<(theta-pi/2))),             %   relative to center
         ang = ang+pi;                                          %   of DASAR array.
-    elseif ((theta<=-pi/2) & (ang<(3*pi/2+theta))),
+    elseif ((theta<=-pi/2) && (ang<(3*pi/2+theta))),
         ang = ang+pi;
     end
 end
@@ -6622,21 +6623,21 @@ if nargin<3,
     r = 'm';
 end
 if nargin<4||all(k==0)          % Estimate kappa from the data
-    kest = logical(1);
+    kest = true;
 else
-    kest = logical(0);
+    kest = false;
 end
 r = lower(r);
 robust = strfind('mah',r);
 if isempty(robust),
     error('Input r must be either "m", "a", or "h"');
 end
-failed = strvcat('less than 2 bearings','negative variance estimates',...
-    'solution behind DASARs','failed to converge');
+failed = {'less than 2 bearings','negative variance estimates',...
+    'solution behind DASARs','failed to converge'};
 n = length(angle);
 
 if n<=1  %If only one set of bearings present...
-    outcome = failed(1,:);
+    outcome = failed{1};
 else
     cond_num = 1e15;       % For test of singularity.
     tc = 1.5;              % Tuning constant for robust versions.
@@ -6658,7 +6659,7 @@ else
     if cond2(M1)<cond_num,
         M2 = [sstar; -cstar]* z;
         xyhat = M1\M2;
-        while (~converge)&(iter<maxiter),
+        while (~converge)&&(iter<maxiter),
             iter = iter+1;
             xyold = xyhat;
             % d = dist(xyhat', [x y]');
@@ -6666,7 +6667,7 @@ else
             for JJ=1:length(x)
                 d(JJ)=sqrt((xyhat(1)-x(JJ)).^2+(xyhat(2)-y(JJ)).^2);
             end
-            if (robust>1) & (n>2), % Need 3 or more bearings to calculate weights for
+            if (robust>1) && (n>2), % Need 3 or more bearings to calculate weights for
                 dxy = repmat(xyhat',n,1)-[x y];      % robust methods
                 muhat = cart2pol(dxy(:,1),dxy(:,2));
                 Cd = cos([theta-muhat]');
@@ -6688,7 +6689,7 @@ else
             sstar = w.*(xyhat(2)-y')./(d.^3);
             cstar = w.*(xyhat(1)-x')./(d.^3);
             M1 = [sstar; (-cstar)]*[s -c];
-            if ((n-sum(~w))>1) & (cond2(M1)<cond_num),
+            if ((n-sum(~w))>1) && (cond2(M1)<cond_num),
                 M2 = [sstar; -cstar]*z;
                 xyhat = M1\M2;
                 converge = sum(abs(xyhat-xyold)<dist1)==2;
@@ -6701,13 +6702,13 @@ else
         dxy = repmat(xyhat',n,1)-[x y];
         muhat = cart2pol(dxy(:,1),dxy(:,2));
         Cd = cos([theta-muhat]');
-        if kest & (n>2),
+        if kest && (n>2),
             Cbar = (w*Cd'/sum(w))^(n/(n-2));   % Exponent is small sample size correction
             k = inv(2*(1-Cbar)+(1-Cbar)^2*(0.48794-0.82905*Cbar-1.3915*Cbar^2)/Cbar);
         end
         if Cd*w'>0,             % Weighted average of cosine differences (check
             VM = xyhat';          %   on bad solutions behind DASARs)
-            if kest & (n==2),     % Cannot estimate Qhat with only 2 bearings
+            if kest && (n==2),     % Cannot estimate Qhat with only 2 bearings
                 Qhat = nan*ones(2);
                 outcome = 'successful; 2 bearings; no Kappa';
             else
@@ -6716,21 +6717,24 @@ else
                 M3 = [k.*sstar*s cv; cv k.*cstar*c];
                 Qhat = inv(M3);
             end
-            if ~kest | (n>2),
+            if ~kest || (n>2),
                 if all(diag(Qhat)>0),
                     outcome = 'successful';       % Successful solution
                 else
-                    outcome = failed(2,:);        % Implausible variance estimate(s)
+                    outcome = failed{2};        % Implausible variance estimate(s)
                 end
             end
         else
-            outcome = failed(3,:);          % Bad solution behind DASARs
+            outcome = failed{3};          % Bad solution behind DASARs
         end % if all(Cd>0)
     else
-        outcome = failed(4,:);            % No convergence
+        outcome = failed{4};            % No convergence
     end   % if converge
 end     % if n<=1
-if ~isempty(strmatch(outcome,failed)),
+
+
+
+if ~isempty(strfind(failed,outcome)),
     VM = [nan nan];
     Qhat = nan*ones(2);
     w = zeros(1,n);
@@ -6746,7 +6750,7 @@ function [brefa_table,Icol]=calibrate_bearing_Shell2007(cal_dir,fname,no_load_ta
 %          no_load_table:  if exists, don't load table.
 % Note:  the calibration is assigned based on name of file, not name of enclosing directory..
 brefa_table=[];
-Islash=1+max(findstr(fname,'/'));
+Islash=1+max(strfind(fname,'/'));
 if ~isempty(Islash)
     fname=fname(Islash:end);
 end
