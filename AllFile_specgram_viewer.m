@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 05-Jun-2013 22:26:34
+% Last Modified by GUIDE v2.5 10-Jun-2013 16:10:31
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -502,6 +502,15 @@ set(handles.edit_datestr,'String',datestr(datenumm,0));
 
 guidata(hObject, handles);
 end
+
+% --- If Enable == 'on', executes on mouse press in 5 pixel border.
+% --- Otherwise, executes on mouse press in 5 pixel border or over slider_datestr.
+function	slider_datestr_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to slider_datestr (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+end
+
 % --- Executes during object creation, after setting all properties.
 function edit_mindB_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to edit_mindB (see GCBO)
@@ -822,6 +831,8 @@ chan=get(handles.edit_chan,'String');
 save_name=sprintf('soundsamp%s_%s',handles.mydir((Islash(end)+1):end),datestr(tdate_start,30));
 disp(['Saving ...' save_name]);
 
+save_path	=	fullfile(handles.notes.folder_name, save_name);
+
 try
     if size(x,2)>size(x,1)
         x=x';
@@ -829,15 +840,15 @@ try
     for Ichan=1:size(x,2)
         xfilt(:,Ichan)=filter(handles.b,1,x(:,Ichan)); 
     end
-    wavwrite(xfilt/(1.1*max(max(abs(xfilt)))),Fs,save_name);
+    wavwrite(xfilt/(1.1*max(max(abs(xfilt)))),Fs,save_path);
 
 catch
     disp('No filtering desired... exists; saving raw acoustic data to WAV');
     xfilt=[];
-    wavwrite(x/(1.1*max(max(abs(x)))),Fs,save_name);
+    wavwrite(x/(1.1*max(max(abs(x)))),Fs,save_path);
 
 end
-save(save_name,'x','xfilt','Fs','tdate_start','hdr');
+save(save_path,'x','xfilt','Fs','tdate_start','hdr');
 
 end
 
@@ -941,11 +952,12 @@ if strcmpi(handles.filetype,'MDAT')
         for I=1:2
             if any(get(0,'child')==I)
                 save_name1=sprintf('%s_%i',save_name,I);
+				save_path	=	fullfile(handles.notes.folder_name, save_name1);
                 disp(['Printing %s ...' save_name1]);
                 figure(I)
                 orient landscape
-                print(I,'-djpeg',[save_name1 '.jpg']);
-                save([save_name1 '.mat'],'x','Fs');
+                print(I,'-djpeg',[save_path '.jpg']);
+                save([save_path '.mat'],'x','Fs');
                 close(I);
             end
             
@@ -976,13 +988,14 @@ tlen=handles.tlen;
 chan=get(handles.edit_chan,'String');
 Idot=strfind(handles.myfile,'.')-1;
 save_name=sprintf('soundsamp_%s_%s_%s',handles.myfile(1:Idot),datestr(tdate_start,30),chan);
+save_path	=	fullfile(handles.notes.folder_name, save_name);
 disp(['Printing %s ...' save_name]);
 
 orient landscape
-print(figchc,'-djpeg',save_name);
-print(figchc,'-dtiff',save_name);
+print(figchc,'-djpeg',save_path);
+print(figchc,'-dtiff',save_path);
 
-%print('-depsc',save_name);
+%print('-depsc',save_path);
 
 end
 % --- Executes on button press in pushbutton_annotate.
@@ -1113,6 +1126,7 @@ mydir=pwd;
 cd(handles.inputdir);
 handles.inputfilename=uigetfile('*','Select input file:');
 handles.fid=fopen(handles.inputfilename);
+set(handles.pushbutton_fileread, 'Enable', 'On');
 cd(mydir);
 guidata(hObject, handles);
 
@@ -1241,7 +1255,10 @@ end
 y_scale=(x-min(x))*(Nmax/(max(x)-min(x)));
 Istart=input('Enter an integer for filename: ');
 
-fid=fopen(['PLAY.' int2str(Istart)],'w','ieee-be');
+save_name	=	['PLAY.' int2str(Istart)];
+save_path	=	fullfile(handles.notes.folder_name, save_name);
+
+fid=fopen(save_path,'w','ieee-be');
 COUNT = fwrite(fid,y_scale,'uint16');
 fclose(fid);
 
@@ -1315,7 +1332,6 @@ set(hObject,'SelectionChangeFcn',@uipanel_type_SelectionChangeFcn);
 
 
 end
-
 
 function edit_chan_Callback(hObject, eventdata, handles)
 % hObject    handle to edit_chan (see GCBO)
@@ -3213,7 +3229,27 @@ end
 
 end
 
+function edit_folder_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_folder (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
 
+% Hints: get(hObject,'String') returns contents of edit_folder as text
+%        str2double(get(hObject,'String')) returns contents of edit_folder as a double
+end
+
+% --- Executes during object creation, after setting all properties.
+function edit_folder_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_folder (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+end
 
 
 %%	Supporting functions, i.e. not auto-generated callbacks
@@ -6927,6 +6963,10 @@ else
 	if	handles.fig_updated
 		set(handles.pushbutton_notes_new, 'Enable', 'on');
 	end
+	
+	%	Set folder text box to selected directory
+	set(handles.edit_folder, 'String', folder_name);
+
 end
 end
 
@@ -7120,13 +7160,4 @@ handles		=	guidata(handles.edit_datestr);
 pushbutton_update_Callback(handles.pushbutton_update, [], handles);
 handles		=	guidata(handles.pushbutton_update);
 
-end
-
-
-% --- If Enable == 'on', executes on mouse press in 5 pixel border.
-% --- Otherwise, executes on mouse press in 5 pixel border or over slider_datestr.
-function	slider_datestr_ButtonDownFcn(hObject, eventdata, handles)
-% hObject    handle to slider_datestr (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 end
