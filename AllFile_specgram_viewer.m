@@ -6954,9 +6954,10 @@ else
 	%	if file already exists, load data and enable show by defualt
 	if	exist(file_path, 'file')
 		LS	=	load(file_path);
-		handles.notes.Data	=	LS.Data;
+		handles.notes.Data	=	check_notes(LS.Data);
 		handles.notes.show	=	true;
 		opt				=	'on';
+		
 	else
 		handles.notes.Data	=	[];
 		handles.notes.show	=	false;
@@ -6988,13 +6989,13 @@ Description(1)	=	[];
 names		=	fieldnames(Event);
 N_fields	=	length(names);
 defaults	=	cell(N_fields,1);
-tf_numeric	=	false(N_fields,1);
+%tf_numeric	=	false(N_fields,1);
 for	ii	=	1:N_fields
 	value	=	Event.(names{ii});
-	if	~ischar(value)
+%	if	~ischar(value)
 		value	=	num2str(value);
-		tf_numeric(ii)	=	true;
-	end
+%		tf_numeric(ii)	=	true;
+%	end
 	defaults{ii}	=	value;
 end
 
@@ -7017,9 +7018,9 @@ end
 NewEvent.start_time		=	start_time;
 for	ii	=	1:N_fields
 	value	=	answer{ii};
-	if	tf_numeric(ii)
-		value	=	str2double(value);
-	end
+% 	if	tf_numeric(ii)
+% 		value	=	str2double(value);
+% 	end
 	NewEvent.(names{ii})	=	value;
 end
 
@@ -7091,9 +7092,9 @@ for	ii	=	1:length(i_show)
 	ie		=	i_show(ii);
 	event	=	Events(ie);
 	x		=	event.start_time - Times(1);	x	=	x*24*60*60;
-	y		=	event.min_freq/1000;
-	width	=	event.duration;
-	height	=	(event.max_freq - event.min_freq)/1000;
+	y		=	str2double(event.min_freq)/1000;
+	width	=	str2double(event.duration);
+	height	=	(str2double(event.max_freq) - str2double(event.min_freq))/1000;
 
 	h_show(ii)	=	rectangle('Position',[x,y,width,height],...
 				'Curvature',[0.3],...
@@ -7165,5 +7166,66 @@ handles		=	guidata(handles.edit_datestr);
 %	update figure window
 pushbutton_update_Callback(handles.pushbutton_update, [], handles);
 handles		=	guidata(handles.pushbutton_update);
+
+end
+
+%	Checks existing notes data structure for format compliance
+function	Data	=	check_notes(Data)
+
+if	isempty(Data)
+	return;
+end
+
+req_fields	=	{'Description', 'Template', 'Events'};
+if	~isstruct(Data) || ~all(isfield(Data, req_fields))
+	errmsg	=	'Existing Data must be a structure containing the fields: \n ';
+	for		ii	=	1:length(req_fields)
+		errmsg	=	[errmsg req_fields{ii} ', ']; %#ok<AGROW>
+	end
+	errmsg(end)		=	[];		errmsg(end)		=	[];
+	error(errmsg, []);
+end
+
+if	~iscell(Data.Description)
+	error('Description must be a cell array of strings');
+end
+
+if	~isstruct(Data.Template)
+	error('Template must be a struct with the desired data field names');
+end
+
+N		=	length(Data.Description);
+names	=	fieldnames(Data.Template);
+if	N ~= length(names)
+	error('# of fields in Template do not match # of descriptions');
+end
+
+if	~strcmp(names{1}, 'start_time')
+	error('First field in Template (and Events) must be start_time');
+end
+
+if	isempty(Data.Events)
+	return;
+else
+	names2	=	fieldnames(Data.Events);
+end
+
+if	~strcmp(names, names2)
+	error('Template and Events have differring structures');
+end
+
+%	At this point assume most everything is ok
+%	return
+
+%	Code to convert all fields (except start_time to strings)
+for ii	=	2:N
+	%	!?!? Existing strings are automatically passed through, but do I
+	%	need to specifically check for data types other than numeric?
+	Data.Template.(names{ii})		=	num2str(Data.Template.(names{ii}));
+	for	jj	=	1:length(Data.Events)
+		Data.Events(jj).(names{ii})		=	num2str(Data.Events(jj).(names{ii}));
+	end
+end
+
 
 end
