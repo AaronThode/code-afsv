@@ -3038,8 +3038,14 @@ max_freq	=	(1000*max(Freq));
 duration	=	(abs(Times(2) - Times(1)));
 
 %	Parameters taken from underlying data
-noise_db	=	0;
-peak_db		=	0;
+T			=	handles.sgram.T;
+F			=	handles.sgram.F/1e3;
+B			=	handles.sgram.B;
+i_time		=	(min(Times) <= T) & (T <= max(Times));
+i_freq		=	(min(Freq) <= F) & (F <= max(Freq));
+PSD			=	10*log10(B(i_freq, i_time));
+noise_db	=	median(PSD(:));
+peak_db		=	max(PSD(:));
 
 %	Draw square on plot
 x		=	min(Times);
@@ -3298,7 +3304,9 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
     %[B,FF,TT]=specgram(x(:,1),Nfft,Fs,hanning(Nfft),round(ovlap*Nfft));
     [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
     %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
-    
+	handles.sgram.T	=	TT;
+    handles.sgram.F	=	FF;
+	handles.sgram.B	=	B;
     if strcmp(handles.display_view,'Spectrogram')
         axes(handles.axes1);
     else
@@ -3348,8 +3356,6 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
     % set(gcf,'pos',[30   322  1229   426])
     set(gca,'fontweight','bold','fontsize',14);
     xlabel('Time (sec)');ylabel('Frequency (kHz)');
-    handles.T=TT;
-    handles.F=FF;
     if ~strcmp(handles.display_view,'Spectrogram')
         title(get(handles.text_filename,'String'));
     end
