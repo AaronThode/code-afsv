@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 11-Jun-2013 12:39:22
+% Last Modified by GUIDE v2.5 11-Jun-2013 13:01:14
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -2873,6 +2873,43 @@ end
 
 %%	new annotation stuff
 
+% --- Executes on button press in pushbutton_notes_last.
+function pushbutton_notes_last_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_notes_last (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+N		=	length(handles.notes.Data.Events);
+if	(N == 0)
+	error('What happened?');
+end
+
+handles.notes.i_sel		=	N;
+
+handles		=	update_events(handles);
+
+%	this might be redundant
+guidata(hObject, handles);
+
+end
+
+% --- Executes on button press in pushbutton_notes_first.
+function pushbutton_notes_first_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_notes_first (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+N		=	length(handles.notes.Data.Events);
+if	(N == 0)
+	error('What happened?');
+end
+
+handles.notes.i_sel		=	1;
+
+handles		=	update_events(handles);
+
+%	this might be redundant
+guidata(hObject, handles);
+end
 
 % --- Executes on button press in pushbutton_notes_next.
 function pushbutton_notes_next_Callback(hObject, eventdata, handles)
@@ -3271,6 +3308,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 end
+
 
 
 %%	Supporting functions, i.e. not auto-generated callbacks
@@ -6941,6 +6979,20 @@ if strcmp(player.Running, 'on')
 end
 end
 
+%	disables (or enables) note controls
+function	disable_notes_nav(handles, opt)
+
+if	nargin < 2 || isempty(opt)
+	opt		=	'off';
+end
+
+set(handles.pushbutton_notes_first, 'Enable', opt);
+set(handles.pushbutton_notes_last, 'Enable', opt);
+set(handles.pushbutton_notes_next, 'Enable', opt);
+set(handles.pushbutton_notes_prev, 'Enable', opt);
+
+end
+
 %	Checks Notes folder for existing files and loads them
 function	handles		=	load_notes_file(handles)
 
@@ -6948,13 +7000,12 @@ folder_name	=	handles.notes.folder_name;
 file_name	=	handles.notes.file_name;
 
 
-%	New notes file disables these buttons until otherwise activated
+%	New notes file disables all notes controls, until otherwise activated
 opt		=	'off';
+disable_notes_nav(handles, opt);
 set(handles.pushbutton_notes_new, 'Enable', opt);
 set(handles.pushbutton_notes_save, 'Enable', opt);
 set(handles.pushbutton_notes_edit, 'Enable', opt);
-set(handles.pushbutton_notes_next, 'Enable', opt);
-set(handles.pushbutton_notes_prev, 'Enable', opt);
 set(handles.checkbox_notes_show, 'Enable', opt);
 set(handles.checkbox_notes_delete, 'Enable', opt);
 
@@ -7015,8 +7066,7 @@ else
 		handles.notes.show	=	false;
 		opt				=	'off';
 	end
-	set(handles.pushbutton_notes_next, 'Enable', opt);
-	set(handles.pushbutton_notes_prev, 'Enable', opt);
+	disable_notes_nav(handles,opt);
 	set(handles.checkbox_notes_show, 'Value', handles.notes.show);
 	set(handles.checkbox_notes_show, 'Enable', opt);
 	if	handles.fig_updated
@@ -7119,8 +7169,7 @@ if	isempty(handles.notes.Data) || isempty(handles.notes.Data.Events)...
 	set(handles.pushbutton_notes_edit,'Enable','off');
 	set(handles.checkbox_notes_delete,'Enable','off');
 	%	Disable prev/next buttons
-	set(handles.pushbutton_notes_prev,'Enable','off');
-	set(handles.pushbutton_notes_next,'Enable','off');
+	disable_notes_nav(handles);
 	return;
 end
 Events	=	handles.notes.Data.Events;
@@ -7166,12 +7215,10 @@ guidata(h_axes, handles);
 
 %	Enable prev/next buttons
 if	length(Events) > 1
-	set(handles.pushbutton_notes_prev,'Enable','on');
-	set(handles.pushbutton_notes_next,'Enable','on');
+	disable_notes_nav(handles,'on');
 else
 	%	Disable prev/next buttons
-	set(handles.pushbutton_notes_prev,'Enable','off');
-	set(handles.pushbutton_notes_next,'Enable','off');
+	disable_notes_nav(handles,'off');
 end
 
 %	Enable edit/delete, if selected event is visible
