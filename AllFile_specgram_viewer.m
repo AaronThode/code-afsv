@@ -392,17 +392,36 @@ function edit_winlen_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of edit_winlen as text
 %        str2double(get(hObject,'String')) returns contents of edit_winlen as a double
 tlen	=	str2double(get(hObject,'String'));
-if tlen <= 240
-    maxx		=	get(handles.slider_datestr,'max');
-    minn		=	get(handles.slider_datestr,'min');
-    slider_step	=	get(handles.slider_datestr,'sliderstep');
-    slider_step(1)	=datenum(0,0,0,0,0,tlen)/(maxx-minn);
-    set(handles.slider_datestr,'sliderstep',slider_step)
-else
-    errordlg('window length greater than 240 sec');
+tlen_max=	5*60;
+
+if tlen > tlen_max
+	%	Make sure user actually intended to set a window this long
+	tlen_opts{1}	=	['Given, ' num2str(tlen) 's'];
+	tlen_opts{2}	=	['Suggested, ' num2str(tlen_max) 's'];
+	tlen_opts{3}	=	['Original, ' num2str(handles.tlen) 's'];
+	choice	=	questdlg('Are you sure you want to use a window size this big? Select...', ...
+						'Window length sanity check', ...
+						tlen_opts{1}, tlen_opts{2}, tlen_opts{3},...
+						tlen_opts{3});
+	% Handle response
+	switch choice
+		case tlen_opts{1}
+			%tlen	=	tlen;
+		case tlen_opts{2}
+			tlen	=	tlen_max;
+		case tlen_opts{3}
+			tlen	=	handles.tlen;
+	end
 end
 
+maxx		=	get(handles.slider_datestr,'max');
+minn		=	get(handles.slider_datestr,'min');
+slider_step	=	get(handles.slider_datestr,'sliderstep');
+slider_step(1)	=datenum(0,0,0,0,0,tlen)/(maxx-minn);
+set(handles.slider_datestr,'sliderstep',slider_step)
 
+
+set(hObject, 'String', num2str(tlen));
 handles.tlen	=	tlen;
 guidata(hObject, handles);
 
