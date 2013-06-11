@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 10-Jun-2013 16:10:31
+% Last Modified by GUIDE v2.5 11-Jun-2013 12:39:22
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -659,6 +659,38 @@ handles.audio_stale		=	true;
 guidata(hObject,handles);
 end
 
+
+% --- Executes on selection change in popupmenu_scalesound.
+function popupmenu_scalesound_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenu_scalesound (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu_scalesound contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenu_scalesound
+
+handles.audio_scale		=	get(hObject,'Value');
+handles.audio_stale		=	true;
+
+guidata(hObject, handles);
+end
+
+% --- Executes during object creation, after setting all properties.
+function popupmenu_scalesound_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenu_scalesound (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+handles.audio_scale		=	1;
+guidata(hObject, handles);
+end
+
 % --- Executes on button press in pushbutton_playsound.
 function pushbutton_playsound_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_playsound (see GCBO)
@@ -774,7 +806,8 @@ if	audio_stale
 	x	=	x ./ max(abs(x));
 	
 	%	Create audio player object
-	player	=	audioplayer(x, Fs);
+	Fs_play		=	Fs * handles.audio_scale;
+	player		=	audioplayer(x, Fs_play);
 	handles.audio_stale		=	false;
 	handles.audioplayer		=	player;
 	
@@ -783,6 +816,7 @@ if	audio_stale
 	hold on;
 	hline	=	plot([0 0], YL, 'r');	% plot the marker
 	hold off;
+	try	delete(handles.hline);	end
 	handles.hline			=	hline;
 	
 	%	set callbacks for audioplayer
