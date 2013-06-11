@@ -810,6 +810,7 @@ if	audio_stale
 	player		=	audioplayer(x, Fs_play);
 	handles.audio_stale		=	false;
 	handles.audioplayer		=	player;
+	handles.audioFs			=	Fs;
 	
 	%	Draw initial marker line
 	YL		=	ylim;					% get the y-axis limits
@@ -6971,7 +6972,7 @@ hline	=	handles.hline;
 if strcmp(player.Running, 'on')
 	% get the currently playing sample #
 	x	=	player.CurrentSample;
-	Fs	=	player.SampleRate;
+	Fs	=	handles.audioFs;
 
 	% change position of marker line
 	set(hline,'XData',x/Fs*[1 1]);
