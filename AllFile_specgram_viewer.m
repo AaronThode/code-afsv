@@ -3072,44 +3072,6 @@ sig_type	=	sig_types{choice};
 Data	=	handles.notes.Data;
 i_sel	=	handles.notes.i_sel;
 
-%	Default values if none already present
-if	isempty(Data)
-	%	Default prompt
-	Description	=	{'Start Time',...
-					'Author',...
-					'Pulse or FM?',...
-					'Call Type',...
-					'Min Freq (Hz)',...
-					'Max Freq (Hz)',...
-					'Duration (s)',...
-					'Noise (dB)',...
-					'Peak (dB)',...
-					'# of pulses',...
-					'# of harmonics',...
-					'Modulation (Hz)',...
-					'Comments'};
-
-	%	Default values
-	Template.start_time		=	0;
-	Template.author			=	'Your name';
-	Template.sig_type		=	sig_type;
-	Template.call_type		=	'S1';
-	Template.min_freq		=	0;
-	Template.max_freq		=	5000;
-	Template.duration		=	10;
-	Template.noise_db		=	0;
-	Template.peak_db		=	27;
-	Template.num_pulses		=	2;
-	Template.num_harmonics	=	-1;
-	Template.modulation		=	0;
-	Template.comments		=	'';
-
-	Data.Description	=	Description;
-	Data.Template		=	Template;
-	Data.Events			=	[];
-end
-
-
 if	~isempty(Data.Events)
 	if	~isempty(i_sel)
 		Event	=	Data.Events(i_sel);
@@ -6959,7 +6921,44 @@ else
 		opt				=	'on';
 		
 	else
-		handles.notes.Data	=	[];
+		%	Create defaults if none already present
+		%	Default prompt
+		Description	=	{'Start Time',...
+						'Author',...
+						'Pulse or FM?',...
+						'Call Type',...
+						'Min Freq (Hz)',...
+						'Max Freq (Hz)',...
+						'Duration (s)',...
+						'Noise (dB)',...
+						'Peak (dB)',...
+						'# of pulses',...
+						'# of harmonics',...
+						'Modulation (Hz)',...
+						'Confidence (1-5)',...
+						'Comments'};
+
+		%	Default values
+		Template.start_time		=	0;
+		Template.author			=	'Your name';
+		Template.sig_type		=	'NA';
+		Template.call_type		=	'S1';
+		Template.min_freq		=	0;
+		Template.max_freq		=	5000;
+		Template.duration		=	10;
+		Template.noise_db		=	0;
+		Template.peak_db		=	27;
+		Template.num_pulses		=	2;
+		Template.num_harmonics	=	-1;
+		Template.modulation		=	0;
+		Template.confidence		=	3;
+		Template.comments		=	'';
+
+		Data.Description	=	Description;
+		Data.Template		=	Template;
+		Data.Events			=	[];
+		
+		handles.notes.Data	=	Data;
 		handles.notes.show	=	false;
 		opt				=	'off';
 	end
