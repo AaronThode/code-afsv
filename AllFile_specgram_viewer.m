@@ -205,9 +205,8 @@ function OpenMenuItem_Callback(hObject, eventdata, handles)
 %end
 
 %	List of supported file types + descriptions/names
-File_types	=	{'*';'MT';'WAV';'GSI';'ADI';'DAT';'MDAT';'MAT'};
-File_descs	=	{	'All files';...
-					'MT files';...
+File_types	=	{'MT';'WAV';'GSI';'ADI';'DAT';'MDAT';'MAT'};
+File_descs	=	{	'MT files';...
 					'WAV files';...
 					'GSI files';...
 					'ADI files';...
@@ -216,13 +215,20 @@ File_descs	=	{	'All files';...
 					'Simulations'};
 
 %	 Setup menu file extensions
-menustr		=	cell(length(File_types),1);
+menustr		=	cell(length(File_types)+1,1);
+all_types	=	[];
 for	ff = 1:length(File_types)
 	ftype	=	File_types{ff};
 	fdesc	=	File_descs{ff};
-	menustr{ff,1}	=	['*.' lower(ftype), ', *.' upper(ftype)];
-	menustr{ff,2}	=	[fdesc ' (' menustr{ff,1} ')'];
+	menustr{ff+1,1}	=	['*.' lower(ftype), ';*.' upper(ftype)];
+	menustr{ff+1,2}	=	[fdesc ' (' menustr{ff+1,1} ')'];
+	
+	all_types	=	[all_types ';' menustr{ff+1,1}];
 end
+%	Prepend all supported files
+all_types(1)	=	[];			%	Get rid of initial ;
+menustr{1,1}	=	all_types;
+menustr{1,2}	=	['All supported files' ' (...)'];
 
 
 %	Specify default file
