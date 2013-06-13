@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.deploytool" plugin-version="1.0">
-  <configuration target="target.standalone.win" target-name="Windows Standalone Application" name="AllFile_specgram_viewer_Win" location="C:\Users\jit\Desktop\AllFile_specgram_viewer" file="C:\Users\jit\Desktop\AllFile_specgram_viewer\AllFile_specgram_viewer_Win.prj" preferred-package-type="package.type.exe" build-checksum="2316357282" preferred-package-location="C:\Users\jit\Desktop\AllFile_specgram_viewer">
-    <param.project.name>C:\Users\jit\Desktop\AllFile_specgram_viewer\AllFile_specgram_viewer_Win.prj</param.project.name>
+  <configuration target="target.standalone.win" target-name="Windows Standalone Application" name="AllFile_specgram_viewer_Win" location="\\enterprise.ucsd.edu\jit\Work\matlab\AllFile_specgram_viewer" file="\\enterprise.ucsd.edu\jit\Work\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win.prj" preferred-package-type="package.type.exe" build-checksum="1944955205" preferred-package-location="H:\Work\matlab\AllFile_specgram_viewer">
+    <param.project.name>\\enterprise.ucsd.edu\jit\Work\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win.prj</param.project.name>
     <param.target.type>Windows Standalone Application</param.target.type>
     <param.appname>AllFile_specgram_viewer_Win</param.appname>
     <param.intermediate>${PROJECT_ROOT}\AllFile_specgram_viewer_Win\src</param.intermediate>
@@ -65,8 +65,8 @@
     </fileset.resources>
     <fileset.package />
     <build-deliverables>
-      <file name="readme.txt" location="${PROJECT_ROOT}\AllFile_specgram_viewer_Win\distrib" optional="true">C:\Users\jit\Desktop\AllFile_specgram_viewer\AllFile_specgram_viewer_Win\distrib\readme.txt</file>
-      <file name="AllFile_specgram_viewer_Win.exe" location="${PROJECT_ROOT}\AllFile_specgram_viewer_Win\distrib" optional="false">C:\Users\jit\Desktop\AllFile_specgram_viewer\AllFile_specgram_viewer_Win\distrib\AllFile_specgram_viewer_Win.exe</file>
+      <file name="readme.txt" location="${PROJECT_ROOT}\AllFile_specgram_viewer_Win\distrib" optional="true">\\enterprise.ucsd.edu\jit\Work\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win\distrib\readme.txt</file>
+      <file name="AllFile_specgram_viewer_Win.exe" location="${PROJECT_ROOT}\AllFile_specgram_viewer_Win\distrib" optional="false">\\enterprise.ucsd.edu\jit\Work\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win\distrib\AllFile_specgram_viewer_Win.exe</file>
     </build-deliverables>
     <workflow />
     <matlab>
