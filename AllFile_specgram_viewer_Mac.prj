@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.deploytool" plugin-version="1.0">
-  <configuration target="target.standalone" target-name="Standalone Application" name="AllFile_specgram_viewer_Mac" location="/Users/jit/Work/matlab/AllFile_specgram_viewer" file="/Users/jit/Work/matlab/AllFile_specgram_viewer/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.zip" build-checksum="2140386778" preferred-package-location="/Users/jit/Downloads">
+  <configuration target="target.standalone" target-name="Standalone Application" name="AllFile_specgram_viewer_Mac" location="/Users/jit/Work/matlab/AllFile_specgram_viewer" file="/Users/jit/Work/matlab/AllFile_specgram_viewer/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.zip" build-checksum="3412663610" preferred-package-location="/Users/jit/Work/matlab/AllFile_specgram_viewer">
     <param.project.name>/Users/jit/Work/matlab/AllFile_specgram_viewer/AllFile_specgram_viewer_Mac.prj</param.project.name>
     <param.target.type>Standalone Application</param.target.type>
     <param.appname>AllFile_specgram_viewer_Mac</param.appname>
@@ -569,7 +569,7 @@
       <vista>false</vista>
       <linux>false</linux>
       <solaris>false</solaris>
-      <osver>10.8.3</osver>
+      <osver>10.8.4</osver>
       <os32>false</os32>
       <os64>true</os64>
       <arch>maci64</arch>
