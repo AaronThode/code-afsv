@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 11-Jun-2013 13:01:14
+% Last Modified by GUIDE v2.5 13-Jun-2013 13:46:08
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -421,11 +421,11 @@ if tlen > tlen_max
 	end
 end
 
-maxx		=	get(handles.slider_datestr,'max');
-minn		=	get(handles.slider_datestr,'min');
-slider_step	=	get(handles.slider_datestr,'sliderstep');
-slider_step(1)	=datenum(0,0,0,0,0,tlen)/(maxx-minn);
-set(handles.slider_datestr,'sliderstep',slider_step)
+% maxx		=	get(handles.slider_datestr,'max');
+% minn		=	get(handles.slider_datestr,'min');
+% slider_step	=	get(handles.slider_datestr,'sliderstep');
+% slider_step(1)	=datenum(0,0,0,0,0,tlen)/(maxx-minn);
+% set(handles.slider_datestr,'sliderstep',slider_step);
 
 
 set(hObject, 'String', num2str(tlen));
@@ -3558,8 +3558,8 @@ set(handles.slider_datestr,'Min',0);
 set(handles.slider_datestr,'Max',1);
 
 %	20sec and 1min increments
-dT_min	=	(tmax-tmin)*24*60;
-set(handles.slider_datestr,'sliderstep',[(20/60)/dT_min 1/dT_min]);
+dT	=	(tmax-tmin)*24*60;
+set(handles.slider_datestr,'SliderStep',[(20/60)/dT 1/dT]);
 
 set(handles.slider_datestr,'Value',0.5);
 handles.tdate_start		=	0.5*(tmin+tmax);
@@ -7253,7 +7253,6 @@ end
 
 end
 
-
 %	Merge Events, inserting missing fields as needed
 function	Events		=	merge_events(Events1, Events2)
 
@@ -7278,7 +7277,6 @@ Events2(end)	=	[];
 Events	=	add_event(Events1, Events2);
 
 end
-
 
 %	Overlays events within current window
 function	handles	=	plot_events(handles)
