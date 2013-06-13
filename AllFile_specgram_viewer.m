@@ -283,10 +283,11 @@ handles.fig_updated		=	false;
 set(handles.pushbutton_notes_select, 'Enable', 'on');
 %	set notes file name and dir accordingly
 if	isempty(handles.notes.folder_name)
-	handles.notes.folder_name	=	pathname;
+	notes_folder	=	pathname;
+else
+	notes_folder	=	[];
 end
-handles.notes.file_name	=	[fname '-notes' '.mat'];
-handles		=	load_notes_file(handles);
+handles		=	load_notes_file(handles, notes_folder);
 
 
 
@@ -3048,9 +3049,7 @@ if isnumeric(folder_name)
 	return;
 end
 
-handles.notes.folder_name	=	folder_name;
-
-handles		=	load_notes_file(handles);
+handles		=	load_notes_file(handles, folder_name);
 guidata(hObject, handles);
 
 end
@@ -7001,10 +7000,30 @@ set(handles.pushbutton_notes_prev, 'Enable', opt);
 end
 
 %	Checks Notes folder for existing files and loads them
-function	handles		=	load_notes_file(handles)
+function	handles		=	load_notes_file(handles, new_folder)
 
-folder_name	=	handles.notes.folder_name;
-file_name	=	handles.notes.file_name;
+
+%	First check that current notes are saved before proceeding
+if	~handles.notes.saved && ~handles.notes.readonly
+	qtitle	=	'Unsaved changes';
+	qstring	=	{'Warning: current changes to notes not saved!'...
+				'Write to file before continuing?'};
+	str1	=	'Yes';
+	str2	=	'No';
+	button	=	questdlg(qstring, qtitle, str1, str2, str1);
+	
+	switch	button
+		case	str1
+			%	Save file
+			pushbutton_notes_save_Callback(handles.pushbutton_notes_save,...
+											[], handles);
+			handles		=	guidata(handles.pushbutton_notes_save);
+		case	str2
+			%	Don't bother
+		otherwise
+			error('This should not be reached');
+	end
+end
 
 
 %	New notes file disables all notes controls, until otherwise activated
@@ -7016,74 +7035,147 @@ set(handles.pushbutton_notes_edit, 'Enable', opt);
 set(handles.checkbox_notes_show, 'Enable', opt);
 set(handles.checkbox_notes_delete, 'Enable', opt);
 
-%	! This case should never actually happen
-if isempty(folder_name) || isempty(file_name)
-	warning('No folder or file name set for notes');
-	return;
+
+%	Switch to new folder and check for existing files
+if	exist('new_folder','var') && ~isempty(new_folder)
+	folder_name	=	new_folder;
 else
-	file_path		=	fullfile(folder_name, file_name);
-	handles.notes.file_path	=	file_path;
+	folder_name	=	handles.notes.folder_name;
+end
+[~,fname,~]		=	fileparts(handles.myfile);
+fname			=	[fname '-notes'];
+user_name		=	getusername();
+%	Default file name
+file_name	=	[fname '-' user_name '.mat'];
+sel_names	=	[];
+
+%	Find all existing files
+listing		=	dir(fullfile(folder_name, [fname,'*.mat']));
+if	~isempty(listing)
+	%	Ask user which file(s) to load
+	N_files		=	length(listing);
+	list_files	=	cell(N_files,1);
+	for	ii	=	1:N_files
+		list_names{ii}	=	listing(ii).name;
+	end
 	
-	%	if file already exists, load data and enable show by defualt
-	if	exist(file_path, 'file')
-		LS	=	load(file_path);
-		handles.notes.Data	=	check_notes(LS.Data);
-		handles.notes.show	=	true;
-		opt				=	'on';
-		
+	[Sel, OK]	=	listdlg('ListString', list_names,...
+							'Name', 'Available notes',...
+							'PromptString', 'Select file(s) to load:',...
+							'OKString', 'Load',...
+							'CancelString', 'New');
+	if	(OK == 0) || isempty(Sel)
+		sel_names	=	[];
 	else
-		%	Create defaults if none already present
-		%	Default prompt
-		Description	=	{'Start Time',...
-						'Author',...
-						'Pulse or FM?',...
-						'Call Type',...
-						'Min Freq (Hz)',...
-						'Max Freq (Hz)',...
-						'Duration (s)',...
-						'Noise (dB)',...
-						'Peak (dB)',...
-						'# of pulses',...
-						'# of harmonics',...
-						'Modulation (Hz)',...
-						'Confidence (1-5)',...
-						'Comments'};
-
-		%	Default values
-		Template.start_time		=	0;
-		Template.author			=	'Your name';
-		Template.sig_type		=	'NA';
-		Template.call_type		=	'S1';
-		Template.min_freq		=	0;
-		Template.max_freq		=	5000;
-		Template.duration		=	10;
-		Template.noise_db		=	0;
-		Template.peak_db		=	27;
-		Template.num_pulses		=	2;
-		Template.num_harmonics	=	-1;
-		Template.modulation		=	0;
-		Template.confidence		=	3;
-		Template.comments		=	'';
-
-		Data.Description	=	Description;
-		Data.Template		=	Template;
-		Data.Events			=	[];
-		
-		handles.notes.Data	=	Data;
-		handles.notes.show	=	false;
-		opt				=	'off';
-	end
-	disable_notes_nav(handles,opt);
-	set(handles.checkbox_notes_show, 'Value', handles.notes.show);
-	set(handles.checkbox_notes_show, 'Enable', opt);
-	if	handles.fig_updated
-		set(handles.pushbutton_notes_new, 'Enable', 'on');
+		sel_names	=	list_names(Sel);
+	
+		%	If just one file, then make it the target of future saves
+		if	length(Sel) == 1
+			file_name	=	sel_names{1};
+		elseif	length(Sel) > 1
+		%	Otherwise new merged file
+			user_name	=	'merged';
+			file_name	=	[fname '-' user_name '.mat'];
+		end
 	end
 	
-	%	Set folder text box to selected directory
-	set(handles.edit_folder, 'String', folder_name);
+	%	Make sure file name for new files is unique
+	if	length(Sel) ~= 1	%i.e. we're not working with a specific file
+		ii	=	0;
+		while	any(strcmp(file_name, list_names))
+			ii	=	ii + 1;
+			file_name	=	[fname '-' user_name '-' num2str(ii) '.mat'];
+		end
+	end
 
 end
+
+
+%	New file with default data template
+if isempty(listing) || isempty(sel_names)
+	%	Create defaults if none already present
+	%	Default prompt
+	Description	=	{'Start Time',...
+		'Author',...
+		'Pulse or FM?',...
+		'Call Type',...
+		'Min Freq (Hz)',...
+		'Max Freq (Hz)',...
+		'Duration (s)',...
+		'Noise (dB)',...
+		'Peak (dB)',...
+		'# of pulses',...
+		'# of harmonics',...
+		'Modulation (Hz)',...
+		'Confidence (1-5)',...
+		'Comments'};
+	
+	%	Default values
+	Template.start_time		=	0;
+	Template.author			=	'Your name';
+	Template.sig_type		=	'NA';
+	Template.call_type		=	'S1';
+	Template.min_freq		=	0;
+	Template.max_freq		=	5000;
+	Template.duration		=	10;
+	Template.noise_db		=	0;
+	Template.peak_db		=	27;
+	Template.num_pulses		=	2;
+	Template.num_harmonics	=	-1;
+	Template.modulation		=	0;
+	Template.confidence		=	3;
+	Template.comments		=	'';
+	
+	Data.Description	=	Description;
+	Data.Template		=	Template;
+	Data.Events			=	[];
+	
+	handles.notes.Data	=	Data;
+	handles.notes.show	=	false;
+	opt				=	'off';
+		
+	
+%	Load selected files and merge data
+else
+	Data	=	[];
+	for	ii	=	1:length(sel_names)
+		file_path		=	fullfile(folder_name, sel_names{ii});
+		LS		=	load(file_path);
+		if	isempty(Data)
+			Data	=	check_notes(LS.Data);
+		else
+			nData	=	check_notes(LS.Data);
+			Data.Events		=	merge_events(Data.Events, nData.Events);
+		end
+	end
+
+	if	length(Sel) > 1
+		%	Since this is a new merged file, turn save on, and read_only off
+		handles.notes.saved	=	false;
+		set(handles.checkbox_notes_readonly, 'Value', 0);
+		checkbox_notes_readonly_Callback(handles.checkbox_notes_readonly, [], handles);
+	end
+	
+	handles.notes.Data	=	Data;
+	handles.notes.show	=	true;
+	opt				=	'on';
+end
+
+%	enable relevant buttons
+disable_notes_nav(handles,opt);
+set(handles.checkbox_notes_show, 'Value', handles.notes.show);
+set(handles.checkbox_notes_show, 'Enable', opt);
+if	handles.fig_updated
+	set(handles.pushbutton_notes_new, 'Enable', 'on');
+end
+
+%	Set folder text box to selected directory
+set(handles.edit_folder, 'String', folder_name);
+
+handles.notes.folder_name	=	folder_name;
+handles.notes.file_name		=	file_name;
+handles.notes.file_path		=	fullfile(folder_name, file_name);
+
 end
 
 %	Pops up window to edit event data
@@ -7144,22 +7236,49 @@ if	isempty(Event_set)
 	Event_set	=	Event;
 	ii			=	1;
 else
-	%	Append new event
-	Event_set(end+1)	=	Event;
-	Start_times			=	cell2mat({Event_set.start_time});
-	N					=	length(Start_times);
+	%	Append new event(s)
+	N			=	length(Event_set) + 1;
+	Event_set	=	[Event_set(:); Event(:)];
+	Start_times	=	cell2mat({Event_set.start_time});
 	%	Check if already sorted, i.e. sequential additions
 	if	issorted(Start_times)
-		ii	=	N;		%	index of inserted item
+		ii	=	N;	%	index of 1st inserted item
 	else
 		[~,I]		=	sort(Start_times);
 		Event_set	=	Event_set(I);
-		%	Find new index of inserted event
+		%	Find new index of 1st inserted event
 		ii			=	find(I == N);
 	end
 end
 
 end
+
+
+%	Merge Events, inserting missing fields as needed
+function	Events		=	merge_events(Events1, Events2)
+
+%	Combine field names, to account for duplicates and missing entries
+names1	=	fieldnames(Events1);
+names2	=	fieldnames(Events2);
+names	=	union(names1, names2);
+
+%	Use dummy entry to add new field names to each record set
+Events1(end+1)	=	Events1(end);
+Events2(end+1)	=	Events2(end);
+for	ii	=	1:length(names)
+	Events1(end).(names{ii})	=	[];
+	Events2(end).(names{ii})	=	[];
+end
+
+%	Delete dummy entries
+Events1(end)	=	[];
+Events2(end)	=	[];
+
+%	Merge records, now that they are field consistent
+Events	=	add_event(Events1, Events2);
+
+end
+
 
 %	Overlays events within current window
 function	handles	=	plot_events(handles)
@@ -7221,10 +7340,9 @@ handles.notes.h_show	=	h_show;
 guidata(h_axes, handles);
 
 %	Enable prev/next buttons
-if	length(Events) > 1
+if	length(Events) >= 1
 	disable_notes_nav(handles,'on');
-else
-	%	Disable prev/next buttons
+else	%	Disable prev/next buttons
 	disable_notes_nav(handles,'off');
 end
 
@@ -7334,4 +7452,15 @@ for ii	=	2:N
 end
 
 
+end
+
+%	Helper function to get current users id/name
+function	user_name	=	getusername()
+	if	isunix || ismac
+		user_name = getenv('USER');
+	elseif ispc
+		user_name = getenv('USERNAME');
+	else
+		error('Unregognized system');
+	end
 end
