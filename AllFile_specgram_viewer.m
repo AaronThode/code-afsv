@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 13-Jun-2013 13:46:08
+% Last Modified by GUIDE v2.5 17-Jun-2013 14:21:47
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -153,7 +153,7 @@ function pushbutton_update_Callback(hObject, eventdata, handles)
 
 %	Stop audio playback if it's running
 if	~isempty(handles.audioplayer) && isplaying(handles.audioplayer)
-	stop(handles.audioplayer);
+    stop(handles.audioplayer);
 end
 
 %	Disable update buttons while loading/processing
@@ -207,23 +207,23 @@ function OpenMenuItem_Callback(hObject, eventdata, handles)
 %	List of supported file types + descriptions/names
 File_types	=	{'MT';'WAV';'GSI';'ADI';'DAT';'MDAT';'MAT'};
 File_descs	=	{	'MT files';...
-					'WAV files';...
-					'GSI files';...
-					'ADI files';...
-					'DAT files';...
-					'MDAT files';...
-					'Simulations'};
+    'WAV files';...
+    'GSI files';...
+    'ADI files';...
+    'DAT files';...
+    'MDAT files';...
+    'Simulations'};
 
 %	 Setup menu file extensions
 menustr		=	cell(length(File_types)+1,1);
 all_types	=	[];
 for	ff = 1:length(File_types)
-	ftype	=	File_types{ff};
-	fdesc	=	File_descs{ff};
-	menustr{ff+1,1}	=	['*.' lower(ftype), ';*.' upper(ftype)];
-	menustr{ff+1,2}	=	[fdesc ' (' menustr{ff+1,1} ')'];
-	
-	all_types	=	[all_types ';' menustr{ff+1,1}];
+    ftype	=	File_types{ff};
+    fdesc	=	File_descs{ff};
+    menustr{ff+1,1}	=	['*.' lower(ftype), ';*.' upper(ftype)];
+    menustr{ff+1,2}	=	[fdesc ' (' menustr{ff+1,1} ')'];
+    
+    all_types	=	[all_types ';' menustr{ff+1,1}];
 end
 %	Prepend all supported files
 all_types(1)	=	[];			%	Get rid of initial ;
@@ -236,30 +236,30 @@ default_file	=	[];
 if ~isempty(handles.mydir)
     disp(handles.mydir);
     default_file	=	handles.mydir;
-	try
-		default_file	=	fullfile(default_file, handles.myfile);
-	end
+    try
+        default_file	=	fullfile(default_file, handles.myfile);
+    end
 end
 
 %	Open dialog box
 [filename, pathname, ~]	=	...
-						uigetfile(menustr, 'Select a file:', default_file);
+    uigetfile(menustr, 'Select a file:', default_file);
 
 %	Parse selected file name
 if	isnumeric(filename) || isnumeric(pathname)
-	return;		%	window canceled
+    return;		%	window canceled
 end
 
 [~,fname,myext]		=	fileparts(filename);
 
 if	~isempty(myext)
-	myext	=	myext(2:end);
-	file_ind=	find(strcmpi(myext,File_types));
+    myext	=	myext(2:end);
+    file_ind=	find(strcmpi(myext,File_types));
 end
 
 if	isempty(myext) || isempty(file_ind)
-	disp([myext ' File type not supported']);
-	return;
+    disp([myext ' File type not supported']);
+    return;
 end
 
 %	Assume valid data type at this point
@@ -283,11 +283,13 @@ handles.fig_updated		=	false;
 set(handles.pushbutton_notes_select, 'Enable', 'on');
 %	set notes file name and dir accordingly
 if	isempty(handles.notes.folder_name)
-	notes_folder	=	pathname;
+    notes_folder	=	pathname;
 else
-	notes_folder	=	[];
+    notes_folder	=	[];
 end
-handles		=	load_notes_file(handles, notes_folder);
+
+%Don't load notes until directory selected.
+%handles		=	load_notes_file(handles, notes_folder);
 
 
 
@@ -348,20 +350,20 @@ try
     new_date	=	datenum(get(hObject,'String'));
 catch %#ok<*CTCH>
     errordlg('Incorrect datestr');
-	new_date =	[];
+    new_date =	[];
 end
 
 if	~isempty(new_date)
-	if		new_date < tmin
-		new_date	=	tmin;
-	elseif	new_date > tmax
-		new_date	=	tmax;
-	end
+    if		new_date < tmin
+        new_date	=	tmin;
+    elseif	new_date > tmax
+        new_date	=	tmax;
+    end
     newval	=	(new_date-tmin)/(tmax-tmin);
-	handles.tdate_start		=	new_date;
-	set(hObject,'String', datestr(new_date));
+    handles.tdate_start		=	new_date;
+    set(hObject,'String', datestr(new_date));
     set(handles.slider_datestr,'Value',newval);
-	guidata(hObject, handles);
+    guidata(hObject, handles);
 end
 
 
@@ -402,30 +404,30 @@ tlen	=	str2double(get(hObject,'String'));
 tlen_max=	5*60;
 
 if tlen > tlen_max
-	%	Make sure user actually intended to set a window this long
-	tlen_opts{1}	=	['Given, ' num2str(tlen) 's'];
-	tlen_opts{2}	=	['Suggested, ' num2str(tlen_max) 's'];
-	tlen_opts{3}	=	['Original, ' num2str(handles.tlen) 's'];
-	choice	=	questdlg('Are you sure you want to use a window size this big? Select...', ...
-						'Window length sanity check', ...
-						tlen_opts{1}, tlen_opts{2}, tlen_opts{3},...
-						tlen_opts{3});
-	% Handle response
-	switch choice
-		case tlen_opts{1}
-			%tlen	=	tlen;
-		case tlen_opts{2}
-			tlen	=	tlen_max;
-		case tlen_opts{3}
-			tlen	=	handles.tlen;
-	end
+    %	Make sure user actually intended to set a window this long
+    tlen_opts{1}	=	['Given, ' num2str(tlen) 's'];
+    tlen_opts{2}	=	['Suggested, ' num2str(tlen_max) 's'];
+    tlen_opts{3}	=	['Original, ' num2str(handles.tlen) 's'];
+    choice	=	questdlg('Are you sure you want to use a window size this big? Select...', ...
+        'Window length sanity check', ...
+        tlen_opts{1}, tlen_opts{2}, tlen_opts{3},...
+        tlen_opts{3});
+    % Handle response
+    switch choice
+        case tlen_opts{1}
+            %tlen	=	tlen;
+        case tlen_opts{2}
+            tlen	=	tlen_max;
+        case tlen_opts{3}
+            tlen	=	handles.tlen;
+    end
 end
 
-% maxx		=	get(handles.slider_datestr,'max');
-% minn		=	get(handles.slider_datestr,'min');
-% slider_step	=	get(handles.slider_datestr,'sliderstep');
-% slider_step(1)	=datenum(0,0,0,0,0,tlen)/(maxx-minn);
-% set(handles.slider_datestr,'sliderstep',slider_step);
+maxx		=	get(handles.slider_datestr,'max');
+minn		=	get(handles.slider_datestr,'min');
+slider_step	=	get(handles.slider_datestr,'sliderstep');
+slider_step(1)	=datenum(0,0,0,0,0,tlen)/(maxx-minn);
+set(handles.slider_datestr,'sliderstep',slider_step)
 
 
 set(hObject, 'String', num2str(tlen));
@@ -705,20 +707,20 @@ function pushbutton_playsound_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 if	isfield(handles, 'audioplayer')
-	player	=	handles.audioplayer;
+    player	=	handles.audioplayer;
 else
-	player	=	[];
+    player	=	[];
 end
 
 %	If existing audio player is running, stop it
 if	~isempty(player) && ~handles.audio_stale
-	ispaused	=	(player.CurrentSample ~= 1) &&...
-		(player.CurrentSample ~= player.TotalSamples);
-	if	isplaying(player) || ispaused
-		stop(player);
-		audio_stop(player,[],handles);
-		return;
-	end
+    ispaused	=	(player.CurrentSample ~= 1) &&...
+        (player.CurrentSample ~= player.TotalSamples);
+    if	isplaying(player) || ispaused
+        stop(player);
+        audio_stop(player,[],handles);
+        return;
+    end
 end
 %	Only need to recreate player if, file has changed, filter is enabled,
 %	or filter has changed.
@@ -727,111 +729,111 @@ use_filter	=	get(handles.checkbox_filter,'Value');
 audio_stale	=	handles.audio_stale | (use_filter & handles.filter.changed);
 
 if	audio_stale
-	Fs	=	handles.Fs;
-	x	=	handles.x;
-	
-	%	Perform filtering if requested
-	if	use_filter
-		if	handles.filter.changed
-			f_max	=	handles.filter.f_max;
-			f_min	=	handles.filter.f_min;
-			
-			%	check frequency ranges
-			if	f_min < 0 || f_min >= Fs/2
-				f_min	=	0;
-			end
-			if	f_max <= 0 || f_max > Fs/2
-				f_max	=	Fs/2;
-			end
-			if f_min > f_max
-				f_temp	=	f_max;
-				f_max	=	f_min;
-				f_min	=	f_temp;
-				clear	f_temp;
-			end
-			handles.filter.f_min	=	f_min;
-			set(handles.edit_minfreq, 'String', num2str(f_min));
-			handles.filter.f_max	=	f_max;
-			set(handles.edit_maxfreq, 'String', num2str(f_max));
-			
-			
-			%	Skip filtering if range covers whole band
-			if	f_min <=0 && f_max >= Fs/2
-				use_filter = false;
-			else
-				%	default band-pass filter
-				df	=	0.1*[f_min f_max]; df = df(df>0);
-				df	=	min(df);
-				f	=	[f_min-[df 0] f_max+[0 df]];
-				a	=	[0 1 0];
-				rp	=	0.1;
-				rs	=	40;
-				dev	= [10^(-rs/20) (10^(rp/20)-1)/(10^(rp/20)+1)  10^(-rs/20)];
-
-				%	low-pass filter
-				if	min(f) <= 0
-					f	=	f(end-1:end);
-					a	=	a(end-1:end);
-					dev	=	dev(end-1:end);
-				
-				%	high-pass fiter
-				elseif	max(f) >= Fs/2
-					f	=	f(1:2);
-					a	=	a(1:2);
-					dev	=	dev(1:2);
-				end
-
-				[n,fo,ao,w] =	firpmord(f, a, dev, Fs);
-				b			=	firpm(n,fo,ao,w);
-
-				handles.filter.b		=	b;
-				handles.filter.changed	=	false;
-			end
-		end
-	end
-		
-	%	Apply filter if needed
-	if	use_filter
-		b	=	handles.filter.b;
-		x	=	filter(b, 1, x);
-	end
-		
-	%	Resample if not within generic sound-card limits
-	valid_audio_Fs	=	[5000,8000,11025,22050,44100,48000];
-	if ~ismember(Fs, valid_audio_Fs)
-		[~, ii]		=	min(abs(valid_audio_Fs - Fs));
-		ii	=	ii(1);
-		newFs	=	valid_audio_Fs(ii);
-		
-		disp('Resampling sound');
-		x	=	resample(x, newFs, Fs);
-		Fs	=	newFs;
-	end
-		
-	%	Floating point data must be scaled to -1:+1 for playback
-	x	=	x - mean(x);
-	x	=	x ./ max(abs(x));
-	
-	%	Create audio player object
-	Fs_play		=	Fs * handles.audio_scale;
-	player		=	audioplayer(x, Fs_play);
-	handles.audio_stale		=	false;
-	handles.audioplayer		=	player;
-	handles.audioFs			=	Fs;
-	
-	%	Draw initial marker line
-	YL		=	ylim;					% get the y-axis limits
-	hold on;
-	hline	=	plot([0 0], YL, 'r');	% plot the marker
-	hold off;
-	try	delete(handles.hline);	end
-	handles.hline			=	hline;
-	
-	%	set callbacks for audioplayer
-	player.StopFcn = {@audio_stop, handles};
-	player.TimerFcn = {@audio_timer, handles}; % timer callback function (defined below)
-	player.TimerPeriod = 0.01; % period of the timer in seconds
-
+    Fs	=	handles.Fs;
+    x	=	handles.x;
+    
+    %	Perform filtering if requested
+    if	use_filter
+        if	handles.filter.changed
+            f_max	=	handles.filter.f_max;
+            f_min	=	handles.filter.f_min;
+            
+            %	check frequency ranges
+            if	f_min < 0 || f_min >= Fs/2
+                f_min	=	0;
+            end
+            if	f_max <= 0 || f_max > Fs/2
+                f_max	=	Fs/2;
+            end
+            if f_min > f_max
+                f_temp	=	f_max;
+                f_max	=	f_min;
+                f_min	=	f_temp;
+                clear	f_temp;
+            end
+            handles.filter.f_min	=	f_min;
+            set(handles.edit_minfreq, 'String', num2str(f_min));
+            handles.filter.f_max	=	f_max;
+            set(handles.edit_maxfreq, 'String', num2str(f_max));
+            
+            
+            %	Skip filtering if range covers whole band
+            if	f_min <=0 && f_max >= Fs/2
+                use_filter = false;
+            else
+                %	default band-pass filter
+                df	=	0.1*[f_min f_max]; df = df(df>0);
+                df	=	min(df);
+                f	=	[f_min-[df 0] f_max+[0 df]];
+                a	=	[0 1 0];
+                rp	=	0.1;
+                rs	=	40;
+                dev	= [10^(-rs/20) (10^(rp/20)-1)/(10^(rp/20)+1)  10^(-rs/20)];
+                
+                %	low-pass filter
+                if	min(f) <= 0
+                    f	=	f(end-1:end);
+                    a	=	a(end-1:end);
+                    dev	=	dev(end-1:end);
+                    
+                    %	high-pass fiter
+                elseif	max(f) >= Fs/2
+                    f	=	f(1:2);
+                    a	=	a(1:2);
+                    dev	=	dev(1:2);
+                end
+                
+                [n,fo,ao,w] =	firpmord(f, a, dev, Fs);
+                b			=	firpm(n,fo,ao,w);
+                
+                handles.filter.b		=	b;
+                handles.filter.changed	=	false;
+            end
+        end
+    end
+    
+    %	Apply filter if needed
+    if	use_filter
+        b	=	handles.filter.b;
+        x	=	filter(b, 1, x);
+    end
+    
+    %	Resample if not within generic sound-card limits
+    valid_audio_Fs	=	[5000,8000,11025,22050,44100,48000];
+    if ~ismember(Fs, valid_audio_Fs)
+        [~, ii]		=	min(abs(valid_audio_Fs - Fs));
+        ii	=	ii(1);
+        newFs	=	valid_audio_Fs(ii);
+        
+        disp('Resampling sound');
+        x	=	resample(x, newFs, Fs);
+        Fs	=	newFs;
+    end
+    
+    %	Floating point data must be scaled to -1:+1 for playback
+    x	=	x - mean(x);
+    x	=	x ./ max(abs(x));
+    
+    %	Create audio player object
+    Fs_play		=	Fs * handles.audio_scale;
+    player		=	audioplayer(x, Fs_play);
+    handles.audio_stale		=	false;
+    handles.audioplayer		=	player;
+    handles.audioFs			=	Fs;
+    
+    %	Draw initial marker line
+    YL		=	ylim;					% get the y-axis limits
+    hold on;
+    hline	=	plot([0 0], YL, 'r');	% plot the marker
+    hold off;
+    try	delete(handles.hline);	end
+    handles.hline			=	hline;
+    
+    %	set callbacks for audioplayer
+    player.StopFcn = {@audio_stop, handles};
+    player.TimerFcn = {@audio_timer, handles}; % timer callback function (defined below)
+    player.TimerPeriod = 0.01; % period of the timer in seconds
+    
 end
 
 %	start playback
@@ -854,14 +856,14 @@ function pushbutton_pausesound_Callback(hObject, eventdata, handles)
 
 %	If existing audio player is running, pause or resume it
 if	isfield(handles, 'audioplayer')
-	player	=	handles.audioplayer;
-	if	isplaying(player)
-		pause(player);
-		set(hObject, 'String', 'Resume');
-	else
-		resume(player);
-		set(hObject, 'String', 'Pause');
-	end
+    player	=	handles.audioplayer;
+    if	isplaying(player)
+        pause(player);
+        set(hObject, 'String', 'Resume');
+    else
+        resume(player);
+        set(hObject, 'String', 'Pause');
+    end
 end
 
 
@@ -899,15 +901,15 @@ try
         x=x';
     end
     for Ichan=1:size(x,2)
-        xfilt(:,Ichan)=filter(handles.b,1,x(:,Ichan)); 
+        xfilt(:,Ichan)=filter(handles.b,1,x(:,Ichan));
     end
     wavwrite(xfilt/(1.1*max(max(abs(xfilt)))),Fs,save_path);
-
+    
 catch
     disp('No filtering desired... exists; saving raw acoustic data to WAV');
     xfilt=[];
     wavwrite(x/(1.1*max(max(abs(x)))),Fs,save_path);
-
+    
 end
 save(save_path,'x','xfilt','Fs','tdate_start','hdr');
 
@@ -1013,7 +1015,7 @@ if strcmpi(handles.filetype,'MDAT')
         for I=1:2
             if any(get(0,'child')==I)
                 save_name1=sprintf('%s_%i',save_name,I);
-				save_path	=	fullfile(handles.notes.folder_name, save_name1);
+                save_path	=	fullfile(handles.notes.folder_name, save_name1);
                 disp(['Printing %s ...' save_name1]);
                 figure(I)
                 orient landscape
@@ -1039,7 +1041,7 @@ else
     Igoodd	=	(chcc-round(chcc)==0);
     chcc=chcc(Igoodd);
     for III=1:length(chcc)
-        tmp{III}=chcc(III); 
+        tmp{III}=chcc(III);
     end
     figchc=menu('Select a figure number:',tmp);
     figure(chcc(figchc));
@@ -1078,7 +1080,7 @@ Icall		=	menu('Signal type?',call_types);
 call_type	=	call_types{Icall};
 
 prompt={'File name','pulse or FM?','Call Type','Min Freq(Hz)','Max Freq(Hz)',...
-	'Duration(sec)','Number_pulses','Number_harmonics','modulation (Hz)', 'Notes'};
+    'Duration(sec)','Number_pulses','Number_harmonics','modulation (Hz)', 'Notes'};
 if Icall==1  %Pulsive
     def={handles.annotation_file,'pulse','S1',min_freq,max_freq,duration,'10','-1','0',''};
 else
@@ -1090,7 +1092,7 @@ lineNo(end) =	5;
 answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
 
 if	isempty(answer)
-	return;
+    return;
 end
 fid=fopen(answer{1},'a');
 if ftell(fid)==0
@@ -1149,27 +1151,27 @@ newtime	=	tline(1:(max(Icolon)+2));
 
 
 if	tline ~= -1
-	tmin	=	handles.tdate_min;
-	tmax	=	handles.tdate_max;
-	try
-		new_date	=	datenum(newtime);
-	catch
-		errordlg('Incorrect datestr');
-		new_date =	[];
-	end
-	
-	if	~isempty(new_date)
-		if		new_date < tmin
-			new_date	=	tmin;
-		elseif	new_date > tmax
-			new_date	=	tmax;
-		end
-		newval	=	(new_date-tmin)/(tmax-tmin);
-		handles.tdate_start		=	new_date;
-		set(hObject,'String', datestr(new_date));
-		set(handles.slider_datestr,'Value',newval);
-		guidata(hObject, handles);
-	end
+    tmin	=	handles.tdate_min;
+    tmax	=	handles.tdate_max;
+    try
+        new_date	=	datenum(newtime);
+    catch
+        errordlg('Incorrect datestr');
+        new_date =	[];
+    end
+    
+    if	~isempty(new_date)
+        if		new_date < tmin
+            new_date	=	tmin;
+        elseif	new_date > tmax
+            new_date	=	tmax;
+        end
+        newval	=	(new_date-tmin)/(tmax-tmin);
+        handles.tdate_start		=	new_date;
+        set(hObject,'String', datestr(new_date));
+        set(handles.slider_datestr,'Value',newval);
+        guidata(hObject, handles);
+    end
 else
     disp('End of file reached');
     fclose(handles.fid);
@@ -2014,7 +2016,7 @@ Bfilt = firpm(N,Fo,Ao,W);
 
 Nchan=size(data.x,1);
 y=zeros(size(data.x));
-for I=1:Nchan 
+for I=1:Nchan
     try
         y(I,:)=filtfilt(Bfilt,1,data.x(I,:)-mean(data.x(I,:)));
         %[B(:,:,I),FF,TT] = specgram(y(I,:),Nfft,Fs,Nfft2,round(0.9*Nfft2)); %B(freq,time,element);
@@ -2038,7 +2040,7 @@ if length(MFP_scenario)>1  %Multiple runs..
     prompt1={'range guesses (m)', 'maxdelay for mode 1:2 range estimation (s)[-1 to automatically select]:', ...
         'maxdelay for mode 1:N range estimation (s): [-1 to automatically select]','plot intermediate images?', ...
         'Nfft for plotting:','depths','tilt','max modes'};
-    for J=1:length(default_tilt) 
+    for J=1:length(default_tilt)
         Islash=max(strfind(MFP_scenario{J},'/'))+1;
         fprintf('tilt: %s File: %s \n',default_tilt{J},MFP_scenario{J}(Islash:end));
     end
@@ -2105,7 +2107,7 @@ for Imodel=1:length(MFP_scenario)
     %model.U=model.U(Igood,:,:);
     
     Igood	=	zeros(1,length(head.rd));
-    for I = 1:length(head.rd) 
+    for I = 1:length(head.rd)
         [junk, Igood(I)]		=	min(abs(model.rd-head.rd(I)));
     end
     
@@ -2889,7 +2891,7 @@ function pushbutton_notes_last_Callback(hObject, eventdata, handles)
 
 N		=	length(handles.notes.Data.Events);
 if	(N == 0)
-	error('What happened?');
+    error('What happened?');
 end
 
 handles.notes.i_sel		=	N;
@@ -2908,7 +2910,7 @@ function pushbutton_notes_first_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 N		=	length(handles.notes.Data.Events);
 if	(N == 0)
-	error('What happened?');
+    error('What happened?');
 end
 
 handles.notes.i_sel		=	1;
@@ -2929,17 +2931,17 @@ i_sel	=	handles.notes.i_sel;
 N		=	length(handles.notes.Data.Events);
 
 if	(N == 0)
-	error('What happened?');
+    error('What happened?');
 end
 
 if	isempty(i_sel)
-	i_sel	=	1;
+    i_sel	=	1;
 else
-	i_sel	=	i_sel + 1;
+    i_sel	=	i_sel + 1;
 end
 
 if	i_sel > N
-	i_sel	=	1;
+    i_sel	=	1;
 end
 handles.notes.i_sel		=	i_sel;
 
@@ -2960,13 +2962,13 @@ i_sel	=	handles.notes.i_sel;
 N		=	length(handles.notes.Data.Events);
 
 if	isempty(i_sel) || (i_sel == 0) || (N == 0)
-	warning('Selection index is not valid');
-	return;
+    warning('Selection index is not valid');
+    return;
 end
 
 i_sel	=	i_sel - 1;
 if	i_sel < 1
-	i_sel	=	N;
+    i_sel	=	N;
 end
 handles.notes.i_sel		=	i_sel;
 
@@ -2995,30 +2997,30 @@ function pushbutton_notes_save_Callback(hObject, eventdata, handles)
 %	Shouldn't be able to click this button anyway, but can't hurt to check
 readonly	=	handles.notes.readonly;
 if readonly
-	warning('Readonly flag set, file not saved');
-	return;
+    warning('Readonly flag set, file not saved');
+    return;
 end
 
 %	The following should never be empty, but...
 Data		=	handles.notes.Data;
 if	isempty(Data)
-	warning('Notes data empty, nothing to save');
-	return;
+    warning('Notes data empty, nothing to save');
+    return;
 end
 
 file_path	=	handles.notes.file_path;
 if	isempty(file_path)
-	warning('Notes file/folder not set, file not saved');
-	return;
+    warning('Notes file/folder not set, file not saved');
+    return;
 end
 
 %	Save whole data structure, allows implicit expansion of named variables
 %	Only save if changed
 if	~handles.notes.saved
-	save(file_path, 'Data');
-	set(hObject,'Enable','off');
-	handles.notes.saved	=	true;
-	guidata(hObject, handles)
+    save(file_path, 'Data');
+    set(hObject,'Enable','off');
+    handles.notes.saved	=	true;
+    guidata(hObject, handles)
 end
 
 end
@@ -3036,17 +3038,20 @@ guidata(hObject, handles);
 end
 
 % --- Executes on button press in pushbutton_notes_select.
+%  Used to select either an annotations or an automated detector file.
 function pushbutton_notes_select_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_notes_select (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+%
+%
 
 dialog_title	=	'Select location for Annotation files';
 start_path		=	handles.notes.folder_name;
 folder_name		=	uigetdir(start_path, dialog_title);
 
 if isnumeric(folder_name)
-	return;
+    return;
 end
 
 handles		=	load_notes_file(handles, folder_name);
@@ -3073,9 +3078,9 @@ function checkbox_notes_readonly_Callback(hObject, eventdata, handles)
 read_only	=	get(hObject, 'Value');
 saved		=	handles.notes.saved;
 if	read_only || saved
-	opt		=	'off';
+    opt		=	'off';
 else
-	opt		=	'on';
+    opt		=	'on';
 end
 set(handles.pushbutton_notes_save, 'Enable', opt);
 
@@ -3122,26 +3127,16 @@ disp('Click on two points defining a rectangle on the figure: ');
 
 %	Check if user tried to terminate input early
 if	(length(Buttons) < 2) || any(Buttons > 3)
-	disp('Input cancelled');
-	return;
+    disp('Input cancelled');
+    return;
 end
 
-%	Parameters taken from plot
+%	Parameters taken from ginput
 start_time	=	handles.tdate_start...
-				+	datenum(0,0,0,0,0,min(Times));
+    +	datenum(0,0,0,0,0,min(Times));
 min_freq	=	(1000*min(Freq));
 max_freq	=	(1000*max(Freq));
 duration	=	(abs(Times(2) - Times(1)));
-
-%	Parameters taken from underlying data
-T			=	handles.sgram.T;
-F			=	handles.sgram.F/1e3;
-B			=	handles.sgram.B;
-i_time		=	(min(Times) <= T) & (T <= max(Times));
-i_freq		=	(min(Freq) <= F) & (F <= max(Freq));
-PSD			=	10*log10(B(i_freq, i_time));
-noise_db	=	median(PSD(:));
-peak_db		=	max(PSD(:));
 
 %	Draw square on plot
 x		=	min(Times);
@@ -3150,34 +3145,41 @@ width	=	duration;
 height	=	(max_freq - min_freq)/1000;
 axes(handles.axes1);
 hrec	=	rectangle('Position',[x,y,width,height],...
-				'Curvature',[0.3],...
-				'LineWidth',2,'LineStyle','-',...
-				'EdgeColor','r');
+    'Curvature',[0.3],...
+    'LineWidth',2,'LineStyle','-',...
+    'EdgeColor','r');
 
 %	Initial signal type selection
 sig_types	=	{'Pulsive','FM'};
 choice		=	menu('Signal type?',sig_types);
 if	choice == 0
-	disp('Input cancelled');
-	delete(hrec);
-	return;
+    disp('Input cancelled');
+    delete(hrec);
+    return;
 end
 sig_type	=	sig_types{choice};
+
+%%Get automated parameters from basic information
+params_extract=extract_automated_fields(Times,Freq,handles);
+if isempty(params_extract)
+    errordlg('SNR and level could not be extracted: Time window is too small; Show greater time window and retry');
+    return
+end
+
 
 %	Get existing notes
 Data	=	handles.notes.Data;
 i_sel	=	handles.notes.i_sel;
 
 if	~isempty(Data.Events)
-	if	~isempty(i_sel)
-		Event	=	Data.Events(i_sel);
-	else
-		Event	=	Data.Events(end);
-	end
+    if	~isempty(i_sel)
+        Event	=	Data.Events(i_sel);
+    else
+        Event	=	Data.Events(end);
+    end
 else
-	Event	=	Data.Template;
+    Event	=	Data.Template;
 end
-
 
 %	Insert current values
 Event.start_time	=	start_time;
@@ -3185,46 +3187,137 @@ Event.sig_type		=	sig_type;
 Event.min_freq		=	min_freq;
 Event.max_freq		=	max_freq;
 Event.duration		=	duration;
-Event.noise_db		=	noise_db;
-Event.peak_db		=	peak_db;
+
+Event.noise_se_dB		=	params_extract.noise_se_dB;
+Event.noise_rms_dB		=	params_extract.noise_rms_dB;
+Event.noise_peakpsd_dB		=	params_extract.noise_peakpsd_dB;
+Event.signal_se_dB		=	params_extract.signal_se_dB;
+Event.signal_rms_dB		=	params_extract.signal_rms_dB;
+Event.signal_peakpsd_dB		=	params_extract.signal_peakpsd_dB;
+Event.SNR_rms_dB		=       params_extract.SNR_rms_dB;
+
 
 
 %	modified defualts for other signal types
 switch sig_type
-	case	'Pulsive'
-		Event.call_type		=	'S1';
-		Event.num_pulses	=	10;
-		Event.num_harmonics	=	-1;
-	case	'FM'
-		Event.call_type		=	'moan';
-		Event.num_pulses	=	-1;
-		Event.num_harmonics	=	1;
-	otherwise
-		warning('Signal type not recognized for defaults');
+    case	'Pulsive'
+        Event.call_type		=	'S1';
+        Event.num_pulses	=	10;
+        Event.num_harmonics	=	-1;
+    case	'FM'
+        Event.call_type		=	'moan';
+        Event.num_pulses	=	-1;
+        Event.num_harmonics	=	1;
+    otherwise
+        warning('Signal type not recognized for defaults');
 end
 
 
 %!! Separate here for use with Edit too
-Event	=	edit_event(Event, Data.Description);
+% Note that edit_event automatically recomputes intensity and SNR values.
+Event	=	edit_event(Event, Data.Description, handles);
 
 try %#ok<*TRYNC>
-	delete(hrec);
+    delete(hrec);
 end
 
 if	~isempty(Event)
-	%	Add new event to data store
-	[Data.Events, ii]	=	add_event(Data.Events, Event);
-	handles.notes.Data	=	Data;
-	
-	handles.notes.saved	=	false;
-	checkbox_notes_readonly_Callback(handles.checkbox_notes_readonly, [], handles);
-	set(handles.checkbox_notes_show, 'Enable', 'on');
-	
-	%	Set new note as currently selected one and replot if enabled
-	handles.notes.i_sel	=	ii;
-	handles		=	plot_events(handles);
-	guidata(hObject, handles);
+    %	Add new event to data store
+    [Data.Events, ii]	=	add_event(Data.Events, Event);
+    handles.notes.Data	=	Data;
+    
+    handles.notes.saved	=	false;
+    checkbox_notes_readonly_Callback(handles.checkbox_notes_readonly, [], handles);
+    set(handles.checkbox_notes_show, 'Enable', 'on');
+    
+    %	Set new note as currently selected one and replot if enabled
+    handles.notes.i_sel	=	ii;
+    handles		=	plot_events(handles);
+    guidata(hObject, handles);
 end
+end
+
+function params_extract=extract_automated_fields(Times,Freq,handles)
+
+start_time	=	handles.tdate_start...
+    +	datenum(0,0,0,0,0,min(Times));
+min_freq	=	(1000*min(Freq));
+max_freq	=	(1000*max(Freq));
+duration	=	(abs(Times(2) - Times(1)));
+
+
+T			=	handles.sgram.T;
+F			=	handles.sgram.F/1e3;
+dF=F(2)-F(1);
+dT=T(2)-T(1);
+B			=	handles.sgram.B;
+i_time		=	(min(Times) <= T) & (T <= max(Times));
+i_freq		=	(min(Freq) <= F) & (F <= max(Freq));
+PSD			=	(B(i_freq, i_time));
+
+%Estimating the signal-to-noise ratio in terms of rms power/rms power
+% AARON THODE flag, changed June 16, 2013
+% Compute noise over window just before and after detection,
+%  with total duration equal  to detection length
+
+% Let X(f) be raw FFT
+% Then PSD(f) =|X(f)|^2/(Nfft*Fs)
+% From parsevals theorem and dt*X(f)=X(w)_analytic
+%    rms power over FFT sample~sum(df*PSD) in a single column
+%       Thus mean rms is mean(sum(df*PSD));
+%       Note that this handles overlap between samples
+%    SE across FFT sample:  sum(PSD) per column
+%    SE_total for entire signal across all spectrogram columns:
+%       Simplest solution is mutliply rms power by duration
+%       se=rms*duration;
+
+signal_rms=mean(sum(dF*PSD)); %note not technically root mean square, actually mean square
+signal_se=signal_rms*duration;
+signal_peakpsd=max(PSD(:));
+
+signal_se_dB=10*log10(signal_se);
+signal_rms_dB=10*log10(signal_rms);  %not 20 log because actually mean sqaure
+signal_peakpsd_dB=10*log10(signal_peakpsd);
+
+%Take noise sample from just before and after current detection
+Tmin=min(Times);
+Tmax=max(Times);
+duration_noise=0.5*(Tmax-Tmin);
+i_time_noise1 = (Tmin-duration_noise <= T) & (T < Tmin);
+i_time_noise2 = (Tmax < T) & (T <= Tmax+duration_noise);
+%Shift one column earlier to avoid picking up first signal FFT bin
+if sum(i_time_noise1)*dT<0.9*duration_noise ||sum(i_time_noise2)*dT<0.9*duration_noise
+    disp('Selected signal too close to start of window; SNR cannot be computed');
+    params_extract=[];
+    return
+end
+PSD_noise   =  [B(i_freq,i_time_noise1) B(i_freq,i_time_noise2)];
+
+%noise duration should equal signal duration from above procedure.
+noise_rms=mean(sum(dF*PSD_noise)); %note not technically root mean square, actually mean square
+noise_se=noise_rms*duration;
+noise_peakpsd=max(PSD_noise(:));
+
+
+noise_se_dB=10*log10(noise_se);
+noise_rms_dB=10*log10(noise_rms); %not 20 log because actually mean sqaure
+noise_peakpsd_dB=10*log10(noise_peakpsd);
+
+SNR_rms=signal_rms/noise_rms;
+SNR_rms_dB=10*log10(SNR_rms);  % not 20log because ratio of mean-square, not root-mean-square
+
+params_extract.noise_se_dB=noise_se_dB;
+params_extract.noise_rms_dB=noise_rms_dB; %not 20 log because actually mean sqaure
+params_extract.noise_peakpsd_dB=noise_peakpsd_dB;
+
+params_extract.signal_se_dB=signal_se_dB;
+params_extract.signal_rms_dB=signal_rms_dB;  %not 20 log because actually mean sqaure
+params_extract.signal_peakpsd_dB=signal_peakpsd_dB;
+
+%params_extract.SNR_rms=SNR_rms;
+params_extract.SNR_rms_dB=SNR_rms_dB;
+
+
 end
 
 % --- Executes on button press in pushbutton_notes_edit.
@@ -3234,38 +3327,38 @@ function pushbutton_notes_edit_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 if	isempty(handles.notes.i_sel)
-	warning('No event selected');
-	return;
+    warning('No event selected');
+    return;
 else
-	i_sel	=	handles.notes.i_sel;
+    i_sel	=	handles.notes.i_sel;
 end
 
 if	isempty(handles.notes.Data) || isempty(handles.notes.Data.Events)
-	warning('No events data');
-	return;
+    warning('No events data');
+    return;
 end
 
 %	Delete entry if enabled
 delete_on	=	get(handles.checkbox_notes_delete, 'Value');
 if	delete_on
-	handles.notes.Data.Events(i_sel)	=	[];
-	N	=	length(handles.notes.Data.Events);
-	if	N == 0
-		i_sel	=	[];
-	elseif	i_sel > N
-		i_sel	=	1;
-	end
-	handles.notes.i_sel	=	i_sel;
-	
-%	Otherwise open edit window with existing values
+    handles.notes.Data.Events(i_sel)	=	[];
+    N	=	length(handles.notes.Data.Events);
+    if	N == 0
+        i_sel	=	[];
+    elseif	i_sel > N
+        i_sel	=	1;
+    end
+    handles.notes.i_sel	=	i_sel;
+    
+    %	Otherwise open edit window with existing values
 else
-	Event	=	handles.notes.Data.Events(i_sel);
-	Event	=	edit_event(Event, handles.notes.Data.Description);
-	if	isempty(Event)
-		return;
-	else
-		handles.notes.Data.Events(i_sel)	=	Event;
-	end	
+    Event	=	handles.notes.Data.Events(i_sel);
+    Event	=	edit_event(Event, handles.notes.Data.Description,handles);
+    if	isempty(Event)
+        return;
+    else
+        handles.notes.Data.Events(i_sel)	=	Event;
+    end
 end
 
 handles.notes.saved	=	false;
@@ -3286,9 +3379,9 @@ function checkbox_notes_delete_Callback(hObject, eventdata, handles)
 delete_on	=	get(hObject, 'Value');
 
 if	delete_on
-	set(handles.pushbutton_notes_edit, 'String', 'Delete');
+    set(handles.pushbutton_notes_edit, 'String', 'Delete');
 else
-	set(handles.pushbutton_notes_edit, 'String', 'Edit');
+    set(handles.pushbutton_notes_edit, 'String', 'Edit');
 end
 
 end
@@ -3330,11 +3423,21 @@ tlen	=	handles.tlen;
 mydir	=	pwd;
 Ichan	=	str2double(get(handles.edit_chan,'String'));  %Hardwire first channel
 
+try
 [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,...
-									handles.tdate_start,tlen,Ichan,handles);
+    handles.tdate_start,tlen,Ichan,handles);
+catch
+   errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge');
+   return
+end
+
+if isempty(x)
+    errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge');
+    return
+end
 if max(t)<tlen
-	tlen	=	max(t);
-	handles.tlen	=	max(t);
+    tlen	=	max(t);
+    handles.tlen	=	max(t);
     set(handles.edit_winlen,'String',num2str(tlen));
 end
 
@@ -3347,7 +3450,7 @@ Fs=round(Fs);
 mymaxfreq=str2double(get(handles.edit_maxfreq,'String'));
 
 if mymaxfreq==0||mymaxfreq>Fs/2
-	handles.filter.f_max	=	Fs/2;
+    handles.filter.f_max	=	Fs/2;
     set(handles.edit_maxfreq,'String',num2str(Fs/2));
 end
 %disp(sprintf('Fs=%i',Fs));
@@ -3363,9 +3466,13 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
     %[B,FF,TT]=specgram(x(:,1),Nfft,Fs,hanning(Nfft),round(ovlap*Nfft));
     [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
     %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
-	handles.sgram.T	=	TT;
+    handles.sgram.T	=	TT;
     handles.sgram.F	=	FF;
-	handles.sgram.B	=	B;
+    handles.sgram.B	=	B;
+    handles.sgram.Nfft=Nfft;
+    handles.sgram.ovlap=ovlap;
+    handles.sgram.Fs=Fs;
+    
     if strcmp(handles.display_view,'Spectrogram')
         axes(handles.axes1);
     else
@@ -3377,9 +3484,9 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
         Xp_cal_fin=polyval(hdr.calcurv,FF/Fs);
         
         imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
-    %elseif isfield(hdr,'cable_factor')
-   %    Xp_cal_fin=20*log10(1+hdr.cable_factor*FF);  %Unit resistance 140 ohm, capacitance 110 nF
-    %    imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
+        %elseif isfield(hdr,'cable_factor')
+        %    Xp_cal_fin=20*log10(1+hdr.cable_factor*FF);  %Unit resistance 140 ohm, capacitance 110 nF
+        %    imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
     else
         
         imagesc(TT,FF/1000,10*log10(B));%
@@ -3538,7 +3645,7 @@ mydir			=	pwd;
 errorflag		=	0;
 handles.tdate_min=	-1;
 handles.tdate_max=	-1;
-% 
+%
 % if isempty(handles.mydir)
 %     handles.mydir=pwd;
 % end
@@ -3558,8 +3665,8 @@ set(handles.slider_datestr,'Min',0);
 set(handles.slider_datestr,'Max',1);
 
 %	20sec and 1min increments
-dT	=	(tmax-tmin)*24*60;
-set(handles.slider_datestr,'SliderStep',[(20/60)/dT 1/dT]);
+dT_min	=	(tmax-tmin)*24*60;
+set(handles.slider_datestr,'sliderstep',[(20/60)/dT_min 1/dT_min]);
 
 set(handles.slider_datestr,'Value',0.5);
 handles.tdate_start		=	0.5*(tmin+tmax);
@@ -4494,7 +4601,7 @@ chout=char(fread(fid,N,'char')');
 end
 
 function [x, tfs, tfe, fs]    =...
-        read_dat_file(file_name, fs, tstart, ns, units_voltage, sens, raw)
+    read_dat_file(file_name, fs, tstart, ns, units_voltage, sens, raw)
 %READ_DAT_FILE     Read in a DAT file
 %
 %   WARNING!  LOG file must be in same location.
@@ -4543,8 +4650,8 @@ function [x, tfs, tfe, fs]    =...
 
 
 %%  Input parameter checking, and default values
-                                                    %   dB re 1uPa/V
-if ~exist('sens', 'var') || isempty(sens),      sens    =	-172;	end 
+%   dB re 1uPa/V
+if ~exist('sens', 'var') || isempty(sens),      sens    =	-172;	end
 if ~exist('units_voltage', 'var') || isempty(units_voltage),
     units_voltage   =   0;      end
 if ~exist('fs', 'var'),                         fs      =   [];     end
@@ -4559,7 +4666,7 @@ VREF    =   2.5;
 nc      =   1;
 
 %   An input voltage of 0.05 V p-p produces a 1.2 V p-p at A/D
-scale   =   (0.038/1.0)*VREF/(2^16-1);  
+scale   =   (0.038/1.0)*VREF/(2^16-1);
 
 
 %%  Parse input file name and associated log file
@@ -4571,7 +4678,7 @@ if ~exist(log_file, 'file')
     log_file    =   fullfile(pathstr, [name '.LOG']); % check upper case ext
     if ~exist(log_file, 'file')
         error('%s does not exist in same directory as %s',...
-            log_file,                               file_name); 
+            log_file,                               file_name);
     end
 end
 
@@ -4620,7 +4727,7 @@ end
 fclose(fid);
 
 if (tfs==0 || tfe==0)
-	fprintf('Could not understand %s',log_file);
+    fprintf('Could not understand %s',log_file);
 end
 
 
@@ -4638,7 +4745,7 @@ end
 try
     if tstart > tfs,
         offset  =   etime(datevec(tstart), datevec(tfs));
-%        offset  =   (offset(:,6)+60*offset(:,5)+3600*offset(:,4)+24*3600*offset(:,3));  %offset in seconds from file
+        %        offset  =   (offset(:,6)+60*offset(:,5)+3600*offset(:,4)+24*3600*offset(:,3));  %offset in seconds from file
         %disp(sprintf('%i second offset from file start',offset));
     elseif tstart > 0
         %error('cannot read this time from this file');
@@ -5004,6 +5111,11 @@ function x=calibrate_GSI_signal(xin, keyword,RawFileName)
 % using sensitivity of 150 dB re 1uPa/V
 % and peak A/D voltage of 2.5 V
 %keyboard
+
+if isempty(xin)
+    x=[];
+    return
+end
 if strcmp(keyword,'short')||~isempty(strfind(keyword,'DASAR2007'))
     [numd,dend] = DASAR_Shell_2007_equalization(1000,0);
     filt.a=dend;
@@ -6959,11 +7071,11 @@ end
 function audio_stop(player, ~, handles)
 %	Set controls
 ispaused	=	(player.CurrentSample > 1) &&...
-					(player.CurrentSample < player.TotalSamples);
+    (player.CurrentSample < player.TotalSamples);
 if	~ispaused
-	set(handles.pushbutton_playsound, 'String', 'Play');
-	set(handles.pushbutton_pausesound, 'String', 'Pause');
-	set(handles.pushbutton_pausesound, 'Enable', 'off');
+    set(handles.pushbutton_playsound, 'String', 'Play');
+    set(handles.pushbutton_pausesound, 'String', 'Pause');
+    set(handles.pushbutton_pausesound, 'Enable', 'off');
 end
 
 end
@@ -6975,13 +7087,13 @@ hline	=	handles.hline;
 
 % check if sound is playing, then only plot new marker
 if strcmp(player.Running, 'on')
-	% get the currently playing sample #
-	x	=	player.CurrentSample;
-	Fs	=	handles.audioFs;
-
-	% change position of marker line
-	set(hline,'XData',x/Fs*[1 1]);
-	drawnow expose;
+    % get the currently playing sample #
+    x	=	player.CurrentSample;
+    Fs	=	handles.audioFs;
+    
+    % change position of marker line
+    set(hline,'XData',x/Fs*[1 1]);
+    drawnow expose;
 end
 end
 
@@ -6989,15 +7101,16 @@ end
 function	disable_notes_nav(handles, opt)
 
 if	nargin < 2 || isempty(opt)
-	opt		=	'off';
+    opt		=	'off';
 end
 
 set(handles.pushbutton_notes_first, 'Enable', opt);
 set(handles.pushbutton_notes_last, 'Enable', opt);
 set(handles.pushbutton_notes_next, 'Enable', opt);
 set(handles.pushbutton_notes_prev, 'Enable', opt);
+set(handles.pushbutton_notes_screen, 'Enable', opt);
 
-end
+end  %disable
 
 %	Checks Notes folder for existing files and loads them
 function	handles		=	load_notes_file(handles, new_folder)
@@ -7005,24 +7118,24 @@ function	handles		=	load_notes_file(handles, new_folder)
 
 %	First check that current notes are saved before proceeding
 if	~handles.notes.saved && ~handles.notes.readonly
-	qtitle	=	'Unsaved changes';
-	qstring	=	{'Warning: current changes to notes not saved!'...
-				'Write to file before continuing?'};
-	str1	=	'Yes';
-	str2	=	'No';
-	button	=	questdlg(qstring, qtitle, str1, str2, str1);
-	
-	switch	button
-		case	str1
-			%	Save file
-			pushbutton_notes_save_Callback(handles.pushbutton_notes_save,...
-											[], handles);
-			handles		=	guidata(handles.pushbutton_notes_save);
-		case	str2
-			%	Don't bother
-		otherwise
-			error('This should not be reached');
-	end
+    qtitle	=	'Unsaved changes';
+    qstring	=	{'Warning: current changes to notes not saved!'...
+        'Write to file before continuing?'};
+    str1	=	'Yes';
+    str2	=	'No';
+    button	=	questdlg(qstring, qtitle, str1, str2, str1);
+    
+    switch	button
+        case	str1
+            %	Save file
+            pushbutton_notes_save_Callback(handles.pushbutton_notes_save,...
+                [], handles);
+            handles		=	guidata(handles.pushbutton_notes_save);
+        case	str2
+            %	Don't bother
+        otherwise
+            error('This should not be reached');
+    end
 end
 
 
@@ -7038,127 +7151,147 @@ set(handles.checkbox_notes_delete, 'Enable', opt);
 
 %	Switch to new folder and check for existing files
 if	exist('new_folder','var') && ~isempty(new_folder)
-	folder_name	=	new_folder;
+    folder_name	=	new_folder;
 else
-	folder_name	=	handles.notes.folder_name;
+    folder_name	=	handles.notes.folder_name;
 end
 [~,fname,~]		=	fileparts(handles.myfile);
-fname			=	[fname '-notes'];
-user_name		=	getusername();
-%	Default file name
-file_name	=	[fname '-' user_name '.mat'];
+
+
+%%AARON:  Give user option of loading automated detector
+%  or existing notes file
+file_chc=menu('Select a file type:','Automated Detector','Manual Annotation');
+
+if file_chc==2 %Manual annotation
+    extt='.mat';
+    manual_flag=true;
+    fname			=	[fname '-notes'];
+    user_name		=	getusername();
+    file_name	=	[fname '-' user_name '.mat'];
+else %Automated
+    extt='.detsum';
+    manual_flag=false;
+    user_name		=	getusername();
+    %	Default output file name
+    file_name	=	[fname '-notes-' user_name '.mat'];
+end
+
 sel_names	=	[];
 
 %	Find all existing files
-listing		=	dir(fullfile(folder_name, [fname,'*.mat']));
-if	~isempty(listing)
-	%	Ask user which file(s) to load
-	N_files		=	length(listing);
-	list_files	=	cell(N_files,1);
-	for	ii	=	1:N_files
-		list_names{ii}	=	listing(ii).name;
-	end
-	
-	[Sel, OK]	=	listdlg('ListString', list_names,...
-							'Name', 'Available notes',...
-							'PromptString', 'Select file(s) to load:',...
-							'OKString', 'Load',...
-							'CancelString', 'New');
-	if	(OK == 0) || isempty(Sel)
-		sel_names	=	[];
-	else
-		sel_names	=	list_names(Sel);
-	
-		%	If just one file, then make it the target of future saves
-		if	length(Sel) == 1
-			file_name	=	sel_names{1};
-		elseif	length(Sel) > 1
-		%	Otherwise new merged file
-			user_name	=	'merged';
-			file_name	=	[fname '-' user_name '.mat'];
-		end
-	end
-	
-	%	Make sure file name for new files is unique
-	if	length(Sel) ~= 1	%i.e. we're not working with a specific file
-		ii	=	0;
-		while	any(strcmp(file_name, list_names))
-			ii	=	ii + 1;
-			file_name	=	[fname '-' user_name '-' num2str(ii) '.mat'];
-		end
-	end
+listing		=	dir(fullfile(folder_name, [fname '*' extt]));
 
+if	~isempty(listing)
+    %	Ask user which file(s) to load
+    N_files		=	length(listing);
+    list_files	=	cell(N_files,1);
+    for	ii	=	1:N_files
+        list_names{ii}	=	listing(ii).name;
+    end
+    
+    %AARON note: example of listdlg
+    [Sel, OK]	=	listdlg('ListString', list_names,...
+        'Name', 'Available notes',...
+        'PromptString', 'Select file(s) to load:',...
+        'OKString', 'Load',...
+        'CancelString', 'New');
+    if	(OK == 0) || isempty(Sel)
+        sel_names	=	[];
+    else
+        sel_names	=	list_names(Sel);
+        
+        %	If just one file, then make it the target of future saves
+        if	length(Sel) == 1 && manual_flag
+            
+            file_name	=	sel_names{1};
+        elseif length(Sel) == 1 && ~manual_flag
+            %%keep file name
+            
+            
+        elseif	length(Sel) > 1
+            %	Otherwise new merged file
+            user_name	=	'merged';
+            file_name	=	[fname '-' user_name '.mat'];
+        end
+    end
+    
+    %	Make sure file name for new files is unique
+    if	length(Sel) ~= 1	%i.e. we're not working with a specific file
+        ii	=	0;
+        while	any(strcmp(file_name, list_names))
+            ii	=	ii + 1;
+            file_name	=	[fname '-' user_name '-' num2str(ii) '.mat'];
+        end
+    end
+    
 end
 
 
 %	New file with default data template
+ [Description, Template]=load_default_template;
+   
 if isempty(listing) || isempty(sel_names)
-	%	Create defaults if none already present
-	%	Default prompt
-	Description	=	{'Start Time',...
-		'Author',...
-		'Pulse or FM?',...
-		'Call Type',...
-		'Min Freq (Hz)',...
-		'Max Freq (Hz)',...
-		'Duration (s)',...
-		'Noise (dB)',...
-		'Peak (dB)',...
-		'# of pulses',...
-		'# of harmonics',...
-		'Modulation (Hz)',...
-		'Confidence (1-5)',...
-		'Comments'};
-	
-	%	Default values
-	Template.start_time		=	0;
-	Template.author			=	'Your name';
-	Template.sig_type		=	'NA';
-	Template.call_type		=	'S1';
-	Template.min_freq		=	0;
-	Template.max_freq		=	5000;
-	Template.duration		=	10;
-	Template.noise_db		=	0;
-	Template.peak_db		=	27;
-	Template.num_pulses		=	2;
-	Template.num_harmonics	=	-1;
-	Template.modulation		=	0;
-	Template.confidence		=	3;
-	Template.comments		=	'';
-	
-	Data.Description	=	Description;
-	Data.Template		=	Template;
-	Data.Events			=	[];
-	
-	handles.notes.Data	=	Data;
-	handles.notes.show	=	false;
-	opt				=	'off';
-		
-	
-%	Load selected files and merge data
+    %	Create defaults if none already present
+    %	Default prompt
+      
+    Data.Description	=	Description;
+    Data.Template		=	Template;
+    Data.Events			=	[];
+    
+    handles.notes.Data	=	Data;
+    handles.notes.show	=	false;
+    opt				=	'off';
+    
+    
+    %	Load selected files and merge data
 else
-	Data	=	[];
-	for	ii	=	1:length(sel_names)
-		file_path		=	fullfile(folder_name, sel_names{ii});
-		LS		=	load(file_path);
-		if	isempty(Data)
-			Data	=	check_notes(LS.Data);
-		else
-			nData	=	check_notes(LS.Data);
-			Data.Events		=	merge_events(Data.Events, nData.Events);
-		end
-	end
-
-	if	length(Sel) > 1
-		%	Since this is a new merged file, turn save on, and read_only off
-		handles.notes.saved	=	false;
-		set(handles.checkbox_notes_readonly, 'Value', 0);
-		checkbox_notes_readonly_Callback(handles.checkbox_notes_readonly, [], handles);
-	end
-	
-	handles.notes.Data	=	Data;
-	handles.notes.show	=	true;
-	opt				=	'on';
+    Data	=	[];
+    for	ii	=	1:length(sel_names)
+        file_path		=	fullfile(folder_name, sel_names{ii});
+        
+        %%AARON changes
+        if manual_flag
+            LSfile		=	load(file_path); 
+        else  %import automated file
+            [auto,head]=readEnergySummary(file_path, Inf);
+            LSfile.Data.Description=Description;
+            LSfile.Data.Template=Template;
+            LSfile.Data.param=head;
+            hh = waitbar(0,sprintf('Importing %s...',sel_names{ii}));
+            for JJ=1:length(auto.ctime)
+                if rem(JJ,500)==0
+                   waitbar(JJ/length(auto.ctime),hh); 
+                end
+               LSfile.Data.Events(JJ)=Template;
+               LSfile.Data.Events(JJ).start_time= datenum(1970,1,1,0,0,auto.ctime(JJ));
+               LSfile.Data.Events(JJ).author='JAVA Energy Processor';
+               LSfile.Data.Events(JJ).duration= num2str(auto.features(end,JJ)); 
+               LSfile.Data.Events(JJ).min_freq= num2str(auto.features(1,JJ)); 
+               LSfile.Data.Events(JJ).max_freq= num2str(auto.features(3,JJ)); 
+            end
+            close(hh);
+            
+        end
+        
+        
+        if	isempty(Data)
+            Data	=	check_notes(LSfile.Data);
+        else
+            nData	=	check_notes(LSfile.Data);
+            Data.Events		=	merge_events(Data.Events, nData.Events);
+        end
+    end
+    
+    if	length(Sel) > 1
+        %	Since this is a new merged file, turn save on, and read_only off
+        handles.notes.saved	=	false;
+        set(handles.checkbox_notes_readonly, 'Value', 0);
+        checkbox_notes_readonly_Callback(handles.checkbox_notes_readonly, [], handles);
+    end
+    
+    handles.notes.Data	=	Data;
+    handles.notes.show	=	true;
+    opt				=	'on';
 end
 
 %	enable relevant buttons
@@ -7166,7 +7299,7 @@ disable_notes_nav(handles,opt);
 set(handles.checkbox_notes_show, 'Value', handles.notes.show);
 set(handles.checkbox_notes_show, 'Enable', opt);
 if	handles.fig_updated
-	set(handles.pushbutton_notes_new, 'Enable', 'on');
+    set(handles.pushbutton_notes_new, 'Enable', 'on');
 end
 
 %	Set folder text box to selected directory
@@ -7176,15 +7309,70 @@ handles.notes.folder_name	=	folder_name;
 handles.notes.file_name		=	file_name;
 handles.notes.file_path		=	fullfile(folder_name, file_name);
 
+%%AARON: Set current selection to middle of screen
+%handles.notes.i_sel=
+
+h_axes	=	handles.axes1;
+%	Window limits
+Times	=	mean(xlim(h_axes));
+Times	=	handles.tdate_start + datenum(0,0,0,0,0,Times);
+
+%	Event times
+Start_Times	=	cell2mat({Data.Events.start_time});
+
+%	AARON Find closest event
+[junk,i_show]	=	min(abs(Start_Times-Times));
+
+if ~isempty(i_show)
+    handles.notes.i_sel=i_show;
+end
+
 end
 
 %	Pops up window to edit event data
-function	NewEvent	=	edit_event(Event, Description)
+function	NewEvent	=	edit_event(Event, Description, handles)
 
 %	Start time included in window title, should not be part of input
 start_time		=	Event.start_time;
 Event			=	rmfield(Event, 'start_time');
 Description(1)	=	[];
+
+tmp=datevec(start_time-handles.tdate_start);
+Times(1)=3600*tmp(:,4)+60*tmp(:,5)+tmp(:,6);
+
+%Check whether this event is new or an edit of an old event
+% A new event has numerical values assigned to the fields;
+% An old event has already converted them into strings
+if ischar(Event.duration)||ischar(Event.min_freq)||ischar(Event.max_freq) %old event
+    disp('Editing old event');
+    Event.duration=str2double(Event.duration);
+    Event.min_freq=str2double(Event.min_freq);
+    Event.max_freq=str2double(Event.max_freq);
+else % new event
+    disp('Editing new event');
+end
+
+Times(2)=Times(1)+Event.duration;
+Freq(1)=Event.min_freq/1000;
+Freq(2)=Event.max_freq/1000;
+
+params_extract=extract_automated_fields(Times,Freq,handles);
+if isempty(params_extract)
+    errordlg('SNR and level could not be extracted: Time window is too small');
+    NewEvent=[];
+    return
+else
+    fieldname=fieldnames(params_extract);
+    for I=1:length(fieldname)
+        Event.(fieldname{I})=(params_extract.(fieldname{I}));
+    end
+end
+
+% start_time	=	handles.tdate_start...
+% 				+	datenum(0,0,0,0,0,min(Times));
+% min_freq	=	(1000*min(Freq));
+% max_freq	=	(1000*max(Freq));
+% duration	=	(abs(Times(2) - Times(1)));
 
 %	Generate default strings from field values
 names		=	fieldnames(Event);
@@ -7192,12 +7380,12 @@ N_fields	=	length(names);
 defaults	=	cell(N_fields,1);
 %tf_numeric	=	false(N_fields,1);
 for	ii	=	1:N_fields
-	value	=	Event.(names{ii});
-%	if	~ischar(value)
-		value	=	num2str(value);
-%		tf_numeric(ii)	=	true;
-%	end
-	defaults{ii}	=	value;
+    value	=	Event.(names{ii});
+    %	if	~ischar(value)
+    value	=	num2str(value);
+    %		tf_numeric(ii)	=	true;
+    %	end
+    defaults{ii}	=	value;
 end
 
 %	Size of each prompt field
@@ -7211,18 +7399,18 @@ dlgTitle	=	['Annotation for event at ' datestr(start_time)];
 answer		=	inputdlg(Description, dlgTitle, num_lines, defaults);
 
 if	isempty(answer)
-	NewEvent	=	[];
-	return;
+    NewEvent	=	[];
+    return;
 end
 
 %	start_time is always first field
 NewEvent.start_time		=	start_time;
 for	ii	=	1:N_fields
-	value	=	answer{ii};
-% 	if	tf_numeric(ii)
-% 		value	=	str2double(value);
-% 	end
-	NewEvent.(names{ii})	=	value;
+    value	=	answer{ii};
+    % 	if	tf_numeric(ii)
+    % 		value	=	str2double(value);
+    % 	end
+    NewEvent.(names{ii})	=	value;
 end
 
 
@@ -7231,27 +7419,28 @@ end
 %	Adds new event to notes structure and re-sorts chronologically
 function	[Event_set, ii]			=	add_event(Event_set, Event)
 
-	%	If new set, just return the single event
+%	If new set, just return the single event
 if	isempty(Event_set)
-	Event_set	=	Event;
-	ii			=	1;
+    Event_set	=	Event;
+    ii			=	1;
 else
-	%	Append new event(s)
-	N			=	length(Event_set) + 1;
-	Event_set	=	[Event_set(:); Event(:)];
-	Start_times	=	cell2mat({Event_set.start_time});
-	%	Check if already sorted, i.e. sequential additions
-	if	issorted(Start_times)
-		ii	=	N;	%	index of 1st inserted item
-	else
-		[~,I]		=	sort(Start_times);
-		Event_set	=	Event_set(I);
-		%	Find new index of 1st inserted event
-		ii			=	find(I == N);
-	end
+    %	Append new event(s)
+    N			=	length(Event_set) + 1;
+    Event_set	=	[Event_set(:); Event(:)];
+    Start_times	=	cell2mat({Event_set.start_time});
+    %	Check if already sorted, i.e. sequential additions
+    if	issorted(Start_times)
+        ii	=	N;	%	index of 1st inserted item
+    else
+        [~,I]		=	sort(Start_times);
+        Event_set	=	Event_set(I);
+        %	Find new index of 1st inserted event
+        ii			=	find(I == N);
+    end
 end
 
 end
+
 
 %	Merge Events, inserting missing fields as needed
 function	Events		=	merge_events(Events1, Events2)
@@ -7265,8 +7454,8 @@ names	=	union(names1, names2);
 Events1(end+1)	=	Events1(end);
 Events2(end+1)	=	Events2(end);
 for	ii	=	1:length(names)
-	Events1(end).(names{ii})	=	[];
-	Events2(end).(names{ii})	=	[];
+    Events1(end).(names{ii})	=	[];
+    Events2(end).(names{ii})	=	[];
 end
 
 %	Delete dummy entries
@@ -7278,23 +7467,30 @@ Events	=	add_event(Events1, Events2);
 
 end
 
+
 %	Overlays events within current window
 function	handles	=	plot_events(handles)
 
+
+%%If no notes are opened, leave gracefully
+if isempty(handles.notes.file_name)
+    return
+end
+
 %	Try deleting existing events from window
 try
-	delete(handles.notes.h_show);
+    delete(handles.notes.h_show);
 end
 
 
 %	Disable edit, next/prev buttons if nothing is shown
 if	isempty(handles.notes.Data) || isempty(handles.notes.Data.Events)...
-		|| ~handles.notes.show
-	set(handles.pushbutton_notes_edit,'Enable','off');
-	set(handles.checkbox_notes_delete,'Enable','off');
-	%	Disable prev/next buttons
-	disable_notes_nav(handles);
-	return;
+        || ~handles.notes.show
+    set(handles.pushbutton_notes_edit,'Enable','off');
+    set(handles.checkbox_notes_delete,'Enable','off');
+    %	Disable prev/next buttons
+    disable_notes_nav(handles);
+    return;
 end
 Events	=	handles.notes.Data.Events;
 
@@ -7314,23 +7510,26 @@ axes(h_axes);
 h_show	=	[];
 sel_vis	=	false;
 for	ii	=	1:length(i_show)
-	ie		=	i_show(ii);
-	event	=	Events(ie);
-	x		=	event.start_time - Times(1);	x	=	x*24*60*60;
-	y		=	str2double(event.min_freq)/1000;
-	width	=	str2double(event.duration);
-	height	=	(str2double(event.max_freq) - str2double(event.min_freq))/1000;
-
-	h_show(ii)	=	rectangle('Position',[x,y,width,height],...
-				'Curvature',[0.3],...
-				'LineWidth',2,'LineStyle','-',...
-				'EdgeColor','w'); %#ok<AGROW>
-	
-	%	Highlight selected event with a different color
-	if	ie == handles.notes.i_sel
-		set(h_show(ii),'EdgeColor', 'm');
-		sel_vis		=	true;
-	end
+    ie		=	i_show(ii);
+    event	=	Events(ie);
+    x		=	event.start_time - Times(1);	x	=	x*24*60*60;
+    y		=	str2double(event.min_freq)/1000;
+    width	=	str2double(event.duration);
+    height	=	(str2double(event.max_freq) - str2double(event.min_freq))/1000;
+    
+    %AARON fix for dodgy detections
+    height=max([1e-5 height]);
+    width=max([1e-5 width]);
+    h_show(ii)	=	rectangle('Position',[x,y,width,height],...
+        'Curvature',[0.3],...
+        'LineWidth',2,'LineStyle','-',...
+        'EdgeColor','w'); %#ok<AGROW>
+    
+    %	Highlight selected event with a different color
+    if	ie == handles.notes.i_sel
+        set(h_show(ii),'EdgeColor', 'm');
+        sel_vis		=	true;
+    end
 end
 
 handles.notes.i_show	=	i_show;
@@ -7339,18 +7538,18 @@ guidata(h_axes, handles);
 
 %	Enable prev/next buttons
 if	length(Events) >= 1
-	disable_notes_nav(handles,'on');
+    disable_notes_nav(handles,'on');
 else	%	Disable prev/next buttons
-	disable_notes_nav(handles,'off');
+    disable_notes_nav(handles,'off');
 end
 
 %	Enable edit/delete, if selected event is visible
 if sel_vis
-	set(handles.pushbutton_notes_edit,'Enable','on');
-	set(handles.checkbox_notes_delete,'Enable','on');
+    set(handles.pushbutton_notes_edit,'Enable','on');
+    set(handles.checkbox_notes_delete,'Enable','on');
 else
-	set(handles.pushbutton_notes_edit,'Enable','off');
-	set(handles.checkbox_notes_delete,'Enable','off');
+    set(handles.pushbutton_notes_edit,'Enable','off');
+    set(handles.checkbox_notes_delete,'Enable','off');
 end
 
 end
@@ -7364,7 +7563,7 @@ set(handles.pushbutton_pausesound,'Enable','off'); %always off at first
 
 %	enable new note button
 if	~isempty(handles.notes.file_path)
-	set(handles.pushbutton_notes_new,'Enable',opt);
+    set(handles.pushbutton_notes_new,'Enable',opt);
 end
 
 %	enable next/prev window increment
@@ -7395,70 +7594,149 @@ end
 function	Data	=	check_notes(Data)
 
 if	isempty(Data)
-	return;
+    return;
 end
 
 req_fields	=	{'Description', 'Template', 'Events'};
 if	~isstruct(Data) || ~all(isfield(Data, req_fields))
-	errmsg	=	'Existing Data must be a structure containing the fields: \n ';
-	for		ii	=	1:length(req_fields)
-		errmsg	=	[errmsg req_fields{ii} ', ']; %#ok<AGROW>
-	end
-	errmsg(end)		=	[];		errmsg(end)		=	[];
-	error(errmsg, []);
+    errmsg	=	'Existing Data must be a structure containing the fields: \n ';
+    for		ii	=	1:length(req_fields)
+        errmsg	=	[errmsg req_fields{ii} ', ']; %#ok<AGROW>
+    end
+    errmsg(end)		=	[];		errmsg(end)		=	[];
+    error(errmsg, []);
 end
 
 if	~iscell(Data.Description)
-	error('Description must be a cell array of strings');
+    error('Description must be a cell array of strings');
 end
 
 if	~isstruct(Data.Template)
-	error('Template must be a struct with the desired data field names');
+    error('Template must be a struct with the desired data field names');
 end
 
 N		=	length(Data.Description);
 names	=	fieldnames(Data.Template);
 if	N ~= length(names)
-	error('# of fields in Template do not match # of descriptions');
+    error('# of fields in Template do not match # of descriptions');
 end
 
 if	~strcmp(names{1}, 'start_time')
-	error('First field in Template (and Events) must be start_time');
+    error('First field in Template (and Events) must be start_time');
 end
 
 if	isempty(Data.Events)
-	return;
+    return;
 else
-	names2	=	fieldnames(Data.Events);
+    names2	=	fieldnames(Data.Events);
 end
 
 if	~strcmp(names, names2)
-	error('Template and Events have differring structures');
+    error('Template and Events have differring structures');
 end
 
 %	At this point assume most everything is ok
 %	return
 
 %	Code to convert all fields (except start_time to strings)
+ hh = waitbar(0,sprintf('Checking Data'));
+           
 for ii	=	2:N
-	%	!?!? Existing strings are automatically passed through, but do I
-	%	need to specifically check for data types other than numeric?
-	Data.Template.(names{ii})		=	num2str(Data.Template.(names{ii}));
-	for	jj	=	1:length(Data.Events)
-		Data.Events(jj).(names{ii})		=	num2str(Data.Events(jj).(names{ii}));
-	end
+    
+    %	!?!? Existing strings are automatically passed through, but do I
+    %	need to specifically check for data types other than numeric?
+    Data.Template.(names{ii})		=	num2str(Data.Template.(names{ii}));
+    for	jj	=	1:length(Data.Events)
+        if rem(jj,200)==0
+            waitbar((ii*length(Data.Events)+jj)/(N*length(Data.Events)),hh);
+        end
+        Data.Events(jj).(names{ii})		=	num2str(Data.Events(jj).(names{ii}));
+    end
 end
+close(hh)
 
 
 end
 
 %	Helper function to get current users id/name
 function	user_name	=	getusername()
-	if	isunix || ismac
-		user_name = getenv('USER');
-	elseif ispc
-		user_name = getenv('USERNAME');
-	else
-		error('Unregognized system');
-	end
+if	isunix || ismac
+    user_name = getenv('USER');
+elseif ispc
+    user_name = getenv('USERNAME');
+else
+    error('Unregognized system');
+end
+end
+
+function [Description, Template]=load_default_template
+Description	=	{'Start Time',...
+    'Author',...
+    'Pulse or FM?',...
+    'Call Type',...
+    'Min Freq (Hz)',...
+    'Max Freq (Hz)',...
+    'Duration (s)',...
+    'Noise SEL (dB re 1 uPa^2-s)',...
+    'Noise rms (dB re 1 uPa)',...
+    'Noise peak PSD (dB re 1uPa^2/Hz)',...
+    'Signal SEL (dB re 1 uPa^2-s)',...
+    'Signal rms (dB re 1 uPa)',...
+    'Signal peak PSD (dB re 1uPa^2/Hz)',...
+    'Signal SNR (dB rms)', ...
+    '# of pulses',...
+    '# of harmonics',...
+    'Modulation (Hz)',...
+    'Confidence (1-5)',...
+    'Comments'};
+
+%	Default values
+Template.start_time		=	0;
+Template.author			=	'Your name';
+Template.sig_type		=	'NA';
+Template.call_type		=	'S1';
+Template.min_freq		=	0;
+Template.max_freq		=	5000;
+Template.duration		=	10;
+Template.noise_se_dB		=	0;
+Template.noise_rms_dB		=	0;
+Template.noise_peakpsd_dB		=	0;
+Template.signal_se_dB		=	0;
+Template.signal_rms_dB		=	0;
+Template.signal_peakpsd_dB		=	0;
+Template.SNR_rms_dB		=       0;
+Template.num_pulses		=	2;
+Template.num_harmonics	=	-1;
+Template.modulation		=	0;
+Template.confidence		=	3;
+Template.comments		=	'';
+end
+
+
+% --- Executes on button press in pushbutton_notes_screen.
+function pushbutton_notes_screen_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_notes_screen (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+h_axes	=	handles.axes1;
+%	Window limits
+Times	=	mean(xlim(h_axes));
+Times	=	handles.tdate_start + datenum(0,0,0,0,0,Times);
+
+%	Event times
+Start_Times	=	cell2mat({handles.notes.Data.Events.start_time});
+
+%	AARON Find closest event
+[junk,i_show]	=	min(abs(Start_Times-Times));
+
+if ~isempty(i_show)
+    handles.notes.i_sel=i_show;
+end
+
+handles		=	update_events(handles);
+
+%	this might be redundant
+guidata(hObject, handles);
+
 end
