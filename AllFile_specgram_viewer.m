@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 17-Jun-2013 14:21:47
+% Last Modified by GUIDE v2.5 03-Jul-2013 15:54:33
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -57,7 +57,7 @@ end
 % End initialization code - DO NOT EDIT
 
 % --- Executes just before AllFile_specgram_viewer is made visible.
-function AllFile_specgram_viewer_OpeningFcn(hObject, eventdata, handles, varargin)
+function AllFile_specgram_viewer_OpeningFcn(hObject, eventdata, handles, varargin) %#ok<VANUS>
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -288,8 +288,11 @@ else
     notes_folder	=	[];
 end
 
-%Don't load notes until directory selected.
-%handles		=	load_notes_file(handles, notes_folder);
+%	Jit: Loading should always occur if valid files are present in given
+%	directory
+%	Otherwise same folder has to be reselected everytime new data file in
+%	same series is loaded
+handles		=	load_notes_file(handles, notes_folder);
 
 
 
@@ -1040,7 +1043,7 @@ else
     chcc=get(0,'child');
     Igoodd	=	(chcc-round(chcc)==0);
     chcc=chcc(Igoodd);
-    for III=1:length(chcc)
+    for III=1:length(chcc) %#ok<*FORPF>
         tmp{III}=chcc(III);
     end
     figchc=menu('Select a figure number:',tmp);
@@ -2345,7 +2348,7 @@ end %Imodel
                     [ax,h1,h2]=plotyy(range_guess/1000,1000*(squeeze(talign{Imodel}(Itilt2,:,Imm))),range_guess/1000,amplitudes);
                     
                     
-                    set(h1,'markeredgecolor',[plotstr_tilt(Itilt2) ])
+                    set(h1,'markeredgecolor',[plotstr_tilt(Itilt2) ]) %#ok<*NBRAK>
                     set(h1,'marker', plotstr(Imodel));set(ax(2),'xtick',[])
                     set(gca,'fontsize',14,'fontweight','bold');
                     set(ax(2),'fontsize',14,'fontweight','bold');
@@ -2609,7 +2612,7 @@ end %Imodel
             %Plot frequency-averaged depth estimator%
             
             figure(100+Itilt+Ir_best);
-            plot1=10*log10(sum(amb{Imodel}'))/length(Iwant);
+            plot1=10*log10(sum(amb{Imodel}'))/length(Iwant); %#ok<*UDIM>
             plot_norm=10*log10(sum(amb_nowght{Imodel}'))/length(Iwant);
             plot_abs=10*log10(sum(amb_abs{Imodel}'))/length(Iwant);
             plot(plot1/max(abs(plot1)),model.sd,[plotstr_tilt(Itilt) '-' plotstr(Imodel)]);hold on
@@ -3159,10 +3162,12 @@ if	choice == 0
 end
 sig_type	=	sig_types{choice};
 
-%%Get automated parameters from basic information
-params_extract=extract_automated_fields(Times,Freq,handles);
+%	Get automated parameters from basic information
+params_extract	=	extract_automated_fields(Times, Freq, handles);
 if isempty(params_extract)
-    errordlg('SNR and level could not be extracted: Time window is too small; Show greater time window and retry');
+    errordlg({'SNR and level could not be extracted:';...
+				'Time window is too small';...
+				'Show greater time window and retry'});
     return
 end
 
@@ -3190,11 +3195,11 @@ Event.duration		=	duration;
 
 Event.noise_se_dB		=	params_extract.noise_se_dB;
 Event.noise_rms_dB		=	params_extract.noise_rms_dB;
-Event.noise_peakpsd_dB		=	params_extract.noise_peakpsd_dB;
+Event.noise_peakpsd_dB	=	params_extract.noise_peakpsd_dB;
 Event.signal_se_dB		=	params_extract.signal_se_dB;
 Event.signal_rms_dB		=	params_extract.signal_rms_dB;
-Event.signal_peakpsd_dB		=	params_extract.signal_peakpsd_dB;
-Event.SNR_rms_dB		=       params_extract.SNR_rms_dB;
+Event.signal_peakpsd_dB	=	params_extract.signal_peakpsd_dB;
+Event.SNR_rms_dB		=	params_extract.SNR_rms_dB;
 
 
 
@@ -3237,23 +3242,22 @@ if	~isempty(Event)
 end
 end
 
-function params_extract=extract_automated_fields(Times,Freq,handles)
+function	params_extract	=	extract_automated_fields(Times,Freq,handles)
 
-start_time	=	handles.tdate_start...
-    +	datenum(0,0,0,0,0,min(Times));
+start_time	=	handles.tdate_start + datenum(0,0,0,0,0,min(Times));
 min_freq	=	(1000*min(Freq));
 max_freq	=	(1000*max(Freq));
 duration	=	(abs(Times(2) - Times(1)));
 
 
-T			=	handles.sgram.T;
-F			=	handles.sgram.F/1e3;
-dF=F(2)-F(1);
-dT=T(2)-T(1);
-B			=	handles.sgram.B;
-i_time		=	(min(Times) <= T) & (T <= max(Times));
-i_freq		=	(min(Freq) <= F) & (F <= max(Freq));
-PSD			=	(B(i_freq, i_time));
+T		=	handles.sgram.T;
+F		=	handles.sgram.F/1e3;
+dF		=	F(2) - F(1);
+dT		=	T(2) - T(1);
+B		=	handles.sgram.B;
+i_time	=	(min(Times) <= T) & (T <= max(Times));
+i_freq	=	(min(Freq) <= F) & (F <= max(Freq));
+PSD		=	(B(i_freq, i_time));
 
 %Estimating the signal-to-noise ratio in terms of rms power/rms power
 % AARON THODE flag, changed June 16, 2013
@@ -3408,6 +3412,33 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 end
 
+% --- Executes on button press in pushbutton_notes_screen.
+function pushbutton_notes_screen_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_notes_screen (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+h_axes	=	handles.axes1;
+%	Window limits
+Times	=	mean(xlim(h_axes));
+Times	=	handles.tdate_start + datenum(0,0,0,0,0,Times);
+
+%	Event times
+Start_Times	=	cell2mat({handles.notes.Data.Events.start_time});
+
+%	AARON Find closest event
+[junk,i_show]	=	min(abs(Start_Times-Times));
+
+if ~isempty(i_show)
+    handles.notes.i_sel=i_show;
+end
+
+handles		=	update_events(handles);
+
+%	this might be redundant
+guidata(hObject, handles);
+
+end
 
 
 %%	Supporting functions, i.e. not auto-generated callbacks
@@ -3466,12 +3497,12 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
     %[B,FF,TT]=specgram(x(:,1),Nfft,Fs,hanning(Nfft),round(ovlap*Nfft));
     [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
     %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
-    handles.sgram.T	=	TT;
-    handles.sgram.F	=	FF;
-    handles.sgram.B	=	B;
-    handles.sgram.Nfft=Nfft;
-    handles.sgram.ovlap=ovlap;
-    handles.sgram.Fs=Fs;
+    handles.sgram.T		=	TT;
+    handles.sgram.F		=	FF;
+    handles.sgram.B		=	B;
+    handles.sgram.Nfft	=	Nfft;
+    handles.sgram.ovlap	=	ovlap;
+    handles.sgram.Fs	=	Fs;
     
     if strcmp(handles.display_view,'Spectrogram')
         axes(handles.axes1);
@@ -7164,7 +7195,7 @@ file_chc=menu('Select a file type:','Automated Detector','Manual Annotation');
 
 if file_chc==2 %Manual annotation
     extt='.mat';
-    manual_flag=true;
+	manual_flag	=	true;
     fname			=	[fname '-notes'];
     user_name		=	getusername();
     file_name	=	[fname '-' user_name '.mat'];
@@ -7191,10 +7222,10 @@ if	~isempty(listing)
     
     %AARON note: example of listdlg
     [Sel, OK]	=	listdlg('ListString', list_names,...
-        'Name', 'Available notes',...
-        'PromptString', 'Select file(s) to load:',...
-        'OKString', 'Load',...
-        'CancelString', 'New');
+						'Name', 'Available notes',...
+						'PromptString', 'Select file(s) to load:',...
+						'OKString', 'Load',...
+						'CancelString', 'New');
     if	(OK == 0) || isempty(Sel)
         sel_names	=	[];
     else
@@ -7228,7 +7259,7 @@ end
 
 
 %	New file with default data template
- [Description, Template]=load_default_template;
+ [Description, Template]	=	load_default_template;
    
 if isempty(listing) || isempty(sel_names)
     %	Create defaults if none already present
@@ -7240,7 +7271,7 @@ if isempty(listing) || isempty(sel_names)
     
     handles.notes.Data	=	Data;
     handles.notes.show	=	false;
-    opt				=	'off';
+    opt					=	'off';
     
     
     %	Load selected files and merge data
@@ -7253,21 +7284,22 @@ else
         if manual_flag
             LSfile		=	load(file_path); 
         else  %import automated file
-            [auto,head]=readEnergySummary(file_path, Inf);
-            LSfile.Data.Description=Description;
-            LSfile.Data.Template=Template;
-            LSfile.Data.param=head;
-            hh = waitbar(0,sprintf('Importing %s...',sel_names{ii}));
-            for JJ=1:length(auto.ctime)
-                if rem(JJ,500)==0
+            [auto,head]		=	readEnergySummary(file_path, Inf);
+			
+            LSfile.Data.Description		=	Description;
+            LSfile.Data.Template		=	Template;
+            LSfile.Data.param			=	head;
+            hh	=	waitbar(0,sprintf('Importing %s...',sel_names{ii}));
+            for JJ = 1:length(auto.ctime)
+                if rem(JJ,500) == 0
                    waitbar(JJ/length(auto.ctime),hh); 
                 end
-               LSfile.Data.Events(JJ)=Template;
-               LSfile.Data.Events(JJ).start_time= datenum(1970,1,1,0,0,auto.ctime(JJ));
-               LSfile.Data.Events(JJ).author='JAVA Energy Processor';
-               LSfile.Data.Events(JJ).duration= num2str(auto.features(end,JJ)); 
-               LSfile.Data.Events(JJ).min_freq= num2str(auto.features(1,JJ)); 
-               LSfile.Data.Events(JJ).max_freq= num2str(auto.features(3,JJ)); 
+               LSfile.Data.Events(JJ)			=	Template;
+               LSfile.Data.Events(JJ).start_time=	datenum(1970,1,1,0,0,auto.ctime(JJ));
+               LSfile.Data.Events(JJ).author	=	'JAVA Energy Processor';
+               LSfile.Data.Events(JJ).duration	=	num2str(auto.features(end,JJ)); 
+               LSfile.Data.Events(JJ).min_freq	=	num2str(auto.features(1,JJ)); 
+               LSfile.Data.Events(JJ).max_freq	=	num2str(auto.features(3,JJ)); 
             end
             close(hh);
             
@@ -7317,14 +7349,17 @@ h_axes	=	handles.axes1;
 Times	=	mean(xlim(h_axes));
 Times	=	handles.tdate_start + datenum(0,0,0,0,0,Times);
 
-%	Event times
-Start_Times	=	cell2mat({Data.Events.start_time});
+%	Jit, only do this if existing Event data is loaded
+if	~isempty(Data.Events)
+	%	Event times
+	Start_Times	=	cell2mat({Data.Events.start_time});
 
-%	AARON Find closest event
-[junk,i_show]	=	min(abs(Start_Times-Times));
+	%	AARON Find closest event
+	[~, i_show]	=	min(abs(Start_Times - Times));
 
-if ~isempty(i_show)
-    handles.notes.i_sel=i_show;
+	if ~isempty(i_show)
+		handles.notes.i_sel	=	i_show;
+	end
 end
 
 end
@@ -7337,8 +7372,8 @@ start_time		=	Event.start_time;
 Event			=	rmfield(Event, 'start_time');
 Description(1)	=	[];
 
-tmp=datevec(start_time-handles.tdate_start);
-Times(1)=3600*tmp(:,4)+60*tmp(:,5)+tmp(:,6);
+tmp		=	datevec(start_time - handles.tdate_start);
+Times(1)=	3600*tmp(:,4) + 60*tmp(:,5) + tmp(:,6);
 
 %Check whether this event is new or an edit of an old event
 % A new event has numerical values assigned to the fields;
@@ -7352,19 +7387,19 @@ else % new event
     disp('Editing new event');
 end
 
-Times(2)=Times(1)+Event.duration;
-Freq(1)=Event.min_freq/1000;
-Freq(2)=Event.max_freq/1000;
+Times(2)	=	Times(1) + Event.duration;
+Freq(1)		=	Event.min_freq/1000;
+Freq(2)		=	Event.max_freq/1000;
 
-params_extract=extract_automated_fields(Times,Freq,handles);
+params_extract	=	extract_automated_fields(Times, Freq, handles);
 if isempty(params_extract)
     errordlg('SNR and level could not be extracted: Time window is too small');
     NewEvent=[];
     return
 else
-    fieldname=fieldnames(params_extract);
-    for I=1:length(fieldname)
-        Event.(fieldname{I})=(params_extract.(fieldname{I}));
+    names	=	fieldnames(params_extract);
+    for	I = 1:length(names)
+        Event.(names{I}) = params_extract.(names{I});
     end
 end
 
@@ -7441,7 +7476,6 @@ end
 
 end
 
-
 %	Merge Events, inserting missing fields as needed
 function	Events		=	merge_events(Events1, Events2)
 
@@ -7466,7 +7500,6 @@ Events2(end)	=	[];
 Events	=	add_event(Events1, Events2);
 
 end
-
 
 %	Overlays events within current window
 function	handles	=	plot_events(handles)
@@ -7518,8 +7551,8 @@ for	ii	=	1:length(i_show)
     height	=	(str2double(event.max_freq) - str2double(event.min_freq))/1000;
     
     %AARON fix for dodgy detections
-    height=max([1e-5 height]);
-    width=max([1e-5 width]);
+    height	=	max([1e-5 height]);
+    width	=	max([1e-5 width]);
     h_show(ii)	=	rectangle('Position',[x,y,width,height],...
         'Curvature',[0.3],...
         'LineWidth',2,'LineStyle','-',...
@@ -7669,7 +7702,8 @@ else
 end
 end
 
-function [Description, Template]=load_default_template
+%	helper function for default template
+function	[Description, Template]	=	load_default_template()
 Description	=	{'Start Time',...
     'Author',...
     'Pulse or FM?',...
@@ -7691,25 +7725,25 @@ Description	=	{'Start Time',...
     'Comments'};
 
 %	Default values
-Template.start_time		=	0;
-Template.author			=	'Your name';
-Template.sig_type		=	'NA';
-Template.call_type		=	'S1';
-Template.min_freq		=	0;
-Template.max_freq		=	5000;
-Template.duration		=	10;
+Template.start_time			=	0;
+Template.author				=	'Your name';
+Template.sig_type			=	'NA';
+Template.call_type			=	'S1';
+Template.min_freq			=	0;
+Template.max_freq			=	5000;
+Template.duration			=	10;
 Template.noise_se_dB		=	0;
 Template.noise_rms_dB		=	0;
-Template.noise_peakpsd_dB		=	0;
+Template.noise_peakpsd_dB	=	0;
 Template.signal_se_dB		=	0;
 Template.signal_rms_dB		=	0;
-Template.signal_peakpsd_dB		=	0;
-Template.SNR_rms_dB		=       0;
-Template.num_pulses		=	2;
-Template.num_harmonics	=	-1;
-Template.modulation		=	0;
-Template.confidence		=	3;
-Template.comments		=	'';
+Template.signal_peakpsd_dB	=	0;
+Template.SNR_rms_dB			=	0;
+Template.num_pulses			=	2;
+Template.num_harmonics		=	-1;
+Template.modulation			=	0;
+Template.confidence			=	3;
+Template.comments			=	'';
 end
 
 %	Taken from readEnergySummary.m
@@ -7783,7 +7817,7 @@ while (I<=max(index))
             disp(sprintf('End of file reached after detection %i, error flag type %i',I,error_flag_type));
             break;
 
-end
+        end
     else
         fseek(fid,summary_bytes,0);
     end
@@ -7809,6 +7843,7 @@ if length(data.nstart)<1,
     disp('No calls detected in file');
     return;
 end
+
 %%Remove repetitive signals if desired...
 if nargin>2,
 
