@@ -7188,29 +7188,55 @@ else
 end
 [~,fname,~]		=	fileparts(handles.myfile);
 
+%	Default output file name
+user_name	=	getusername();
+file_name	=	[fname '-notes-' user_name '.mat'];
 
+
+%	Jit: this should be done after finding all relevant files
+%	no point showing user this menu if there are no files to select
 %%AARON:  Give user option of loading automated detector
 %  or existing notes file
-file_chc=menu('Select a file type:','Automated Detector','Manual Annotation');
+file_opts	=	{'Manual Annotation', 'Automated Detector'};
+file_exts	=	{'.mat', '.detsum'};
+file_flag	=	{true, false};
 
-if file_chc==2 %Manual annotation
-    extt='.mat';
-	manual_flag	=	true;
-    fname			=	[fname '-notes'];
-    user_name		=	getusername();
-    file_name	=	[fname '-' user_name '.mat'];
-else %Automated
-    extt='.detsum';
-    manual_flag=false;
-    user_name		=	getusername();
-    %	Default output file name
-    file_name	=	[fname '-notes-' user_name '.mat'];
+Nf			=	length(file_exts);
+file_found	=	true(Nf,1);
+
+for ii	=	1:Nf
+	%	Find all existing files
+	file_listings{ii}	=	dir(fullfile(folder_name, [fname '*' file_exts{ii}]));
+	if isempty(file_listings{ii})
+		file_found(ii)	=	false;
+	end
+end
+%	Limit options to available files
+file_opts		=	file_opts(file_found);
+file_exts		=	file_exts(file_found);
+file_flag		=	file_flag(file_found);
+file_listings	=	file_listings(file_found);
+
+choice	=	0;
+if	~isempty(file_listings)
+	if length(file_listings) == 1
+		choice	=	1;
+	else
+		%	Ask user to choose which list
+		choice	=	menu('Select a file type:', file_opts);
+	end
 end
 
-sel_names	=	[];
+if	choice	==	0
+	listing		=	[];
+	manual_flag	=	true;
+else
+	listing		=	file_listings{choice};
+	manual_flag	=	file_flag{choice};
+end
 
-%	Find all existing files
-listing		=	dir(fullfile(folder_name, [fname '*' extt]));
+
+sel_names	=	[];
 
 if	~isempty(listing)
     %	Ask user which file(s) to load
