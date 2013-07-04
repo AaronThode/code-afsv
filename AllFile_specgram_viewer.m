@@ -3881,8 +3881,9 @@ end
 
 end
 
-function [x,t,Fs,tmin,tmax,head]=load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)
-persistent fs keyword
+function [x,t,Fs,tmin,tmax,head]	=	...
+			load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)
+persistent  keyword
 mydir=handles.mydir;
 myfile=handles.myfile;
 teager=get(handles.checkbox_teager,'Value');
@@ -4072,9 +4073,10 @@ switch filetype
             -1.229223450332553e+00];
         
     case 'WAV'
-        sizz=wavread([mydir '/' myfile],'size');
-        [~,Fs]=wavread([mydir '/' myfile],1,'native');
-        handles.Fs=Fs;
+        Nsamples	=	wavread([mydir '/' myfile],'size');
+        [~,Fs]		=	wavread([mydir '/' myfile],1,'native');
+		Nsamples	=	Nsamples(1);
+        handles.Fs	=	Fs;
         
         %%Can we calibrate the data?
         %%  load_wav often normalizes the data so the peak value is 1.
@@ -4122,33 +4124,34 @@ switch filetype
         
         if tstart_min<0
             try
-                tmin=convert_date(myfile,'_');
-                tmax=convert_date(myfile,'_')+datenum(0,0,0,0,0,sizz(1)/Fs);
+                tmin	=	convert_date(myfile,'_');
+                tmax	=	convert_date(myfile,'_') + datenum(0,0,0,0,0,Nsamples/Fs);
             catch
                 disp([myfile ': convert_date failure']);
-                minn=input('Enter start date in format [yr mo day hr min sec]: ');
+                minn	=	input('Enter start date in format [yr mo day hr min sec]: ');
                 if isempty(minn)
                     minn=zeros(1,6);
                 end
-                tmin=datenum(minn);
-                tmax=tmin+datenum(0,0,0,0,0,sizz(1)/Fs);
+                tmin	=	datenum(minn);
+                tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
             end
         else
-            tmin=tstart_min;
-            tmax=tmin+datenum(0,0,0,0,0,sizz(1)/Fs);
-            tdate_vec=datevec(tdate_start-tmin);
-            nsec=tdate_vec(6)+60*tdate_vec(5)+3600*tdate_vec(4);
-            N1=1+round(nsec*handles.Fs);
-            N2=N1+round(tlen*handles.Fs);
-            [x,Fs]=wavread([mydir '/' myfile],[N1 N2],'native');
-            if ~strcmp(Ichan,'all')
-                x=x(:,Ichan);
-            end
+            tmin		=	tstart_min;
+            tmax		=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
+            tdate_vec	=	datevec(tdate_start - tmin);
+            nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);
+            N1			=	1 + round(nsec*handles.Fs);
+            N2			=	N1 + round(tlen*handles.Fs);
+            [x,Fs]		=	wavread([mydir '/' myfile],[N1 N2],'native');
             
-            t=(1:length(x))/Fs;
+			if ~strcmp(Ichan,'all')
+                x		=	x(:,Ichan);
+			end
+            
+            t	=	(1:length(x))/Fs;
         end
-        x=double(x)*sens;
-        head.Nchan=size(x,2);
+        x			=	double(x)*sens;
+        head.Nchan	=	size(x,2);
         
 end
 
@@ -7909,9 +7912,4 @@ x=x(:,1:(I-1));
 end
 
 end
-
-
-
-
-
 
