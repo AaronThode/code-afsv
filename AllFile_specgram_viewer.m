@@ -76,22 +76,22 @@ startupinfo		=	gui_startup_information;
 
 %%%%Set up times based on available times in input directory...%%%%
 %handles.mydir='/Users/thode/Projects/Insta-array/Sperm_Sitka/May9_Kendall_Cobra/Lucy';
-handles.mydir=startupinfo.default_directory;
-handles.inputdir=startupinfo.default_inputfiledir;
-handles.annotation_file=startupinfo.annotation_file;
+handles.mydir			=	startupinfo.default_directory;
+handles.inputdir		=	startupinfo.default_inputfiledir;
+handles.annotation_file	=	startupinfo.annotation_file;
 try
-    handles.calibration_DASAR2007_dir=startup_info.calibration_DASAR2007_dir;
+    handles.calibration_DASAR2007_dir	=	startup_info.calibration_DASAR2007_dir;
 catch
     disp('2007 calibration directory not defined');
 end
 set(handles.text_filename,'String',[handles.mydir ]);
 
-mydir=pwd;
+mydir	=	pwd;
 try
     cd(handles.mydir);
 end
-handles.filetype='mt';
-[handles,errorflag]=set_slider_controls(handles,handles.filetype); %#ok<*NASGU>
+handles.filetype	=	'mt';
+[handles,errorflag] =	set_slider_controls(handles,handles.filetype); %#ok<*NASGU>
 %Make GSIbearing button and CSDM invisible
 set(handles.pushbutton_GSIbearing,'Vis','off');
 set(handles.pushbutton_GSI_localization,'Vis','off');
@@ -100,7 +100,7 @@ set(handles.pushbutton_Mode,'Vis','off');
 set(handles.pushbutton_tilt,'Vis','off');
 set(handles.pushbutton_modalfiltering,'Vis','off');
 
-%	Set prev/next buttons inactive initiall
+%	Set prev/next buttons inactive initially
 set(handles.pushbutton_next,'Enable','off');
 set(handles.pushbutton_prev,'Enable','off');
 
@@ -130,8 +130,6 @@ end
 % UIWAIT makes AllFile_specgram_viewer wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 end
-
-
 
 % --- Outputs from this function are returned to the command line.
 function varargout = AllFile_specgram_viewer_OutputFcn(hObject, eventdata, handles)
@@ -426,13 +424,6 @@ if tlen > tlen_max
     end
 end
 
-maxx		=	get(handles.slider_datestr,'max');
-minn		=	get(handles.slider_datestr,'min');
-slider_step	=	get(handles.slider_datestr,'sliderstep');
-slider_step(1)	=datenum(0,0,0,0,0,tlen)/(maxx-minn);
-set(handles.slider_datestr,'sliderstep',slider_step)
-
-
 set(hObject, 'String', num2str(tlen));
 handles.tlen	=	tlen;
 guidata(hObject, handles);
@@ -518,7 +509,7 @@ function slider_datestr_Callback(hObject, eventdata, handles)
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of
 %        slider
 %keyboard;
-myval=get(hObject,'Value');
+myval	=	get(hObject,'Value');
 
 %%Following commented out because tmax fails to read in WAV data correctly.
 %tmin=datenum(get(handles.text_mintime,'String'));
@@ -3670,7 +3661,7 @@ end
 
 end
 
-function [handles,errorflag]=set_slider_controls(handles,filetype)
+function [handles,errorflag]	=	set_slider_controls(handles,filetype)
 %%Set min, max and other times associated with slider controls
 mydir			=	pwd;
 errorflag		=	0;
@@ -3695,9 +3686,11 @@ end
 set(handles.slider_datestr,'Min',0);
 set(handles.slider_datestr,'Max',1);
 
-%	20sec and 1min increments
-dT_min	=	(tmax-tmin)*24*60;
-set(handles.slider_datestr,'sliderstep',[(20/60)/dT_min 1/dT_min]);
+%	5sec and 10% increments
+T_len		=	(tmax-tmin)*24*60*60;
+small_step	=	5/T_len;				% 5s
+big_step	=	0.1;					% 10%
+set(handles.slider_datestr,'sliderstep',[small_step big_step]);
 
 set(handles.slider_datestr,'Value',0.5);
 handles.tdate_start		=	0.5*(tmin+tmax);
@@ -7912,4 +7905,3 @@ x=x(:,1:(I-1));
 end
 
 end
-
