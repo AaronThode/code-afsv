@@ -111,6 +111,12 @@ cd(mydir);
 %%%Create list of function handles to be used in other specialized
 %%%applications
 
+%	Check for required dependencies, i.e. subfunctions
+status	=	dependency_check();
+if ~status
+	error('You do not seem to have all the required subfunctions on your path');
+end
+
 
 
 % Choose default command line output for AllFile_specgram_viewer
@@ -3433,8 +3439,11 @@ end
 
 
 %%	Supporting functions, i.e. not auto-generated callbacks
+function	status	=	dependency_check()
+	
+	status	=	true;
 
-
+end
 
 function	handles	=	load_and_display_spectrogram(handles)
 
@@ -3709,62 +3718,6 @@ set(handles.edit_fmin,'String',0);
 % keyboard
 cd(mydir);
 
-end
-
-function tstart=convert_date(data,delimiter)
-%%%%%%convert_date.m%%%%%
-% Extract a datenumber from a filename string...
-% function tstart=convert_date(data,delimiter),
-%%get start date from file name.
-%%Two types of filenames, one "MT" style the other MATLAB 'T" style
-%%Start intelligent search for a timestamp in string name...
-
-
-mt_style_flag=~isempty(strfind('Sound',data));
-fname_bounds=strfind(data,delimiter);
-
-if length(fname_bounds)==1,
-    fname_bounds(2)=length(data)+1;
-end
-Idot=strfind(data,'.');
-fname_bounds=sort([fname_bounds Idot(1)]);
-
-nm=[];
-if mt_style_flag==1,
-    Isound=strfind(data,'Sound')+6;
-    yr=str2double(data(Isound:(Isound+3)));
-    mo=str2double(data((Isound+5):(Isound+6)));
-    dy=str2double(data((Isound+7):(Isound+8)));
-    hr=str2double(data((Isound+9):(Isound+10)));
-    mn=str2double(data((Isound+11):(Isound+12)));
-    %sec=str2double(data((Isound+13):(Isound+14)));
-    tstart=datenum(yr,mo,dy,hr,mn,0);
-    
-else
-    try
-        
-        for I=1:(length(fname_bounds)-1),
-            test=data((fname_bounds(I)+1):(fname_bounds(I+1)-1));
-            if length(test)==15,
-                if strcmp(test(9),'T'),
-                    nm=test;
-                end
-            end
-        end
-        if ~isempty(nm)
-            yr=str2double(nm(1:4));
-            mo=str2double(nm(5:6));
-            dy=str2double(nm(7:8));
-            hr=str2double(nm(10:11));
-            mn=str2double(nm(12:13));
-            sec=str2double(nm(14:15));
-            
-            tstart=datenum(yr,mo,dy,hr,mn,sec);
-        end
-    catch
-        error('String does not contain valid datestr');
-    end
-end
 end
 
 function [startup_info]=gui_startup_information
@@ -4303,701 +4256,12 @@ set(handles.text_filename,'String',sprintf('%s/%s %6.2f degrees... ',handles.myd
 %keyboard;
 end
 
-function [omi,t,head]=readgsi(fn,ctstart,tlen,formatt)
-% readsgi
-% matlab script to read and display sample of gsi file.
-% whose name is in fn
-%function [x,t,head]=readgsi(fn,ctstart,tlen,formatt);
-%  fn-file name, including extension
-%  ctstart: c-time of start time...
-%  nsec: number of seconds to read in...
-%  formatt: 'datenum' or 'ctime'
-t=[];omi=[];
-head=readgsif_header(fn);
-if nargin==1,
-    return
-end
-if nargin<4,
-    formatt='ctime';
-end
-
-if strcmp(formatt,'datenum') && ctstart>0,
-    %tfile_start=datenum(1970,1,1,0,0,head.ctbc);
-    ctstart=86400*(ctstart-datenum(1970,1,1,0,0,0));
-    
-end
-%fid = fopen(char(fn),'r','ieee-le');
-fs=head.Fs*(1+head.tdrift/86400);
-fid = fopen(char(fn),'r','ieee-be');
-
-if head.ctbc>ctstart && ctstart>0,
-    disp('Start time less than file start');
-    return;
-end
-
-if ctstart<=0,
-    disp('cstart less than or equal to zero; interpret as seconds offset from file start');
-    tsec=abs(ctstart);
-else
-    tsec=ctstart-head.ctbc;
-end
-
-fseek(fid,512+head.nc*floor(tsec*fs)*2,-1);
-
-omi = fread(fid,[head.nc floor(head.Fs*tlen)],'uint16');
-fclose(fid);
-
-t=(1:size(omi,2))/head.Fs;
-
-%N = 128;
-%spectrogram(omi,hanning(N),N/2,N,head.Fs,'yaxis') % gram
-%end
-
-if 1==0,
-    fn='S508A0T20080819T072522.gsi';
-    tstart=0;
-    %tstart=datenum(2008,8,19,12,0,0);
-    tsec=3;
-    [x,t,head]=readgsi(fn,tstart,tsec,'datenum');
-    for I=1:size(x,1),
-        subplot(size(x,1),1,I);
-        spectrogram(x(I,:),256,128,256,1000,'yaxis')
-        
-        
-    end
-    
-end
-end
-
-function head=readgsif_header(fn)
-
-% readgsif_header
-% matlab script to read and display sample of 2008 gsi file.
-% whose name is in fn
-% head=readsiof_header(fn);
-%fid = fopen(char(fn),'r','ieee-le');
-fid = fopen(char(fn),'r','ieee-be'); %for s1sT
-head.dlabel(1:10) = char(fread(fid,10,'uchar')); %#ok<*FREAD>
-%head.nc=fread(fid,1,'uchar');
-head.contents=char(fread(fid,4,'uchar'));
-
-head.nc=length(find(double(head.contents)>32));
-%head.nc=4;
-%head.nc=length(deblank(head.contents'));
-
-fillx(1:50) = fread(fid,50,'uint8');
-
-a = fread(fid,9,'double');
-head.ctbc=a(1);
-head.ctec=a(2);
-head.tdrift=a(3);
-head.Fs=a(4);
-head.UTMX=a(5);
-head.UTMY=a(6);
-head.depth=a(7);
-head.UTMZone=a(8);
-head.brefa=a(9);
-head.ts = fread(fid,1,'uchar');
-head.tabs_start=datenum(1970,1,1,0,0,head.ctbc);
-
-fclose(fid);
-end
-
-function [x,t,Fs]=load_mt_mult(folders,tdate_start,tlength,tshift,ftype)
-%%%%%%%%%%%%%load_mt_mult.m%%%%%%%%%%%%
-%[x,t,Fs]=load_mt_mult(folders,tdate_start,tlength,tshift,ftype);
-%Load time series from two recorders, adjusting for initial clock
-% drift between them, then make coherence function...
-%%Basic data....
-% folders=strvcat('Linus','Lucy'), etc.;
-% tdate_start: datenumber of absolute time at which to load_data.  Instead the
-%   program uses this time to select which file to start processing.
-% tlength:   how many seconds of data desired
-% tshift=[0.7034 0]; %Inital time shift applied to channels, relative to
-% tdate_start, in sec.  Index order is same as folder rows
-%  ftype: if exists, specifys type of file to look for...
-%Output:
-%   x: matrix of data, rows are time, columns are channels corresponding to
-%   folder order
-
-% Sept 10, 2004:  Added option to load auxiliary mt files as well as sound,
-% eliminated tdrift_rate, since often computed on outside
-%
-% Sept. 21, 2007:  Corrected an error that assumes that the mt files
-%  are contiguous...now have 'samples expected' vs. 'samples got'.
-Nel=size(folders,1);
-goodel=1:Nel;
-if ~exist('ftype', 'var'),
-    ftype='Sound';
-end
-
-%%%% if tshift a variable, adjust the start_time for loading data%%%
-
-%%Make sure there are no negative time lags, otherwise load_mt wont work
-% if tshift(1)<0,
-%     tshift=[0 -tshift(1)];
-% end
-%
-% if tdrift_rate<0,
-%     tdrift_rate=[0 -tdrift_rate(1)];
-% end
-
-myloc=pwd;
-for Idir=1:Nel,
-    cd(deblank(folders(Idir,:)));
-    if nargin>3,
-        tdate_start_file=(tdate_start+datenum([0,0,0,0,0,tshift(Idir)]));
-    else
-        tdate_start_file=tdate_start;
-    end
-    tdate_end_file=(tdate_start_file+datenum([0,0,0,0,0,tlength]));
-    %dirs_all{Idir}=dir('*Sound*');
-    dirs_all{Idir}=dir(['*' ftype '*.mt']);
-    
-    Nfile=0;
-    starttime=0;
-    endtime=Inf;
-    readflag=0;
-    xx=[];
-    %%AARON bug fix..in case each directory has different file names
-    head=read_mt_header(dirs_all{Idir}(1).name);
-    nx=floor(tlength*head.Fs);
-    
-    for Ifile=1:length(dirs_all{Idir}),
-        head=read_mt_header(dirs_all{Idir}(Ifile).name);
-        %%Identify data file where data start
-        if tdate_start_file>=head.tstart && tdate_start_file<head.tend,  %All in one location...
-            %dirs{Idir}.startfile=dirs_all{Idir}(Ifile);
-            telapsed=datevec(tdate_start_file-head.tstart);
-            starttime=3600*telapsed(4)+60*telapsed(5)+telapsed(6);
-            readflag=1;
-            disp(sprintf('Element:%s start file: %s start time in file:%6.2f',folders(Idir,:),dirs_all{Idir}(Ifile).name,starttime));
-        end
-        %%Identify data file where data end
-        if tdate_end_file>=head.tstart&&tdate_end_file<=head.tend,
-            %dirs{Idir}.endfile=dirs_all{Idir}(Ifile);
-            telapsed=datevec(tdate_end_file-head.tstart);
-            endtime=3600*telapsed(4)+60*telapsed(5)+telapsed(6);
-            readflag=1;
-            disp(sprintf('   end file: %s start time in file:%6.2f',dirs_all{Idir}(Ifile).name,endtime));
-        end
-        if head.tstart>tdate_start_file&&head.tend<tdate_end_file,
-            readflag=1;
-            disp(sprintf('   mid file: %s ',dirs_all{Idir}(Ifile).name));
-        end
-        
-        
-        if readflag==1,
-            [xxx,tttt,head]=load_mt(dirs_all{Idir}(Ifile).name,starttime,endtime-starttime); %Note initial time offset
-            %Safety check--is the size of xxx what we expect it to be?
-            tleft=datevec(head.tend-tdate_start);
-            samples_expected=round(head.Fs*(tleft(:,6)+60*tleft(:,5)+3600*tleft(:,4)));
-            samples_got=length(xxx);
-            if isinf(endtime)&&(samples_expected>samples_got)
-                disp('Trying to read to end of file, but samples are missing...');
-                xx=[xx; xxx; zeros(samples_expected-samples_got,1)];
-            else
-                xx=[xx; xxx];
-            end
-            readflag=0;
-            starttime=0;
-            endtime=Inf;
-            %keyboard
-        end  %Ifile
-    end
-    x(:,Idir)=xx;
-    
-    cd(myloc);
-end
-Fs=head.Fs;
-t=(1:size(x,1))/Fs;
-end
-
-function [x,t,head,tdate]=load_mt(fname,tstart,tsec,uncal_chc)
-%function [x,t,head,tdate]=load_mt(fname,tstart,tsec,uncal_chc),
-% fname: file name
-% tstart: start of file in seconds
-% tsec: length of segment desired in seconds
-% uncal_chc; If exists, return uncalibrated values.
-% All times in seconds
-
-if isempty(strfind(fname,'.mt')),
-    fname=[fname '.mt'];
-end
-head=read_mt_header(fname);
-Fs=head.Fs;
-if strcmp(head.signing,'S'),
-    dattype=['int' num2str(8*head.wordsize)];
-else
-    dattype=['uint' num2str(8*head.wordsize)];
-end
-if strcmp(head.swapping,'U'),
-    fid=fopen(fname,'r','ieee-be');
-else
-    fid=fopen(fname,'r','ieee-le');
-end
-
-if fid<0,
-    
-    keyboard;
-end
-fseek(fid,512,-1);  %Skip the 512 bytes
-
-offset=head.wordsize*floor(Fs*tstart);
-status=fseek(fid,offset,0);
-x=fread(fid,floor(tsec*Fs)+1,dattype);
-fclose(fid);
-%Optional calibration...
-N=(2.^head.samplebits)-1;
-if ~exist('uncal_chc', 'var'),
-    switch head.signing,
-        case 'S',
-            calmean=0.5*(head.calmin+head.calmax);
-            x=calmean+x*(head.calmax-head.calmin)/N;
-        case 'U',
-            calmean=head.calmin;
-            x=calmean+x*(head.calmax-head.calmin)/N;
-    end
-    x=x*1000; %Convert from milliPa to microPa
-    
-end
-t=(0:(length(x)-1))/Fs;
-tdate=datenum(head.year,head.month,head.day,head.hours,head.minutes,tstart+t+head.seconds+head.msec/1000);
-end
-
-function head=read_mt_header(fname)
-%%%%%%%%%%%read_mt_header.m%%%%%%%
-% Read in mt header information
-%function head=read_mt_header(fname),
-
-% Nov 21, 2004: Changed head.Fs so that result is rounded to nearest
-% value...
-if isempty(strfind(fname,'.mt')),
-    fname=[fname '.mt'];
-end
-%fname='aa_Sound_2003_08120945.mt';
-fid=fopen(fname,'r');
-
-if fid>0,
-    head.magicstring=read_char(fid,8);
-    head.totalhdrs=read_char(fid,3);
-    head.abbrev=read_char(fid,8);
-    head.stationcode=read_char(fid,3);
-    head.title=read_char(fid,82);
-    head.month=read_num(fid,3);
-    head.day=read_num(fid,3);
-    head.year=read_num(fid,5);
-    head.hours=read_num(fid,3);
-    head.minutes=read_num(fid,3);
-    head.seconds=read_num(fid,3);
-    head.msec=read_num(fid,4);
-    head.sampling_period=read_char(fid,15);
-    head.Fs=round(1./str2double(head.sampling_period));
-    head.samplebits=read_num(fid,3);
-    head.wordsize=read_num(fid,2);
-    head.typemark=read_char(fid,1);
-    head.swapping=read_char(fid,1);
-    head.signing=read_char(fid,1);
-    head.caltype=read_char(fid,1);
-    head.calmin=read_num(fid,15);
-    head.calmax=read_num(fid,15);
-    head.calunits=read_char(fid,40);
-    head.recordsize=read_num(fid,6);
-    head.sourcevers=read_char(fid,9);
-    head.sourcesn=read_char(fid,16);
-    head.tstart=datenum(head.year,head.month,head.day,head.hours, ...
-        head.minutes,head.seconds+head.msec/1000);
-    
-    fseek(fid,0,1);
-    byte_length=ftell(fid);
-    sec_length=byte_length/(head.wordsize*head.Fs);
-    head.tend=datenum(head.year,head.month,head.day,head.hours, ...
-        head.minutes,head.seconds+head.msec/1000+sec_length);
-else
-    disp(sprintf('%s could not be opened',fname));
-end
-fclose(fid);
-end
-
 function nhout=read_num(fid,N)
 nhout=str2double(char(fread(fid,N,'char')'));
 end
 
 function chout=read_char(fid,N)
 chout=char(fread(fid,N,'char')');
-end
-
-function [x, tfs, tfe, fs]    =...
-    read_dat_file(file_name, fs, tstart, ns, units_voltage, sens, raw)
-%READ_DAT_FILE     Read in a DAT file
-%
-%   WARNING!  LOG file must be in same location.
-%
-% Function form:
-%  function [x, tfs, tfe, fs]    =...
-%        read_dat_file(file_name, fs, tstart, ns, units_voltage, sens, raw)
-%
-% Input Parameters:
-%   fname           -   name of *DAT file.  MUST include DAT extension and full pathname!
-%   raw             -   t/f, weather output should be raw data or scaled
-%   fs              -   sampling frequency in Hz.
-%   tstart          -   datenumber of desired start time.
-%                           If zero, data are read from start of file
-%   nsec            -   number of seconds to be pulled.
-%   units_voltage   -   if 1, then output in terms of voltage,otherwise
-%                            output in terms of uPa. Default acoustic uPa
-%   sens            -   Relative scaling factor for acoustic units
-%
-% Output Parameters:
-%   x               -   Scaled data vector
-%   tfs             -   datenumber of the start of the file
-%   tfe             -   datenumber of the end of the file
-%   fs              -   Sampling frequency (in case overridden internally)
-%
-%
-% Revision History:
-%   Version 1, Sept 30, 2006-read in raw data
-%   Version 2, Oct. 28 2006- correct for time lost from serial port
-%       acquisition--for this deployment every five minutes acoustic data
-%       not acquired for 4 seconds (plus some time to power up).
-%       Thus I use a drift formula of 48 sec/hour..
-%
-%   Modified by Jit Sarkar
-%   2012/12/04
-%       Header comments adjusted/formatted for readability
-%   2012/12/17
-%       Modified parameter checking, adding ability to read whole file
-%       Modified all calls to "exist" function to be explicit, e.g.
-%       searching for variables, or files
-%       Changing directories just to find log file unecessary
-%       Applied code-analyzer suggested fixes
-%       Adjusted code formatting/spacing for readability
-
-
-
-
-%%  Input parameter checking, and default values
-%   dB re 1uPa/V
-if ~exist('sens', 'var') || isempty(sens),      sens    =	-172;	end
-if ~exist('units_voltage', 'var') || isempty(units_voltage),
-    units_voltage   =   0;      end
-if ~exist('fs', 'var'),                         fs      =   [];     end
-if ~exist('ns', 'var'),                         ns      =   [];     end
-if ~exist('tstart', 'var') || isempty(tstart),  tstart  =   0;      end
-if ~exist('raw', 'var') || isempty(raw),        raw     =   false;  end
-
-
-%%  Constant values and preassigned variables
-
-VREF    =   2.5;
-nc      =   1;
-
-%   An input voltage of 0.05 V p-p produces a 1.2 V p-p at A/D
-scale   =   (0.038/1.0)*VREF/(2^16-1);
-
-
-%%  Parse input file name and associated log file
-[pathstr, name, ~]    =   fileparts(file_name);
-
-%   Check that associated log file exists
-log_file    =   fullfile(pathstr, [name '.log']);
-if ~exist(log_file, 'file')
-    log_file    =   fullfile(pathstr, [name '.LOG']); % check upper case ext
-    if ~exist(log_file, 'file')
-        error('%s does not exist in same directory as %s',...
-            log_file,                               file_name);
-    end
-end
-
-fid	=	fopen(log_file, 'r');
-
-line.fs     =   [];
-tfs         =   0;    tfe=0;
-sec_flag    =   0;
-
-while 1
-    tline	=	fgetl(fid);
-    
-    if ~ischar(tline), break, end
-    %   ??  Date parsing can be done with inbuilt matlab functions
-    if      strfind(tline, 'Start time')
-        line.start  =   tline;
-        tfs         =   parse_date(line.start);
-        sec_flag    =   1;
-    elseif  strfind(tline, 'Stop time')
-        line.end    =   tline;
-        tfe         =   parse_date(line.end);
-        sec_flag    =   2;
-    elseif  strfind(tline, 'Sample rate:')>0,
-        Idot        =   1 + strfind(tline,':');
-        Iend        =   strfind(tline,'Hz')-1;
-        if isempty(Iend)
-            Iend    =   strfind(tline,'0');
-        end
-        fs  =   str2double(tline(Idot:Iend(end)));
-    elseif  strfind(tline,'Sensitivity:')>0,
-        Idot        =   1 + strfind(tline,':');
-        Iend        =   strfind(tline,'dB')-1;
-        sens        =   str2double(tline(Idot:Iend));
-        
-    elseif  strfind(tline,'seconds')
-        Is          =   strfind(tline,'seconds')-1;
-        secs        =   str2double(tline(1:Is));
-        if sec_flag == 1
-            tfs     =   tfs + datenum(0,0,0,0,0,secs);
-        elseif sec_flag == 2
-            tfe     =   tfe + datenum(0,0,0,0,0,secs);
-        end
-        sec_flag = 0;
-    end
-end
-fclose(fid);
-
-if (tfs==0 || tfe==0)
-    fprintf('Could not understand %s',log_file);
-end
-
-
-%%  Parse date/time values for reading binary file
-if  isempty(fs)
-    error('Sampling rate not provided, and not found in log file');
-end
-if  isempty(ns)     %   assume whole file is requested
-    np  =   inf;
-else
-    np  =   ns * fs;
-end
-
-
-try
-    if tstart > tfs,
-        offset  =   etime(datevec(tstart), datevec(tfs));
-        %        offset  =   (offset(:,6)+60*offset(:,5)+3600*offset(:,4)+24*3600*offset(:,3));  %offset in seconds from file
-        %disp(sprintf('%i second offset from file start',offset));
-    elseif tstart > 0
-        %error('cannot read this time from this file');
-        disp('desired start is before file start, setting offset to 0');
-        offset  =   0;
-    else
-        disp('Tstart less than or equal to zero, will interpret tstart as elasped time in seconds');
-        offset  =   abs(tstart);
-    end
-catch    %#ok<CTCH>
-    disp('File name does not contain date, will interpret tstart as elasped time in seconds');
-    %keyboard;
-    offset  =   tstart;
-end
-
-%%  Open binary data file and read in requeste points
-fid     =   fopen(file_name,'r','ieee-be');
-fskip   =   2*nc*round(fs*offset);
-res     =   fseek(fid,fskip,-1);
-if res<0,
-    keyboard;
-end
-%disp(sprintf('Offset %10.4f s into %s',ftell(fid)/(2*nc*fs),fname));
-
-%   Default to raw output
-x   =	fread(fid,[nc np],'*uint16');
-fclose(fid);
-
-if ~raw
-    x   =   scale*double(x);
-    
-    %Crude acoustic level calibration
-    if units_voltage~=1,
-        disp('Acoustic calibration executed');
-        x   =   x.*(10^(-sens/20));
-    end
-end
-
-
-
-end
-
-function [x,tfs,tfe,fs,x_raw]=read_adi_file(dirname,fname,fs,tstart,ns,units_voltage,sens)
-%%%%%%read_adi_file.m%%%%%%%%%%%
-% [x,tfs,tfe,fs,x_raw]=read_adi_file(dirname,fname,fs,tstart,nsec,units_voltage)
-% Read in a ADIOS file, which is little endian instead of big endian, and different calibration.
-%  WARNING!  LOG file must be in same location.
-% dirname: directory where DAT and LOG file are located.
-% fname, name of *ADI file.  MUST include ADI extension!
-% fs, sampling frequency in Hz.
-% tstart-datenumber of desired start time.  If zero, data are read from
-%   start of file
-% nsec-number of seconds to be pulled.
-% units_voltage: if 1, then output in terms of voltage, otherwise output in terms of uPa.
-%       Default acoustic uPa
-% Output:
-%   tfs: datenumber of the start of the file
-%   tfe: datenumber of the end of the file
-% Created Feb. 17, 2012
-
-if ~exist('units_voltage', 'var'),
-    units_voltage=0;
-end
-%fs=50000;
-x_raw=[];
-VREF=3.3;
-nc=1;
-if ~exist('sens', 'var')
-    sens=-172; %dB re 1uPa/V
-end
-%Get start time of file from .log file...
-mydir=pwd;
-cd(dirname);
-fpre=strfind(fname,'.ADI')-1;
-log_name=[fname(1:fpre) '.log'];
-if ~exist(log_name, 'file')
-    log_name=[fname(1:fpre) '.LOG'];
-    if ~exist(log_name, 'file')
-        error('read_adi_file: %s does not exist in same directory as %s',log_name,fname);
-    end
-end
-fid=fopen(log_name,'r');
-
-line.fs=[];
-tfs=0;tfe=0;
-sec_flag=0;
-sensitivity_flag=0;
-while 1
-    tline = fgetl(fid);
-    if ~ischar(tline), break, end
-    if strfind(tline,'Start time')
-        line.start=tline;
-        tfs=parse_date(line.start);
-        sec_flag=1;
-    elseif strfind(tline,'End time')
-        line.end=tline;
-        tfe=parse_date(line.end);
-        sec_flag=2;
-    elseif strfind(tline,'Sample rate:')>0,
-        Idot=1+strfind(tline,':');
-        Iend=strfind(tline,'Hz')-1;
-        if isempty(Iend)
-            Iend=strfind(tline,'0');
-        end
-        fs=str2double(tline(Idot:Iend(end)));
-        
-    elseif strfind(tline,'Sensitivity:')>0,
-        Idot=1+strfind(tline,':');
-        Iend=strfind(tline,'dB')-1;
-        sens=str2double(tline(Idot:Iend));
-        sensitivity_flag=1;
-    elseif strfind(tline,'seconds')
-        Is=strfind(tline,'seconds')-1;
-        secs=str2double(tline(1:Is));
-        if sec_flag==1
-            tfs=tfs+datenum(0,0,0,0,0,secs);
-        elseif sec_flag==2
-            tfe=tfe+datenum(0,0,0,0,0,secs);
-        end
-        sec_flag=0;
-    end
-end
-fclose(fid);
-np=ns*fs;
-
-
-if tfs==0||tfe==0
-    disp(sprintf('Could not understand %s',log_name));
-end
-if sensitivity_flag==0
-    disp(sprintf('LOG file did not have sensitivity; using a default value of %6.2f',sens));
-end
-
-try
-    if tstart>tfs,
-        offset=datevec(tstart-tfs);
-        offset=(offset(:,6)+60*offset(:,5)+3600*offset(:,4)+24*3600*offset(:,3));  %offset in seconds from file
-        %disp(sprintf('%i second offset from file start',offset));
-    elseif tstart>0
-        %error('cannot read this time from this file');
-        disp('desired start is before file start, setting offset to 0');
-        offset=0;
-    else
-        disp('Tstart less than or equal to zero, will interpret tstart as elasped time in seconds');
-        offset=abs(tstart);
-    end
-catch
-    disp('File name does not contain date, will interpret tstart as elasped time in seconds');
-    %keyboard;
-    offset=tstart;
-end
-
-scale=(1/20)*VREF/(2^16-1);  % Tested with input signal 50 mv pk-pk at 1 kHz (50MV1000.ADI)
-fid=fopen(fname,'r','ieee-le');
-
-cd(mydir);
-fskip=2*nc*round(fs*offset);
-res=fseek(fid,fskip,-1);
-if res<0,
-    keyboard;
-end
-%disp(sprintf('Offset %10.4f s into %s',ftell(fid)/(2*nc*fs),fname));
-x=fread(fid,[nc np],'uint16');
-fclose(fid);
-if nargout>4
-    x_raw=x;
-end
-x=scale*x;
-
-
-%Crude acoustic level calibration
-if units_voltage~=1,
-    disp('Acoustic calibration executed');
-    x=x.*(10^(-sens/20));
-end
-end
-
-function [tfs,tfe,fs,nc,tiltx,tilty,sensitivity]=load_mdat_header(dirname,fname)
-cd(dirname);
-fpre=strfind(lower(fname),'.mdat')-1;
-log_name=[fname(1:fpre) '.LOG'];
-fid=fopen(log_name,'r');
-sensitivity=-160; %dB re V/uPa default
-
-while 1
-    tline=fgetl(fid);
-    if ~ischar(tline),break,end
-    if strfind(tline,'Channels:')>0,
-        Idot=1+strfind(tline,':');
-        nc=str2double(tline(Idot:end));
-    elseif strfind(tline,'Sample rate:')>0,
-        Idot=1+strfind(tline,':');
-        Iend=strfind(tline,'Hz')-1;
-        fs=str2double(tline(Idot:Iend));
-    elseif strfind(tline,'Sensitivity:')>0,
-        Idot=1+strfind(tline,':');
-        Iend=strfind(tline,'dB')-1;
-        sensitivity=str2double(tline(Idot:Iend));
-    elseif strfind(tline,'Start time')>0,
-        Idot=strfind(tline,'=');
-        tfs=parse_date(tline(Idot:end));
-        tline=fgetl(fid);
-        Iend=strfind(tline,'seconds')-1;
-        tfs=tfs+datenum(0,0,0,0,0,str2double(tline(1:Iend)));
-    elseif strfind(tline,'Stop time')>0,
-        Idot=strfind(tline,'=');
-        tfe=parse_date(tline(Idot:end));
-        tline=fgetl(fid);
-        Iend=strfind(tline,'seconds')-1;
-        tfe=tfe+datenum(0,0,0,0,0,str2double(tline(1:Iend)));
-    elseif strfind(tline,'Tilt-X')>0,
-        Idot=strfind(tline,':')+1;
-        Iend=strfind(tline,'Tilt-Y')-1;
-        tiltx=str2double(tline(Idot:Iend));
-        
-        Idot=Iend+8;
-        Iend=strfind(tline,'degrees')-1;
-        tilty=str2double(tline(Idot:Iend));
-        
-    end
-    
-end
-
-fclose(fid);
-
 end
 
 function tabs=parse_date(str)
@@ -5036,246 +4300,6 @@ end
 
 tabs=tm+datenum(year,mn,day,0,0,0);
 
-end
-
-function [x,fparms]=read_mdat_file(dirname,fname,tstart,ns,calibrate_acoustic)
-
-%%%%%%read_mdat_file.m%%%%%%%%%%%
-% [x,fparms]=read_mdat_file(dirname,fname,tstart,nsec,calibrate_acoustic)
-% Read in a DAT file.
-%  WARNING!  LOG file must be in same location.
-% dirname: directory where DAT and LOG file are located.
-% fname, name of *DAT file.  MUST include DAT extension!
-% fs, sampling frequency in Hz.
-% tstart-datenumber of desired start time.  If zero, data are read from
-%   start of file
-% nsec-number of seconds to be pulled.
-% calibrate_acoustic: if 1, then output in terms of acoustics, if 0 output in terms of voltage
-%       if 2, output raw count.
-%       Default is raw count
-% Output:
-%   tfs: datenumber of the start of the file
-
-% Version 1, Sept 30, 2006-read in raw data
-% Version 2, Oct. 28 2006- correct for time lost from serial port
-% acquisition--for this deployment every five minutes acoustic data not
-% acquired for 4 seconds (plus some time to power up).  Thus I use
-%   a drift formula of 48 sec/hour..
-if ~exist('calibrate_acoustic', 'var')
-    calibrate_acoustic=2;
-end
-%fs=50000;
-VREF=2.5;
-Nmax=(2^16)-1;
-bias=(Nmax+1)/2;
-if calibrate_acoustic<2
-    scale=(0.038/1.00)*VREF/Nmax;  %An input voltage of 0.05 V p-p produces a 1.2 V p-p at A/D
-elseif calibrate_acoustic==2
-    scale=1;
-end
-
-%nc=1;
-%np=ns*fs;
-
-%Get data from log file
-mydir=pwd;
-
-[tfs,tfe,fs,nc,tiltx,tilty,sens]=load_mdat_header(dirname,fname);
-
-fparms=struct('tfs',tfs,'tfe',tfe,'fs',fs,'nc',nc,'tiltx',tiltx,'tilty',tilty);
-fid=fopen([fname],'r','ieee-be');
-cd(mydir);
-
-try
-    if tstart>tfs&&tstart<(tfe-datenum(0,0,0,0,0,ns))
-        offset=datevec(tstart-tfs);
-        offset=(offset(:,6)+60*offset(:,5)+3600*offset(:,4)+24*3600*offset(:,3));  %offset in seconds from file. DO NOT ROUND
-        disp(sprintf('%i second offset from file start',offset));
-    else
-        %error('cannot read this time from this file');
-        disp('desired start is before file start, setting offset to 0');
-        offset=0;
-        
-        %offset=4;
-    end
-catch
-    disp('File does not contain wanted time, will interpret tstart as elasped time in seconds');
-    %keyboard;
-    offset=tstart;
-end
-
-%scale=1;
-fparms.nstart=round(offset*fs);
-%scale=1;
-fskip=2*nc*fparms.nstart;
-np=round(fs*ns);
-fparms.nsamples=np;
-
-res=fseek(fid,fskip,-1);
-if res<0,
-    keyboard;
-end
-disp(sprintf('Offset %10.4f s into %s',ftell(fid)/(2*nc*fs),fname));
-x0=fread(fid,[nc np],'uint16');
-fclose(fid);
-x=scale*(x0-bias);
-
-
-%Crude acoustic level calibration
-if calibrate_acoustic==1
-    disp('Acoustic calibration executed');
-    x=x.*(10^(-sens/20));
-end
-
-%Future calibration corrections
-
-end
-
-function x=calibrate_GSI_signal(xin, keyword,RawFileName)
-
-%calibrate_GSI_signal.m
-% Convert raw A/D value of presure sensor in DASAR to uPa
-% using sensitivity of 150 dB re 1uPa/V
-% and peak A/D voltage of 2.5 V
-%keyboard
-
-if isempty(xin)
-    x=[];
-    return
-end
-if strcmp(keyword,'short')||~isempty(strfind(keyword,'DASAR2007'))
-    [numd,dend] = DASAR_Shell_2007_equalization(1000,0);
-    filt.a=dend;
-    filt.b=numd;
-    amp_Scale = (2.5/65535)*(10^(149/20));
-    Nchan=size(xin,2);
-    
-    for I=1:Nchan
-        %xt=xin(:,I)-median(xin(:,I));%disp('subratc medi')
-        xt=xin(:,I)-(2^15);
-        x(:,I) = amp_Scale*filter(filt.b,filt.a,xt);
-        %x(:,I) = amp_Scale*filter(filt.a,filt.b,xt);
-    end
-elseif strcmp(keyword,'short')||~isempty(strfind(keyword,'DASARC'))
-    %     x=xin.*(2.5/(2^16-1));  %x in Volts
-    Nchan=size(xin,2);
-    %      %%This is a 10 Hz high pass filter
-    filt.a=[1.000000000000000e+00    -2.911197067426073e+00     2.826172902227507e+00    -9.149758348014339e-01];
-    filt.b=[5.140662826979191e-01    -9.510226229911504e-01     3.598463978885433e-01     7.710994240468787e-02];
-    amp_Scale = (2.5/65535)*(10^(149/20));
-    
-    for I=1:Nchan
-        %xt=xin(:,I)-median(xin(:,I));%disp('subratc medi')
-        xt=xin(:,I)-(2^15);
-        x(:,I) = amp_Scale*filter(filt.b,filt.a,xt);
-    end
-elseif strcmp(keyword,'filter')
-    error('calibrate_GSI_signal: filter no longer a valid keyword...')
-elseif ~isempty(strfind(keyword,'NorthStar08')),
-    
-    %%This has a 10 Hz high pass filter
-    filt.a=[1.000000000000000e+00    -2.911197067426073e+00     2.826172902227507e+00    -9.149758348014339e-01];
-    filt.b=[5.140662826979191e-01    -9.510226229911504e-01     3.598463978885433e-01     7.710994240468787e-02];
-    
-    %     % oml = oml - mean(oml); % uPa     get rid of DC. not needed, filter has zero @ DC
-    % x = (2.5/65535)* (10^(134/20))*filter(filt.b,filt.a,xin); % uPa     equalize
-    if ~isempty(strfind(RawFileName,'NS08A0'))||~isempty(strfind(RawFileName,'NA08Cx'))
-        amp_Scale = (2.5/65535)*(10^(134/20));
-    else
-        amp_Scale = (2.5/65535)*(10^(148.8/20));
-    end
-    %amp_Scale=1;
-    x = amp_Scale*filter(filt.b,filt.a,xin);
-    %
-    %     The Northstar deployments consist of 14 units, 12 of which are DASAR-Cs (built in 2008), and the other two DASAR-As (built in 2003).
-    % These DASAR-As are identical to the Liberty DASAR-As with which you are already familiar.
-    % By location, the breakdown is as follows (all units are DASAR-C unless marked otherwise):
-    %
-    % NA08A0 SN45
-    % NA08B0 SN51
-    % NA08C0 SN36
-    % NA08D0 SN37
-    % NA08E0 SN48
-    % NA08F0 SN47
-    % NA08G0 SN65
-    % NA08H0 SN52
-    % NA08I0 SN49
-    % NA08J0 SN50
-    % NS08A0 SN2 DASAR-A
-    % NS08B0 SN58
-    % NS08C0 SN59
-    % NA08Cx SN1 DASAR-A
-    % Response equalization for both types of DASAR (in the band 10 to 450 Hz) is very similar, with the only difference being a scalar gain value.
-    % The hydrophone to ADC gain is
-    % -149 dB V/uPa @ 100 Hz for the DASAR-C
-    % -134 dB V/uPa @ 100 Hz for the DASAR-A
-    %
-    % You have the code to equalization both of these. For your convenience I have copied the relevant email message below...
-    %
-    % ------------------------
-    % Aaron -
-    %
-    % For equalization of the omni channel on the BP DASAR-Cs, at sample rate 1 kHz and good for 10 Hz to 450 Hz analysis, you can use the
-    %same IIR filter and coefficient values as were used on the Liberty DASAR-As. The only major difference is a change in gross sensitivity:
-    % the DASAR-Cs are about 1/5 as sensitive as the DASAR-As. The same equalization can be used for all DASAR-Cs. Measurements in the Greeneridge
-    % in-air loudspeaker test box showed all 65 units to be fairly close in sensitivity, with deviations looking no worse than the uncertainty in the calibration itself.
-    %
-    % The DASAR-Cs start rolling off below about 4 Hz (with a high-pass characteristic), so I don't recommend doing any analysis below that frequency without different equalization. You should be OK with these coef values since you are staying between 10 and 450 Hz.
-    %
-    % This equalization as shown includes a second order high-pass filter with break freq 1 Hz. You have the code to change it to 10 Hz if desired.
-    %
-    % Again, only one line changes going from DASAR-A to DASAR-C...
-    %
-    % om = x * 2.5/65536; % convert from counts to V
-    % oml = 10^(148.8/20)*om; % uPa    convert from V to uPa   (WAS: 134 for DASAR-As, IS: 148.8 for DASAR-Cs)
-    %
-    % % this cascades the integrator with a 1 Hz high pass to cut low freqs
-    % % -0.2 db at 100 Hz (ideally 0 db)
-    % % -8.3 db at 250 Hz (ideally 20*log10(100/250)= -7.96
-    % b = [0.53503845807280  -0.98982114743468   0.37452692065096   0.08025576871092]; % 11/13/2005
-    % a = [1.00000000000000  -2.99111429220165   2.98226788807059  -0.99115359586894]; % 11/13/2005
-    % % oml = oml - mean(oml); % uPa     get rid of DC. not needed, filter has zero @ DC
-    % oml =  filter(b,a,oml); % uPa     equalize
-elseif ~isempty(strfind(keyword,'Liberty08')>0)
-    %om = xin * 2.5/65535; % convert from counts to V
-    %om = (10^(134/20))*om; % uPa    convert from V to uPa
-    %
-    %     % this cascades the integrator with a 1 Hz high pass to cut low freqs
-    %     % -0.2 db at 100 Hz (ideally 0 db)
-    %     % -8.3 db at 250 Hz (ideally 20*log10(100/250)= -7.96
-    % filt.b = [0.53503845807280  -0.98982114743468   0.37452692065096   0.08025576871092]; % 11/13/2005
-    %filt.a = [1.00000000000000  -2.99111429220165   2.98226788807059  -0.99115359586894]; % 11/13/2005
-    
-    
-    %This has a 10 Hz high pass filter
-    
-    filt.a=[1.000000000000000e+00    -2.911197067426073e+00     2.826172902227507e+00    -9.149758348014339e-01];
-    filt.b=[5.140662826979191e-01    -9.510226229911504e-01     3.598463978885433e-01     7.710994240468787e-02];
-    
-    %     % oml = oml - mean(oml); % uPa     get rid of DC. not needed, filter has zero @ DC
-    % x = (2.5/65535)* (10^(134/20))*filter(filt.b,filt.a,xin); % uPa     equalize
-    amp_Scale = (2.5/65535)*(10^(134/20));
-    %amp_Scale=1;
-    x = amp_Scale*filter(filt.b,filt.a,xin);
-    
-    %     keyboard;
-end
-
-if 1==0,
-    Fs=1000;
-    Nfft=256;
-    A=fft(filt.a,Nfft);
-    B=fft(filt.b,Nfft);
-    F=linspace(0.1,Fs,Nfft);
-    F=F(1:(Nfft/2));
-    W=20*log10(abs(B./A));
-    W=W(1:(Nfft/2));
-    freqz(filt.b,filt.a,Nfft,Fs)
-    hold on;plot(F,W,'r')
-    
-    figure;semilogx(F,W);xlim([1 1000]);grid on
-    
-end
 end
 
 function  [a_eqC2, b_eqC2]=get_DASARA_filter(f_hp,plot_data)
@@ -7768,140 +6792,152 @@ Template.confidence			=	3;
 Template.comments			=	'';
 end
 
-%	Taken from readEnergySummary.m
-function [data,head,Igood]=readEnergySummary(fn, index, interval_suppress)
 
-Igood=[];
-head=readEnergy_header(fn);
-fmid=0.5*(head.flow+head.fhigh);
-fid = fopen(char(fn),'r','ieee-be');
-fseek(fid,0,1);
-flen=ftell(fid);
-fseek(fid,512,-1);
+%%	Functions that should be removed and referenced externally instead
 
-% In a summary block there are three longs, three ints (fmax, etc)
-% three longs (nstarts), one double (amp_max), one long (peak_index), and one double ('0')
-summary_bytes=3*8+3*4+3*8+8+8+8;
-%summary_bytes=8*3+head.Ndetectors*8*3+8;
-nsamples=ceil(flen/summary_bytes);
-fprintf('There are %i samples in %s\n',nsamples,fn);
-%In a summary block there is two longs, one double, one int and one long
-%per detector, 
+function x=calibrate_GSI_signal(xin, keyword,RawFileName)
 
-%data.nstart=zeros(1+head.Ndetectors,length(index));
-%data.npt=data.nstart;
-%data.magnitude=zeros(head.Ndetectors,length(index));
-if ~isinf(index)
-    data.ctime=zeros(1,length(index));
-else
-    data.ctime=zeros(1,nsamples);
+%calibrate_GSI_signal.m
+% Convert raw A/D value of presure sensor in DASAR to uPa
+% using sensitivity of 150 dB re 1uPa/V
+% and peak A/D voltage of 2.5 V
+%keyboard
+
+if isempty(xin)
+    x=[];
+    return
 end
-data.npt=data.ctime;
-data.nstart=data.ctime;
-data.names={'min_freq','min_duration','max_freq','max_duration','peak_freq','peak_duration','peak','ctime_peak','total_duration'};
-data.features=zeros(length(data.names),length(index));
-
-% Check if current block is desired
-I=1;
-Imark=1;
-
-
-while (I<=max(index))
-    if rem(I,10000)==0
-        fprintf('%6.2f percent done\n',100*ftell(fid)/flen);
+if strcmp(keyword,'short')||~isempty(strfind(keyword,'DASAR2007'))
+    [numd,dend] = DASAR_Shell_2007_equalization(1000,0);
+    filt.a=dend;
+    filt.b=numd;
+    amp_Scale = (2.5/65535)*(10^(149/20));
+    Nchan=size(xin,2);
+    
+    for I=1:Nchan
+        %xt=xin(:,I)-median(xin(:,I));%disp('subratc medi')
+        xt=xin(:,I)-(2^15);
+        x(:,I) = amp_Scale*filter(filt.b,filt.a,xt);
+        %x(:,I) = amp_Scale*filter(filt.a,filt.b,xt);
     end
-    if (isinf(index)||I==index(Imark))
-        try
-            error_flag_type=0;
-            vec=fread(fid,2,'int64');
-            data.nstart(1,Imark)=vec(1,1); %nstart_total
-            data.npt(1,Imark)=vec(2,1);
-            data.ctime(Imark)=fread(fid,1,'double');
-           % keyboard;
-            %Read suband data
-            error_flag_type=1;
-            for J=1:3,
-                data.features(2*J-1,Imark)=fmid(1+fread(fid,1,'int32'));
-                data.features(2*J,Imark)=fread(fid,1,'int64');
-            end
-            error_flag_type=2;
-            data.features(2*J+1,Imark)=10*log10(fread(fid,1,'double'));
-            data.features(2*J+2,Imark)=fread(fid,1,'double');
-            data.features(2*J+3,Imark)=data.npt(1,Imark)/head.Fs;
-            %for J=1:head.Ndetectors,
-            %    data.nstart(1+J,Imark)=fread(fid,1,'int64');
-            %    data.npt(1+J,Imark)=fread(fid,1,'int64');
-            %    data.magnitude(J,Imark)=fread(fid,1,'double');
-            %end
-            fseek(fid,8,0);
-            Imark=Imark+1;
-        catch
-            disp(sprintf('End of file reached after detection %i, error flag type %i',I,error_flag_type));
-            break;
-
-        end
+elseif strcmp(keyword,'short')||~isempty(strfind(keyword,'DASARC'))
+    %     x=xin.*(2.5/(2^16-1));  %x in Volts
+    Nchan=size(xin,2);
+    %      %%This is a 10 Hz high pass filter
+    filt.a=[1.000000000000000e+00    -2.911197067426073e+00     2.826172902227507e+00    -9.149758348014339e-01];
+    filt.b=[5.140662826979191e-01    -9.510226229911504e-01     3.598463978885433e-01     7.710994240468787e-02];
+    amp_Scale = (2.5/65535)*(10^(149/20));
+    
+    for I=1:Nchan
+        %xt=xin(:,I)-median(xin(:,I));%disp('subratc medi')
+        xt=xin(:,I)-(2^15);
+        x(:,I) = amp_Scale*filter(filt.b,filt.a,xt);
+    end
+elseif strcmp(keyword,'filter')
+    error('calibrate_GSI_signal: filter no longer a valid keyword...')
+elseif ~isempty(strfind(keyword,'NorthStar08')),
+    
+    %%This has a 10 Hz high pass filter
+    filt.a=[1.000000000000000e+00    -2.911197067426073e+00     2.826172902227507e+00    -9.149758348014339e-01];
+    filt.b=[5.140662826979191e-01    -9.510226229911504e-01     3.598463978885433e-01     7.710994240468787e-02];
+    
+    %     % oml = oml - mean(oml); % uPa     get rid of DC. not needed, filter has zero @ DC
+    % x = (2.5/65535)* (10^(134/20))*filter(filt.b,filt.a,xin); % uPa     equalize
+    if ~isempty(strfind(RawFileName,'NS08A0'))||~isempty(strfind(RawFileName,'NA08Cx'))
+        amp_Scale = (2.5/65535)*(10^(134/20));
     else
-        fseek(fid,summary_bytes,0);
+        amp_Scale = (2.5/65535)*(10^(148.8/20));
     end
-    I=I+1;
-
+    %amp_Scale=1;
+    x = amp_Scale*filter(filt.b,filt.a,xin);
+    %
+    %     The Northstar deployments consist of 14 units, 12 of which are DASAR-Cs (built in 2008), and the other two DASAR-As (built in 2003).
+    % These DASAR-As are identical to the Liberty DASAR-As with which you are already familiar.
+    % By location, the breakdown is as follows (all units are DASAR-C unless marked otherwise):
+    %
+    % NA08A0 SN45
+    % NA08B0 SN51
+    % NA08C0 SN36
+    % NA08D0 SN37
+    % NA08E0 SN48
+    % NA08F0 SN47
+    % NA08G0 SN65
+    % NA08H0 SN52
+    % NA08I0 SN49
+    % NA08J0 SN50
+    % NS08A0 SN2 DASAR-A
+    % NS08B0 SN58
+    % NS08C0 SN59
+    % NA08Cx SN1 DASAR-A
+    % Response equalization for both types of DASAR (in the band 10 to 450 Hz) is very similar, with the only difference being a scalar gain value.
+    % The hydrophone to ADC gain is
+    % -149 dB V/uPa @ 100 Hz for the DASAR-C
+    % -134 dB V/uPa @ 100 Hz for the DASAR-A
+    %
+    % You have the code to equalization both of these. For your convenience I have copied the relevant email message below...
+    %
+    % ------------------------
+    % Aaron -
+    %
+    % For equalization of the omni channel on the BP DASAR-Cs, at sample rate 1 kHz and good for 10 Hz to 450 Hz analysis, you can use the
+    %same IIR filter and coefficient values as were used on the Liberty DASAR-As. The only major difference is a change in gross sensitivity:
+    % the DASAR-Cs are about 1/5 as sensitive as the DASAR-As. The same equalization can be used for all DASAR-Cs. Measurements in the Greeneridge
+    % in-air loudspeaker test box showed all 65 units to be fairly close in sensitivity, with deviations looking no worse than the uncertainty in the calibration itself.
+    %
+    % The DASAR-Cs start rolling off below about 4 Hz (with a high-pass characteristic), so I don't recommend doing any analysis below that frequency without different equalization. You should be OK with these coef values since you are staying between 10 and 450 Hz.
+    %
+    % This equalization as shown includes a second order high-pass filter with break freq 1 Hz. You have the code to change it to 10 Hz if desired.
+    %
+    % Again, only one line changes going from DASAR-A to DASAR-C...
+    %
+    % om = x * 2.5/65536; % convert from counts to V
+    % oml = 10^(148.8/20)*om; % uPa    convert from V to uPa   (WAS: 134 for DASAR-As, IS: 148.8 for DASAR-Cs)
+    %
+    % % this cascades the integrator with a 1 Hz high pass to cut low freqs
+    % % -0.2 db at 100 Hz (ideally 0 db)
+    % % -8.3 db at 250 Hz (ideally 20*log10(100/250)= -7.96
+    % b = [0.53503845807280  -0.98982114743468   0.37452692065096   0.08025576871092]; % 11/13/2005
+    % a = [1.00000000000000  -2.99111429220165   2.98226788807059  -0.99115359586894]; % 11/13/2005
+    % % oml = oml - mean(oml); % uPa     get rid of DC. not needed, filter has zero @ DC
+    % oml =  filter(b,a,oml); % uPa     equalize
+elseif ~isempty(strfind(keyword,'Liberty08')>0)
+    %om = xin * 2.5/65535; % convert from counts to V
+    %om = (10^(134/20))*om; % uPa    convert from V to uPa
+    %
+    %     % this cascades the integrator with a 1 Hz high pass to cut low freqs
+    %     % -0.2 db at 100 Hz (ideally 0 db)
+    %     % -8.3 db at 250 Hz (ideally 20*log10(100/250)= -7.96
+    % filt.b = [0.53503845807280  -0.98982114743468   0.37452692065096   0.08025576871092]; % 11/13/2005
+    %filt.a = [1.00000000000000  -2.99111429220165   2.98226788807059  -0.99115359586894]; % 11/13/2005
+    
+    
+    %This has a 10 Hz high pass filter
+    
+    filt.a=[1.000000000000000e+00    -2.911197067426073e+00     2.826172902227507e+00    -9.149758348014339e-01];
+    filt.b=[5.140662826979191e-01    -9.510226229911504e-01     3.598463978885433e-01     7.710994240468787e-02];
+    
+    %     % oml = oml - mean(oml); % uPa     get rid of DC. not needed, filter has zero @ DC
+    % x = (2.5/65535)* (10^(134/20))*filter(filt.b,filt.a,xin); % uPa     equalize
+    amp_Scale = (2.5/65535)*(10^(134/20));
+    %amp_Scale=1;
+    x = amp_Scale*filter(filt.b,filt.a,xin);
+    
+    %     keyboard;
 end
 
-%%Trim data
-
-data.nstart=trim(data.nstart,Imark);
-data.npt=trim(data.npt,Imark);
-data.features=data.features(:,1:(Imark-1));
-data.ctime=trim(data.ctime,Imark);
-if ~isempty(data.ctime),
-    data.interval=[0 diff(data.nstart(1,:))];
-else
-    data.interval=[];
+if 1==0,
+    Fs=1000;
+    Nfft=256;
+    A=fft(filt.a,Nfft);
+    B=fft(filt.b,Nfft);
+    F=linspace(0.1,Fs,Nfft);
+    F=F(1:(Nfft/2));
+    W=20*log10(abs(B./A));
+    W=W(1:(Nfft/2));
+    freqz(filt.b,filt.a,Nfft,Fs)
+    hold on;plot(F,W,'r')
+    
+    figure;semilogx(F,W);xlim([1 1000]);grid on
+    
 end
-fclose(fid);
-
-if length(data.nstart)<1,
-    Igood=[];
-    disp('No calls detected in file');
-    return;
-end
-
-%%Remove repetitive signals if desired...
-if nargin>2,
-
-    ngood=round(head.Fs*interval_suppress);
-    Igood=find(data.interval<ngood(1)|data.interval>ngood(2));
-
-    %Now get really clever, and pick up repetitive calls
-    %  that were interrupted by an original call...
-    Ifirst=Igood(1);
-    Igood=Igood(2:end);
-
-    two_call_interval=data.interval(Igood)+data.interval(Igood-1);
-    Igood2= two_call_interval<ngood(1)|two_call_interval>ngood(2);
-    Igood=[Ifirst Igood(Igood2) ];
-
-    data.nstart=data.nstart(Igood);
-    data.npt=data.npt(Igood);
-    %data.magnitude=data.magnitude(:,Igood);
-    data.ctime= data.ctime(Igood);
-    data.interval=data.interval(Igood);
-    if ~isinf(index),
-        Igood=index(Igood);
-    end
-    disp(sprintf('Removing repetitive signals, %i left',length(Igood)));
-
-else
-    Igood=1:length(data.ctime);
-end
-function x=trim(x,I)
-x=x(:,1:(I-1));
-
-%N = 128;
-%spectrogram(omi,hanning(N),N/2,N,head.Fs,'yaxis') % gram
-%end
-
-
-end
-
 end
