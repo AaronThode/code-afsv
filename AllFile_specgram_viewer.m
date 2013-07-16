@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 03-Jul-2013 15:54:33
+% Last Modified by GUIDE v2.5 16-Jul-2013 14:45:23
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -3017,7 +3017,8 @@ end
 %	Save whole data structure, allows implicit expansion of named variables
 %	Only save if changed
 if	~handles.notes.saved
-    save(file_path, 'Data');
+	GUI_params		=	save_gui_params(handles);
+    save(file_path, 'Data', 'GUI_params');
     set(hObject,'Enable','off');
     handles.notes.saved	=	true;
     guidata(hObject, handles)
@@ -6169,24 +6170,24 @@ function	handles		=	load_notes_file(handles, new_folder)
 
 %	First check that current notes are saved before proceeding
 if	~handles.notes.saved && ~handles.notes.readonly
-    qtitle	=	'Unsaved changes';
-    qstring	=	{'Warning: current changes to notes not saved!'...
-        'Write to file before continuing?'};
-    str1	=	'Yes';
-    str2	=	'No';
-    button	=	questdlg(qstring, qtitle, str1, str2, str1);
-    
-    switch	button
-        case	str1
-            %	Save file
-            pushbutton_notes_save_Callback(handles.pushbutton_notes_save,...
-                [], handles);
-            handles		=	guidata(handles.pushbutton_notes_save);
-        case	str2
-            %	Don't bother
-        otherwise
-            error('This should not be reached');
-    end
+	qtitle	=	'Unsaved changes';
+	qstring	=	{'Warning: current changes to notes not saved!'...
+		'Write to file before continuing?'};
+	str1	=	'Yes';
+	str2	=	'No';
+	button	=	questdlg(qstring, qtitle, str1, str2, str1);
+	
+	switch	button
+		case	str1
+			%	Save file
+			pushbutton_notes_save_Callback(handles.pushbutton_notes_save,...
+				[], handles);
+			handles		=	guidata(handles.pushbutton_notes_save);
+		case	str2
+			%	Don't bother
+		otherwise
+			error('This should not be reached');
+	end
 end
 
 
@@ -6202,9 +6203,9 @@ set(handles.checkbox_notes_delete, 'Enable', opt);
 
 %	Switch to new folder and check for existing files
 if	exist('new_folder','var') && ~isempty(new_folder)
-    folder_name	=	new_folder;
+	folder_name	=	new_folder;
 else
-    folder_name	=	handles.notes.folder_name;
+	folder_name	=	handles.notes.folder_name;
 end
 [~,fname,~]		=	fileparts(handles.myfile);
 
@@ -6259,117 +6260,126 @@ end
 sel_names	=	[];
 
 if	~isempty(listing)
-    %	Ask user which file(s) to load
-    N_files		=	length(listing);
-    list_files	=	cell(N_files,1);
-    for	ii	=	1:N_files
-        list_names{ii}	=	listing(ii).name;
-    end
-    
-    %AARON note: example of listdlg
-    [Sel, OK]	=	listdlg('ListString', list_names,...
-						'Name', 'Available notes',...
-						'PromptString', 'Select file(s) to load:',...
-						'OKString', 'Load',...
-						'CancelString', 'New');
-    if	(OK == 0) || isempty(Sel)
-        sel_names	=	[];
-    else
-        sel_names	=	list_names(Sel);
-        
-        %	If just one file, then make it the target of future saves
-        if	length(Sel) == 1 && manual_flag
-            
-            file_name	=	sel_names{1};
-        elseif length(Sel) == 1 && ~manual_flag
-            %%keep file name
-            
-            
-        elseif	length(Sel) > 1
-            %	Otherwise new merged file
-            user_name	=	'merged';
-            file_name	=	[fname '-' user_name '.mat'];
-        end
-    end
-    
-    %	Make sure file name for new files is unique
-    if	length(Sel) ~= 1	%i.e. we're not working with a specific file
-        ii	=	0;
-        while	any(strcmp(file_name, list_names))
-            ii	=	ii + 1;
-            file_name	=	[fname '-' user_name '-' num2str(ii) '.mat'];
-        end
-    end
-    
+	%	Ask user which file(s) to load
+	N_files		=	length(listing);
+	list_files	=	cell(N_files,1);
+	for	ii	=	1:N_files
+		list_names{ii}	=	listing(ii).name;
+	end
+	
+	%AARON note: example of listdlg
+	[Sel, OK]	=	listdlg('ListString', list_names,...
+		'Name', 'Available notes',...
+		'PromptString', 'Select file(s) to load:',...
+		'OKString', 'Load',...
+		'CancelString', 'New');
+	if	(OK == 0) || isempty(Sel)
+		sel_names	=	[];
+	else
+		sel_names	=	list_names(Sel);
+		
+		%	If just one file, then make it the target of future saves
+		if	length(Sel) == 1 && manual_flag
+			
+			file_name	=	sel_names{1};
+		elseif length(Sel) == 1 && ~manual_flag
+			%%keep file name
+			
+			
+		elseif	length(Sel) > 1
+			%	Otherwise new merged file
+			user_name	=	'merged';
+			file_name	=	[fname '-' user_name '.mat'];
+		end
+	end
+	
+	%	Make sure file name for new files is unique
+	if	length(Sel) ~= 1	%i.e. we're not working with a specific file
+		ii	=	0;
+		while	any(strcmp(file_name, list_names))
+			ii	=	ii + 1;
+			file_name	=	[fname '-' user_name '-' num2str(ii) '.mat'];
+		end
+	end
+	
 end
 
 
 %	New file with default data template
- [Description, Template]	=	load_default_template;
-   
+[Description, Template]	=	load_default_template;
+GUI_params	=	[];
+
 if isempty(listing) || isempty(sel_names)
-    %	Create defaults if none already present
-    %	Default prompt
-      
-    Data.Description	=	Description;
-    Data.Template		=	Template;
-    Data.Events			=	[];
-    
-    handles.notes.Data	=	Data;
-    handles.notes.show	=	false;
-    opt					=	'off';
-    
-    
-    %	Load selected files and merge data
+	%	Create defaults if none already present
+	%	Default prompt
+	
+	Data.Description	=	Description;
+	Data.Template		=	Template;
+	Data.Events			=	[];
+	
+	handles.notes.Data	=	Data;
+	handles.notes.show	=	false;
+	opt					=	'off';
+	
+	
+	%	Load selected files and merge data
 else
-    Data	=	[];
-    for	ii	=	1:length(sel_names)
-        file_path		=	fullfile(folder_name, sel_names{ii});
-        
-        %%AARON changes
-        if manual_flag
-            LSfile		=	load(file_path); 
-        else  %import automated file
-            [auto,head]		=	readEnergySummary(file_path, Inf);
+	Data	=	[];
+	for	ii	=	1:length(sel_names)
+		file_path		=	fullfile(folder_name, sel_names{ii});
+		
+		%%AARON changes
+		if manual_flag
+			LSfile		=	load(file_path);
+		else  %import automated file
+			[auto,head]		=	readEnergySummary(file_path, Inf);
 			
-            LSfile.Data.Description		=	Description;
-            LSfile.Data.Template		=	Template;
-            LSfile.Data.param			=	head;
-            hh	=	waitbar(0,sprintf('Importing %s...',sel_names{ii}));
-            for JJ = 1:length(auto.ctime)
-                if rem(JJ,500) == 0
-                   waitbar(JJ/length(auto.ctime),hh); 
-                end
-               LSfile.Data.Events(JJ)			=	Template;
-               LSfile.Data.Events(JJ).start_time=	datenum(1970,1,1,0,0,auto.ctime(JJ));
-               LSfile.Data.Events(JJ).author	=	'JAVA Energy Processor';
-               LSfile.Data.Events(JJ).duration	=	num2str(auto.features(end,JJ)); 
-               LSfile.Data.Events(JJ).min_freq	=	num2str(auto.features(1,JJ)); 
-               LSfile.Data.Events(JJ).max_freq	=	num2str(auto.features(3,JJ)); 
-            end
-            close(hh);
-            
-        end
-        
-        
-        if	isempty(Data)
-            Data	=	check_notes(LSfile.Data);
-        else
-            nData	=	check_notes(LSfile.Data);
-            Data.Events		=	merge_events(Data.Events, nData.Events);
-        end
-    end
-    
-    if	length(Sel) > 1
-        %	Since this is a new merged file, turn save on, and read_only off
-        handles.notes.saved	=	false;
-        set(handles.checkbox_notes_readonly, 'Value', 0);
-        checkbox_notes_readonly_Callback(handles.checkbox_notes_readonly, [], handles);
-    end
-    
-    handles.notes.Data	=	Data;
-    handles.notes.show	=	true;
-    opt				=	'on';
+			LSfile.Data.Description		=	Description;
+			LSfile.Data.Template		=	Template;
+			LSfile.Data.param			=	head;
+			hh	=	waitbar(0,sprintf('Importing %s...',sel_names{ii}));
+			for JJ = 1:length(auto.ctime)
+				if rem(JJ,500) == 0
+					waitbar(JJ/length(auto.ctime),hh);
+				end
+				LSfile.Data.Events(JJ)			=	Template;
+				LSfile.Data.Events(JJ).start_time=	datenum(1970,1,1,0,0,auto.ctime(JJ));
+				LSfile.Data.Events(JJ).author	=	'JAVA Energy Processor';
+				LSfile.Data.Events(JJ).duration	=	num2str(auto.features(end,JJ));
+				LSfile.Data.Events(JJ).min_freq	=	num2str(auto.features(1,JJ));
+				LSfile.Data.Events(JJ).max_freq	=	num2str(auto.features(3,JJ));
+			end
+			close(hh);
+			
+		end
+		
+		%	Check and merge event data
+		if	isempty(Data)
+			Data	=	check_notes(LSfile.Data);
+		else
+			nData	=	check_notes(LSfile.Data);
+			Data.Events		=	merge_events(Data.Events, nData.Events);
+		end
+		
+		%	Load gui parameters if present, and only from first encountered
+		if	isfield(LSfile, 'GUI_params')
+			if isempty(GUI_params)
+				GUI_params	=	LSfile.GUI_params;
+			end
+		end
+		
+	end
+	
+	if	length(Sel) > 1
+		%	Since this is a new merged file, turn save on, and read_only off
+		handles.notes.saved	=	false;
+		set(handles.checkbox_notes_readonly, 'Value', 0);
+		checkbox_notes_readonly_Callback(handles.checkbox_notes_readonly, [], handles);
+	end
+	
+	handles.notes.Data	=	Data;
+	handles.notes.show	=	true;
+	opt				=	'on';
 end
 
 %	enable relevant buttons
@@ -6377,18 +6387,13 @@ disable_notes_nav(handles,opt);
 set(handles.checkbox_notes_show, 'Value', handles.notes.show);
 set(handles.checkbox_notes_show, 'Enable', opt);
 if	handles.fig_updated
-    set(handles.pushbutton_notes_new, 'Enable', 'on');
+	set(handles.pushbutton_notes_new, 'Enable', 'on');
 end
-
-%	Set folder text box to selected directory
-set(handles.edit_folder, 'String', folder_name);
 
 handles.notes.folder_name	=	folder_name;
 handles.notes.file_name		=	file_name;
 handles.notes.file_path		=	fullfile(folder_name, file_name);
 
-%%AARON: Set current selection to middle of screen
-%handles.notes.i_sel=
 
 h_axes	=	handles.axes1;
 %	Window limits
@@ -6396,17 +6401,87 @@ Times	=	mean(xlim(h_axes));
 Times	=	handles.tdate_start + datenum(0,0,0,0,0,Times);
 
 %	Jit, only do this if existing Event data is loaded
+handles.notes.i_sel		=	[];
 if	~isempty(Data.Events)
 	%	Event times
 	Start_Times	=	cell2mat({Data.Events.start_time});
-
+	
 	%	AARON Find closest event
 	[~, i_show]	=	min(abs(Start_Times - Times));
-
+	
 	if ~isempty(i_show)
 		handles.notes.i_sel	=	i_show;
 	end
 end
+
+%	Load previous window settings, if present
+handles		=	load_gui_params(handles, GUI_params);
+
+%	Set folder text box to selected directory + file_name
+set(handles.edit_folder, 'String', handles.notes.file_path);
+
+%	Set note index text accordingly
+i_sel		=	handles.notes.i_sel;
+N			=	length(handles.notes.Data.Events);
+msg			=	{[num2str(i_sel) ' of']; num2str(N)};
+set(handles.text_notenum, 'String', msg);
+
+end
+
+%	Load and apply ancilary window information from notes if present
+function	handles		=	load_gui_params(handles, GUI_params)
+
+if	isempty(GUI_params)
+	return;
+end
+
+%	FFT_parameters
+set(handles.popupmenu_Nfft,'Value', GUI_params.iNfft);
+set(handles.popupmenu_ovlap,'Value', GUI_params.iOvlap);
+set(handles.edit_mindB,'String', num2str(GUI_params.mindB));
+set(handles.edit_dBspread,'String', num2str(GUI_params.dBspread));
+handles.tlen	=	GUI_params.tlen;
+set(handles.edit_winlen,'String', num2str(GUI_params.tlen));
+
+%	Playback parameters
+handles.filter.f_min	=	GUI_params.filter.f_min;
+handles.filter.f_max	=	GUI_params.filter.f_max;
+handles.filter.changed	=	true;
+set(handles.edit_minfreq,'String', num2str(GUI_params.filter.f_min));
+set(handles.edit_maxfreq,'String', num2str(GUI_params.filter.f_max));
+
+%	Plot parameters
+set(handles.edit_fmin,'String', num2str(GUI_params.fmin));
+set(handles.edit_fmax,'String', num2str(GUI_params.fmax));
+set(handles.edit_datestr, 'String', datestr(GUI_params.tdate_start));
+edit_datestr_Callback(handles.edit_datestr, [], handles)
+handles		=	guidata(handles.edit_datestr);
+
+end
+
+%	Saves GUI parameters
+function	GUI_params		=	save_gui_params(handles)
+
+if	isempty(handles)
+	GUI_params	=	[];
+	return;
+end
+
+%	FFT_parameters
+GUI_params.iNfft	=	get(handles.popupmenu_Nfft,'Value');
+GUI_params.iOvlap	=	get(handles.popupmenu_ovlap,'Value');
+GUI_params.mindB	=	str2double(get(handles.edit_mindB,'String'));
+GUI_params.dBspread	=	str2double(get(handles.edit_dBspread,'String'));
+GUI_params.tlen		=	handles.tlen;
+
+%	Playback parameters
+GUI_params.filter.f_min	=	handles.filter.f_min;
+GUI_params.filter.f_max	=	handles.filter.f_max;
+
+%	Plot parameters
+GUI_params.fmin			=	str2double(get(handles.edit_fmin,'String'));
+GUI_params.fmax			=	str2double(get(handles.edit_fmax,'String'));
+GUI_params.tdate_start	=	handles.tdate_start;
 
 end
 
@@ -6550,6 +6625,12 @@ end
 %	Overlays events within current window
 function	handles	=	plot_events(handles)
 
+
+%	Set note text accordingly
+i_sel		=	handles.notes.i_sel;
+N			=	length(handles.notes.Data.Events);
+msg			=	{[num2str(i_sel) ' of']; num2str(N)};
+set(handles.text_notenum, 'String', msg);
 
 %%If no notes are opened, leave gracefully
 if isempty(handles.notes.file_name)
