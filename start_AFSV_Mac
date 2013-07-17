@@ -2,7 +2,7 @@
 exe_name=$0
 exe_dir=`dirname "$0"`
 # Added defualt MCR install path on mac
-  MCRROOT="/Applications/MATLAB_R2012b.app"
+  MCRROOT="/Applications/MATLAB/MATLAB_Compiler_Runtime/v80"
 # Run bundled script
   "${exe_dir}"/run_AllFile_specgram_viewer_Mac.sh $MCRROOT
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.deploytool" plugin-version="1.0">
-  <configuration target="target.standalone" target-name="Standalone Application" name="AllFile_specgram_viewer_Mac" location="/Users/jit/Work/matlab/AllFile_specgram_viewer" file="/Users/jit/Work/matlab/AllFile_specgram_viewer/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.zip" build-checksum="3412663610" preferred-package-location="/Users/jit/Work/matlab/AllFile_specgram_viewer">
+  <configuration target="target.standalone" target-name="Standalone Application" name="AllFile_specgram_viewer_Mac" location="/Users/jit/Work/matlab/AllFile_specgram_viewer" file="/Users/jit/Work/matlab/AllFile_specgram_viewer/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.zip" build-checksum="2136859435" preferred-package-location="/Users/jit/Work/matlab/AllFile_specgram_viewer">
     <param.project.name>/Users/jit/Work/matlab/AllFile_specgram_viewer/AllFile_specgram_viewer_Mac.prj</param.project.name>
     <param.target.type>Standalone Application</param.target.type>
     <param.appname>AllFile_specgram_viewer_Mac</param.appname>
@@ -62,8 +62,10 @@
     </fileset.main>
     <fileset.resources>
       <file>${PROJECT_ROOT}/AllFile_specgram_viewer.fig</file>
+      <file>${PROJECT_ROOT}/deps</file>
     </fileset.resources>
     <fileset.package>
+      <file>${PROJECT_ROOT}/change.log</file>
       <file>${PROJECT_ROOT}/start_AFSV_Mac</file>
     </fileset.package>
     <build-deliverables>
@@ -75,44 +77,6 @@
     <matlab>
       <root>/Applications/MATLAB_R2012b.app</root>
       <path>
-        <directory>/Users/jit/Work/matlab/tools</directory>
-        <directory>/Users/jit/Work/matlab/tools/array_processing</directory>
-        <directory>/Users/jit/Work/matlab/tools/HDF5</directory>
-        <directory>/Users/jit/Work/matlab/tools/models</directory>
-        <directory>/Users/jit/Work/matlab/tools/models/IW</directory>
-        <directory>/Users/jit/Work/matlab/tools/models/NM</directory>
-        <directory>/Users/jit/Work/matlab/tools/models/PE</directory>
-        <directory>/Users/jit/Work/matlab/tools/models/ray</directory>
-        <directory>/Users/jit/Work/matlab/tools/models/sensitivity</directory>
-        <directory>/Users/jit/Work/matlab/tools/peaks</directory>
-        <directory>/Users/jit/Work/matlab/tools/misc</directory>
-        <directory>/Users/jit/Work/matlab/tools/other</directory>
-        <directory>/Users/jit/Work/matlab/tools/other/aogwater</directory>
-        <directory>/Users/Shared/MATLAB/at/Matlab</directory>
-        <directory>/Users/Shared/MATLAB/at/Matlab/Bellhop</directory>
-        <directory>/Users/Shared/MATLAB/at/Matlab/Krakel</directory>
-        <directory>/Users/Shared/MATLAB/at/Matlab/Kraken</directory>
-        <directory>/Users/Shared/MATLAB/at/Matlab/Misc</directory>
-        <directory>/Users/Shared/MATLAB/at/Matlab/Misc/tridiagonal solvers</directory>
-        <directory>/Users/Shared/MATLAB/at/Matlab/Pekeris</directory>
-        <directory>/Users/Shared/MATLAB/at/Matlab/Plot</directory>
-        <directory>/Users/Shared/MATLAB/at/Matlab/ReadWrite</directory>
-        <directory>/Users/Shared/MATLAB/at/Matlab/Scooter</directory>
-        <directory>/Users/Shared/MATLAB/at/Matlab/Slicer</directory>
-        <directory>/Users/Shared/MATLAB/at/Matlab/Sparc</directory>
-        <directory>/Users/Shared/MATLAB/at/Matlab/VirTEX</directory>
-        <directory>/Users/Shared/MATLAB/at/Matlab/VirTEX/Examples</directory>
-        <directory>/Users/Shared/MATLAB/at/Matlab/VirTEX/Examples/Multi-User VirTEX documentation</directory>
-        <directory>/Users/Shared/MATLAB/at/Matlab/waveforms</directory>
-        <directory>/Users/Shared/MATLAB/at/bin</directory>
-        <directory>/Users/jit/Work/matlab/tools/other/cm_and_cb_utilities</directory>
-        <directory>/Users/jit/Work/matlab/tools/other/export_fig</directory>
-        <directory>/Users/jit/Work/matlab/tools/other/FastICA</directory>
-        <directory>/Users/jit/Work/matlab/tools/other/lapack</directory>
-        <directory>/Users/jit/Work/matlab/tools/other/ParforProgMon</directory>
-        <directory>/Users/jit/Work/matlab/tools/other/panel</directory>
-        <directory>/Users/jit/Work/matlab/tools/other/RPSstuff</directory>
-        <directory>/Users/jit/Documents/MATLAB</directory>
         <directory>${MATLAB_ROOT}/toolbox/matlab/demos</directory>
         <directory>${MATLAB_ROOT}/toolbox/matlab/graph2d</directory>
         <directory>${MATLAB_ROOT}/toolbox/matlab/graph3d</directory>
