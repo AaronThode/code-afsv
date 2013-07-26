@@ -6315,6 +6315,11 @@ else
 	Data	=	merge_data(Defaults, Data);
 	Data.Events(1)	=	[];
 	
+	%	Remove obsolete fields
+	obsolete_fields		=	{'noise_db', 'peak_db'};	% default list
+	Data			=	clean_data(Data, obsolete_fields);
+	
+	
 	
 	if	length(Sel) > 1
 		%	Since this is a new merged file, turn save on, and read_only off
@@ -6406,7 +6411,7 @@ handles		=	guidata(handles.edit_datestr);
 end
 
 %	Saves GUI parameters
-function	GUI_params		=	save_gui_params(handles)
+function	GUI_params	=	save_gui_params(handles)
 
 if	isempty(handles)
 	GUI_params	=	[];
@@ -6450,7 +6455,7 @@ end
 
 %	Size of each prompt field
 num_lines		=	ones(N_fields,1);
-num_lines(end)	=	5;
+num_lines(end)	=	2;
 
 %	title for window
 dlgTitle	=	['Annotation for event at ' datestr(start_time)];
@@ -6698,6 +6703,52 @@ names	=	names(perm);
 Data.Description	=	Data.Description(perm);
 Data.Template		=	orderfields(Data.Template, names);
 Data.Events			=	orderfields(Data.Events, names);
+
+
+end
+
+%	Remove obsolute fields from old events, but save data into comments
+function	Data		=	clean_data(Data, obsolete_fields)
+if	nargin < 2
+	obsolete_fields		=	{'noise_db', 'peak_db'};	% default list
+end
+if	ischar(obsolete_fields)
+	temp				=	{obsolete_fields};
+	obsolete_fields		=	temp;
+	clear temp;
+end
+
+%	Find which obsolete fields are present
+names	=	fieldnames(Data.Events);
+for	ii	=	1:length(obsolete_fields)
+	test	=	strcmp(obsolete_fields{ii}, names);
+	if	any(test)
+		i_of(ii)	=	find(test);
+	else
+		i_of(ii)	=	0;
+	end
+end
+%	reduce set to those present, and needing removal
+obsolete_fields(~logical(i_of))	=	[];
+i_of(~logical(i_of))			=	[];
+
+%	loop through events, and append info to comments
+for	ie	=	1:length(Data.Events)
+	event		=	Data.Events(ie);
+	comments	=	event.comments;
+	for ii	=	1:length(obsolete_fields)
+		name		=	obsolete_fields{ii};
+		new_txt		=	num2str(event.(name));
+		comments	=	sprintf([comments '\n' name '=' new_txt]);
+	end
+	event.comments	=	comments;
+	Data.Events(ie)	=	event;
+end
+
+%	remove obsolete fields
+Data.Template			=	rmfield(Data.Template, obsolete_fields);
+Data.Events				=	rmfield(Data.Events, obsolete_fields);
+Data.Description(i_of)	=	[];
 
 
 end
