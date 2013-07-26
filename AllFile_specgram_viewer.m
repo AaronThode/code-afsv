@@ -6230,7 +6230,7 @@ if	~isempty(listing)
 		elseif	length(Sel) > 1
 			%	Otherwise new merged file
 			user_name	=	'merged';
-			file_name	=	[fname '-' user_name '.mat'];
+			file_name	=	[fname '-notes-' user_name '.mat'];
 		end
 	end
 	
@@ -6239,7 +6239,7 @@ if	~isempty(listing)
 		ii	=	0;
 		while	any(strcmp(file_name, list_names))
 			ii	=	ii + 1;
-			file_name	=	[fname '-' user_name '-' num2str(ii) '.mat'];
+			file_name	=	[fname '-notes-' user_name '-' num2str(ii) '.mat'];
 		end
 	end
 	
