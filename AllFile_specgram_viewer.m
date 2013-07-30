@@ -172,7 +172,7 @@ handles		=	load_and_display_spectrogram(handles);
 handles				=	plot_events(handles);
 
 %	Update static date text
-set(handles.text_datestr_demo,'String',datestr(handles.tdate_start));
+set(handles.text_datestr_demo,'String',datestr(handles.tdate_start,0));
 
 %	Audio object is no longer valid
 handles.audio_stale		=	true;
@@ -368,7 +368,7 @@ if	~isempty(new_date)
 	end
 	newval	=	(new_date-tmin)/(tmax-tmin);
 	handles.tdate_start		=	new_date;
-	set(hObject,'String', datestr(new_date));
+	set(hObject,'String', datestr(new_date, 0));
 	set(handles.slider_datestr,'Value',newval);
 	guidata(hObject, handles);
 end
@@ -379,7 +379,6 @@ end
 %        str2double(get(hObject,'String')) returns contents of edit_datestr as a double
 
 end
-
 
 % --- Executes during object creation, after setting all properties.
 function edit_winlen_CreateFcn(hObject, eventdata, handles)
@@ -1086,7 +1085,7 @@ if Icall==1  %Pulsive
 else
 	def={handles.annotation_file,'FM','moan',min_freq,max_freq,duration,'-1','1','0',''};
 end
-dlgTitle	=	sprintf('Annotation for event at %s',datestr(start_time));
+dlgTitle	=	sprintf('Annotation for event at %s',datestr(start_time,0));
 lineNo		=	ones(size(prompt));
 lineNo(end) =	5;
 answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
@@ -1121,12 +1120,12 @@ function pushbutton_selectpoints_Callback(hObject, eventdata, handles)
 prompt={'Number of selections'};
 def={'3'};
 start_time=handles.tdate_start;
-dlgTitle=sprintf('Selecting points at %s',datestr(start_time));
+dlgTitle=sprintf('Selecting points at %s',datestr(start_time,0));
 lineNo=1;
 answer=inputdlg(prompt,dlgTitle,lineNo,def);
 tmp=ginput(str2double(answer{1}));
 disp('Absolute times:')
-disp(datestr(start_time+datenum(0,0,0,0,0,tmp(:,1))));
+disp(datestr(start_time+datenum(0,0,0,0,0,tmp(:,1)),0));
 disp('Relative times and frequencies:');
 disp(tmp(:,1)');
 disp(tmp(:,2)');
@@ -1168,7 +1167,7 @@ if	tline ~= -1
 		end
 		newval	=	(new_date-tmin)/(tmax-tmin);
 		handles.tdate_start		=	new_date;
-		set(hObject,'String', datestr(new_date));
+		set(hObject,'String', datestr(new_date,0));
 		set(handles.slider_datestr,'Value',newval);
 		guidata(hObject, handles);
 	end
@@ -1674,7 +1673,7 @@ if yes>1
 	caxis([60 100])
 	set(gca,'fontweight','bold','fontsize',14);
 	xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
-	title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start),Nfft,length(head.rd)));
+	title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start,30),Nfft,length(head.rd)));
 	set(gcf,'colormap',cmap(1:4:64,:));
 	
 	if yes==4
@@ -2852,7 +2851,7 @@ tlen			=	handles.tlen;
 tlen			=	tlen/60/60/24;	%	convert to fractional days
 new_date		=	new_date + tlen;
 %	Trigger callback to update/check other GUI elements
-set(handles.edit_datestr, 'String', datestr(new_date));
+set(handles.edit_datestr, 'String', datestr(new_date,0));
 edit_datestr_Callback(handles.edit_datestr, [], handles)
 handles		=	guidata(handles.edit_datestr);
 
@@ -2872,7 +2871,7 @@ tlen			=	handles.tlen;
 tlen			=	tlen/60/60/24;	%	convert to fractional days
 new_date		=	new_date - tlen;
 %	Trigger callback to update/check other GUI elements
-set(handles.edit_datestr, 'String', datestr(new_date));
+set(handles.edit_datestr, 'String', datestr(new_date,0));
 edit_datestr_Callback(handles.edit_datestr, [], handles)
 handles		=	guidata(handles.edit_datestr);
 
