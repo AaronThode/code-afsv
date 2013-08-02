@@ -6436,10 +6436,14 @@ GUI_params.tdate_start	=	handles.tdate_start;
 end
 
 %	Pops up window to edit event data
-function	NewEvent	=	edit_event(Event, Description)
+function	NewEvent	=	edit_event(Event, Description, static_fields)
+
+if	nargin < 3
+	static_fields	=	[];
+end
 
 %	Start time included in window title, should not be part of input
-start_time		=	Event.start_time;
+OldEvent		=	Event;
 Event			=	rmfield(Event, 'start_time');
 Description(1)	=	[];
 
@@ -6457,21 +6461,23 @@ num_lines		=	ones(N_fields,1);
 num_lines(end)	=	2;
 
 %	title for window
-dlgTitle	=	['Annotation for event at ' datestr(start_time)];
+dlgTitle	=	['Annotation for event at ' datestr(OldEvent.start_time)];
 
 if	length(Description) ~= N_fields
 	error('# of Descriptors differs from # of fields');
 end
+
 %	Create input dialogbox
-answer		=	inputdlg(Description, dlgTitle, num_lines, defaults);
+options.Resize	=	'on';
+answer		=	inputdlg(Description, dlgTitle, num_lines, defaults, options);
+
 
 if	isempty(answer)
 	NewEvent	=	[];
 	return;
 end
 
-%	start_time is always first field
-NewEvent.start_time		=	start_time;
+NewEvent	=	OldEvent;
 for	ii	=	1:N_fields
 	NewEvent.(names{ii})	=	answer{ii};
 end
@@ -6782,7 +6788,8 @@ if	isempty(handles.notes.Data) || isempty(handles.notes.Data.Events)...
 	disable_notes_nav(handles);
 	return;
 end
-Events	=	handles.notes.Data.Events;
+Events		=	handles.notes.Data.Events;
+Description	=	handles.notes.Data.Description;
 
 h_axes	=	handles.axes1;
 %	Window limits
@@ -6821,6 +6828,7 @@ for	ii	=	1:length(i_show)
 	if	ie == handles.notes.i_sel
 		set(h_show(ii),'EdgeColor', 'm');
 		sel_vis		=	true;
+		handles.notes.h_info	=	show_event_info(event, Description);
 	end
 end
 
@@ -6843,6 +6851,18 @@ else
 	set(handles.pushbutton_notes_edit,'Enable','off');
 	set(handles.checkbox_notes_delete,'Enable','off');
 end
+
+end
+
+%	Pops up new window with event details
+function	hmsg	=	show_event_info(Event, Description)
+
+names	=	fieldnames(Event);
+
+Message	=	[Description(:).'; names(:).'];
+Title	=	'Annotation details';
+
+hmsg	=	msgbox(Message, Title, 'replace');
 
 end
 
