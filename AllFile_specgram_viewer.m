@@ -6901,6 +6901,8 @@ for	ii	=	1:length(names)
 end
 %	comments don't need to be indented
 Message{2,ii}	=	temp;
+%	start_time should be formated
+Message{2,1}	=	datestr(Event.(names{1}), 'yyyy-mm-dd HH:MM:SS.FFF');
 
 %	Put details in window
 set(hdlg, 'Name', Title);
