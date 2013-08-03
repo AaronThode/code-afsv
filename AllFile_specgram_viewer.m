@@ -3106,6 +3106,7 @@ handles.notes.show	=	false;
 handles.notes.i_show=	[];
 handles.notes.h_show=	[];
 handles.notes.i_sel =	[];
+handles.notes.h_info=	[];
 
 guidata(hObject, handles);
 end
@@ -3223,7 +3224,7 @@ end
 
 
 %	JIT: Unnecssary, removed recomputation, it's done above.
-Event	=	edit_event(Event, Data.Description);
+Event	=	edit_event(Event, Data.Description, handles.notes.edit_fields);
 
 try %#ok<*TRYNC>
 	delete(hrec);
@@ -3302,7 +3303,7 @@ else
 		end
 	end
 	
-	Event	=	edit_event(Event, handles.notes.Data.Description);
+	Event	=	edit_event(Event, handles.notes.Data.Description, handles.notes.edit_fields);
 	if	isempty(Event)
 		return;
 	else
@@ -6254,9 +6255,11 @@ end
 
 
 %	New file with default data template
-[Defaults.Description, Defaults.Template]	=	load_default_template();
+[Defaults.Description, Defaults.Template, edit_fields]	=	load_default_template();
 Defaults.Events		=	Defaults.Template;
-GUI_params	=	[];
+GUI_params			=	[];
+handles.notes.edit_fields	=	edit_fields;
+
 
 if isempty(listing) || isempty(sel_names)
 	%	Create defaults if none already present
@@ -6444,16 +6447,30 @@ GUI_params.tdate_start	=	handles.tdate_start;
 end
 
 %	Pops up window to edit event data
-function	NewEvent	=	edit_event(Event, Description, static_fields)
+function	NewEvent	=	edit_event(Event, Description, edit_fields)
 
 if	nargin < 3
-	static_fields	=	[];
+	edit_fields	=	[];
 end
 
 %	Start time included in window title, should not be part of input
 OldEvent		=	Event;
 Event			=	rmfield(Event, 'start_time');
 Description(1)	=	[];
+
+%	only keep those fields we want to edit
+if	~isempty(edit_fields)
+	keep	=	[];
+	names	=	fieldnames(Event);
+	for	ii	=	1:length(names)
+		if	any(strcmp(names{ii},edit_fields))
+			keep	=	[keep; ii];
+		else
+			Event	=	rmfield(Event, names{ii});
+		end
+	end
+	Description		=	Description(keep);
+end
 
 %	Generate default strings from field values
 names		=	fieldnames(Event);
@@ -6811,7 +6828,6 @@ Start_Times	=	cell2mat({Events.start_time});
 i_show	=	find((Times(1) <= Start_Times) & (Start_Times <= Times(2)));
 
 %	Plot rectangles for visible events
-axes(h_axes);
 h_show	=	[];
 sel_vis	=	false;
 for	ii	=	1:length(i_show)
@@ -6826,7 +6842,7 @@ for	ii	=	1:length(i_show)
 	height	=	max([1e-5 height]);
 	width	=	max([1e-5 width]);
 	
-	
+	axes(h_axes);
 	h_show(ii)	=	rectangle('Position',[x,y,width,height],...
 		'Curvature',[0.3],...
 		'LineWidth',2,'LineStyle','-',...
@@ -6836,7 +6852,7 @@ for	ii	=	1:length(i_show)
 	if	ie == handles.notes.i_sel
 		set(h_show(ii),'EdgeColor', 'm');
 		sel_vis		=	true;
-		handles.notes.h_info	=	show_event_info(event, Description);
+		handles.notes.h_info	=	show_event_info(event, Description, handles.notes.h_info);
 	end
 end
 
@@ -6863,14 +6879,39 @@ end
 end
 
 %	Pops up new window with event details
-function	hmsg	=	show_event_info(Event, Description)
+function	hdlg	=	show_event_info(Event, Description, hdlg)
 
-names	=	fieldnames(Event);
+if nargin < 3 || isempty(hdlg) || ~ishandle(hdlg)
+	hdlg	=	dialog('Windowstyle', 'normal');
+	pos		=	get(hdlg, 'Position');
+	pos(3)	=	pos(3)/2;
+	set(hdlg,'Position',pos);
+else
+	figure(hdlg);
+	clf(hdlg);
+end
 
-Message	=	[Description(:).'; names(:).'];
+%	Fetch details
 Title	=	'Annotation details';
+names	=	fieldnames(Event);
+Message	=	[Description(:).'; names(:).'];
+for	ii	=	1:length(names)
+	temp			=	num2str(Event.(names{ii}));
+	Message{2,ii}	=	[char(9) char(9) temp(:).'];
+end
+%	comments don't need to be indented
+Message{2,ii}	=	temp;
 
-hmsg	=	msgbox(Message, Title, 'replace');
+%	Put details in window
+set(hdlg, 'Name', Title);
+htxt	=	uicontrol(hdlg, 'Style', 'edit',...
+				'Enable', 'on',...
+				'Units', 'normalized',...;
+				'Position', [0 0 1 1],...
+				'Max', 2, 'Min', 0,...;
+				'HorizontalAlignment','left',...
+				'String', Message(:));
+
 
 end
 
@@ -6922,7 +6963,7 @@ end
 end
 
 %	helper function for default template
-function	[Description, Template]	=	load_default_template()
+function	[Description, Template, edit_fields]	=	load_default_template()
 Description	=	{'Start Time',...
 	'Author',...
 	'Pulse or FM?',...
@@ -6963,6 +7004,9 @@ Template.num_harmonics		=	-1;
 Template.modulation			=	0;
 Template.confidence			=	3;
 Template.comments			=	'';
+
+edit_fields			=	fieldnames(Template);
+edit_fields(5:14)	=	[];
 end
 
 
@@ -7116,7 +7160,7 @@ end
 end
 
 
-%%%%%%%%%%%%AAron modifications%%%%%%%%%%
+%% %%%%%%%%%%AAron modifications%%%%%%%%%%
 
 % --- Executes on button press in pushbutton_timewarp.
 function pushbutton_timewarp_Callback(hObject, eventdata, handles)
@@ -7425,7 +7469,7 @@ hlength=hlength+1-rem(hlength,2);
 
 if (nargin == 1),
     t=1:xrow; h = tftb_window(hlength); trace=0;
-elseif (nargin == 2) | (nargin == 3),
+elseif (nargin == 2) || (nargin == 3),
     h = tftb_window(hlength); trace = 0;
 elseif (nargin == 4),
     trace = 0;
