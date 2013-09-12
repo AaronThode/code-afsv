@@ -4518,7 +4518,7 @@ function [mux,Rbar,kappa] = vm_ests_uneq(x,options,flag) %#ok<STOUT>
 %n1 = size(x,1);
 
 lx = sqrt(sum(x.^2,2));                % Get length of each vector
-idx = find(lx>0);                        % Get rid of 0-length vectors
+idx = lx>0;                        % Get rid of 0-length vectors
 %n = length(idx);
 %if n<n1,
 x = x(idx,:);
@@ -6830,6 +6830,7 @@ i_show	=	find((Times(1) <= Start_Times) & (Start_Times <= Times(2)));
 %	Plot rectangles for visible events
 h_show	=	[];
 sel_vis	=	false;
+axes(h_axes);
 for	ii	=	1:length(i_show)
 	ie		=	i_show(ii);
 	event	=	Events(ie);
@@ -6842,7 +6843,6 @@ for	ii	=	1:length(i_show)
 	height	=	max([1e-5 height]);
 	width	=	max([1e-5 width]);
 	
-	axes(h_axes);
 	h_show(ii)	=	rectangle('Position',[x,y,width,height],...
 		'Curvature',[0.3],...
 		'LineWidth',2,'LineStyle','-',...
