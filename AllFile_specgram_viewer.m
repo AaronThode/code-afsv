@@ -4518,7 +4518,7 @@ function [mux,Rbar,kappa] = vm_ests_uneq(x,options,flag) %#ok<STOUT>
 %n1 = size(x,1);
 
 lx = sqrt(sum(x.^2,2));                % Get length of each vector
-idx = lx;                        % Get rid of 0-length vectors
+idx = find(lx>0);                        % Get rid of 0-length vectors
 %n = length(idx);
 %if n<n1,
 x = x(idx,:);
@@ -4544,7 +4544,7 @@ lx = sqrt(sum(x.^2,2));                % Get length of each vector
 idx = find(lx);                        % Get rid of 0-length vectors
 n = length(idx);
 if n<n1,
-	x = x(idx,:);
+    x = x(idx,:);
 end
 x = x./repmat(lx,1,2);                 % Make unit vectors
 r = sum(x);
