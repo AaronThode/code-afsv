@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.deploytool" plugin-version="1.0">
-  <configuration target="target.standalone.win" target-name="Windows Standalone Application" name="AllFile_specgram_viewer_Win32" location="E:\matlab\AllFile_specgram_viewer" file="E:\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win32.prj" preferred-package-type="package.type.exe" build-checksum="1341208558" preferred-package-location="E:\matlab\AllFile_specgram_viewer">
-    <param.project.name>E:\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win32.prj</param.project.name>
+  <configuration target="target.standalone.win" target-name="Windows Standalone Application" name="AllFile_specgram_viewer_Win32" location="H:\Work\matlab\AllFile_specgram_viewer" file="H:\Work\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win32.prj" preferred-package-type="package.type.exe" build-checksum="1036627380" preferred-package-location="H:\Work\matlab\AllFile_specgram_viewer">
+    <param.project.name>H:\Work\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win32.prj</param.project.name>
     <param.target.type>Windows Standalone Application</param.target.type>
     <param.appname>AllFile_specgram_viewer_Win32</param.appname>
     <param.intermediate>${PROJECT_ROOT}\AllFile_specgram_viewer_Win32\src</param.intermediate>
@@ -68,14 +68,34 @@
       <file>${PROJECT_ROOT}\change.log</file>
     </fileset.package>
     <build-deliverables>
-      <file name="readme.txt" location="${PROJECT_ROOT}\AllFile_specgram_viewer_Win32\distrib" optional="true">E:\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win32\distrib\readme.txt</file>
-      <file name="AllFile_specgram_viewer_Win32.exe" location="${PROJECT_ROOT}\AllFile_specgram_viewer_Win32\distrib" optional="false">E:\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win32\distrib\AllFile_specgram_viewer_Win32.exe</file>
+      <file name="AllFile_specgram_viewer_Win32.exe" location="${PROJECT_ROOT}\AllFile_specgram_viewer_Win32\distrib" optional="false">H:\Work\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win32\distrib\AllFile_specgram_viewer_Win32.exe</file>
+      <file name="readme.txt" location="${PROJECT_ROOT}\AllFile_specgram_viewer_Win32\distrib" optional="true">H:\Work\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win32\distrib\readme.txt</file>
     </build-deliverables>
     <workflow />
     <matlab>
-      <root>C:\Program Files\MATLAB\R2012b</root>
+      <root>C:\MATLAB\Win32\R2012b</root>
       <path>
-        <directory>C:\Documents and Settings\Jit Sarkar\My Documents\MATLAB</directory>
+        <directory>H:\Work\matlab\tools</directory>
+        <directory>H:\Work\matlab\tools\array_processing</directory>
+        <directory>H:\Work\matlab\tools\HDF5</directory>
+        <directory>H:\Work\matlab\tools\models</directory>
+        <directory>H:\Work\matlab\tools\models\IW</directory>
+        <directory>H:\Work\matlab\tools\models\NM</directory>
+        <directory>H:\Work\matlab\tools\models\PE</directory>
+        <directory>H:\Work\matlab\tools\models\ray</directory>
+        <directory>H:\Work\matlab\tools\models\sensitivity</directory>
+        <directory>H:\Work\matlab\tools\peaks</directory>
+        <directory>H:\Work\matlab\tools\misc</directory>
+        <directory>H:\Work\matlab\tools\other</directory>
+        <directory>H:\Work\matlab\tools\other\aogwater</directory>
+        <directory>H:\Work\matlab\tools\other\cm_and_cb_utilities</directory>
+        <directory>H:\Work\matlab\tools\other\export_fig</directory>
+        <directory>H:\Work\matlab\tools\other\FastICA</directory>
+        <directory>H:\Work\matlab\tools\other\lapack</directory>
+        <directory>H:\Work\matlab\tools\other\ParforProgMon</directory>
+        <directory>H:\Work\matlab\tools\other\panel</directory>
+        <directory>H:\Work\matlab\tools\other\RPSstuff</directory>
+        <directory>H:\Work\matlab</directory>
         <directory>${MATLAB_ROOT}\toolbox\matlab\demos</directory>
         <directory>${MATLAB_ROOT}\toolbox\matlab\graph2d</directory>
         <directory>${MATLAB_ROOT}\toolbox\matlab\graph3d</directory>
@@ -540,11 +560,11 @@
       <mac>false</mac>
       <windows>true</windows>
       <win2k>false</win2k>
-      <winxp>true</winxp>
+      <winxp>false</winxp>
       <vista>false</vista>
       <linux>false</linux>
       <solaris>false</solaris>
-      <osver>5.1</osver>
+      <osver>6.1</osver>
       <os32>true</os32>
       <os64>false</os64>
       <arch>win32</arch>

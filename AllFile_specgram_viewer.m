@@ -3153,9 +3153,9 @@ width	=	duration;
 height	=	(max_freq - min_freq)/1000;
 axes(handles.axes1);
 hrec	=	rectangle('Position',[x,y,width,height],...
-	'Curvature',[0.3],...
-	'LineWidth',2,'LineStyle','-',...
-	'EdgeColor','r');
+				'Curvature',[0.3],...
+				'LineWidth',2,'LineStyle','-',...
+				'EdgeColor','r');
 
 %	Initial signal type selection
 sig_types	=	{'Pulsive','FM'};
@@ -3172,7 +3172,8 @@ params_extract	=	extract_automated_fields(Times, Freq, handles);
 if isempty(params_extract)
 	errordlg({'SNR and level could not be extracted:';...
 		'Time window is too small';...
-		'Show greater time window and retry'});
+		'Show larger time window and retry'});
+	delete(hrec);
 	return
 end
 
@@ -3181,6 +3182,7 @@ end
 Data	=	handles.notes.Data;
 i_sel	=	handles.notes.i_sel;
 
+%	Default values from last (selected) event or template
 if	~isempty(Data.Events)
 	if	~isempty(i_sel)
 		Event	=	Data.Events(i_sel);
@@ -6813,7 +6815,7 @@ if	isempty(handles.notes.Data) || isempty(handles.notes.Data.Events)...
 	disable_notes_nav(handles);
 	return;
 end
-Events	=	handles.notes.Data.Events;
+Events		=	handles.notes.Data.Events;
 Description	=	handles.notes.Data.Description;
 
 h_axes	=	handles.axes1;
@@ -6835,9 +6837,10 @@ for	ii	=	1:length(i_show)
 	ie		=	i_show(ii);
 	event	=	Events(ie);
 	x		=	event.start_time - Times(1);	x	=	x*24*60*60;
-	y		=	str2double(event.min_freq)/1000;
-	width	=	str2double(event.duration);
-	height	=	(str2double(event.max_freq) - str2double(event.min_freq))/1000;
+	y		=	str2double(num2str(event.min_freq))/1000;
+	width	=	str2double(num2str(event.duration));
+	height	=	(str2double(num2str(event.max_freq))...
+							- str2double(num2str(event.min_freq)))/1000;
 	
 	%AARON fix for dodgy detections
 	height	=	max([1e-5 height]);
