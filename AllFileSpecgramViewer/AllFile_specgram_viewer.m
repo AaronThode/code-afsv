@@ -394,7 +394,7 @@ else
     set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
 end
 
-handles.tlen	=	tlen;
+handles.tlen	=	[];
 guidata(hObject, handles);
 end
 
