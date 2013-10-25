@@ -114,7 +114,7 @@ cd(mydir);
 %	Check for required dependencies, i.e. subfunctions
 status	=	dependency_check();
 if ~status
-	error('You do not seem to have all the required subfunctions on your path');
+    error('You do not seem to have all the required subfunctions on your path');
 end
 
 
@@ -128,9 +128,9 @@ guidata(hObject, handles);
 % This sets up the initial plot - only do when we are invisible
 % so window can get raised using AllFile_specgram_viewer.
 if strcmp(get(hObject,'Visible'),'off')
-	%A = imread('/Users/thode/Personal/meriah_n_me.jpg','jpg');
-	%image(A);set(gca,'vis','off');
-	%plot(rand(5));
+    %A = imread('/Users/thode/Personal/meriah_n_me.jpg','jpg');
+    %image(A);set(gca,'vis','off');
+    %plot(rand(5));
 end
 
 % UIWAIT makes AllFile_specgram_viewer wait for user response (see UIRESUME)
@@ -157,7 +157,7 @@ function pushbutton_update_Callback(hObject, eventdata, handles)
 
 %	Stop audio playback if it's running
 if	~isempty(handles.audioplayer) && isplaying(handles.audioplayer)
-	stop(handles.audioplayer);
+    stop(handles.audioplayer);
 end
 
 %	Disable update buttons while loading/processing
@@ -211,23 +211,23 @@ function OpenMenuItem_Callback(hObject, eventdata, handles)
 %	List of supported file types + descriptions/names
 File_types	=	{'MT';'WAV';'GSI';'ADI';'DAT';'MDAT';'MAT'};
 File_descs	=	{	'MT files';...
-	'WAV files';...
-	'GSI files';...
-	'ADI files';...
-	'DAT files';...
-	'MDAT files';...
-	'Simulations'};
+    'WAV files';...
+    'GSI files';...
+    'ADI files';...
+    'DAT files';...
+    'MDAT files';...
+    'Simulations'};
 
 %	 Setup menu file extensions
 menustr		=	cell(length(File_types)+1,1);
 all_types	=	[];
 for	ff = 1:length(File_types)
-	ftype	=	File_types{ff};
-	fdesc	=	File_descs{ff};
-	menustr{ff+1,1}	=	['*.' lower(ftype), ';*.' upper(ftype)];
-	menustr{ff+1,2}	=	[fdesc ' (' menustr{ff+1,1} ')'];
-	
-	all_types	=	[all_types ';' menustr{ff+1,1}];
+    ftype	=	File_types{ff};
+    fdesc	=	File_descs{ff};
+    menustr{ff+1,1}	=	['*.' lower(ftype), ';*.' upper(ftype)];
+    menustr{ff+1,2}	=	[fdesc ' (' menustr{ff+1,1} ')'];
+    
+    all_types	=	[all_types ';' menustr{ff+1,1}];
 end
 %	Prepend all supported files
 all_types(1)	=	[];			%	Get rid of initial ;
@@ -238,32 +238,32 @@ menustr{1,2}	=	['All supported files' ' (...)'];
 %	Specify default file
 default_file	=	[];
 if ~isempty(handles.mydir)
-	disp(handles.mydir);
-	default_file	=	handles.mydir;
-	try
-		default_file	=	fullfile(default_file, handles.myfile);
-	end
+    disp(handles.mydir);
+    default_file	=	handles.mydir;
+    try
+        default_file	=	fullfile(default_file, handles.myfile);
+    end
 end
 
 %	Open dialog box
 [filename, pathname, ~]	=	...
-	uigetfile(menustr, 'Select a file:', default_file);
+    uigetfile(menustr, 'Select a file:', default_file);
 
 %	Parse selected file name
 if	isnumeric(filename) || isnumeric(pathname)
-	return;		%	window canceled
+    return;		%	window canceled
 end
 
 [~,fname,myext]		=	fileparts(filename);
 
 if	~isempty(myext)
-	myext	=	myext(2:end);
-	file_ind=	find(strcmpi(myext,File_types));
+    myext	=	myext(2:end);
+    file_ind=	find(strcmpi(myext,File_types));
 end
 
 if	isempty(myext) || isempty(file_ind)
-	disp([myext ' File type not supported']);
-	return;
+    disp([myext ' File type not supported']);
+    return;
 end
 
 %	Assume valid data type at this point
@@ -287,9 +287,9 @@ handles.fig_updated		=	false;
 set(handles.pushbutton_notes_select, 'Enable', 'on');
 %	set notes file name and dir accordingly
 if	isempty(handles.notes.folder_name)
-	notes_folder	=	pathname;
+    notes_folder	=	pathname;
 else
-	notes_folder	=	[];
+    notes_folder	=	[];
 end
 
 %	Jit: Loading should always occur if valid files are present in given
@@ -317,10 +317,10 @@ function CloseMenuItem_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 selection = questdlg(['Close ' get(handles.figure1,'Name') '?'],...
-	['Close ' get(handles.figure1,'Name') '...'],...
-	'Yes','No','Yes');
+    ['Close ' get(handles.figure1,'Name') '...'],...
+    'Yes','No','Yes');
 if strcmp(selection,'No')
-	return;
+    return;
 end
 
 delete(handles.figure1)
@@ -336,9 +336,9 @@ function edit_datestr_CreateFcn(hObject, eventdata, handles) %#ok<*DEFNU,*INUSD>
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc
-	set(hObject,'BackgroundColor','white');
+    set(hObject,'BackgroundColor','white');
 else
-	set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
+    set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
 end
 
 end
@@ -354,23 +354,23 @@ tmin	=	handles.tdate_min;
 tmax	=	handles.tdate_max;
 
 try
-	new_date	=	datenum(get(hObject,'String'));
+    new_date	=	datenum(get(hObject,'String'));
 catch %#ok<*CTCH>
-	errordlg('Incorrect datestr');
-	new_date =	[];
+    errordlg('Incorrect datestr');
+    new_date =	[];
 end
 
 if	~isempty(new_date)
-	if		new_date < tmin
-		new_date	=	tmin;
-	elseif	new_date > tmax
-		new_date	=	tmax;
-	end
-	newval	=	(new_date-tmin)/(tmax-tmin);
-	handles.tdate_start		=	new_date;
+    if		new_date < tmin
+        new_date	=	tmin;
+    elseif	new_date > tmax
+        new_date	=	tmax;
+    end
+    newval	=	(new_date-tmin)/(tmax-tmin);
+    handles.tdate_start		=	new_date;
 	set(hObject,'String', datestr(new_date, 0));
-	set(handles.slider_datestr,'Value',newval);
-	guidata(hObject, handles);
+    set(handles.slider_datestr,'Value',newval);
+    guidata(hObject, handles);
 end
 
 
@@ -389,9 +389,9 @@ function edit_winlen_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc
-	set(hObject,'BackgroundColor','white');
+    set(hObject,'BackgroundColor','white');
 else
-	set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
+    set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
 end
 
 handles.tlen	=	tlen;
@@ -409,23 +409,23 @@ tlen	=	str2double(get(hObject,'String'));
 tlen_max=	5*60;
 
 if tlen > tlen_max
-	%	Make sure user actually intended to set a window this long
-	tlen_opts{1}	=	['Given, ' num2str(tlen) 's'];
-	tlen_opts{2}	=	['Suggested, ' num2str(tlen_max) 's'];
-	tlen_opts{3}	=	['Original, ' num2str(handles.tlen) 's'];
-	choice	=	questdlg('Are you sure you want to use a window size this big? Select...', ...
-		'Window length sanity check', ...
-		tlen_opts{1}, tlen_opts{2}, tlen_opts{3},...
-		tlen_opts{3});
-	% Handle response
-	switch choice
-		case tlen_opts{1}
-			%tlen	=	tlen;
-		case tlen_opts{2}
-			tlen	=	tlen_max;
-		case tlen_opts{3}
-			tlen	=	handles.tlen;
-	end
+    %	Make sure user actually intended to set a window this long
+    tlen_opts{1}	=	['Given, ' num2str(tlen) 's'];
+    tlen_opts{2}	=	['Suggested, ' num2str(tlen_max) 's'];
+    tlen_opts{3}	=	['Original, ' num2str(handles.tlen) 's'];
+    choice	=	questdlg('Are you sure you want to use a window size this big? Select...', ...
+        'Window length sanity check', ...
+        tlen_opts{1}, tlen_opts{2}, tlen_opts{3},...
+        tlen_opts{3});
+    % Handle response
+    switch choice
+        case tlen_opts{1}
+            %tlen	=	tlen;
+        case tlen_opts{2}
+            tlen	=	tlen_max;
+        case tlen_opts{3}
+            tlen	=	handles.tlen;
+    end
 end
 
 set(hObject, 'String', num2str(tlen));
@@ -442,9 +442,9 @@ function popupmenu_Nfft_CreateFcn(hObject, eventdata, handles)
 % Hint: popupmenu controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc
-	set(hObject,'BackgroundColor','white');
+    set(hObject,'BackgroundColor','white');
 else
-	set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
+    set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
 end
 %contents=get(hObject,'String');
 set(hObject,'Value',4);
@@ -469,9 +469,9 @@ function popupmenu_ovlap_CreateFcn(hObject, eventdata, handles)
 % Hint: popupmenu controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc
-	set(hObject,'BackgroundColor','white');
+    set(hObject,'BackgroundColor','white');
 else
-	set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
+    set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
 end
 %contents=get(hObject,'String');
 set(hObject,'Value',4);
@@ -497,9 +497,9 @@ function slider_datestr_CreateFcn(hObject, eventdata, handles)
 %       'usewhitebg' to 0 to use default.  See ISPC and COMPUTER.
 usewhitebg = 1;
 if usewhitebg
-	set(hObject,'BackgroundColor',[.9 .9 .9]);
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
 else
-	set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor')); %#ok<UNRCH>
+    set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor')); %#ok<UNRCH>
 end
 
 end
@@ -546,9 +546,9 @@ function edit_mindB_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc
-	set(hObject,'BackgroundColor','white');
+    set(hObject,'BackgroundColor','white');
 else
-	set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
+    set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
 end
 
 end
@@ -574,9 +574,9 @@ function edit_dBspread_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc
-	set(hObject,'BackgroundColor','white');
+    set(hObject,'BackgroundColor','white');
 else
-	set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
+    set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
 end
 
 end
@@ -602,9 +602,9 @@ function edit_minfreq_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc
-	set(hObject,'BackgroundColor','white');
+    set(hObject,'BackgroundColor','white');
 else
-	set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
+    set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
 end
 handles.filter.f_min	=	str2double(get(hObject,'String'));
 handles.filter.changed	=	true;
@@ -634,9 +634,9 @@ function edit_maxfreq_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc
-	set(hObject,'BackgroundColor','white');
+    set(hObject,'BackgroundColor','white');
 else
-	set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
+    set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
 end
 handles.filter.f_max	=	str2double(get(hObject,'String'));
 guidata(hObject, handles);
@@ -691,7 +691,7 @@ function popupmenu_scalesound_CreateFcn(hObject, eventdata, handles)
 % Hint: popupmenu controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-	set(hObject,'BackgroundColor','white');
+    set(hObject,'BackgroundColor','white');
 end
 
 handles.audio_scale		=	1;
@@ -705,20 +705,20 @@ function pushbutton_playsound_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 if	isfield(handles, 'audioplayer')
-	player	=	handles.audioplayer;
+    player	=	handles.audioplayer;
 else
-	player	=	[];
+    player	=	[];
 end
 
 %	If existing audio player is running, stop it
 if	~isempty(player) && ~handles.audio_stale
-	ispaused	=	(player.CurrentSample ~= 1) &&...
-		(player.CurrentSample ~= player.TotalSamples);
-	if	isplaying(player) || ispaused
-		stop(player);
-		audio_stop(player,[],handles);
-		return;
-	end
+    ispaused	=	(player.CurrentSample ~= 1) &&...
+        (player.CurrentSample ~= player.TotalSamples);
+    if	isplaying(player) || ispaused
+        stop(player);
+        audio_stop(player,[],handles);
+        return;
+    end
 end
 %	Only need to recreate player if, file has changed, filter is enabled,
 %	or filter has changed.
@@ -727,115 +727,115 @@ use_filter	=	get(handles.checkbox_filter,'Value');
 audio_stale	=	handles.audio_stale | (use_filter & handles.filter.changed);
 
 if	audio_stale
-	Fs	=	handles.Fs;
-	x	=	handles.x;
-	
-	%	Perform filtering if requested
-	if	use_filter
-		if	handles.filter.changed
-			f_max	=	handles.filter.f_max;
-			f_min	=	handles.filter.f_min;
-			
-			%	check frequency ranges
-			if	f_min < 0 || f_min >= Fs/2
-				f_min	=	0;
-			end
-			if	f_max <= 0 || f_max > Fs/2
-				f_max	=	Fs/2;
-			end
-			if f_min > f_max
-				f_temp	=	f_max;
-				f_max	=	f_min;
-				f_min	=	f_temp;
-				clear	f_temp;
-			end
-			handles.filter.f_min	=	f_min;
-			set(handles.edit_minfreq, 'String', num2str(f_min));
-			handles.filter.f_max	=	f_max;
-			set(handles.edit_maxfreq, 'String', num2str(f_max));
-			
-			
-			%	Skip filtering if range covers whole band
-			if	f_min <=0 && f_max >= Fs/2
-				use_filter = false;
-			else
-				%	default band-pass filter
-				df	=	0.1*[f_min f_max]; df = df(df>0);
-				df	=	min(df);
-				f	=	[f_min-[df 0] f_max+[0 df]];
-				a	=	[0 1 0];
-				rp	=	0.1;
-				rs	=	40;
-				dev	= [10^(-rs/20) (10^(rp/20)-1)/(10^(rp/20)+1)  10^(-rs/20)];
-				
-				%	low-pass filter
-				if	min(f) <= 0
-					f	=	f(end-1:end);
-					a	=	a(end-1:end);
-					dev	=	dev(end-1:end);
-					
-					%	high-pass fiter
-				elseif	max(f) >= Fs/2
-					f	=	f(1:2);
-					a	=	a(1:2);
-					dev	=	dev(1:2);
-				end
-				
-				[n,fo,ao,w] =	firpmord(f, a, dev, Fs);
-				b			=	firpm(n,fo,ao,w);
-				
-				handles.filter.b		=	b;
-				handles.filter.changed	=	false;
-			end
-		end
-	end
-	
-	%	Apply filter if needed
-	if	use_filter
-		b	=	handles.filter.b;
-		x	=	filter(b, 1, x);
-	end
-	
-	%	Resample if not within generic sound-card limits
-	valid_audio_Fs	=	[5000,8000,11025,22050,44100,48000];
-	if ~ismember(Fs, valid_audio_Fs)
-		[~, ii]		=	min(abs(valid_audio_Fs - Fs));
-		ii	=	ii(1);
-		newFs	=	valid_audio_Fs(ii);
-		
-		disp('Resampling sound');
-		x	=	resample(x, newFs, Fs);
-		Fs	=	newFs;
-	end
-	
-	%	Floating point data must be scaled to -1:+1 for playback
-	x	=	x - mean(x);
-	x	=	x ./ max(abs(x));
-	
-	%	Create audio player object
-	Fs_play		=	Fs * handles.audio_scale;
-	player		=	audioplayer(x, Fs_play);
-	handles.audio_stale		=	false;
-	handles.audioplayer		=	player;
-	handles.audioFs			=	Fs;
-	
-	%	Draw initial marker line
-	YL		=	ylim;					% get the y-axis limits
-	hold on;
-	hline	=	plot([0 0], YL, 'r');	% plot the marker
-	hold off;
-	try	delete(handles.hline);	end
-	handles.hline			=	hline;
-	
-	%	set callbacks for audioplayer
+    Fs	=	handles.Fs;
+    x	=	handles.x;
+    
+    %	Perform filtering if requested
+    if	use_filter
+        if	handles.filter.changed
+            f_max	=	handles.filter.f_max;
+            f_min	=	handles.filter.f_min;
+            
+            %	check frequency ranges
+            if	f_min < 0 || f_min >= Fs/2
+                f_min	=	0;
+            end
+            if	f_max <= 0 || f_max > Fs/2
+                f_max	=	Fs/2;
+            end
+            if f_min > f_max
+                f_temp	=	f_max;
+                f_max	=	f_min;
+                f_min	=	f_temp;
+                clear	f_temp;
+            end
+            handles.filter.f_min	=	f_min;
+            set(handles.edit_minfreq, 'String', num2str(f_min));
+            handles.filter.f_max	=	f_max;
+            set(handles.edit_maxfreq, 'String', num2str(f_max));
+            
+            
+            %	Skip filtering if range covers whole band
+            if	f_min <=0 && f_max >= Fs/2
+                use_filter = false;
+            else
+                %	default band-pass filter
+                df	=	0.1*[f_min f_max]; df = df(df>0);
+                df	=	min(df);
+                f	=	[f_min-[df 0] f_max+[0 df]];
+                a	=	[0 1 0];
+                rp	=	0.1;
+                rs	=	40;
+                dev	= [10^(-rs/20) (10^(rp/20)-1)/(10^(rp/20)+1)  10^(-rs/20)];
+                
+                %	low-pass filter
+                if	min(f) <= 0
+                    f	=	f(end-1:end);
+                    a	=	a(end-1:end);
+                    dev	=	dev(end-1:end);
+                    
+                    %	high-pass fiter
+                elseif	max(f) >= Fs/2
+                    f	=	f(1:2);
+                    a	=	a(1:2);
+                    dev	=	dev(1:2);
+                end
+                
+                [n,fo,ao,w] =	firpmord(f, a, dev, Fs);
+                b			=	firpm(n,fo,ao,w);
+                
+                handles.filter.b		=	b;
+                handles.filter.changed	=	false;
+            end
+        end
+    end
+    
+    %	Apply filter if needed
+    if	use_filter
+        b	=	handles.filter.b;
+        x	=	filter(b, 1, x);
+    end
+    
+    %	Resample if not within generic sound-card limits
+    valid_audio_Fs	=	[5000,8000,11025,22050,44100,48000];
+    if ~ismember(Fs, valid_audio_Fs)
+        [~, ii]		=	min(abs(valid_audio_Fs - Fs));
+        ii	=	ii(1);
+        newFs	=	valid_audio_Fs(ii);
+        
+        disp('Resampling sound');
+        x	=	resample(x, newFs, Fs);
+        Fs	=	newFs;
+    end
+    
+    %	Floating point data must be scaled to -1:+1 for playback
+    x	=	x - mean(x);
+    x	=	x ./ max(abs(x));
+    
+    %	Create audio player object
+    Fs_play		=	Fs * handles.audio_scale;
+    player		=	audioplayer(x, Fs_play);
+    handles.audio_stale		=	false;
+    handles.audioplayer		=	player;
+    handles.audioFs			=	Fs;
+    
+    %	Draw initial marker line
+    YL		=	ylim;					% get the y-axis limits
+    hold on;
+    hline	=	plot([0 0], YL, 'r');	% plot the marker
+    hold off;
+    try	delete(handles.hline);	end
+    handles.hline			=	hline;
+    
+    %	set callbacks for audioplayer
 	player.StopFcn = {@audio_stop, handles};
 	player.TimerFcn = {@audio_timer, handles}; % timer callback function (defined below)
-	player.TimerPeriod = 0.01; % period of the timer in seconds
-	
+    player.TimerPeriod = 0.01; % period of the timer in seconds
+    
 end
 
 %	start playback
-play(player);
+    play(player);
 
 %	Set controls
 set(hObject, 'String', 'Stop');
@@ -854,14 +854,14 @@ function pushbutton_pausesound_Callback(hObject, eventdata, handles)
 
 %	If existing audio player is running, pause or resume it
 if	isfield(handles, 'audioplayer')
-	player	=	handles.audioplayer;
-	if	isplaying(player)
-		pause(player);
-		set(hObject, 'String', 'Resume');
-	else
-		resume(player);
-		set(hObject, 'String', 'Pause');
-	end
+    player	=	handles.audioplayer;
+    if	isplaying(player)
+        pause(player);
+        set(hObject, 'String', 'Resume');
+    else
+        resume(player);
+        set(hObject, 'String', 'Pause');
+    end
 end
 
 
@@ -883,9 +883,9 @@ Ichan='all';
 [x,~,Fs,~,~,hdr]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
 
 if ~isempty(strfind(lower(computer),'mac'))
-	Islash=strfind(handles.mydir,'/');
+    Islash=strfind(handles.mydir,'/');
 else
-	Islash=strfind(handles.mydir,'\');
+    Islash=strfind(handles.mydir,'\');
 end
 chan=get(handles.edit_chan,'String');
 
@@ -895,19 +895,19 @@ disp(['Saving ...' save_name]);
 save_path	=	fullfile(pwd, save_name);  %AARON: save to local directory, not server
 
 try
-	if size(x,2)>size(x,1)
-		x=x';
-	end
-	for Ichan=1:size(x,2)
-		xfilt(:,Ichan)=filter(handles.b,1,x(:,Ichan));
-	end
-	wavwrite(xfilt/(1.1*max(max(abs(xfilt)))),Fs,save_path);
-	
+    if size(x,2)>size(x,1)
+        x=x';
+    end
+    for Ichan=1:size(x,2)
+        xfilt(:,Ichan)=filter(handles.b,1,x(:,Ichan));
+    end
+    wavwrite(xfilt/(1.1*max(max(abs(xfilt)))),Fs,save_path);
+    
 catch
-	disp('No filtering desired... exists; saving raw acoustic data to WAV');
-	xfilt=[];
-	wavwrite(x/(1.1*max(max(abs(x)))),Fs,save_path);
-	
+    disp('No filtering desired... exists; saving raw acoustic data to WAV');
+    xfilt=[];
+    wavwrite(x/(1.1*max(max(abs(x)))),Fs,save_path);
+    
 end
 save(save_path,'x','xfilt','Fs','tdate_start','hdr');
 
@@ -920,130 +920,130 @@ function pushbutton_print_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 if strcmpi(handles.filetype,'MDAT')
-	mychc=menu('Which print option?','Single phone','all phones');
-	
-	if mychc==2  %%Multiphone data...
-		
-		figure;
-		tdate_start=handles.tdate_start;
-		tlen=handles.tlen;
-		contents=get(handles.popupmenu_Nfft,'String');
+    mychc=menu('Which print option?','Single phone','all phones');
+    
+    if mychc==2  %%Multiphone data...
+        
+        figure;
+        tdate_start=handles.tdate_start;
+        tlen=handles.tlen;
+        contents=get(handles.popupmenu_Nfft,'String');
 		Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
-		
-		contents=get(handles.popupmenu_ovlap,'String');
+        
+        contents=get(handles.popupmenu_ovlap,'String');
 		ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
-		ovlap=min([1-1/Nfft ovlap]);
-
-		mydir=pwd;
-		figure(1)
-		set(gcf,'pos',[291         628        1513         991]);
-		Iplot=0;
-		%[x,t,Fs,tstart,junk1,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
-		[x,~,Fs,~,~,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
-		
-		for Ichan=1:head.Nchan
-			
-			if Iplot<8
-				Iplot=Iplot+1;
-			else
-				figure(2)
-				set(gcf,'pos',[291         628        1513         991]);
-				Iplot=1;
-				
-			end
-			subplot(4,2,Iplot);
-			
-			[~,FF,TT,B] = spectrogram(x(Ichan,:),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
-			%B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
-			%axes(handles.axes1);
-			imagesc(TT,FF,10*log10(B));%
-			axis('xy')
+        ovlap=min([1-1/Nfft ovlap]);
+        
+        mydir=pwd;
+        figure(1)
+        set(gcf,'pos',[291         628        1513         991]);
+        Iplot=0;
+        %[x,t,Fs,tstart,junk1,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
+        [x,~,Fs,~,~,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
+        
+        for Ichan=1:head.Nchan
+            
+            if Iplot<8
+                Iplot=Iplot+1;
+            else
+                figure(2)
+                set(gcf,'pos',[291         628        1513         991]);
+                Iplot=1;
+                
+            end
+            subplot(4,2,Iplot);
+            
+            [~,FF,TT,B] = spectrogram(x(Ichan,:),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
+            %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
+            %axes(handles.axes1);
+            imagesc(TT,FF,10*log10(B));%
+            axis('xy')
 			fmax=str2double(get(handles.edit_fmax,'String'));
 			fmin=str2double(get(handles.edit_fmin,'String'));
-			if fmax==0,
-				ylim([0 Fs/2]);
-				set(handles.edit_fmax,'String',num2str(Fs/2));
-			else
-				ylim([fmin fmax]*1000);
-			end
-			%ylim([0 1]);axis('xy')
+            if fmax==0,
+                ylim([0 Fs/2]);
+                set(handles.edit_fmax,'String',num2str(Fs/2));
+            else
+                ylim([fmin fmax]*1000);
+            end
+            %ylim([0 1]);axis('xy')
 			climm(1)=str2double(get(handles.edit_mindB,'String'));
 			climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
-			caxis(climm);
-			if get(handles.checkbox_grayscale,'Value')==1,
-				colormap(flipud(gray));
-			else
-				colormap(jet);
-			end
-			% set(gcf,'pos',[30   322  1229   426])
-			set(gca,'fontweight','bold','fontsize',14);
-			ylabel('Hz');
-			if rem(Ichan,2)==0
-				ylabel('');
-			end
-			if Iplot<7
-				set(gca,'xticklabel',[]);
-			else
-				xlabel('Time (sec)');
-			end
-			poss=get(gca,'pos');
-			poss(4)=.2;poss(3)=.4;
-			set(gca,'pos',poss);
-			set(gca,'yminorgrid','on','xminorgrid','on');
-			try
+            caxis(climm);
+            if get(handles.checkbox_grayscale,'Value')==1,
+                colormap(flipud(gray));
+            else
+                colormap(jet);
+            end
+            % set(gcf,'pos',[30   322  1229   426])
+            set(gca,'fontweight','bold','fontsize',14);
+            ylabel('Hz');
+            if rem(Ichan,2)==0
+                ylabel('');
+            end
+            if Iplot<7
+                set(gca,'xticklabel',[]);
+            else
+                xlabel('Time (sec)');
+            end
+            poss=get(gca,'pos');
+            poss(4)=.2;poss(3)=.4;
+            set(gca,'pos',poss);
+            set(gca,'yminorgrid','on','xminorgrid','on');
+            try
                 text(0.1,0.9,num2str(head.geom.rd(Ichan),3),'color','y','units','norm','fontsize',14,'fontweight','bold');
-			catch
-				disp('No elements depths provided');
-			end
-			hh=colorbar('East');
-			set(hh,'fontweight','bold','fontsize',14,'ycolor','y')
-			
-			%             if Ichan==1
-			%                 xall=zeros(8,length(x));
-			%             end
-			%xall(Ichan,:)=x;
-		end
-		if ~isempty(strfind(lower(computer),'mac'))
-			Islash=strfind(handles.mydir,'/')+1;
-		else
-			Islash=strfind(handles.mydir,'\')+1;
-		end
-		save_name=sprintf('soundNfft%i_%s.%s_%s_%s',Nfft,handles.mydir((Islash(end-1)):(end-1)),handles.myfile,datestr(tdate_start,30),'all_channels');
-		pause
-		
-		for I=1:2
-			if any(get(0,'child')==I)
-				save_name1=sprintf('%s_%i',save_name,I);
-				save_path	=	fullfile(handles.notes.folder_name, save_name1);
-				disp(['Printing %s ...' save_name1]);
-				figure(I)
-				orient landscape
-				print(I,'-djpeg',[save_path '.jpg']);
-				save([save_path '.mat'],'x','Fs');
-				close(I);
-			end
-			
-		end
-		
-		return
-	end
+            catch
+                disp('No elements depths provided');
+            end
+            hh=colorbar('East');
+            set(hh,'fontweight','bold','fontsize',14,'ycolor','y')
+            
+            %             if Ichan==1
+            %                 xall=zeros(8,length(x));
+            %             end
+            %xall(Ichan,:)=x;
+        end
+        if ~isempty(strfind(lower(computer),'mac'))
+            Islash=strfind(handles.mydir,'/')+1;
+        else
+            Islash=strfind(handles.mydir,'\')+1;
+        end
+        save_name=sprintf('soundNfft%i_%s.%s_%s_%s',Nfft,handles.mydir((Islash(end-1)):(end-1)),handles.myfile,datestr(tdate_start,30),'all_channels');
+        pause
+        
+        for I=1:2
+            if any(get(0,'child')==I)
+                save_name1=sprintf('%s_%i',save_name,I);
+                save_path	=	fullfile(handles.notes.folder_name, save_name1);
+                disp(['Printing %s ...' save_name1]);
+                figure(I)
+                orient landscape
+                print(I,'-djpeg',[save_path '.jpg']);
+                save([save_path '.mat'],'x','Fs');
+                close(I);
+            end
+            
+        end
+        
+        return
+    end
 end
 
 handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
 
 if ~strcmp(handles.display_view,'New Fig')
-	figchc=[];
-	axes(handles.axes1);
+    figchc=[];
+    axes(handles.axes1);
 else
-	figure(gcf);
-	chcc=get(0,'child');
-	Igoodd	=	(chcc-round(chcc)==0);
-	chcc=chcc(Igoodd);
-	for III=1:length(chcc) %#ok<*FORPF>
-		tmp{III}=chcc(III);
-	end
-	figchc=menu('Select a figure number:',tmp);
-	figure(chcc(figchc));
+    figure(gcf);
+    chcc=get(0,'child');
+    Igoodd	=	(chcc-round(chcc)==0);
+    chcc=chcc(Igoodd);
+    for III=1:length(chcc) %#ok<*FORPF>
+        tmp{III}=chcc(III);
+    end
+    figchc=menu('Select a figure number:',tmp);
+    figure(chcc(figchc));
 end
 tdate_start=handles.tdate_start;
 tlen=handles.tlen;
@@ -1079,11 +1079,11 @@ Icall		=	menu('Signal type?',call_types);
 call_type	=	call_types{Icall};
 
 prompt={'File name','pulse or FM?','Call Type','Min Freq(Hz)','Max Freq(Hz)',...
-	'Duration(sec)','Number_pulses','Number_harmonics','modulation (Hz)', 'Notes'};
+    'Duration(sec)','Number_pulses','Number_harmonics','modulation (Hz)', 'Notes'};
 if Icall==1  %Pulsive
-	def={handles.annotation_file,'pulse','S1',min_freq,max_freq,duration,'10','-1','0',''};
+    def={handles.annotation_file,'pulse','S1',min_freq,max_freq,duration,'10','-1','0',''};
 else
-	def={handles.annotation_file,'FM','moan',min_freq,max_freq,duration,'-1','1','0',''};
+    def={handles.annotation_file,'FM','moan',min_freq,max_freq,duration,'-1','1','0',''};
 end
 dlgTitle	=	sprintf('Annotation for event at %s',datestr(start_time,0));
 lineNo		=	ones(size(prompt));
@@ -1091,20 +1091,20 @@ lineNo(end) =	5;
 answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
 
 if	isempty(answer)
-	return;
+    return;
 end
 fid=fopen(answer{1},'a');
 if ftell(fid)==0
-	fprintf(fid,'%s','Start Date and Time,');
-	for I=2:length(prompt)
-		fprintf(fid,'%s,',prompt{I});
-	end
-	fprintf(fid,'\n');
+    fprintf(fid,'%s','Start Date and Time,');
+    for I=2:length(prompt)
+        fprintf(fid,'%s,',prompt{I});
+    end
+    fprintf(fid,'\n');
 end
 
 fprintf(fid,'%s,',datestr(start_time,0));
 for I=2:length(prompt)
-	fprintf(fid,'%s, ',answer{I});
+    fprintf(fid,'%s, ',answer{I});
 end
 fprintf(fid,'\n');
 fclose(fid);
@@ -1148,30 +1148,30 @@ newtime	=	tline(1:(max(Icolon)+2));
 
 
 if	tline ~= -1
-	tmin	=	handles.tdate_min;
-	tmax	=	handles.tdate_max;
-	try
-		new_date	=	datenum(newtime);
-	catch
-		errordlg('Incorrect datestr');
-		new_date =	[];
-	end
-	
-	if	~isempty(new_date)
-		if		new_date < tmin
-			new_date	=	tmin;
-		elseif	new_date > tmax
-			new_date	=	tmax;
-		end
-		newval	=	(new_date-tmin)/(tmax-tmin);
-		handles.tdate_start		=	new_date;
+    tmin	=	handles.tdate_min;
+    tmax	=	handles.tdate_max;
+    try
+        new_date	=	datenum(newtime);
+    catch
+        errordlg('Incorrect datestr');
+        new_date =	[];
+    end
+    
+    if	~isempty(new_date)
+        if		new_date < tmin
+            new_date	=	tmin;
+        elseif	new_date > tmax
+            new_date	=	tmax;
+        end
+        newval	=	(new_date-tmin)/(tmax-tmin);
+        handles.tdate_start		=	new_date;
 		set(hObject,'String', datestr(new_date,0));
-		set(handles.slider_datestr,'Value',newval);
-		guidata(hObject, handles);
-	end
+        set(handles.slider_datestr,'Value',newval);
+        guidata(hObject, handles);
+    end
 else
-	disp('End of file reached');
-	fclose(handles.fid);
+    disp('End of file reached');
+    fclose(handles.fid);
 end
 
 end
@@ -1199,14 +1199,14 @@ function checkbox_restart_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_restart
 if get(hObject,'Value')==1,
-	try
-		fclose(handles.fid);
-		mydir=pwd;
-		cd(handles.inputdir);
-		handles.fid=fopen(handles.inputfilename);
-		cd(mydir);
-		guidata(hObject, handles);
-	end
+    try
+        fclose(handles.fid);
+        mydir=pwd;
+        cd(handles.inputdir);
+        handles.fid=fopen(handles.inputfilename);
+        cd(mydir);
+        guidata(hObject, handles);
+    end
 end
 end
 
@@ -1219,9 +1219,9 @@ function checkbox_grayscale_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of checkbox_grayscale
 
 if get(hObject,'Value')==1,
-	colormap(flipud(gray));
+    colormap(flipud(gray));
 else
-	colormap(jet);
+    colormap(jet);
 end
 end
 
@@ -1234,9 +1234,9 @@ function edit_fmax_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc
-	set(hObject,'BackgroundColor','white');
+    set(hObject,'BackgroundColor','white');
 else
-	set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
+    set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
 end
 set(hObject,'String',num2str(0));
 
@@ -1260,9 +1260,9 @@ function edit_fmin_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc
-	set(hObject,'BackgroundColor','white');
+    set(hObject,'BackgroundColor','white');
 else
-	set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
+    set(hObject,'BackgroundColor',get(0,'defaultUicontrolBackgroundColor'));
 end
 set(hObject,'String',num2str(0));
 
@@ -1308,8 +1308,8 @@ Nmax=(2^16)-1;
 Fs_want=125000;  %Actual playback rate
 
 if Fs<Fs_want
-	[q,p]=rat(Fs/Fs_want,0.0001);
-	x=resample(x,p,q);
+    [q,p]=rat(Fs/Fs_want,0.0001);
+    x=resample(x,p,q);
 end
 
 y_scale=(x-min(x))*(Nmax/(max(x)-min(x)));
@@ -1359,25 +1359,25 @@ function uipanel_type_SelectionChangeFcn(hObject,eventdata,handles)
 
 
 switch get(eventdata.NewValue,'Tag') % Get Tag of selected object.
-	case 'radiobutton_MT'
-		disp('MT selected')
-		
-	case 'radiobutton_WAV'
-		disp('WAV selected');
-		
-	case 'radiobutton_GSI'
-		%  set(hObject,'filetype','GSI');
-		disp('GSI selected');
-	case 'radiobutton_DAT'
-		
-		% Continue with more cases as necessary.
-	case 'radiobutton_MDAT'
-		disp('MDAT selected');
-	case 'radiobutton_ADI'
-		disp('ADI selected');
-		% Continue with more cases as necessary.
-	otherwise
-		% Code for when there is no match.
+    case 'radiobutton_MT'
+        disp('MT selected')
+        
+    case 'radiobutton_WAV'
+        disp('WAV selected');
+        
+    case 'radiobutton_GSI'
+        %  set(hObject,'filetype','GSI');
+        disp('GSI selected');
+    case 'radiobutton_DAT'
+        
+        % Continue with more cases as necessary.
+    case 'radiobutton_MDAT'
+        disp('MDAT selected');
+    case 'radiobutton_ADI'
+        disp('ADI selected');
+        % Continue with more cases as necessary.
+    otherwise
+        % Code for when there is no match.
 end
 
 
@@ -1412,7 +1412,7 @@ function edit_chan_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-	set(hObject,'BackgroundColor','white');
+    set(hObject,'BackgroundColor','white');
 end
 end
 
@@ -1437,19 +1437,19 @@ theta=-2*ones(1,NDasar);
 kappa=theta;
 strr=upper('abcdefghijklm');
 for Idasar=1:NDasar
-	%%Assume final directoryname containing files is of the form 'S510G0/'
-	handles.mydir(end-2)=strr(Idasar);
-	%%S510G0T20100831T000000.gsi form
-	handles.myfile(5)=strr(Idasar);
+    %%Assume final directoryname containing files is of the form 'S510G0/'
+    handles.mydir(end-2)=strr(Idasar);
+    %%S510G0T20100831T000000.gsi form
+    handles.myfile(5)=strr(Idasar);
     fprintf('Directory %s contains %s\n',handles.mydir,handles.myfile);
-	try
-		handles		=	load_and_display_spectrogram(handles);
-		[theta(Idasar),kappa(Idasar),tsec]=get_GSI_bearing(hObject,eventdata,handles);
-	catch
-		disp('Directory does not exist');
-	end
-	
-	
+    try
+        handles		=	load_and_display_spectrogram(handles);
+        [theta(Idasar),kappa(Idasar),tsec]=get_GSI_bearing(hObject,eventdata,handles);
+    catch
+        disp('Directory does not exist');
+    end
+    
+    
 end
 
 prompt1={'File of locations','Site','UTM location to compute range'};
@@ -1483,11 +1483,11 @@ range=sqrt(sum((VA_cords-VM/1000).^2));
 title(sprintf('Range of source from chosen location: %6.2f +/- %3.2f km, minor axis %3.2f km',range,A/1000,B/1000));
 yes=menu('Print and Save?','Yes','No');
 if yes==1
-	orient landscape
-	tstart=datestr(datenum(0,0,0,0,0,tsec)+handles.tdate_start,30);
-	figure(1);
-	print(1,'-djpeg',sprintf('Localization_G_%s.jpg',tstart));
-	print('-djpeg',sprintf('Spectrogram_G_%s.jpg',tstart));
+    orient landscape
+    tstart=datestr(datenum(0,0,0,0,0,tsec)+handles.tdate_start,30);
+    figure(1);
+    print(1,'-djpeg',sprintf('Localization_G_%s.jpg',tstart));
+    print('-djpeg',sprintf('Spectrogram_G_%s.jpg',tstart));
     save(sprintf('DASAR_localization_%s',tstart),'DASAR_coords','Igood','theta','Ikeep','VM','A','B','ANG','range');
 end
 close(1)
@@ -1516,67 +1516,67 @@ Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
 contents=get(handles.popupmenu_ovlap,'String');
 ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
 ovlap=min([1-1/Nfft ovlap]);
-		
+
 fmin=str2double(get(handles.edit_fmin,'String'));
 fmax=str2double(get(handles.edit_fmax,'String'));
 chann=input('Enter channel indicies (remember that channels have been flipped, 1 is now shallowest) (1:Nchan):');
 if isempty(chann)
-	chann=1:head.Nchan; %For 2008 short-term vertical array
+    chann=1:head.Nchan; %For 2008 short-term vertical array
 end
 
 Ichc=menu('Enter type of frequency processing:','Contour','All');
 
 if Ichc==1
-	Nf=input('Enter number of harmonics:');
-	if isempty(Nf)
-		Nf=1;
-	end
-	
-	ftmp=ginput(Nf);
-	frange=ftmp(:,2)*1000;
-	
-	Nbad=input('Enter number of bad frequencies: ');
-	if ~isempty(Nbad)
-		fbad=ginput(Nbad);
-		fbad=fbad(:,2)*1000;
-	else
-		fbad=[];
-	end
-	fr=input('Enter frequency band to search (10):');
-	if isempty(fr)
-		fr=10;
-	end
-	
-	[Ksout,Ns]=extractKsbest_contour(x,ovlap,Nfft,chann, frange,fr,fbad,Fs,Nfft,'keep_zeros');
-	%    Ksout: structure array containing
-	%     Kstot CSDM size(Nel,Nel,Nfreq)
-	%     freq: frequencies corresponding to Ks in third dimension
-	%     fcontour: frequencies detected, (Is,If)--can use to make contours..
-	%     fcount: Number of times each frequency has been averaged..
-	%     fpower: Power in each bin
-	
-	%[Kstot,Ks_eig,Nsnap,freq_all,pwr_est,SNRest]=extractKsexact_MDAT(x,ovlap,Nfft,chann,1000*[fmin fmax],Fs,-1,Nfft);
-	
-	axes(handles.axes1)
-	hold on
-	plot(Ksout.tcontour,Ksout.fcontour/1000,'o');
-	hold off
+    Nf=input('Enter number of harmonics:');
+    if isempty(Nf)
+        Nf=1;
+    end
+    
+    ftmp=ginput(Nf);
+    frange=ftmp(:,2)*1000;
+    
+    Nbad=input('Enter number of bad frequencies: ');
+    if ~isempty(Nbad)
+        fbad=ginput(Nbad);
+        fbad=fbad(:,2)*1000;
+    else
+        fbad=[];
+    end
+    fr=input('Enter frequency band to search (10):');
+    if isempty(fr)
+        fr=10;
+    end
+    
+    [Ksout,Ns]=extractKsbest_contour(x,ovlap,Nfft,chann, frange,fr,fbad,Fs,Nfft,'keep_zeros');
+    %    Ksout: structure array containing
+    %     Kstot CSDM size(Nel,Nel,Nfreq)
+    %     freq: frequencies corresponding to Ks in third dimension
+    %     fcontour: frequencies detected, (Is,If)--can use to make contours..
+    %     fcount: Number of times each frequency has been averaged..
+    %     fpower: Power in each bin
+    
+    %[Kstot,Ks_eig,Nsnap,freq_all,pwr_est,SNRest]=extractKsexact_MDAT(x,ovlap,Nfft,chann,1000*[fmin fmax],Fs,-1,Nfft);
+    
+    axes(handles.axes1)
+    hold on
+    plot(Ksout.tcontour,Ksout.fcontour/1000,'o');
+    hold off
 elseif Ichc==2  %extractKsexact
-	%%process all frequencies over a given range
-	disp('Select two frequencies from image:')
-	ftmp=ginput(2);
-	frange=sort(ftmp(:,2)*1000);
-	fprintf('frange: %6.2f to %6.2f Hz\n',frange);
-	threshold=input('Enter threshold in dB:');
-	if isempty(threshold)
-		threshold=-Inf;
-	end
-	[Ksout.Kstot,Ksout.freq,Ksout.VV,Ksout.EE]=extractKsexact(x,ovlap,Nfft,chann,frange,Fs,-1,Nfft,0,threshold);
-	if ~isempty(Ksout.EE)
-		Ksout.SNR=Ksout.EE(1,:)./Ksout.EE(2,:);
-	else
-		Ksout.SNR=Inf*ones(size(Ksout.freq));
-	end
+    %%process all frequencies over a given range
+    disp('Select two frequencies from image:')
+    ftmp=ginput(2);
+    frange=sort(ftmp(:,2)*1000);
+    fprintf('frange: %6.2f to %6.2f Hz\n',frange);
+    threshold=input('Enter threshold in dB:');
+    if isempty(threshold)
+        threshold=-Inf;
+    end
+    [Ksout.Kstot,Ksout.freq,Ksout.VV,Ksout.EE]=extractKsexact(x,ovlap,Nfft,chann,frange,Fs,-1,Nfft,0,threshold);
+    if ~isempty(Ksout.EE)
+        Ksout.SNR=Ksout.EE(1,:)./Ksout.EE(2,:);
+    else
+        Ksout.SNR=Inf*ones(size(Ksout.freq));
+    end
 end
 
 figure
@@ -1587,113 +1587,113 @@ grid on;title('estimated SNR of CSDM frequency components')
 yes=menu('Beamform?','No','Conventional','MV','Both','Reflection Coefficient Estimation','MFP');
 
 if yes>1
-	
-	if yes<6
-		angles=input('Enter vector of angles (-90:90):');
-		if isempty(angles)
-			angles=-90:90;
-		end
-	end
-	switch yes
-		case 2
+    
+    if yes<6
+        angles=input('Enter vector of angles (-90:90):');
+        if isempty(angles)
+            angles=-90:90;
+        end
+    end
+    switch yes
+        case 2
             B=conventional_beamforming(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
-		case 3
+        case 3
             B=MV_beamforming(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
-		case 4
+        case 4
             B=conventional_beamforming(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
-			
+            
             B2=MV_beamforming(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
-		case 5
+        case 5
             R=derive_reflection_coefficient2(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
-		case 6
-			%Simple Pekeris waveguide determined from DASAR cutoff frequencies
-			
-			prompt1={'Model file..','tilt offsets (deg)','ranges (m)', 'depths (m):','plot intermediate images?', ...
+        case 6
+            %Simple Pekeris waveguide determined from DASAR cutoff frequencies
+            
+            prompt1={'Model file..','tilt offsets (deg)','ranges (m)', 'depths (m):','plot intermediate images?', ...
                 'Nfft for plotting:','SNR_cutoff or list of frequencies..','Primary Eigenvector only?','receiver depths (m):'};
-			
-			dlgTitle1='Parameters for matched field processing...';
-			
-			[MFP_replica_file,range_str,default_tilt,default_SNR]=load_MFP_scenario;
-			
-			if length(MFP_replica_file)>1
-				error('Cannot select multiple environmental models during MFP');
-			end
-			
+            
+            dlgTitle1='Parameters for matched field processing...';
+            
+            [MFP_replica_file,range_str,default_tilt,default_SNR]=load_MFP_scenario;
+            
+            if length(MFP_replica_file)>1
+                error('Cannot select multiple environmental models during MFP');
+            end
+            
             head.geom.rd=get_VA_2010_depths_and_offset(2010,handles.myfile,MFP_replica_file{1});
             %head.geom.rd=head.geom.rd;
             
             def1={MFP_replica_file{1}, default_tilt{1},range_str{1},'1:1:55','0','2048',['[' num2str(default_SNR{1}) ']'],'yes',num2str(head.geom.rd)};
-			answer=inputdlg(prompt1,dlgTitle1,1,def1);
-			model_name=answer{1};
-			tilt_offset=str2double(answer{2});
-			ranges=str2double(answer{3});
-			depths=str2double(answer{4});
-			plot_chc=str2double(answer{5});
-			Nfft2=str2double(answer{6});
-			SNRmin=str2double(answer{7});  %May also be frequency
+            answer=inputdlg(prompt1,dlgTitle1,1,def1);
+            model_name=answer{1};
+            tilt_offset=str2double(answer{2});
+            ranges=str2double(answer{3});
+            depths=str2double(answer{4});
+            plot_chc=str2double(answer{5});
+            Nfft2=str2double(answer{6});
+            SNRmin=str2double(answer{7});  %May also be frequency
             head.geom.rd=str2double(answer{9});
-			Ksout.Nfft=Nfft;
-			Ksout.ovlap=ovlap;
-			
-			if ~isempty(Ksout.VV)
-				V1=squeeze(Ksout.VV(:,1,:));
-				for If=1:length(Ksout.freq)
-					Ksout.Kstot_eig(:,:,If)=V1(:,If)*V1(:,If)';
-					
-				end
-			else
-				Ksout.SNR=Inf*ones(size(Ksout.freq));
-				Ksout.Kstot_eig=[];
-			end
-			
-			srcname=sprintf('CSDM_Nfft%i_%s',Nfft,datestr(tdate_start,30));
-			
-			if strcmp(answer{8},'yes')&&~isempty(Ksout.VV)
+            Ksout.Nfft=Nfft;
+            Ksout.ovlap=ovlap;
+            
+            if ~isempty(Ksout.VV)
+                V1=squeeze(Ksout.VV(:,1,:));
+                for If=1:length(Ksout.freq)
+                    Ksout.Kstot_eig(:,:,If)=V1(:,If)*V1(:,If)';
+                    
+                end
+            else
+                Ksout.SNR=Inf*ones(size(Ksout.freq));
+                Ksout.Kstot_eig=[];
+            end
+            
+            srcname=sprintf('CSDM_Nfft%i_%s',Nfft,datestr(tdate_start,30));
+            
+            if strcmp(answer{8},'yes')&&~isempty(Ksout.VV)
                 save_result=matched_field_processor(model_name,tilt_offset,ranges,depths,Ksout.Kstot_eig,Ksout.freq,10*log10(Ksout.SNR),head.geom.rd,SNRmin,srcname);
-			else
+            else
                 save_result=matched_field_processor(model_name,tilt_offset,ranges,depths,Ksout.Kstot,Ksout.freq,10*log10(Ksout.SNR),head.geom.rd,SNRmin,srcname);
-			end
-			
-			
-			if ~isempty(save_result)
-				save(srcname,'Ksout','head','tdate_start','tlen');
+            end
+            
+            
+            if ~isempty(save_result)
+                save(srcname,'Ksout','head','tdate_start','tlen');
                 write_covmat(Ksout.freq,Ksout.Kstot,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
-				if ~isempty(Ksout.VV)
-					srcname=sprintf('CSDM_Nfft%i_%s_eigenvector',Nfft,datestr(tdate_start,30));
+                if ~isempty(Ksout.VV)
+                    srcname=sprintf('CSDM_Nfft%i_%s_eigenvector',Nfft,datestr(tdate_start,30));
                     write_covmat(Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
-				end
-			end
-			return
-	end
-	figure
-	if yes==4
-		subplot(2,1,1)
-	end
-	imagesc(Ksout.freq,angles,10*log10(B'));
-	colorbar
-	cmap=colormap;
-	caxis([60 100])
-	set(gca,'fontweight','bold','fontsize',14);
-	xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
+                end
+            end
+            return
+    end
+    figure
+    if yes==4
+        subplot(2,1,1)
+    end
+    imagesc(Ksout.freq,angles,10*log10(B'));
+    colorbar
+    cmap=colormap;
+    caxis([60 100])
+    set(gca,'fontweight','bold','fontsize',14);
+    xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
     title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start),Nfft,length(head.geom.rd)));
-	set(gcf,'colormap',cmap(1:4:64,:));
-	
-	if yes==4
-		subplot(2,1,2);
-		imagesc(Ksout.freq,angles,10*log10(B2'));
-		colorbar
-		%cmap=colormap;
-		caxis([60 100])
-		set(gca,'fontweight','bold','fontsize',14);
-		xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
-		title('MV processor');
-		%set(gcf,'colormap',cmap(1:4:64,:));
-		
-	end
-	orient tall
-	print(gcf,'-djpeg',sprintf('BeamformingExample_%s',datestr(tdate_start,30)));
-	keyboard
-	
+    set(gcf,'colormap',cmap(1:4:64,:));
+    
+    if yes==4
+        subplot(2,1,2);
+        imagesc(Ksout.freq,angles,10*log10(B2'));
+        colorbar
+        %cmap=colormap;
+        caxis([60 100])
+        set(gca,'fontweight','bold','fontsize',14);
+        xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
+        title('MV processor');
+        %set(gcf,'colormap',cmap(1:4:64,:));
+        
+    end
+    orient tall
+    print(gcf,'-djpeg',sprintf('BeamformingExample_%s',datestr(tdate_start,30)));
+    keyboard
+    
 end
 
 % yes=input('Type ''y'' to write a file:','s');
@@ -1704,37 +1704,37 @@ end
 % end
 %Save only non-zero CSDM to *.in file
 if Ichc==2
-	
-	Ksout.Nfft=Nfft;
-	Ksout.ovlap=ovlap;
-	V1=squeeze(Ksout.VV(:,1,:));
-	for If=1:length(Ksout.freq)
-		Ksout.Kstot_eig(:,:,If)=V1(:,If)*V1(:,If)';
-		
-	end
-	
-	srcname=sprintf('CSDM_Nfft%i_%s',Nfft,datestr(tdate_start,30));
-	save(srcname,'Ksout','head','tdate_start','tlen');
+    
+    Ksout.Nfft=Nfft;
+    Ksout.ovlap=ovlap;
+    V1=squeeze(Ksout.VV(:,1,:));
+    for If=1:length(Ksout.freq)
+        Ksout.Kstot_eig(:,:,If)=V1(:,If)*V1(:,If)';
+        
+    end
+    
+    srcname=sprintf('CSDM_Nfft%i_%s',Nfft,datestr(tdate_start,30));
+    save(srcname,'Ksout','head','tdate_start','tlen');
     write_covmat(Ksout.freq,Ksout.Kstot,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
-	
-	srcname=sprintf('CSDM_Nfft%i_%s_eigenvector',Nfft,datestr(tdate_start,30));
+    
+    srcname=sprintf('CSDM_Nfft%i_%s_eigenvector',Nfft,datestr(tdate_start,30));
     write_covmat(Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
-	
-	%     srcname=sprintf('CSDM_Nfft%i_%s_flipped',Nfft,datestr(tdate_start,30));
+    
+    %     srcname=sprintf('CSDM_Nfft%i_%s_flipped',Nfft,datestr(tdate_start,30));
     %     write_covmat(Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
-	%
-	figure
-	imagesc(Ksout.freq,[],10*log10(abs(Ksout.EE)));
-	xlabel('frequency (Hz)')
-	ylabel('eigenvalue:')
-	title(sprintf('eigenvectors of %s',srcname))
-	orient landscape
-	for I=1:3
-		figure(I+1)
-		imagesc(abs(squeeze(Ksout.VV(:,I,:))));
-		
-	end
-	
+    %
+    figure
+    imagesc(Ksout.freq,[],10*log10(abs(Ksout.EE)));
+    xlabel('frequency (Hz)')
+    ylabel('eigenvalue:')
+    title(sprintf('eigenvectors of %s',srcname))
+    orient landscape
+    for I=1:3
+        figure(I+1)
+        imagesc(abs(squeeze(Ksout.VV(:,I,:))));
+        
+    end
+    
 end
 
 keyboard;
@@ -1768,7 +1768,7 @@ tlen=handles.tlen;
 %for Ichan=1:8
 [x,~,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles); %#ok<*ASGLU>
 if size(x,2)>1
-	x=x';
+    x=x';
 end
 %xall{Ichan}=x;
 %end
@@ -1784,57 +1784,57 @@ ovlap=min([1-1/Nfft ovlap]);
 
 handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
 for Ichan=1:head.Nchan
-	
-	%%Test 1
-	[S,FF,TT,B] = spectrogram(x(:,Ichan)-mean(x(:,Ichan)),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
-	[junk,Iwant]=min(abs(twant-TT));
-	Bslice(:,Ichan)=B(:,Iwant); %#ok<*AGROW>
-	
-	
-	%Sign test
-	index=round(twant*Fs)+(1:Nfft);
-	Bslice2(:,Ichan)=fft((x(index,Ichan)-mean(x(index,Ichan))).*(hanning(Nfft)));
-	
+    
+    %%Test 1
+    [S,FF,TT,B] = spectrogram(x(:,Ichan)-mean(x(:,Ichan)),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
+    [junk,Iwant]=min(abs(twant-TT));
+    Bslice(:,Ichan)=B(:,Iwant); %#ok<*AGROW>
+    
+    
+    %Sign test
+    index=round(twant*Fs)+(1:Nfft);
+    Bslice2(:,Ichan)=fft((x(index,Ichan)-mean(x(index,Ichan))).*(hanning(Nfft)));
+    
 end
 Bslice2=Bslice2((1:(Nfft/2+1)),:);
 figure(1)
 for I=1:2
-	subplot(2,1,I)
-	if I==1
+    subplot(2,1,I)
+    if I==1
         contourf(FF,head.geom.rd,10*log10(abs(Bslice2')), 'linestyle','none');axis('ij')
-		%caxis([80 120])
-		title(sprintf('log magnitude Raw FFT %s: %s plus %6.2f sec',get(handles.text_filename,'String'),datestr(tdate_start),twant));
-	else
+        %caxis([80 120])
+        title(sprintf('log magnitude Raw FFT %s: %s plus %6.2f sec',get(handles.text_filename,'String'),datestr(tdate_start),twant));
+    else
         imagesc(FF,head.geom.rd,abs(Bslice2'));  title('magnitude of FFT');
-		%caxis([1e9 1e11])
-	end
-	
-	xlim([0 1000])
-	grid
-	colorbar
-	xlabel('Hz')
-	ylabel('Channel');
+        %caxis([1e9 1e11])
+    end
+    
+    xlim([0 1000])
+    grid
+    colorbar
+    xlabel('Hz')
+    ylabel('Channel');
 end
 
 
 figure(2)
 for I=1:2
-	subplot(2,1,I)
-	if I==1
+    subplot(2,1,I)
+    if I==1
         contourf(FF,head.geom.rd,10*log10(Bslice'), 'linestyle','none');axis('ij')
-		caxis([80 120])
-		title(sprintf('Log spectrogram %s: %s plus %6.2f sec',get(handles.text_filename,'String'),datestr(tdate_start),twant));
-	else
+        caxis([80 120])
+        title(sprintf('Log spectrogram %s: %s plus %6.2f sec',get(handles.text_filename,'String'),datestr(tdate_start),twant));
+    else
         imagesc(FF,head.geom.rd,(Bslice'));title('Spectrogram slice');
         %contourf(FF,head.geom.rd,(Bslice'),1e10:1e10:10e10,'linestyle','none');
-		%caxis([1e9 1e11])
-	end
-	
-	xlim([0 1000])
-	grid
-	colorbar
-	xlabel('Hz')
-	ylabel('Channel');
+        %caxis([1e9 1e11])
+    end
+    
+    xlim([0 1000])
+    grid
+    colorbar
+    xlabel('Hz')
+    ylabel('Channel');
 end
 
 keyboard
@@ -1864,8 +1864,8 @@ title('horizontal meter offset from top element');
 
 yes=input('Save a mode example?','s');
 if ~isempty(yes)
-	modeno=input('Enter mode number:');
-	save(deblank(sprintf('Mode%iExample%3.0fHz_%s',modeno,FF(Ibest),datestr(tdate_start+datenum(0,0,0,0,0,twant),30))),'mode','head','freq','angg','tilt_offset');
+    modeno=input('Enter mode number:');
+    save(deblank(sprintf('Mode%iExample%3.0fHz_%s',modeno,FF(Ibest),datestr(tdate_start+datenum(0,0,0,0,0,twant),30))),'mode','head','freq','angg','tilt_offset');
 end
 
 close(1:3)
@@ -1887,7 +1887,7 @@ tlen=handles.tlen;
 
 %x(1) is shallowest element...
 if size(x,2)>1
-	x=x';
+    x=x';
 end
 %xall{Ichan}=x;
 %end
@@ -1912,7 +1912,7 @@ frange=[0.8*minfreq minfreq maxfreq maxfreq+0.2*minfreq];
 Bfilt = firpm(N,Fo,Ao,W);
 
 for I=1:head.Nchan
-	y(:,I)=filtfilt(Bfilt,1,x(:,I)-mean(x(:,I)));
+    y(:,I)=filtfilt(Bfilt,1,x(:,I)-mean(x(:,I)));
 end
 
 offsets=zeros(head.Nchan,1);
@@ -1920,32 +1920,32 @@ offsets_cum=offsets;
 maxval=zeros(head.Nchan,2);
 Ioffset=1;
 for I=1:(head.Nchan-Ioffset)
-	[xc,lags]=xcov(y(:,I),y(:,I+Ioffset));  %lags are positive if array tilting towards signal
-	[maxval(I,1),Ibest]=max(xc);
-	offsets(I+1)=1.45*1000*lags(Ibest)/Fs;
-	[maxval(I,2),junk]=max(-xc);
-	
-	figure(1);
-	subplot(3,1,1)
-	plot(lags/Fs,xc);xlim(4*[-0.05 0.05]);
-	grid on
-	title(sprintf('Element %i, leads previous by %10.6f m with %0.5g, max negative value is %i percent of max',I+1,offsets(I+1), maxval(I,1),round(100*maxval(I,2)/maxval(I,1))));
-	
-	subplot(3,1,2)
-	[S,FF,TT,B] = spectrogram(y(:,I),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
-	imagesc(TT,FF/1000,10*log10(B));%
-	axis('xy');ylim([minfreq maxfreq]/1000);caxis([40 120]);
-	
-	subplot(3,1,3)
-	[S,FF,TT,B] = spectrogram(y(:,I+Ioffset),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
-	imagesc(TT,FF/1000,10*log10(B));%
-	axis('xy');ylim([minfreq maxfreq]/1000);caxis([40 120]);
-	
-	[xc,lags]=xcov(y(:,1),y(:,I+Ioffset));  %lags are positive if array tilting towards signal
-	[junk,Ibest]=max(xc);
-	offsets_cum(I+1)=1.45*1000*lags(Ibest)/Fs;
-	
-	pause
+    [xc,lags]=xcov(y(:,I),y(:,I+Ioffset));  %lags are positive if array tilting towards signal
+    [maxval(I,1),Ibest]=max(xc);
+    offsets(I+1)=1.45*1000*lags(Ibest)/Fs;
+    [maxval(I,2),junk]=max(-xc);
+    
+    figure(1);
+    subplot(3,1,1)
+    plot(lags/Fs,xc);xlim(4*[-0.05 0.05]);
+    grid on
+    title(sprintf('Element %i, leads previous by %10.6f m with %0.5g, max negative value is %i percent of max',I+1,offsets(I+1), maxval(I,1),round(100*maxval(I,2)/maxval(I,1))));
+    
+    subplot(3,1,2)
+    [S,FF,TT,B] = spectrogram(y(:,I),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
+    imagesc(TT,FF/1000,10*log10(B));%
+    axis('xy');ylim([minfreq maxfreq]/1000);caxis([40 120]);
+    
+    subplot(3,1,3)
+    [S,FF,TT,B] = spectrogram(y(:,I+Ioffset),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
+    imagesc(TT,FF/1000,10*log10(B));%
+    axis('xy');ylim([minfreq maxfreq]/1000);caxis([40 120]);
+    
+    [xc,lags]=xcov(y(:,1),y(:,I+Ioffset));  %lags are positive if array tilting towards signal
+    [junk,Ibest]=max(xc);
+    offsets_cum(I+1)=1.45*1000*lags(Ibest)/Fs;
+    
+    pause
 end
 
 % figure(1);
@@ -1966,9 +1966,9 @@ title(sprintf('Depth: %6.2f m Times: %s, freq range: %i to %i Hz', head.geom.D,d
 
 yes=menu('Save a tilt example?','Yes','No');
 if yes==1
-	figure(1)
-	orient landscape
-	print(1,'-djpeg',sprintf('TiltExample_%s_%ito%iHz',datestr(tdate_start,30),round(minfreq),round(maxfreq)));
+    figure(1)
+    orient landscape
+    print(1,'-djpeg',sprintf('TiltExample_%s_%ito%iHz',datestr(tdate_start,30),round(minfreq),round(maxfreq)));
 end
 %close(1);
 %%%Test to understand xcorr lags
@@ -1988,7 +1988,7 @@ function pushbutton_modalfiltering_Callback(hObject, eventdata, handles)
 figss=get(0,'child');
 Iclose=find(figss-floor(figss)==0);
 if ~isempty(figss(Iclose))
-	close(figss(Iclose));
+    close(figss(Iclose));
 end
 tdate_start=handles.tdate_start;
 tlen=handles.tlen;
@@ -2022,12 +2022,12 @@ Bfilt = firpm(N,Fo,Ao,W);
 Nchan=size(data.x,1);
 y=zeros(size(data.x));
 for I=1:Nchan
-	try
-		y(I,:)=filtfilt(Bfilt,1,data.x(I,:)-mean(data.x(I,:)));
-		%[B(:,:,I),FF,TT] = specgram(y(I,:),Nfft,Fs,Nfft2,round(0.9*Nfft2)); %B(freq,time,element);
-	catch
-		keyboard
-	end
+    try
+        y(I,:)=filtfilt(Bfilt,1,data.x(I,:)-mean(data.x(I,:)));
+        %[B(:,:,I),FF,TT] = specgram(y(I,:),Nfft,Fs,Nfft2,round(0.9*Nfft2)); %B(freq,time,element);
+    catch
+        keyboard
+    end
 end
 
 %%Convert time series into one long FFT
@@ -2042,799 +2042,799 @@ B=B.'; %(Nel, freq);
 [MFP_scenario,range_str,default_tilt]=load_MFP_scenario;
 
 if length(MFP_scenario)>1  %Multiple runs..
-	prompt1={'range guesses (m)', 'maxdelay for mode 1:2 range estimation (s)[-1 to automatically select]:', ...
-		'maxdelay for mode 1:N range estimation (s): [-1 to automatically select]','plot intermediate images?', ...
-		'Nfft for plotting:','depths','tilt','max modes'};
-	for J=1:length(default_tilt)
-		Islash=max(strfind(MFP_scenario{J},'/'))+1;
-		fprintf('tilt: %s File: %s \n',default_tilt{J},MFP_scenario{J}(Islash:end));
-	end
-	dlgTitle1='Parameters for modal beamforming...';
-	def1={range_str{1},'0.1','0.025','0','2048','1:1:55',default_tilt{1},'3'};
-	answer=inputdlg(prompt1,dlgTitle1,1,def1);
-	range_guess=str2double(answer{1});
-	maxdelay(1)=str2double(answer{2});
-	maxdelay(2)=maxdelay(1);
-	maxdelay(3)=str2double(answer{3});
-	plot_chc=str2double(answer{4});
-	Nfft2=str2double(answer{5});
-	depths=str2double(answer{6});
-	tilt_offset=str2double(answer{7});
-	Maxmodes=str2double(answer{8});
-	
-	
+    prompt1={'range guesses (m)', 'maxdelay for mode 1:2 range estimation (s)[-1 to automatically select]:', ...
+        'maxdelay for mode 1:N range estimation (s): [-1 to automatically select]','plot intermediate images?', ...
+        'Nfft for plotting:','depths','tilt','max modes'};
+    for J=1:length(default_tilt)
+        Islash=max(strfind(MFP_scenario{J},'/'))+1;
+        fprintf('tilt: %s File: %s \n',default_tilt{J},MFP_scenario{J}(Islash:end));
+    end
+    dlgTitle1='Parameters for modal beamforming...';
+    def1={range_str{1},'0.1','0.025','0','2048','1:1:55',default_tilt{1},'3'};
+    answer=inputdlg(prompt1,dlgTitle1,1,def1);
+    range_guess=str2double(answer{1});
+    maxdelay(1)=str2double(answer{2});
+    maxdelay(2)=maxdelay(1);
+    maxdelay(3)=str2double(answer{3});
+    plot_chc=str2double(answer{4});
+    Nfft2=str2double(answer{5});
+    depths=str2double(answer{6});
+    tilt_offset=str2double(answer{7});
+    Maxmodes=str2double(answer{8});
+    
+    
 end
 
 
 for Imodel=1:length(MFP_scenario)
-	
-	if length(MFP_scenario)==1
-		
-		prompt1={'Model file..','tilt offsets (deg)','range guesses (m)', ...
-			'maxdelay for mode 1:2 range estimation (s):', ...
-			'maxdelay for mode 1:N range estimation (s):', ...
-			'plot intermediate images?', ...
-			'Nfft for plotting:','depths','max modes'};
-		
-		dlgTitle1='Parameters for modal beamforming...';
-		
+    
+    if length(MFP_scenario)==1
+        
+        prompt1={'Model file..','tilt offsets (deg)','range guesses (m)', ...
+            'maxdelay for mode 1:2 range estimation (s):', ...
+            'maxdelay for mode 1:N range estimation (s):', ...
+            'plot intermediate images?', ...
+            'Nfft for plotting:','depths','max modes'};
+        
+        dlgTitle1='Parameters for modal beamforming...';
+        
         def1={MFP_scenario{Imodel}, default_tilt{Imodel},range_str{Imodel},'0.1','0.025','0','2048','1:0.5:55','2'};
-		
-		answer=inputdlg(prompt1,dlgTitle1,1,def1);
-		model=load(answer{1});
-		disp(['Loaded ',answer{1}]);
-		tilt_offset=str2double(answer{2});
-		range_guess=str2double(answer{3});
-		maxdelay(1)=str2double(answer{4});
-		maxdelay(2)=maxdelay(1);
-		maxdelay(3)=str2double(answer{5});
-		plot_chc=str2double(answer{6});
-		Nfft2=str2double(answer{7});
-		depths=str2double(answer{8});
-		Maxmodes=str2double(answer{9});
-	else
-		
-		model=load(MFP_scenario{Imodel});
-		disp(sprintf('Loaded %s',MFP_scenario{Imodel})); %#ok<*DSPS>
-		%tilt_offset=str2double(default_tilt{Imodel});
-		
-	end
-	maxdelay(4:Maxmodes)=maxdelay(3);
-	
+        
+        answer=inputdlg(prompt1,dlgTitle1,1,def1);
+        model=load(answer{1});
+        disp(['Loaded ',answer{1}]);
+        tilt_offset=str2double(answer{2});
+        range_guess=str2double(answer{3});
+        maxdelay(1)=str2double(answer{4});
+        maxdelay(2)=maxdelay(1);
+        maxdelay(3)=str2double(answer{5});
+        plot_chc=str2double(answer{6});
+        Nfft2=str2double(answer{7});
+        depths=str2double(answer{8});
+        Maxmodes=str2double(answer{9});
+    else
+        
+        model=load(MFP_scenario{Imodel});
+        disp(sprintf('Loaded %s',MFP_scenario{Imodel})); %#ok<*DSPS>
+        %tilt_offset=str2double(default_tilt{Imodel});
+        
+    end
+    maxdelay(4:Maxmodes)=maxdelay(3);
+    
     %disp('Save signal sample if you wish...');
    % keyboard
-	%following operation is now done in load_data...
-	%data.x=flipud(data.x); %Shallowest data now first...
-	
+   %following operation is now done in load_data...
+   %data.x=flipud(data.x); %Shallowest data now first...
+   
    %%AARON:  REMOVE THIS!
    %head.geom.rd=head.geom.rd+2;
    %disp('WARNING WARNING WARNING I added 2 m depth to array elements!!!!!!');
-	
+   
     Igood	=	zeros(1,length(head.geom.rd));
     for I = 1:length(head.geom.rd)
         [junk, Igood(I)]		=	min(abs(model.rd-head.geom.rd(I)));
-	end
-	
-	%%depths are desired modeled source depths.
-	Igood_source=zeros(1,length(depths));
-	for I=1:length(depths) %#ok<*FXUP>
-		[junk,Igood_source(I)]=min(abs(model.rd-depths(I)));
-	end
-	
-	model.sd=model.rd(Igood_source);
-	model.Urd=model.U(Igood,:,:);
-	
-	model.U=model.U(Igood_source,:,:);
-	model.rd=model.rd(Igood);
-	
-	
-	%%%Match frequency bins with frequencies computed in model
-	If_min=floor(minfreq*Nfft/Fs);
-	If_max=ceil(maxfreq*Nfft/Fs);
-	index=If_min:If_max;
-	FF=(Fs/Nfft)*index;
-	Iwant=zeros(length(index),1);  %Iwant will be indicies in model frequencies that match FFT bins in index
-	for If=1:length(index)
-		[junk,Iwant(If)]=min(abs(model.freq-FF(If)));
-	end
-	kk=2*pi*model.freq(Iwant)./1495;
-	
-	%%Compute expected group delays between mode pairs
-	if any(maxdelay<0)
-		for Im=1:Maxmodes
-			Igg1=find(model.cgroup(Iwant,Im))>0;
-			Igg1=Iwant(Igg1);
-			for Im2=(Im+1):Maxmodes
-				Igg2=find(model.cgroup(Iwant,Im2))>0;
-				Igg2=Iwant(Igg2);
-				Sij(Im,Im2)=median(abs(1./model.cgroup(Igg1,Im)-1./model.cgroup(Igg2,Im2)));
-			end
-			
-		end
-	end
-	
-	
-	windowpwr=sum(hanning(Nfft).^2)/Nfft;
-	normm=1./sqrt(Nfft*Fs*windowpwr);
-	%normm=1;
-	
-	%Make initial normalization of modes such that numerical integration approximations analytical result
-	depth_weights=sqrt([model.rd(1) diff(model.rd) ]');  %Set dz
-	
-	
-	%%Gosh, this has been the incorrect formula for a linear tilt for a long time...
-	%rd_cum=model.rd./cumsum(model.rd);
-	
-	rd_cum=-(model.rd-min(model.rd))./(max(model.rd)-min(model.rd));
-	
-	%%Depth estimator setups...
-	magg{Imodel}=zeros(length(tilt_offset),length(range_guess),Maxmodes);
-	talign{Imodel}=magg{Imodel};
-	talign_allModeOne{Imodel}=zeros(length(tilt_offset),length(range_guess));
-	talign_all{Imodel}=zeros(length(tilt_offset),length(range_guess));
-	
-	%%Cross-correlation has different FFT size than orignal processing, so adjust relevent variables...
-	%Nxc=2*round(Fs*maxdelay(1))+1;
-	Nxc=2*round(Fs*max(maxdelay))+1;
-	Nfft_xc=2^ceil(log10(Nxc)/log10(2));
-	If_min1=floor(minfreq*Nfft_xc/Fs);
-	If_max1=ceil(maxfreq*Nfft_xc/Fs);
-	index2=If_min1:If_max1;
-	Iwant2=zeros(length(index2),1);  %Iwant will be indicies in model frequencies that match FFT bins in index
-	for If=1:length(index2)
-		[junk,Iwant2(If)]=min(abs(model.freq-Fs*index2(If)/Nfft_xc));
-	end
-	
-	
-	
-	for Itilt=1:length(tilt_offset)  %Each tilt offset will get a separate figure...
-		disp(sprintf('Tilt: %6.2f',tilt_offset(Itilt)));
-		
-		dvec=zeros(length(range_guess),Maxmodes,length(index2));
-		for Ir=1:length(range_guess)
-			if rem(Ir,10)==0, disp(sprintf('%6.2f percent ranges done',100*Ir/length(range_guess)));end
-			Bout=zeros(Nfft,Maxmodes);
-			Bout_corrected=Bout;
-			tilt_matrix=exp(-1i*tilt_offset(Itilt)*rd_cum'*kk);
-			for Im=1:Maxmodes
-				kg=real(model.kr{1}(Iwant,Im))-(2*pi*model.freq(Iwant)'./max(model.cgroup(Iwant,1)));
-				%Last term is maximum group velocity of group 1 across all frequencies.
-				% As mode 1 is fastest mode, this is fastest velocity across all
+    end
+    
+    %%depths are desired modeled source depths.
+    Igood_source=zeros(1,length(depths));
+    for I=1:length(depths) %#ok<*FXUP>
+        [junk,Igood_source(I)]=min(abs(model.rd-depths(I)));
+    end
+    
+    model.sd=model.rd(Igood_source);
+    model.Urd=model.U(Igood,:,:);
+    
+    model.U=model.U(Igood_source,:,:);
+    model.rd=model.rd(Igood);
+    
+    
+    %%%Match frequency bins with frequencies computed in model
+    If_min=floor(minfreq*Nfft/Fs);
+    If_max=ceil(maxfreq*Nfft/Fs);
+    index=If_min:If_max;
+    FF=(Fs/Nfft)*index;
+    Iwant=zeros(length(index),1);  %Iwant will be indicies in model frequencies that match FFT bins in index
+    for If=1:length(index)
+        [junk,Iwant(If)]=min(abs(model.freq-FF(If)));
+    end
+    kk=2*pi*model.freq(Iwant)./1495;
+    
+    %%Compute expected group delays between mode pairs
+    if any(maxdelay<0)
+        for Im=1:Maxmodes
+            Igg1=find(model.cgroup(Iwant,Im))>0;
+            Igg1=Iwant(Igg1);
+            for Im2=(Im+1):Maxmodes
+                Igg2=find(model.cgroup(Iwant,Im2))>0;
+                Igg2=Iwant(Igg2);
+                Sij(Im,Im2)=median(abs(1./model.cgroup(Igg1,Im)-1./model.cgroup(Igg2,Im2)));
+            end
+            
+        end
+    end
+    
+    
+    windowpwr=sum(hanning(Nfft).^2)/Nfft;
+    normm=1./sqrt(Nfft*Fs*windowpwr);
+    %normm=1;
+    
+    %Make initial normalization of modes such that numerical integration approximations analytical result
+    depth_weights=sqrt([model.rd(1) diff(model.rd) ]');  %Set dz
+    
+    
+    %%Gosh, this has been the incorrect formula for a linear tilt for a long time...
+    %rd_cum=model.rd./cumsum(model.rd);
+    
+    rd_cum=-(model.rd-min(model.rd))./(max(model.rd)-min(model.rd));
+    
+    %%Depth estimator setups...
+    magg{Imodel}=zeros(length(tilt_offset),length(range_guess),Maxmodes);
+    talign{Imodel}=magg{Imodel};
+    talign_allModeOne{Imodel}=zeros(length(tilt_offset),length(range_guess));
+    talign_all{Imodel}=zeros(length(tilt_offset),length(range_guess));
+    
+    %%Cross-correlation has different FFT size than orignal processing, so adjust relevent variables...
+    %Nxc=2*round(Fs*maxdelay(1))+1;
+    Nxc=2*round(Fs*max(maxdelay))+1;
+    Nfft_xc=2^ceil(log10(Nxc)/log10(2));
+    If_min1=floor(minfreq*Nfft_xc/Fs);
+    If_max1=ceil(maxfreq*Nfft_xc/Fs);
+    index2=If_min1:If_max1;
+    Iwant2=zeros(length(index2),1);  %Iwant will be indicies in model frequencies that match FFT bins in index
+    for If=1:length(index2)
+        [junk,Iwant2(If)]=min(abs(model.freq-Fs*index2(If)/Nfft_xc));
+    end
+    
+    
+    
+    for Itilt=1:length(tilt_offset)  %Each tilt offset will get a separate figure...
+        disp(sprintf('Tilt: %6.2f',tilt_offset(Itilt)));
+        
+        dvec=zeros(length(range_guess),Maxmodes,length(index2));
+        for Ir=1:length(range_guess)
+            if rem(Ir,10)==0, disp(sprintf('%6.2f percent ranges done',100*Ir/length(range_guess)));end
+            Bout=zeros(Nfft,Maxmodes);
+            Bout_corrected=Bout;
+            tilt_matrix=exp(-1i*tilt_offset(Itilt)*rd_cum'*kk);
+            for Im=1:Maxmodes
+                kg=real(model.kr{1}(Iwant,Im))-(2*pi*model.freq(Iwant)'./max(model.cgroup(Iwant,1)));
+                %Last term is maximum group velocity of group 1 across all frequencies.
+                % As mode 1 is fastest mode, this is fastest velocity across all
                 % frequencies.  This makes a convenient time shift..
-				
-				%kg=ones(size(kg));
-				
-				%%From Buck 1998 paper on modal extraction, weight SMS filter by 1./U(z).^2 to ensure U'*U
-				%%diagonal is unbiased (all ones)
-				
-				%U=squeeze(model.Urd(:,Iwant,Im)).*(depth_weights*ones(1,length(index)));  %(rd,freq)
-				U=squeeze(model.Urd(:,Iwant,Im));
-				U=U./(ones(Nchan,1)*(sum(U.^2)));
-				Bout(index,Im)=trapz(B(:,index).*U.*tilt_matrix);
-				
-				%%%Alternate PI inversion....
-				
-				kg_dispersed=exp(1i*range_guess(Ir)*ones(length(model.rd),1)*kg.');
-				Bout_corrected(index,Im)=trapz(B(:,index).*U.*tilt_matrix.*kg_dispersed);
-				
-				
-			end  %Im
-			
-			yout=2*real(ifft(Bout,Nfft));
-			yout_corrected=2*real(ifft(Bout_corrected,Nfft));
-			
-			%tilt=asin(tilt_offset(Itilt)./(max(model.rd)-min(model.rd)))*180/pi;
-			
-			if plot_chc==1
-				tilt_check(Itilt)=plot_mode_filtering;
-				if length(tilt_offset)>1
-					figure(1)
-					pause(0.1);
-					disp('capturing frame');
-					MM(Itilt)=getframe(gcf);
-					
-				end
-			end
-			
-			for Im=2:Maxmodes
-				%maxdelay(Im)=2*range_guess(Ir).*(1./model.cgroup
-				
-				if any(maxdelay<0)
-					maxdelayt(1,Im)=Sij(1,Im)*range_guess(Ir);
-				else
-					maxdelayt(1,Im)=maxdelay(Im);
-				end
-				[xc,lags]=xcov(yout_corrected(:,1),yout_corrected(:,Im),round(Fs*maxdelayt(1,Im)));  %lags are positive if array tilting towards signal
-				[magg{Imodel}(Itilt,Ir,Im),Ibest]=max(abs(xc));
-				magg{Imodel}(Itilt,Ir,Im)=sign(xc(Ibest))*magg{Imodel}(Itilt,Ir,Im);
-				talign{Imodel}(Itilt,Ir,Im)=lags(Ibest)/Fs;  %talign estimates time difference between modes 1 and Im
-				%%%Add square of time offsets between phase-shifted modal arrivals, weighted by peak of
-				%%%correlation (which should be proportional to modal excitation).
-				%%% To avoid situations where a low peak reduces error, normalize weighting factor by peak
-				%%% power (so relative weighting between modes preserved)
-				
-				if Im==2 %first round
-					magg_norm=abs(magg{Imodel}(Itilt,Ir,Im));  %Mode 12 interference weight
-					
-				end
-				
-				wght{Imodel}(Itilt,Ir,Im)=abs(magg{Imodel}(Itilt,Ir,Im))./magg_norm;
-				talign_allModeOne{Imodel}(Itilt,Ir)=talign_allModeOne{Imodel}(Itilt,Ir)+wght{Imodel}(Itilt,Ir,Im).*talign{Imodel}(Itilt,Ir,Im).^2;
-				talign_all{Imodel}(Itilt,Ir)=talign_all{Imodel}(Itilt,Ir)+wght{Imodel}(Itilt,Ir,Im).*talign{Imodel}(Itilt,Ir,Im).^2;
-				
-				if Im>1
-					for Im2=(Im+1):Maxmodes
-						%fprintf('Computing xcorr of %i and %i\n',Im,Im2);
-						if any(maxdelay<0)
-							maxdelayt(Im,Im2)=Sij(Im,Im2)*range_guess(Ir);
-							
-						else
-							maxdelayt(Im,Im2)=maxdelay(Im);
-						end
-						
-						[xc2,lags2]=xcov(yout_corrected(:,Im2),yout_corrected(:,Im),round(Fs*maxdelayt(Im,Im2)));  %lags are positive if array tilting towards signal
-						[magg2,Ibest2]=max(abs(xc2));
-						wght2{Imodel}(Itilt,Ir,Im,Im2)=abs(sign(xc2(Ibest2))*magg2/magg_norm);
-						talign2=lags2(Ibest2)/Fs;  %talign estimates time difference between modes 1 and Im
-						talign_all{Imodel}(Itilt,Ir)=talign_all{Imodel}(Itilt,Ir)+wght2{Imodel}(Itilt,Ir,Im,Im2).*talign2.^2;
-						
-					end
-				end
-				
-				%if min(maxdelay)~=maxdelay(Im)  %When estimating depth use full xc
-				[xc,lags]=xcov(yout_corrected(:,1),yout_corrected(:,Im),round(Fs*max(maxdelay)));  %lags are positive if array tilting towards signal
-				% end
-				%%Try to keep the function as even as possible (as small a phase as possible)
-				%%Try to multiply Bout directly?  But need to make sure no sidelobes are included...
-				zpad=floor(0.5*(Nfft_xc-length(xc)));
-				xc_pad=fftshift([zeros(zpad,1); hanning(length(xc)).*xc ;zeros(zpad,1)]);
-				xc_FFT=fft(xc_pad,Nfft_xc);
-				dvec(Ir,Im,:)=xc_FFT(index2);
-				
-				if plot_chc==1
-					plot_xcorr;
-				end
-			end  %Im
-			
-			
-		end %Ir
-		
-		
-		
-		
-		%%%Estimate best range from each tilt computation...
+                
+                %kg=ones(size(kg));
+                
+                %%From Buck 1998 paper on modal extraction, weight SMS filter by 1./U(z).^2 to ensure U'*U
+                %%diagonal is unbiased (all ones)
+                
+                %U=squeeze(model.Urd(:,Iwant,Im)).*(depth_weights*ones(1,length(index)));  %(rd,freq)
+                U=squeeze(model.Urd(:,Iwant,Im));
+                U=U./(ones(Nchan,1)*(sum(U.^2)));
+                Bout(index,Im)=trapz(B(:,index).*U.*tilt_matrix);
+                
+                %%%Alternate PI inversion....
+                
+                kg_dispersed=exp(1i*range_guess(Ir)*ones(length(model.rd),1)*kg.');
+                Bout_corrected(index,Im)=trapz(B(:,index).*U.*tilt_matrix.*kg_dispersed);
+                
+                
+            end  %Im
+            
+            yout=2*real(ifft(Bout,Nfft));
+            yout_corrected=2*real(ifft(Bout_corrected,Nfft));
+            
+            %tilt=asin(tilt_offset(Itilt)./(max(model.rd)-min(model.rd)))*180/pi;
+            
+            if plot_chc==1
+                tilt_check(Itilt)=plot_mode_filtering;
+                if length(tilt_offset)>1
+                    figure(1)
+                    pause(0.1);
+                    disp('capturing frame');
+                    MM(Itilt)=getframe(gcf);
+                    
+                end
+            end
+            
+            for Im=2:Maxmodes
+                %maxdelay(Im)=2*range_guess(Ir).*(1./model.cgroup
+                
+                if any(maxdelay<0)
+                    maxdelayt(1,Im)=Sij(1,Im)*range_guess(Ir);
+                else
+                    maxdelayt(1,Im)=maxdelay(Im);
+                end
+                [xc,lags]=xcov(yout_corrected(:,1),yout_corrected(:,Im),round(Fs*maxdelayt(1,Im)));  %lags are positive if array tilting towards signal
+                [magg{Imodel}(Itilt,Ir,Im),Ibest]=max(abs(xc));
+                magg{Imodel}(Itilt,Ir,Im)=sign(xc(Ibest))*magg{Imodel}(Itilt,Ir,Im);
+                talign{Imodel}(Itilt,Ir,Im)=lags(Ibest)/Fs;  %talign estimates time difference between modes 1 and Im
+                %%%Add square of time offsets between phase-shifted modal arrivals, weighted by peak of
+                %%%correlation (which should be proportional to modal excitation).
+                %%% To avoid situations where a low peak reduces error, normalize weighting factor by peak
+                %%% power (so relative weighting between modes preserved)
+                
+                if Im==2 %first round
+                    magg_norm=abs(magg{Imodel}(Itilt,Ir,Im));  %Mode 12 interference weight
+                    
+                end
+                
+                wght{Imodel}(Itilt,Ir,Im)=abs(magg{Imodel}(Itilt,Ir,Im))./magg_norm;
+                talign_allModeOne{Imodel}(Itilt,Ir)=talign_allModeOne{Imodel}(Itilt,Ir)+wght{Imodel}(Itilt,Ir,Im).*talign{Imodel}(Itilt,Ir,Im).^2;
+                talign_all{Imodel}(Itilt,Ir)=talign_all{Imodel}(Itilt,Ir)+wght{Imodel}(Itilt,Ir,Im).*talign{Imodel}(Itilt,Ir,Im).^2;
+                
+                if Im>1
+                    for Im2=(Im+1):Maxmodes
+                        %fprintf('Computing xcorr of %i and %i\n',Im,Im2);
+                        if any(maxdelay<0)
+                            maxdelayt(Im,Im2)=Sij(Im,Im2)*range_guess(Ir);
+                            
+                        else
+                            maxdelayt(Im,Im2)=maxdelay(Im);
+                        end
+                        
+                        [xc2,lags2]=xcov(yout_corrected(:,Im2),yout_corrected(:,Im),round(Fs*maxdelayt(Im,Im2)));  %lags are positive if array tilting towards signal
+                        [magg2,Ibest2]=max(abs(xc2));
+                        wght2{Imodel}(Itilt,Ir,Im,Im2)=abs(sign(xc2(Ibest2))*magg2/magg_norm);
+                        talign2=lags2(Ibest2)/Fs;  %talign estimates time difference between modes 1 and Im
+                        talign_all{Imodel}(Itilt,Ir)=talign_all{Imodel}(Itilt,Ir)+wght2{Imodel}(Itilt,Ir,Im,Im2).*talign2.^2;
+                        
+                    end
+                end
+                
+                %if min(maxdelay)~=maxdelay(Im)  %When estimating depth use full xc
+                [xc,lags]=xcov(yout_corrected(:,1),yout_corrected(:,Im),round(Fs*max(maxdelay)));  %lags are positive if array tilting towards signal
+                % end
+                %%Try to keep the function as even as possible (as small a phase as possible)
+                %%Try to multiply Bout directly?  But need to make sure no sidelobes are included...
+                zpad=floor(0.5*(Nfft_xc-length(xc)));
+                xc_pad=fftshift([zeros(zpad,1); hanning(length(xc)).*xc ;zeros(zpad,1)]);
+                xc_FFT=fft(xc_pad,Nfft_xc);
+                dvec(Ir,Im,:)=xc_FFT(index2);
+                
+                if plot_chc==1
+                    plot_xcorr;
+                end
+            end  %Im
+            
+            
+        end %Ir
+        
+        
+        
+        
+        %%%Estimate best range from each tilt computation...
         %compute_depth_estimate;
-		
-	end %Itilt
-	%%Plot summary of range estimation time lags...
-	plot_range_estimates;
-	
-	if plot_chc==1
-		if exist('MM', 'var');
-			movie2avi(MM,'tiltTest');
-		end
-		keyboard
-		for I=1:12
-			if any(get(0,'child')==I)
-				figure(I)
-				orient tall
-				print(I,'-djpeg',sprintf('ModalBeamform%i',I));
-			end
-		end
-	end
+        
+    end %Itilt
+    %%Plot summary of range estimation time lags...
+    plot_range_estimates;
+    
+    if plot_chc==1
+        if exist('MM', 'var');
+            movie2avi(MM,'tiltTest');
+        end
+        keyboard
+        for I=1:12
+            if any(get(0,'child')==I)
+                figure(I)
+                orient tall
+                print(I,'-djpeg',sprintf('ModalBeamform%i',I));
+            end
+        end
+    end
 end %Imodel
 
 %%%Inner function for plotting range estimates
-	function plot_range_estimates
-		%%%Plot time alignment vs hypothesized source range and look for zero crossing
-		persistent best_range fitt best_range2 fitt2
-		
-		if Imodel==1
-			best_range=[]; fitt=[]; best_range2=[]; fitt2=[];
-		end
-		plotstr='oxs+*';
-		plotstr_tilt='kbgrckbgrckbgrckbgrc';
-		
-		if length(range_guess)>1  %Plot only once...
-			for Itilt2=1:length(tilt_offset)
-				figure(10+Itilt2)
-				
-				%%Plot individual mode pair combinations
-				for Imm=2:Maxmodes
-					subplot(Maxmodes+1,1,Imm-1);
-					%amplitudes=1000*abs(magg{Imodel}(Itilt2,:,Imm));
-					%[ax,h1,h2]=plotyy(range_guess/1000,1000*(squeeze(talign{Imodel}(Itilt2,:,Imm))),range_guess/1000,amplitudes);
-					
-					amplitudes=squeeze(wght{Imodel}(Itilt2,:,Imm));
-					[ax,h1,h2]=plotyy(range_guess/1000,1000*(squeeze(talign{Imodel}(Itilt2,:,Imm))),range_guess/1000,amplitudes);
-					
-					
-					set(h1,'markeredgecolor',[plotstr_tilt(Itilt2) ]) %#ok<*NBRAK>
-					set(h1,'marker', plotstr(Imodel));set(ax(2),'xtick',[])
-					set(gca,'fontsize',14,'fontweight','bold');
-					set(ax(2),'fontsize',14,'fontweight','bold');
-					ylabel(ax(2),'Amplitude');
-					grid on
-					xlabel('Range guessed (km)');ylabel('lag (ms)');
-					
-					title(sprintf('legend: %s, Cross-correlation between modes 1 and %i, Tilt: %6.2f Freq range: %6.1f-%6.1f Hz', ...
-						plotstr,Imm, tilt_offset(Itilt2),minfreq,maxfreq));
-					hold on
-					line(range_guess([1 end])/1000,maxdelayt(1,Imm)*[1 1]*1000);
-					line(range_guess([1 end])/1000,-maxdelayt(1,Imm)*[1 1]*1000);
-					%if Imm==2, ylim([-25 25]);end
-					ylim(maxdelayt(1,Imm)*[-1 1]*1000);
-					ylimm=ylim;
-					set(ax(1),'ytick',linspace(ylimm(1),ylimm(2),5));
-				end
-				
-				
-				%%Plot MSE error vs. range estimate, mode 1 combos only%%%%%%%%
-				[fitt(Itilt2,Imodel),Ir_chc]=min(talign_allModeOne{Imodel}(Itilt2,:));
-				best_range(Itilt2,Imodel)=range_guess(Ir_chc)/1000;
-				
-				subplot(Maxmodes+1,1,Maxmodes);
-				plot(range_guess/1000,1000*sqrt(squeeze(talign_allModeOne{Imodel}(Itilt2,:))),[plotstr_tilt(Itilt2) '-' plotstr(Imodel)]);
-				set(gca,'fontsize',14,'fontweight','bold');
-				grid on;xlabel('Range guessed (km)');ylabel('MSE (ms)');
-				title(sprintf('legend: %s, MSE, all mode 1 combos: %6.3g ms at %6.2f km, Tilt: %6.2f Freq range: %6.1f-%6.1f Hz',plotstr, ...
-					1000*sqrt(fitt(Itilt2,Imodel)), range_guess(Ir_chc)/1000, tilt_offset(Itilt2),minfreq,maxfreq));
-				hold on
-				%line(range_guess([1 end])/1000,maxdelay(Imm)*[1 1]*1000);
-				%line(range_guess([1 end])/1000,-maxdelay(Imm)*[1 1]*1000);
-				plot(best_range(Itilt2,Imodel),1000*sqrt(fitt(Itilt2,Imodel)),[plotstr_tilt(Itilt2) 's' ],'markerfacecolor',plotstr_tilt(Itilt2));
-				%ylim([0 50]);
-				
-				%%%Plot MSE error vs. range estimate for all mode combinations...
-				subplot(Maxmodes+1,1,Maxmodes+1);
-				plot(range_guess/1000,1000*sqrt(squeeze(talign_all{Imodel}(Itilt2,:))),[plotstr_tilt(Itilt2) '-' plotstr(Imodel)]);
-				set(gca,'fontsize',14,'fontweight','bold');
-				grid on
-				xlabel('Range guessed (km)');ylabel('MSE (ms)');
-				title(sprintf('legend: %s, MSE, all modes, Tilt: %6.2f Freq range: %6.1f-%6.1f Hz',plotstr, tilt_offset(Itilt2),minfreq,maxfreq));
-				hold on
-				[fitt2(Itilt2,Imodel),Ir_chc2]=min(talign_all{Imodel}(Itilt2,:));
-				best_range2(Itilt2,Imodel)=range_guess(Ir_chc2)/1000;
-				plot(best_range2(Itilt2,Imodel),1000*sqrt(fitt2(Itilt2,Imodel)),[plotstr_tilt(Itilt2) 's' ],'markerfacecolor',plotstr_tilt(Itilt2));
-				
-				%line(range_guess([1 end])/1000,maxdelay(Imm)*[1 1]*1000);
-				%line(range_guess([1 end])/1000,-maxdelay(Imm)*[1 1]*1000);
-				
-			end  %Itilt2
-			
-		end  %if range_guess length is 1
-		
-		
-		if Imodel==length(MFP_scenario)
-			yes=menu('Save and Print result?','Yes','No');
-			if yes==1
-				for Itilt2=1:length(tilt_offset)
-					savename_base=sprintf('%s_%ikm_tilt%4.2f_%ito%iHz_%imodels',datestr(tdate_start,30),round(range_guess(1)/1000), ...
-						tilt_offset(Itilt2),round(minfreq),round(maxfreq),Imodel);
-					
-					figure(10+Itilt2)
-					orient landscape
-					print(gcf,'-djpeg',sprintf('RangeEstimate_%s.jpg',savename_base));
-					
-					%%%%%Plot best range vs. fit%%%%%%
-					figure(1)
-					
-					subplot(2,1,1)
-					for Imodel2=1:length(MFP_scenario)
-						%subplot(length(MFP_scenario),1,Imodel2);
-						plot(best_range(Itilt2,Imodel2),1000*sqrt(fitt(Itilt2,Imodel2)),[plotstr_tilt(Itilt2) plotstr(Imodel2)]);
-						hold on
-					end
-					xlabel('Best range (km)');
-					ylabel('MSE (msec)');
-					title(sprintf('Mode 1 contribution only: Color %s is tilt, %s is inversion model',plotstr_tilt,plotstr));grid on
-					
-					subplot(2,1,2)
-					for Imodel2=1:length(MFP_scenario)
-						%subplot(length(MFP_scenario),1,Imodel2);
-						plot(best_range2(Itilt2,Imodel2),1000*sqrt(fitt2(Itilt2,Imodel2)),[plotstr_tilt(Itilt2) plotstr(Imodel2)]);
-						hold on
-					end
-					xlabel('Best range (km)');
-					ylabel('MSE (msec)');
-					title(sprintf('All mode contributions: Color %s is tilt, %s is inversion model',plotstr_tilt,plotstr));grid on
-					
-				end
-				
-				%%%%%Plot min error vs array tilt...
-				figure(2)
-				
-				subplot(2,1,1)
-				for Imodel2=1:length(MFP_scenario)
-					plot(tilt_offset,1000*sqrt(fitt(:,Imodel2)),['k-' plotstr(Imodel2)]);hold on;grid
-					
-				end
-				xlabel('tilt offset (m)');
-				ylabel('mse error (msec)');
-				title(sprintf('Mode 1 only: %s is inversion model',plotstr));grid on
-				
-				subplot(2,1,2)
-				for Imodel2=1:length(MFP_scenario)
-					plot(tilt_offset,1000*sqrt(fitt2(:,Imodel2)),['k-' plotstr(Imodel2)]);hold on;grid
-					
-				end
-				xlabel('tilt offset (m)');
-				ylabel('mse error (msec)');
-				title(sprintf('All modes: %s is inversion model',plotstr));grid on
-				
-				
-				figure(1)
-				orient landscape
-				legend('full model','Pekeris model','Averaged Pekeris')
-				print(gcf,'-djpeg',sprintf('RangeError1_%s.jpg',savename_base));
-				
-				figure(2)
-				orient landscape
-				legend('full model','Pekeris model','Averaged Pekeris')
-				print(gcf,'-djpeg',sprintf('RangeError2_%s.jpg',savename_base));
-				
-				
-				save(sprintf('ModalEstimateRange_%s.mat',savename_base), ...
-					'range_guess','tilt_offset','talign','talign_all','talign_allModeOne','MFP_scenario',...
-					'minfreq','maxfreq','maxdelay','plotstr','plotstr_tilt','Maxmodes', ...
-					'fitt','best_range','fitt2','best_range2','magg','wght');
-				
-				
-			end
-		end
-	end
+    function plot_range_estimates
+        %%%Plot time alignment vs hypothesized source range and look for zero crossing
+        persistent best_range fitt best_range2 fitt2
+        
+        if Imodel==1
+            best_range=[]; fitt=[]; best_range2=[]; fitt2=[];
+        end
+        plotstr='oxs+*';
+        plotstr_tilt='kbgrckbgrckbgrckbgrc';
+        
+        if length(range_guess)>1  %Plot only once...
+            for Itilt2=1:length(tilt_offset)
+                figure(10+Itilt2)
+                
+                %%Plot individual mode pair combinations
+                for Imm=2:Maxmodes
+                    subplot(Maxmodes+1,1,Imm-1);
+                    %amplitudes=1000*abs(magg{Imodel}(Itilt2,:,Imm));
+                    %[ax,h1,h2]=plotyy(range_guess/1000,1000*(squeeze(talign{Imodel}(Itilt2,:,Imm))),range_guess/1000,amplitudes);
+                    
+                    amplitudes=squeeze(wght{Imodel}(Itilt2,:,Imm));
+                    [ax,h1,h2]=plotyy(range_guess/1000,1000*(squeeze(talign{Imodel}(Itilt2,:,Imm))),range_guess/1000,amplitudes);
+                    
+                    
+                    set(h1,'markeredgecolor',[plotstr_tilt(Itilt2) ]) %#ok<*NBRAK>
+                    set(h1,'marker', plotstr(Imodel));set(ax(2),'xtick',[])
+                    set(gca,'fontsize',14,'fontweight','bold');
+                    set(ax(2),'fontsize',14,'fontweight','bold');
+                    ylabel(ax(2),'Amplitude');
+                    grid on
+                    xlabel('Range guessed (km)');ylabel('lag (ms)');
+                    
+                    title(sprintf('legend: %s, Cross-correlation between modes 1 and %i, Tilt: %6.2f Freq range: %6.1f-%6.1f Hz', ...
+                        plotstr,Imm, tilt_offset(Itilt2),minfreq,maxfreq));
+                    hold on
+                    line(range_guess([1 end])/1000,maxdelayt(1,Imm)*[1 1]*1000);
+                    line(range_guess([1 end])/1000,-maxdelayt(1,Imm)*[1 1]*1000);
+                    %if Imm==2, ylim([-25 25]);end
+                    ylim(maxdelayt(1,Imm)*[-1 1]*1000);
+                    ylimm=ylim;
+                    set(ax(1),'ytick',linspace(ylimm(1),ylimm(2),5));
+                end
+                
+                
+                %%Plot MSE error vs. range estimate, mode 1 combos only%%%%%%%%
+                [fitt(Itilt2,Imodel),Ir_chc]=min(talign_allModeOne{Imodel}(Itilt2,:));
+                best_range(Itilt2,Imodel)=range_guess(Ir_chc)/1000;
+                
+                subplot(Maxmodes+1,1,Maxmodes);
+                plot(range_guess/1000,1000*sqrt(squeeze(talign_allModeOne{Imodel}(Itilt2,:))),[plotstr_tilt(Itilt2) '-' plotstr(Imodel)]);
+                set(gca,'fontsize',14,'fontweight','bold');
+                grid on;xlabel('Range guessed (km)');ylabel('MSE (ms)');
+                title(sprintf('legend: %s, MSE, all mode 1 combos: %6.3g ms at %6.2f km, Tilt: %6.2f Freq range: %6.1f-%6.1f Hz',plotstr, ...
+                    1000*sqrt(fitt(Itilt2,Imodel)), range_guess(Ir_chc)/1000, tilt_offset(Itilt2),minfreq,maxfreq));
+                hold on
+                %line(range_guess([1 end])/1000,maxdelay(Imm)*[1 1]*1000);
+                %line(range_guess([1 end])/1000,-maxdelay(Imm)*[1 1]*1000);
+                plot(best_range(Itilt2,Imodel),1000*sqrt(fitt(Itilt2,Imodel)),[plotstr_tilt(Itilt2) 's' ],'markerfacecolor',plotstr_tilt(Itilt2));
+                %ylim([0 50]);
+                
+                %%%Plot MSE error vs. range estimate for all mode combinations...
+                subplot(Maxmodes+1,1,Maxmodes+1);
+                plot(range_guess/1000,1000*sqrt(squeeze(talign_all{Imodel}(Itilt2,:))),[plotstr_tilt(Itilt2) '-' plotstr(Imodel)]);
+                set(gca,'fontsize',14,'fontweight','bold');
+                grid on
+                xlabel('Range guessed (km)');ylabel('MSE (ms)');
+                title(sprintf('legend: %s, MSE, all modes, Tilt: %6.2f Freq range: %6.1f-%6.1f Hz',plotstr, tilt_offset(Itilt2),minfreq,maxfreq));
+                hold on
+                [fitt2(Itilt2,Imodel),Ir_chc2]=min(talign_all{Imodel}(Itilt2,:));
+                best_range2(Itilt2,Imodel)=range_guess(Ir_chc2)/1000;
+                plot(best_range2(Itilt2,Imodel),1000*sqrt(fitt2(Itilt2,Imodel)),[plotstr_tilt(Itilt2) 's' ],'markerfacecolor',plotstr_tilt(Itilt2));
+                
+                %line(range_guess([1 end])/1000,maxdelay(Imm)*[1 1]*1000);
+                %line(range_guess([1 end])/1000,-maxdelay(Imm)*[1 1]*1000);
+                
+            end  %Itilt2
+            
+        end  %if range_guess length is 1
+        
+        
+        if Imodel==length(MFP_scenario)
+            yes=menu('Save and Print result?','Yes','No');
+            if yes==1
+                for Itilt2=1:length(tilt_offset)
+                    savename_base=sprintf('%s_%ikm_tilt%4.2f_%ito%iHz_%imodels',datestr(tdate_start,30),round(range_guess(1)/1000), ...
+                        tilt_offset(Itilt2),round(minfreq),round(maxfreq),Imodel);
+                    
+                    figure(10+Itilt2)
+                    orient landscape
+                    print(gcf,'-djpeg',sprintf('RangeEstimate_%s.jpg',savename_base));
+                    
+                    %%%%%Plot best range vs. fit%%%%%%
+                    figure(1)
+                    
+                    subplot(2,1,1)
+                    for Imodel2=1:length(MFP_scenario)
+                        %subplot(length(MFP_scenario),1,Imodel2);
+                        plot(best_range(Itilt2,Imodel2),1000*sqrt(fitt(Itilt2,Imodel2)),[plotstr_tilt(Itilt2) plotstr(Imodel2)]);
+                        hold on
+                    end
+                    xlabel('Best range (km)');
+                    ylabel('MSE (msec)');
+                    title(sprintf('Mode 1 contribution only: Color %s is tilt, %s is inversion model',plotstr_tilt,plotstr));grid on
+                    
+                    subplot(2,1,2)
+                    for Imodel2=1:length(MFP_scenario)
+                        %subplot(length(MFP_scenario),1,Imodel2);
+                        plot(best_range2(Itilt2,Imodel2),1000*sqrt(fitt2(Itilt2,Imodel2)),[plotstr_tilt(Itilt2) plotstr(Imodel2)]);
+                        hold on
+                    end
+                    xlabel('Best range (km)');
+                    ylabel('MSE (msec)');
+                    title(sprintf('All mode contributions: Color %s is tilt, %s is inversion model',plotstr_tilt,plotstr));grid on
+                    
+                end
+                
+                %%%%%Plot min error vs array tilt...
+                figure(2)
+                
+                subplot(2,1,1)
+                for Imodel2=1:length(MFP_scenario)
+                    plot(tilt_offset,1000*sqrt(fitt(:,Imodel2)),['k-' plotstr(Imodel2)]);hold on;grid
+                    
+                end
+                xlabel('tilt offset (m)');
+                ylabel('mse error (msec)');
+                title(sprintf('Mode 1 only: %s is inversion model',plotstr));grid on
+                
+                subplot(2,1,2)
+                for Imodel2=1:length(MFP_scenario)
+                    plot(tilt_offset,1000*sqrt(fitt2(:,Imodel2)),['k-' plotstr(Imodel2)]);hold on;grid
+                    
+                end
+                xlabel('tilt offset (m)');
+                ylabel('mse error (msec)');
+                title(sprintf('All modes: %s is inversion model',plotstr));grid on
+                
+                
+                figure(1)
+                orient landscape
+                legend('full model','Pekeris model','Averaged Pekeris')
+                print(gcf,'-djpeg',sprintf('RangeError1_%s.jpg',savename_base));
+                
+                figure(2)
+                orient landscape
+                legend('full model','Pekeris model','Averaged Pekeris')
+                print(gcf,'-djpeg',sprintf('RangeError2_%s.jpg',savename_base));
+                
+                
+                save(sprintf('ModalEstimateRange_%s.mat',savename_base), ...
+                    'range_guess','tilt_offset','talign','talign_all','talign_allModeOne','MFP_scenario',...
+                    'minfreq','maxfreq','maxdelay','plotstr','plotstr_tilt','Maxmodes', ...
+                    'fitt','best_range','fitt2','best_range2','magg','wght');
+                
+                
+            end
+        end
+    end
 
 %%%%%Inner function for depth estimation
-	function compute_depth_estimate
-		persistent depth_chc
-		depth_chc=1;
-		
-		if Itilt==1&&Imodel==1
-			%depth_chc=menu('Select depth estimation choice:','No depth estimation','Depth estimate for all ranges','Depth estimate at best mode one only range estimate');
-		end
-		%depth_chc=1;
-		
-		if depth_chc==2
-			Ir_chc=1:length(range_guess);
-		else
-			Ir_chc=1;
-			fitt=Inf;
-			if length(range_guess)>1
-				%dt=diff(sign(squeeze(talign{Imodel}(Itilt,:,2))));dt=[0 dt];
-				[fitt,Ir_chc]=min(talign_allModeOne{Imodel}(Itilt,:));
-				
-			end
-			if isempty(Ir_chc)
-				Ir_chc=-1;
-				fprintf('No best range for Model %i..\n',Imodel);
-			else
-				fprintf('Best range for Model %i: %6.2f km, error %6.2f msec\n',Imodel,range_guess(Ir_chc)/1000,sqrt(fitt));
-			end
-			if depth_chc==1
-				return
-			end
-		end
-		
-		%%%Estimate source depth by relative amplitudes of cross correlations with mode 1 extraction...
-		mvec=model.U(:,Iwant2,1:Maxmodes);  %All real values
-		sqkr=sqrt(real(model.kr{1}(Iwant2,1:Maxmodes)));
-		for Is=1:length(model.sd)
-			mvec(Is,:,:)=(squeeze(model.U(Is,Iwant2,1))'*ones(1,Maxmodes)).*squeeze(mvec(Is,:,:))./sqkr;  %U1(zs)*Um(zs)/sqrt(km)
-		end
-		mvec(isnan(mvec))=0;
-		amb{Imodel}=zeros(length(model.sd),length(Iwant2));
-		amb_abs{Imodel}=amb{Imodel};
-		amb_nowght{Imodel}=amb{Imodel};
-		
-		for Ir_best=Ir_chc
-			
-			dd=squeeze(dvec(Ir_best,:,:));
-			for I=1:Maxmodes
-				freq_wght(I,:)=abs(dd(I,:))./max(abs(dd(I,:)));
-			end
-			freq_wght=mean(freq_wght);  %Frequency weight for all modes
-			for J=1:length(Iwant2)
-				for I=1:length(model.sd)
-					mm=real(squeeze(mvec(I,J,:)));
-					Iexist=find(mm~=0);
-					mm(Iexist)=mm(Iexist)/norm(mm(Iexist));
-					%Don't penalize absent modes...
-					dd(Iexist,J)=dd(Iexist,J)/norm(dd(Iexist,J));
-					if Ir_best>0
-						amb{Imodel}(I,J)=freq_wght(J).*abs(dd(Iexist,J)'*mm(Iexist)).^2;  %FT of xcorr data, unnormalized...,
-						amb_abs{Imodel}(I,J)=freq_wght(J).*abs(dd(Iexist,J))'*abs(mm(Iexist));  %FT of xcorr data, unnormalized...,
-						
-						amb_nowght{Imodel}(I,J)=abs(dd(Iexist,J)'*mm(Iexist)).^2; %No frequency weighting
-						%amb2{Imodel}(I,J)=(mm'*dvec1).^2;   %Real/real comparison...
-					else
-						amb{Imodel}(I,J)=NaN;
-						amb_abs{Imodel}=NaN;
-						amb_nowght{Imodel}(I,J)=NaN;
-						%amb2{Imodel}(I,J)=NaN;
-					end
-				end
-			end
-			
-			amb{Imodel}=amb{Imodel}/max(max(amb{Imodel}));
-			amb_abs{Imodel}=amb_abs{Imodel}/max(max(amb_abs{Imodel}));
-			amb_nowght{Imodel}=amb_nowght{Imodel}/max(max(amb_nowght{Imodel}));
-			
-			%%%%%%%%Plotting%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-			savename_base=plot_depth_estimates;
-		end  %Ir_best
-		
-		
-		if Itilt==1&&Imodel==1
-			
-			yes=menu('Save result?','Yes','No');
-			if yes==1
-				
-				
-				save(sprintf('ModalEstimateDepthTilt%i_%s.mat',tilt_offset(Itilt),savename_base), ...
-					'tdate_start','range_guess','Ir_best','Iwant','tilt_offset','Itilt','amb','amb_abs','amb_nowght', ...
-					'model','Imodel','MFP_scenario','minfreq','maxfreq','maxdelay','plotstr','plotstr_tilt','Maxmodes','fitt');
-				
-			end
-		end
-		
-		%%%%%%%%%Inner function plot_range_estimates%%%%%%%%%%%%
-		
-		%%%Inner function plot_depth_estimates%%%%%%
-		function savename_base=plot_depth_estimates
-			%%Plot graphs of depth estimators
-			
-			savename_base=sprintf('%s_%ikm_tilt%4.2f_%ito%iHz_%imodels',datestr(tdate_start,30),round(range_guess(min(Ir_best))/1000), ...
-				tilt_offset(Itilt),round(minfreq),round(maxfreq),Imodel);
-			
-			plotstr='oxs+*';
-			plotstr_tilt='kbgrc';
-			
-			%%%Plot 2-D depth estimator
-			figure(30+10*Imodel+Itilt+Ir_best);
-			
-			subplot(2,1,1)
-			imagesc(model.freq(Iwant),model.sd,10*log10(amb{Imodel}));
-			set(gca,'fontweight','bold','fontsize',14);
-			xlabel('Frequency (Hz)');
-			ylabel('Source depth (m)');
-			title(sprintf('Depth estimate of call starting at %s, using FT of xc function',datestr(tdate_start)));
-			plot_letter_label('a)');
-			
-			subplot(2,1,2)
-			imagesc(model.freq(Iwant),model.sd,10*log10(amb_nowght{Imodel}));
-			set(gca,'fontweight','bold','fontsize',14);
-			xlabel('Frequency (Hz)');
-			ylabel('Source depth (m)');
-			title('No frequency weighting');
-			orient tall
-			print(gcf,'-djpeg',sprintf('DepthEstimate2D_%s.jpg',savename_base));
-			
-			
-			%Plot frequency-averaged depth estimator%
-			
-			figure(100+Itilt+Ir_best);
-			plot1=10*log10(sum(amb{Imodel}'))/length(Iwant); %#ok<*UDIM>
-			plot_norm=10*log10(sum(amb_nowght{Imodel}'))/length(Iwant);
-			plot_abs=10*log10(sum(amb_abs{Imodel}'))/length(Iwant);
-			plot(plot1/max(abs(plot1)),model.sd,[plotstr_tilt(Itilt) '-' plotstr(Imodel)]);hold on
-			%plot(plot_norm/max(abs(plot_norm)),model.sd,[plotstr_tilt(Itilt) '-' plotstr(Imodel+1)]);
-			plot(plot_abs/max(abs(plot_abs)),model.sd,[plotstr_tilt(Itilt) '-' plotstr(Imodel+1)]);
-			
-			set(gca,'fontweight','bold','fontweight','bold');grid on
-			ylabel('Source depth (m)');xlabel('Normalized depth response');
-			try
-				title(sprintf('legend: %s, Depth estimate, Range: %6.2f km, Tilt: %6.2f m, Freq range: %6.1f-%6.1f Hz', ...
-					plotstr_tilt,range_guess(Ir_best)/1000,tilt_offset(Itilt),minfreq,maxfreq));
-			end
-			axis('ij')
-			hold on
-			legend('frequency weighted','abs value');
-			print(gcf,'-djpeg',sprintf('DepthEstimate_%s.jpg',savename_base));
-			
-			
-			
-			
-			
-		end  %Inner function plot_depth_estimates
-		
-	end  %inner function compute_depth_estimates
+    function compute_depth_estimate
+        persistent depth_chc
+        depth_chc=1;
+        
+        if Itilt==1&&Imodel==1
+            %depth_chc=menu('Select depth estimation choice:','No depth estimation','Depth estimate for all ranges','Depth estimate at best mode one only range estimate');
+        end
+        %depth_chc=1;
+        
+        if depth_chc==2
+            Ir_chc=1:length(range_guess);
+        else
+            Ir_chc=1;
+            fitt=Inf;
+            if length(range_guess)>1
+                %dt=diff(sign(squeeze(talign{Imodel}(Itilt,:,2))));dt=[0 dt];
+                [fitt,Ir_chc]=min(talign_allModeOne{Imodel}(Itilt,:));
+                
+            end
+            if isempty(Ir_chc)
+                Ir_chc=-1;
+                fprintf('No best range for Model %i..\n',Imodel);
+            else
+                fprintf('Best range for Model %i: %6.2f km, error %6.2f msec\n',Imodel,range_guess(Ir_chc)/1000,sqrt(fitt));
+            end
+            if depth_chc==1
+                return
+            end
+        end
+        
+        %%%Estimate source depth by relative amplitudes of cross correlations with mode 1 extraction...
+        mvec=model.U(:,Iwant2,1:Maxmodes);  %All real values
+        sqkr=sqrt(real(model.kr{1}(Iwant2,1:Maxmodes)));
+        for Is=1:length(model.sd)
+            mvec(Is,:,:)=(squeeze(model.U(Is,Iwant2,1))'*ones(1,Maxmodes)).*squeeze(mvec(Is,:,:))./sqkr;  %U1(zs)*Um(zs)/sqrt(km)
+        end
+        mvec(isnan(mvec))=0;
+        amb{Imodel}=zeros(length(model.sd),length(Iwant2));
+        amb_abs{Imodel}=amb{Imodel};
+        amb_nowght{Imodel}=amb{Imodel};
+        
+        for Ir_best=Ir_chc
+            
+            dd=squeeze(dvec(Ir_best,:,:));
+            for I=1:Maxmodes
+                freq_wght(I,:)=abs(dd(I,:))./max(abs(dd(I,:)));
+            end
+            freq_wght=mean(freq_wght);  %Frequency weight for all modes
+            for J=1:length(Iwant2)
+                for I=1:length(model.sd)
+                    mm=real(squeeze(mvec(I,J,:)));
+                    Iexist=find(mm~=0);
+                    mm(Iexist)=mm(Iexist)/norm(mm(Iexist));
+                    %Don't penalize absent modes...
+                    dd(Iexist,J)=dd(Iexist,J)/norm(dd(Iexist,J));
+                    if Ir_best>0
+                        amb{Imodel}(I,J)=freq_wght(J).*abs(dd(Iexist,J)'*mm(Iexist)).^2;  %FT of xcorr data, unnormalized...,
+                        amb_abs{Imodel}(I,J)=freq_wght(J).*abs(dd(Iexist,J))'*abs(mm(Iexist));  %FT of xcorr data, unnormalized...,
+                        
+                        amb_nowght{Imodel}(I,J)=abs(dd(Iexist,J)'*mm(Iexist)).^2; %No frequency weighting
+                        %amb2{Imodel}(I,J)=(mm'*dvec1).^2;   %Real/real comparison...
+                    else
+                        amb{Imodel}(I,J)=NaN;
+                        amb_abs{Imodel}=NaN;
+                        amb_nowght{Imodel}(I,J)=NaN;
+                        %amb2{Imodel}(I,J)=NaN;
+                    end
+                end
+            end
+            
+            amb{Imodel}=amb{Imodel}/max(max(amb{Imodel}));
+            amb_abs{Imodel}=amb_abs{Imodel}/max(max(amb_abs{Imodel}));
+            amb_nowght{Imodel}=amb_nowght{Imodel}/max(max(amb_nowght{Imodel}));
+            
+            %%%%%%%%Plotting%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            savename_base=plot_depth_estimates;
+        end  %Ir_best
+        
+        
+        if Itilt==1&&Imodel==1
+            
+            yes=menu('Save result?','Yes','No');
+            if yes==1
+                
+                
+                save(sprintf('ModalEstimateDepthTilt%i_%s.mat',tilt_offset(Itilt),savename_base), ...
+                    'tdate_start','range_guess','Ir_best','Iwant','tilt_offset','Itilt','amb','amb_abs','amb_nowght', ...
+                    'model','Imodel','MFP_scenario','minfreq','maxfreq','maxdelay','plotstr','plotstr_tilt','Maxmodes','fitt');
+                
+            end
+        end
+        
+        %%%%%%%%%Inner function plot_range_estimates%%%%%%%%%%%%
+        
+        %%%Inner function plot_depth_estimates%%%%%%
+        function savename_base=plot_depth_estimates
+            %%Plot graphs of depth estimators
+            
+            savename_base=sprintf('%s_%ikm_tilt%4.2f_%ito%iHz_%imodels',datestr(tdate_start,30),round(range_guess(min(Ir_best))/1000), ...
+                tilt_offset(Itilt),round(minfreq),round(maxfreq),Imodel);
+            
+            plotstr='oxs+*';
+            plotstr_tilt='kbgrc';
+            
+            %%%Plot 2-D depth estimator
+            figure(30+10*Imodel+Itilt+Ir_best);
+            
+            subplot(2,1,1)
+            imagesc(model.freq(Iwant),model.sd,10*log10(amb{Imodel}));
+            set(gca,'fontweight','bold','fontsize',14);
+            xlabel('Frequency (Hz)');
+            ylabel('Source depth (m)');
+            title(sprintf('Depth estimate of call starting at %s, using FT of xc function',datestr(tdate_start)));
+            plot_letter_label('a)');
+            
+            subplot(2,1,2)
+            imagesc(model.freq(Iwant),model.sd,10*log10(amb_nowght{Imodel}));
+            set(gca,'fontweight','bold','fontsize',14);
+            xlabel('Frequency (Hz)');
+            ylabel('Source depth (m)');
+            title('No frequency weighting');
+            orient tall
+            print(gcf,'-djpeg',sprintf('DepthEstimate2D_%s.jpg',savename_base));
+            
+            
+            %Plot frequency-averaged depth estimator%
+            
+            figure(100+Itilt+Ir_best);
+            plot1=10*log10(sum(amb{Imodel}'))/length(Iwant); %#ok<*UDIM>
+            plot_norm=10*log10(sum(amb_nowght{Imodel}'))/length(Iwant);
+            plot_abs=10*log10(sum(amb_abs{Imodel}'))/length(Iwant);
+            plot(plot1/max(abs(plot1)),model.sd,[plotstr_tilt(Itilt) '-' plotstr(Imodel)]);hold on
+            %plot(plot_norm/max(abs(plot_norm)),model.sd,[plotstr_tilt(Itilt) '-' plotstr(Imodel+1)]);
+            plot(plot_abs/max(abs(plot_abs)),model.sd,[plotstr_tilt(Itilt) '-' plotstr(Imodel+1)]);
+            
+            set(gca,'fontweight','bold','fontweight','bold');grid on
+            ylabel('Source depth (m)');xlabel('Normalized depth response');
+            try
+                title(sprintf('legend: %s, Depth estimate, Range: %6.2f km, Tilt: %6.2f m, Freq range: %6.1f-%6.1f Hz', ...
+                    plotstr_tilt,range_guess(Ir_best)/1000,tilt_offset(Itilt),minfreq,maxfreq));
+            end
+            axis('ij')
+            hold on
+            legend('frequency weighted','abs value');
+            print(gcf,'-djpeg',sprintf('DepthEstimate_%s.jpg',savename_base));
+            
+            
+            
+            
+            
+        end  %Inner function plot_depth_estimates
+        
+    end  %inner function compute_depth_estimates
 %%%%%%%%%%%%%%%%%
 
 
 %%Inner function for plotting
-	function tltchk=plot_mode_filtering
-		persistent timmes_signal timmes_noise pwrr yes %#ok<NUSED>
-		
-		if Itilt==1
-			%yes=menu('What intermediate data do you want?','Filtered spectrograms','SNR estimate');
-			yes=1;
-			pwrr=[];
-		end
-		if yes==1
-			
-			y1=yout(:,1);
-			y2=yout(:,2);
-			tltchk=y1'*y2./(norm(y1).*norm(y2));
-			fprintf('Xcor for bottom sensor, tilt %6.2f: %6.4f, \n',  ...
-				tilt_offset(Itilt),tltchk);
-			
-			figure(1)
-			
+    function tltchk=plot_mode_filtering
+        persistent timmes_signal timmes_noise pwrr yes %#ok<NUSED>
+        
+        if Itilt==1
+            %yes=menu('What intermediate data do you want?','Filtered spectrograms','SNR estimate');
+            yes=1;
+            pwrr=[];
+        end
+        if yes==1
+            
+            y1=yout(:,1);
+            y2=yout(:,2);
+            tltchk=y1'*y2./(norm(y1).*norm(y2));
+            fprintf('Xcor for bottom sensor, tilt %6.2f: %6.4f, \n',  ...
+                tilt_offset(Itilt),tltchk);
+            
+            figure(1)
+            
             for Imm=1:Maxmodes
-				[Bbeam,FF1,TT] = specgram(yout(:,Imm),Nfft2,Fs,Nfft2,round(0.9*Nfft2)); %B(freq,time,element);
-				figure(1)
-				set(gcf,'units','norm','pos',[ 0.1589    0.3345    0.2216    0.6102]);
-				
+                [Bbeam,FF1,TT] = specgram(yout(:,Imm),Nfft2,Fs,Nfft2,round(0.9*Nfft2)); %B(freq,time,element);
+                figure(1)
+                set(gcf,'units','norm','pos',[ 0.1589    0.3345    0.2216    0.6102]);
+                
                 subplot(Maxmodes,1,Imm);
-				imagesc(TT,FF1,20*log10(abs(Bbeam).*normm));%
-				orient landscape
-				grid on;set(gca,'fontweight','bold','fontsize',14,'ycolor','k','xcolor','k','xminorgrid','on');
+                imagesc(TT,FF1,20*log10(abs(Bbeam).*normm));%
+                orient landscape
+                grid on;set(gca,'fontweight','bold','fontsize',14,'ycolor','k','xcolor','k','xminorgrid','on');
                 axis('xy');ylim([minfreq maxfreq]);
                 caxis([70 120]-30);
                 %caxis([-150 -70])
-				if Imm==1
-					%title(sprintf('Mode %i, modal beamforming only: vertical tilt: %6.2f deg',Imm, tilt));
-				end
-				ylabel('Hz');
-				xlabel('Time (s)');
-				if Imm<3
-					set(gca,'xticklabel',[]);
-					xlabel('');
-				end
-				set(gca,'units','norm');
-				poss=get(gca,'pos');
-				poss(4)=.27;
-				%set(gca,'pos',poss,'xtick',0:0.25:3);
-				
-				text(0.1,0.8,sprintf('Mode %i',Imm),'units','norm','color','w','fontsize',14,'fontweight','bold');
-				title(sprintf('Modal Filtering, Tilt: %6.2f deg, correlation: %6.4f',tilt_offset(Itilt),tltchk));
-			end
-			hh=colorbar('south','fontweight','bold','fontsize',14);
-			set(hh,'pos',[0.1369    0.0239    0.7462    0.0234]);
-			
-			
-			
+                if Imm==1
+                    %title(sprintf('Mode %i, modal beamforming only: vertical tilt: %6.2f deg',Imm, tilt));
+                end
+                ylabel('Hz');
+                xlabel('Time (s)');
+                if Imm<3
+                    set(gca,'xticklabel',[]);
+                    xlabel('');
+                end
+                set(gca,'units','norm');
+                poss=get(gca,'pos');
+                poss(4)=.27;
+                %set(gca,'pos',poss,'xtick',0:0.25:3);
+                
+                text(0.1,0.8,sprintf('Mode %i',Imm),'units','norm','color','w','fontsize',14,'fontweight','bold');
+                title(sprintf('Modal Filtering, Tilt: %6.2f deg, correlation: %6.4f',tilt_offset(Itilt),tltchk));
+            end
+            hh=colorbar('south','fontweight','bold','fontsize',14);
+            set(hh,'pos',[0.1369    0.0239    0.7462    0.0234]);
+            
+            
+            
             for Imm=1:Maxmodes
-				[Bbeam1,FF1,TT] = specgram(yout_corrected(:,Imm),Nfft2,Fs,Nfft2,round(0.9*Nfft2)); %B(freq,time,element);
-				figure(2)
+                [Bbeam1,FF1,TT] = specgram(yout_corrected(:,Imm),Nfft2,Fs,Nfft2,round(0.9*Nfft2)); %B(freq,time,element);
+                figure(2)
                 subplot(Maxmodes,1,Imm);
-				imagesc(TT,FF1,20*log10(abs(Bbeam1).*normm));%
-				orient landscape
-				grid on;set(gca,'fontweight','bold','fontsize',14,'ycolor','k','xcolor','k','xminorgrid','on');
-				ylabel('Hz'); xlabel('Time (s)');
-				
+                imagesc(TT,FF1,20*log10(abs(Bbeam1).*normm));%
+                orient landscape
+                grid on;set(gca,'fontweight','bold','fontsize',14,'ycolor','k','xcolor','k','xminorgrid','on');
+                ylabel('Hz'); xlabel('Time (s)');
+                
                 axis('xy');ylim([minfreq maxfreq]);
                     caxis([70 120]-30);grid on
                     %caxis([-150 -70])
-				if Imm==1
-					%title(sprintf('Mode %i, modal beamforming and dispersion correction: vertical tilt: %6.2f deg',Imm, tilt));
-				end
+                    if Imm==1
+                    %title(sprintf('Mode %i, modal beamforming and dispersion correction: vertical tilt: %6.2f deg',Imm, tilt));
+                    end
                     if Imm<Maxmodes
-					set(gca,'xticklabel',[]);
-					xlabel('');
-					
-				end
-				set(gca,'units','norm');
-				poss=get(gca,'pos');
-				poss(4)=.27;
-				
-				%set(gca,'pos',poss,'xtick',0:0.25:3);
-				text(0.25,110,sprintf('Mode %i',Imm),'color','w','fontsize',14,'fontweight','bold');
-				title(sprintf('Phase Correction, Range: %6.2f km, Tilt: %6.2f deg',range_guess(Ir)/1000,tilt_offset(Itilt)));
-			end
-			colorbar('south','fontweight','bold','fontsize',14);
-			
-			
-			
-		else
-			%%Estimate SNR of signal...
-			
-			[tmp,lags]=xcov(yout(:,1),y(1,:)');
-			[~,Imax]=max(abs(tmp));
-			Imax=lags(Imax);
-			
-			figure(10);
-			
-			[Bbeam0,FF1,TT] = specgram(y(1,:),Nfft2,Fs,Nfft2,round(0.9*Nfft2)); %B(freq,time,element);
-			subplot(2,1,1);
-			
-			imagesc(TT,FF1,20*log10(abs(Bbeam0).*normm));%
-			orient landscape
-			grid on;set(gca,'fontweight','bold','fontsize',14,'ycolor','k','xcolor','k','xminorgrid','on');
-			axis('xy');ylim([minfreq maxfreq]);%caxis([70 120]-30);
-			xlimm=xlim;
-			title('Single element');
-			
-			subplot(2,1,2);
-			set(gcf,'units','norm','pos',[ 0.1589    0.3345    0.2216    0.6102]);
-			yout=yout(Imax:end,:);
-			
-			[Bbeam,FF1,TT] = specgram(yout(:,1),Nfft2,Fs,Nfft2,round(0.9*Nfft2)); %B(freq,time,element);
-			
-			imagesc(TT,FF1,20*log10(abs(Bbeam).*normm));%
-			orient landscape
-			grid on;set(gca,'fontweight','bold','fontsize',14,'ycolor','k','xcolor','k','xminorgrid','on');
-			axis('xy');ylim([minfreq maxfreq]);%caxis([70 120]-30);
-			xlim(xlimm)
-			title(sprintf('Mode 1 filter, tilt %6.2f',tilt_offset(Itilt)));
-			
-			if Itilt==1
-				disp('Select two times for signal estimate...');
-				
-				timmes_signal=ginput(2);
-			end
-			In=round(Fs*timmes_signal(:,1));
-			dn=diff(In);
-			pwrr.single.signal(Itilt)=sum(y(1,In(1):In(2)).^2)/dn;  %This has been prefiltered...
-			pwrr.filtered.signal(Itilt)=sum(yout(In(1):In(2),1).^2)/dn;
-			
-			y1=yout(In(1):In(2),1);
-			y2=yout(In(1):In(2),2);
-			pwrr.filtered.xcor(Itilt)=y1'*y2./(norm(y1).*norm(y2));
-			
-			%             figure(11)
-			%             subplot(2,1,1)
-			%             hold on
-			%             plot(y(1,In(1):In(2)),'r');
-			%             subplot(2,1,2);
-			%             hold on;
-			%             plot(yout(In(1):In(2),1),'r');
-			
-			%         soundsc(yout(In(1):In(2),1),Fs)
-			%         soundsc(y(1,In(1):In(2)),Fs)
-			%
-			%             figure(10);
-			%             if Itilt==1
-			%                 disp('Select two times for background noise estimate...');
-			%                 timmes_noise=ginput(2);
-			%             end
-			%             In=round(Fs*timmes_noise(:,1));
-			%             dn=diff(In);
-			%             pwrr.single.noise=sum(y(1,In(1):In(2)).^2)/dn;  %This has been prefiltered...
-			%             pwrr.filtered.noise=sum(yout(In(1):In(2),1).^2)/dn;
-			%
-			%             figure(11)
-			%             subplot(2,1,1)
-			%             plot(y(1,In(1):In(2)),'k');
-			%             subplot(2,1,2);
-			%             plot(yout(In(1):In(2),1),'k');
-			
-			%             fprintf('SNR for bottom sensor, tilt %6.2f: %6.2f, power: %6.2f \n',  ...
-			%                 tilt_offset(Itilt),10*log10(abs(pwrr.single.signal(Itilt)/pwrr.single.noise)),10*log10(pwrr.single.signal(Itilt)));
-			%             fprintf('SNR for mode 1 filter, tilt %6.2f: %6.2f, power: %6.2f \n', ...
-			%                 tilt_offset(Itilt),10*log10(abs(pwrr.filtered.signal(Itilt)/pwrr.filtered.noise)),10*log10(pwrr.filtered.signal(Itilt)));
-			%
-			
-			fprintf('Xcor for bottom sensor, tilt %6.2f: %6.4f, power: %6.2f \n',  ...
-				tilt_offset(Itilt),abs(pwrr.filtered.xcor(Itilt)),10*log10(pwrr.single.signal(Itilt)));
-			
-			if Itilt==length(tilt_offset)
-				figure(45)
-				plot(tilt_offset,10*log10(pwrr.filtered.signal));grid on
-				xlabel('Tilt Range Estimate');
-				ylabel('dB re 1uPa');
-				title('Measured power of filtered mode 1 signal');
-				keyboard
-			end
-			
-		end
-		
-	end  %plot_mode_filtering..
+                        set(gca,'xticklabel',[]);
+                        xlabel('');
+                        
+                    end
+                    set(gca,'units','norm');
+                    poss=get(gca,'pos');
+                    poss(4)=.27;
+                    
+                    %set(gca,'pos',poss,'xtick',0:0.25:3);
+                    text(0.25,110,sprintf('Mode %i',Imm),'color','w','fontsize',14,'fontweight','bold');
+                    title(sprintf('Phase Correction, Range: %6.2f km, Tilt: %6.2f deg',range_guess(Ir)/1000,tilt_offset(Itilt)));
+            end
+            colorbar('south','fontweight','bold','fontsize',14);
+            
+            
+            
+        else
+            %%Estimate SNR of signal...
+            
+            [tmp,lags]=xcov(yout(:,1),y(1,:)');
+            [~,Imax]=max(abs(tmp));
+            Imax=lags(Imax);
+            
+            figure(10);
+            
+            [Bbeam0,FF1,TT] = specgram(y(1,:),Nfft2,Fs,Nfft2,round(0.9*Nfft2)); %B(freq,time,element);
+            subplot(2,1,1);
+            
+            imagesc(TT,FF1,20*log10(abs(Bbeam0).*normm));%
+            orient landscape
+            grid on;set(gca,'fontweight','bold','fontsize',14,'ycolor','k','xcolor','k','xminorgrid','on');
+            axis('xy');ylim([minfreq maxfreq]);%caxis([70 120]-30);
+            xlimm=xlim;
+            title('Single element');
+            
+            subplot(2,1,2);
+            set(gcf,'units','norm','pos',[ 0.1589    0.3345    0.2216    0.6102]);
+            yout=yout(Imax:end,:);
+            
+            [Bbeam,FF1,TT] = specgram(yout(:,1),Nfft2,Fs,Nfft2,round(0.9*Nfft2)); %B(freq,time,element);
+            
+            imagesc(TT,FF1,20*log10(abs(Bbeam).*normm));%
+            orient landscape
+            grid on;set(gca,'fontweight','bold','fontsize',14,'ycolor','k','xcolor','k','xminorgrid','on');
+            axis('xy');ylim([minfreq maxfreq]);%caxis([70 120]-30);
+            xlim(xlimm)
+            title(sprintf('Mode 1 filter, tilt %6.2f',tilt_offset(Itilt)));
+            
+            if Itilt==1
+                disp('Select two times for signal estimate...');
+                
+                timmes_signal=ginput(2);
+            end
+            In=round(Fs*timmes_signal(:,1));
+            dn=diff(In);
+            pwrr.single.signal(Itilt)=sum(y(1,In(1):In(2)).^2)/dn;  %This has been prefiltered...
+            pwrr.filtered.signal(Itilt)=sum(yout(In(1):In(2),1).^2)/dn;
+            
+            y1=yout(In(1):In(2),1);
+            y2=yout(In(1):In(2),2);
+            pwrr.filtered.xcor(Itilt)=y1'*y2./(norm(y1).*norm(y2));
+            
+            %             figure(11)
+            %             subplot(2,1,1)
+            %             hold on
+            %             plot(y(1,In(1):In(2)),'r');
+            %             subplot(2,1,2);
+            %             hold on;
+            %             plot(yout(In(1):In(2),1),'r');
+            
+            %         soundsc(yout(In(1):In(2),1),Fs)
+            %         soundsc(y(1,In(1):In(2)),Fs)
+            %
+            %             figure(10);
+            %             if Itilt==1
+            %                 disp('Select two times for background noise estimate...');
+            %                 timmes_noise=ginput(2);
+            %             end
+            %             In=round(Fs*timmes_noise(:,1));
+            %             dn=diff(In);
+            %             pwrr.single.noise=sum(y(1,In(1):In(2)).^2)/dn;  %This has been prefiltered...
+            %             pwrr.filtered.noise=sum(yout(In(1):In(2),1).^2)/dn;
+            %
+            %             figure(11)
+            %             subplot(2,1,1)
+            %             plot(y(1,In(1):In(2)),'k');
+            %             subplot(2,1,2);
+            %             plot(yout(In(1):In(2),1),'k');
+            
+            %             fprintf('SNR for bottom sensor, tilt %6.2f: %6.2f, power: %6.2f \n',  ...
+            %                 tilt_offset(Itilt),10*log10(abs(pwrr.single.signal(Itilt)/pwrr.single.noise)),10*log10(pwrr.single.signal(Itilt)));
+            %             fprintf('SNR for mode 1 filter, tilt %6.2f: %6.2f, power: %6.2f \n', ...
+            %                 tilt_offset(Itilt),10*log10(abs(pwrr.filtered.signal(Itilt)/pwrr.filtered.noise)),10*log10(pwrr.filtered.signal(Itilt)));
+            %
+            
+            fprintf('Xcor for bottom sensor, tilt %6.2f: %6.4f, power: %6.2f \n',  ...
+                tilt_offset(Itilt),abs(pwrr.filtered.xcor(Itilt)),10*log10(pwrr.single.signal(Itilt)));
+            
+            if Itilt==length(tilt_offset)
+                figure(45)
+                plot(tilt_offset,10*log10(pwrr.filtered.signal));grid on
+                xlabel('Tilt Range Estimate');
+                ylabel('dB re 1uPa');
+                title('Measured power of filtered mode 1 signal');
+                keyboard
+            end
+            
+        end
+        
+    end  %plot_mode_filtering..
 
 %Inner function for plotting xcorr
-	function plot_xcorr
-		pause(0.5);
-		MMM(Itilt)=getframe(gcf);
-		figure(3)
-		% for Im=1:3
+    function plot_xcorr
+        pause(0.5);
+        MMM(Itilt)=getframe(gcf);
+        figure(3)
+        % for Im=1:3
         subplot(Maxmodes-1,1,Im-1)
-		plot(lags/Fs,xc);xlim(10*[-0.05 0.05]);
-		grid on
-		title(sprintf('Mode %i, leads mode 1 by %10.6f ms',Im,1000*talign{Imodel}(Itilt,Ir,Im)));
-		xlabel('Relative delay (s)');
-		ylabel('Cross-correlation');
-		%end
-	end
+        plot(lags/Fs,xc);xlim(10*[-0.05 0.05]);
+        grid on
+        title(sprintf('Mode %i, leads mode 1 by %10.6f ms',Im,1000*talign{Imodel}(Itilt,Ir,Im)));
+        xlabel('Relative delay (s)');
+        ylabel('Cross-correlation');
+        %end
+    end
 end  %function modal_filtering
 
 % --- Executes on button press in checkbox_teager.
@@ -2897,7 +2897,7 @@ function pushbutton_notes_last_Callback(hObject, eventdata, handles)
 
 N		=	length(handles.notes.Data.Events);
 if	(N == 0)
-	error('What happened?');
+    error('What happened?');
 end
 
 handles.notes.i_sel		=	N;
@@ -2916,7 +2916,7 @@ function pushbutton_notes_first_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 N		=	length(handles.notes.Data.Events);
 if	(N == 0)
-	error('What happened?');
+    error('What happened?');
 end
 
 handles.notes.i_sel		=	1;
@@ -2937,17 +2937,17 @@ i_sel	=	handles.notes.i_sel;
 N		=	length(handles.notes.Data.Events);
 
 if	(N == 0)
-	error('What happened?');
+    error('What happened?');
 end
 
 if	isempty(i_sel)
-	i_sel	=	1;
+    i_sel	=	1;
 else
-	i_sel	=	i_sel + 1;
+    i_sel	=	i_sel + 1;
 end
 
 if	i_sel > N
-	i_sel	=	1;
+    i_sel	=	1;
 end
 handles.notes.i_sel		=	i_sel;
 
@@ -2968,13 +2968,13 @@ i_sel	=	handles.notes.i_sel;
 N		=	length(handles.notes.Data.Events);
 
 if	isempty(i_sel) || (i_sel == 0) || (N == 0)
-	warning('Selection index is not valid');
-	return;
+    warning('Selection index is not valid');
+    return;
 end
 
 i_sel	=	i_sel - 1;
 if	i_sel < 1
-	i_sel	=	N;
+    i_sel	=	N;
 end
 handles.notes.i_sel		=	i_sel;
 
@@ -3003,31 +3003,31 @@ function pushbutton_notes_save_Callback(hObject, eventdata, handles)
 %	Shouldn't be able to click this button anyway, but can't hurt to check
 readonly	=	handles.notes.readonly;
 if readonly
-	warning('Readonly flag set, file not saved');
-	return;
+    warning('Readonly flag set, file not saved');
+    return;
 end
 
 %	The following should never be empty, but...
 Data		=	handles.notes.Data;
 if	isempty(Data)
-	warning('Notes data empty, nothing to save');
-	return;
+    warning('Notes data empty, nothing to save');
+    return;
 end
 
 file_path	=	handles.notes.file_path;
 if	isempty(file_path)
-	warning('Notes file/folder not set, file not saved');
-	return;
+    warning('Notes file/folder not set, file not saved');
+    return;
 end
 
 %	Save whole data structure, allows implicit expansion of named variables
 %	Only save if changed
 if	~handles.notes.saved
-	GUI_params		=	save_gui_params(handles);
-	save(file_path, 'Data', 'GUI_params');
-	set(hObject,'Enable','off');
-	handles.notes.saved	=	true;
-	guidata(hObject, handles)
+    GUI_params		=	save_gui_params(handles);
+    save(file_path, 'Data', 'GUI_params');
+    set(hObject,'Enable','off');
+    handles.notes.saved	=	true;
+    guidata(hObject, handles)
 end
 
 end
@@ -3058,7 +3058,7 @@ start_path		=	handles.notes.folder_name;
 folder_name		=	uigetdir(start_path, dialog_title);
 
 if isnumeric(folder_name)
-	return;
+    return;
 end
 
 handles		=	load_notes_file(handles, folder_name);
@@ -3085,9 +3085,9 @@ function checkbox_notes_readonly_Callback(hObject, eventdata, handles)
 read_only	=	get(hObject, 'Value');
 saved		=	handles.notes.saved;
 if	read_only || saved
-	opt		=	'off';
+    opt		=	'off';
 else
-	opt		=	'on';
+    opt		=	'on';
 end
 set(handles.pushbutton_notes_save, 'Enable', opt);
 
@@ -3135,13 +3135,13 @@ disp('Click on two points defining a rectangle on the figure: ');
 
 %	Check if user tried to terminate input early
 if	(length(Buttons) < 2) || any(Buttons > 3)
-	disp('Input cancelled');
-	return;
+    disp('Input cancelled');
+    return;
 end
 
 %	Parameters taken from ginput
 start_time	=	handles.tdate_start...
-	+	datenum(0,0,0,0,0,min(Times));
+    +	datenum(0,0,0,0,0,min(Times));
 min_freq	=	(1000*min(Freq));
 max_freq	=	(1000*max(Freq));
 duration	=	(abs(Times(2) - Times(1)));
@@ -3153,28 +3153,28 @@ width	=	duration;
 height	=	(max_freq - min_freq)/1000;
 axes(handles.axes1);
 hrec	=	rectangle('Position',[x,y,width,height],...
-				'Curvature',[0.3],...
-				'LineWidth',2,'LineStyle','-',...
-				'EdgeColor','r');
+    'Curvature',[0.3],...
+    'LineWidth',2,'LineStyle','-',...
+    'EdgeColor','r');
 
 %	Initial signal type selection
 sig_types	=	{'Pulsive','FM'};
 choice		=	menu('Signal type?',sig_types);
 if	choice == 0
-	disp('Input cancelled');
-	delete(hrec);
-	return;
+    disp('Input cancelled');
+    delete(hrec);
+    return;
 end
 sig_type	=	sig_types{choice};
 
 %	Get automated parameters from basic information
 params_extract	=	extract_automated_fields(Times, Freq, handles);
 if isempty(params_extract)
-	errordlg({'SNR and level could not be extracted:';...
-		'Time window is too small';...
+    errordlg({'SNR and level could not be extracted:';...
+        'Time window is too small';...
 		'Show larger time window and retry'});
 	delete(hrec);
-	return
+    return
 end
 
 
@@ -3184,13 +3184,13 @@ i_sel	=	handles.notes.i_sel;
 
 %	Default values from last (selected) event or template
 if	~isempty(Data.Events)
-	if	~isempty(i_sel)
-		Event	=	Data.Events(i_sel);
-	else
-		Event	=	Data.Events(end);
-	end
+    if	~isempty(i_sel)
+        Event	=	Data.Events(i_sel);
+    else
+        Event	=	Data.Events(end);
+    end
 else
-	Event	=	Data.Template;
+    Event	=	Data.Template;
 end
 
 %	Insert current values
@@ -3212,16 +3212,16 @@ Event.SNR_rms_dB		=	params_extract.SNR_rms_dB;
 
 %	modified defualts for other signal types
 switch sig_type
-	case	'Pulsive'
-		Event.call_type		=	'S1';
-		Event.num_pulses	=	10;
-		Event.num_harmonics	=	-1;
-	case	'FM'
-		Event.call_type		=	'moan';
-		Event.num_pulses	=	-1;
-		Event.num_harmonics	=	1;
-	otherwise
-		warning('Signal type not recognized for defaults');
+    case	'Pulsive'
+        Event.call_type		=	'S1';
+        Event.num_pulses	=	10;
+        Event.num_harmonics	=	-1;
+    case	'FM'
+        Event.call_type		=	'moan';
+        Event.num_pulses	=	-1;
+        Event.num_harmonics	=	1;
+    otherwise
+        warning('Signal type not recognized for defaults');
 end
 
 
@@ -3229,22 +3229,22 @@ end
 Event	=	edit_event(Event, Data.Description, handles.notes.edit_fields);
 
 try %#ok<*TRYNC>
-	delete(hrec);
+    delete(hrec);
 end
 
 if	~isempty(Event)
-	%	Add new event to data store
-	[Data.Events, ii]	=	add_event(Data.Events, Event);
-	handles.notes.Data	=	Data;
-	
-	handles.notes.saved	=	false;
-	checkbox_notes_readonly_Callback(handles.checkbox_notes_readonly, [], handles);
-	set(handles.checkbox_notes_show, 'Enable', 'on');
-	
-	%	Set new note as currently selected one and replot if enabled
-	handles.notes.i_sel	=	ii;
-	handles		=	plot_events(handles);
-	guidata(hObject, handles);
+    %	Add new event to data store
+    [Data.Events, ii]	=	add_event(Data.Events, Event);
+    handles.notes.Data	=	Data;
+    
+    handles.notes.saved	=	false;
+    checkbox_notes_readonly_Callback(handles.checkbox_notes_readonly, [], handles);
+    set(handles.checkbox_notes_show, 'Enable', 'on');
+    
+    %	Set new note as currently selected one and replot if enabled
+    handles.notes.i_sel	=	ii;
+    handles		=	plot_events(handles);
+    guidata(hObject, handles);
 end
 end
 
@@ -3255,62 +3255,62 @@ function pushbutton_notes_edit_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 if	isempty(handles.notes.i_sel)
-	warning('No event selected');
-	return;
+    warning('No event selected');
+    return;
 else
-	i_sel	=	handles.notes.i_sel;
+    i_sel	=	handles.notes.i_sel;
 end
 
 if	isempty(handles.notes.Data) || isempty(handles.notes.Data.Events)
-	warning('No events data');
-	return;
+    warning('No events data');
+    return;
 end
 
 %	Delete entry if enabled
 delete_on	=	get(handles.checkbox_notes_delete, 'Value');
 if	delete_on
-	handles.notes.Data.Events(i_sel)	=	[];
-	N	=	length(handles.notes.Data.Events);
-	if	N == 0
-		i_sel	=	[];
-	elseif	i_sel > N
-		i_sel	=	1;
-	end
-	handles.notes.i_sel	=	i_sel;
-	
-	%	Otherwise open edit window with existing values
+    handles.notes.Data.Events(i_sel)	=	[];
+    N	=	length(handles.notes.Data.Events);
+    if	N == 0
+        i_sel	=	[];
+    elseif	i_sel > N
+        i_sel	=	1;
+    end
+    handles.notes.i_sel	=	i_sel;
+    
+    %	Otherwise open edit window with existing values
 else
-	Event	=	handles.notes.Data.Events(i_sel);
-	
-	%	Recalculate noise and signal stats
-	%	JIT: datevec components unnecessary
-	tmp			=	Event.start_time - handles.tdate_start;
-	Times(1)	=	tmp*24*60*60;
-	Times(2)	=	Times(1) + str2double(Event.duration);
-	Freq(1)		=	str2double(Event.min_freq)/1000;
-	Freq(2)		=	str2double(Event.max_freq)/1000;
-	
-	params_extract	=	extract_automated_fields(Times, Freq, handles);
-	if isempty(params_extract)
-		errordlg('SNR and level could not be extracted: Time window is too small');
-		NewEvent=[];
-		return
-	else
-		names	=	fieldnames(params_extract);
-		for	ii	=	1:length(names)
-			if	~isfield(Event,names{ii})
-				error('Event does not contain field for this parameter');
-			end
-			Event.(names{ii})	=	params_extract.(names{ii});
-		end
-	end
-	
+    Event	=	handles.notes.Data.Events(i_sel);
+    
+    %	Recalculate noise and signal stats
+    %	JIT: datevec components unnecessary
+    tmp			=	Event.start_time - handles.tdate_start;
+    Times(1)	=	tmp*24*60*60;
+    Times(2)	=	Times(1) + str2double(Event.duration);
+    Freq(1)		=	str2double(Event.min_freq)/1000;
+    Freq(2)		=	str2double(Event.max_freq)/1000;
+    
+    params_extract	=	extract_automated_fields(Times, Freq, handles);
+    if isempty(params_extract)
+        errordlg('SNR and level could not be extracted: Time window is too small');
+        NewEvent=[];
+        return
+    else
+        names	=	fieldnames(params_extract);
+        for	ii	=	1:length(names)
+            if	~isfield(Event,names{ii})
+                error('Event does not contain field for this parameter');
+            end
+            Event.(names{ii})	=	params_extract.(names{ii});
+        end
+    end
+    
 	Event	=	edit_event(Event, handles.notes.Data.Description, handles.notes.edit_fields);
-	if	isempty(Event)
-		return;
-	else
-		handles.notes.Data.Events(i_sel)	=	Event;
-	end
+    if	isempty(Event)
+        return;
+    else
+        handles.notes.Data.Events(i_sel)	=	Event;
+    end
 end
 
 handles.notes.saved	=	false;
@@ -3331,9 +3331,9 @@ function checkbox_notes_delete_Callback(hObject, eventdata, handles)
 delete_on	=	get(hObject, 'Value');
 
 if	delete_on
-	set(handles.pushbutton_notes_edit, 'String', 'Delete');
+    set(handles.pushbutton_notes_edit, 'String', 'Delete');
 else
-	set(handles.pushbutton_notes_edit, 'String', 'Edit');
+    set(handles.pushbutton_notes_edit, 'String', 'Edit');
 end
 
 end
@@ -3356,7 +3356,7 @@ function edit_folder_CreateFcn(hObject, eventdata, handles)
 % Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-	set(hObject,'BackgroundColor','white');
+    set(hObject,'BackgroundColor','white');
 end
 end
 
@@ -3378,7 +3378,7 @@ Start_Times	=	cell2mat({handles.notes.Data.Events.start_time});
 [junk,i_show]	=	min(abs(Start_Times-Times));
 
 if ~isempty(i_show)
-	handles.notes.i_sel=i_show;
+    handles.notes.i_sel=i_show;
 end
 
 handles		=	update_events(handles);
@@ -3406,25 +3406,25 @@ mydir	=	pwd;
 Ichan	=	str2double(get(handles.edit_chan,'String'));  %Hardwire first channel
 
 try
-	[x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,...
-		handles.tdate_start,tlen,Ichan,handles);
+    [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,...
+        handles.tdate_start,tlen,Ichan,handles);
 catch
-	errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge');
-	return
+    errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge');
+    return
 end
 
 if isempty(x)
-	errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge');
-	return
+    errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge');
+    return
 end
 if max(t)<tlen
-	tlen	=	max(t);
-	handles.tlen	=	max(t);
-	set(handles.edit_winlen,'String',num2str(tlen));
+    tlen	=	max(t);
+    handles.tlen	=	max(t);
+    set(handles.edit_winlen,'String',num2str(tlen));
 end
 
 if size(x,2)>1
-	x=x';
+    x=x';
 end
 
 Fs=round(Fs);
@@ -3432,8 +3432,8 @@ Fs=round(Fs);
 mymaxfreq=str2double(get(handles.edit_maxfreq,'String'));
 
 if mymaxfreq==0||mymaxfreq>Fs/2
-	handles.filter.f_max	=	Fs/2;
-	set(handles.edit_maxfreq,'String',num2str(Fs/2));
+    handles.filter.f_max	=	Fs/2;
+    set(handles.edit_maxfreq,'String',num2str(Fs/2));
 end
 %disp(sprintf('Fs=%i',Fs));
 contents=get(handles.popupmenu_Nfft,'String');
@@ -3446,155 +3446,155 @@ ovlap=min([1-1/Nfft ovlap]);
 handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
 
 if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New Fig')
-	%[B,FF,TT]=specgram(x(:,1),Nfft,Fs,hanning(Nfft),round(ovlap*Nfft));
-	[S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
-	%B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
-	handles.sgram.T		=	TT;
-	handles.sgram.F		=	FF;
-	handles.sgram.B		=	B;
-	handles.sgram.Nfft	=	Nfft;
-	handles.sgram.ovlap	=	ovlap;
-	handles.sgram.Fs	=	Fs;
-	
-	if strcmp(handles.display_view,'Spectrogram')
-		axes(handles.axes1);
-	else
-		figure;
-	end
-	
-	%%Add spectral calibration curve, if present
-	if isfield(hdr,'calcurv')
-		Xp_cal_fin=polyval(hdr.calcurv,FF/Fs);
-		
-		imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
-		%elseif isfield(hdr,'cable_factor')
-		%    Xp_cal_fin=20*log10(1+hdr.cable_factor*FF);  %Unit resistance 140 ohm, capacitance 110 nF
-		%    imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
-	else
-		
-		imagesc(TT,FF/1000,10*log10(B));%
-	end
-	grid on
-	axis('xy')
+    %[B,FF,TT]=specgram(x(:,1),Nfft,Fs,hanning(Nfft),round(ovlap*Nfft));
+    [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
+    %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
+    handles.sgram.T		=	TT;
+    handles.sgram.F		=	FF;
+    handles.sgram.B		=	B;
+    handles.sgram.Nfft	=	Nfft;
+    handles.sgram.ovlap	=	ovlap;
+    handles.sgram.Fs	=	Fs;
+    
+    if strcmp(handles.display_view,'Spectrogram')
+        axes(handles.axes1);
+    else
+        figure;
+    end
+    
+    %%Add spectral calibration curve, if present
+    if isfield(hdr,'calcurv')
+        Xp_cal_fin=polyval(hdr.calcurv,FF/Fs);
+        
+        imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
+        %elseif isfield(hdr,'cable_factor')
+        %    Xp_cal_fin=20*log10(1+hdr.cable_factor*FF);  %Unit resistance 140 ohm, capacitance 110 nF
+        %    imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
+    else
+        
+        imagesc(TT,FF/1000,10*log10(B));%
+    end
+    grid on
+    axis('xy')
 	fmax=str2double(get(handles.edit_fmax,'String'));
 	fmin=str2double(get(handles.edit_fmin,'String'));
-	if fmax==0,
-		ylim([0 Fs/2000]);
-		set(handles.edit_fmax,'String',num2str(Fs/2000));
-	else
-		ylim([fmin fmax]);
-	end
-	%ylim([0 1]);axis('xy')
+    if fmax==0,
+        ylim([0 Fs/2000]);
+        set(handles.edit_fmax,'String',num2str(Fs/2000));
+    else
+        ylim([fmin fmax]);
+    end
+    %ylim([0 1]);axis('xy')
 	climm(1)=str2double(get(handles.edit_mindB,'String'));
 	climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
-	%%If switching from correlogram, reset to suggested values
-	if climm(1)==0&&climm(2)<1
-		climm=[40 70];
-		set(handles.edit_mindB,'String',num2str(climm(1)));
-		set(handles.edit_dBspread,'String',num2str(climm(2)));
-		climm(2)=sum(climm);
-	end
-	
-	caxis(climm);
-	if get(handles.checkbox_grayscale,'Value')==1,
-		colormap(flipud(gray));
-	else
-		colormap(jet);
-	end
-	colorbar;
-	% set(gcf,'pos',[30   322  1229   426])
-	set(gca,'fontweight','bold','fontsize',14);
-	xlabel('Time (sec)');ylabel('Frequency (kHz)');
-	if ~strcmp(handles.display_view,'Spectrogram')
-		title(get(handles.text_filename,'String'));
-	end
+    %%If switching from correlogram, reset to suggested values
+    if climm(1)==0&&climm(2)<1
+        climm=[40 70];
+        set(handles.edit_mindB,'String',num2str(climm(1)));
+        set(handles.edit_dBspread,'String',num2str(climm(2)));
+        climm(2)=sum(climm);
+    end
+    
+    caxis(climm);
+    if get(handles.checkbox_grayscale,'Value')==1,
+        colormap(flipud(gray));
+    else
+        colormap(jet);
+    end
+    colorbar;
+    % set(gcf,'pos',[30   322  1229   426])
+    set(gca,'fontweight','bold','fontsize',14);
+    xlabel('Time (sec)');ylabel('Frequency (kHz)');
+    if ~strcmp(handles.display_view,'Spectrogram')
+        title(get(handles.text_filename,'String'));
+    end
 elseif strcmp(handles.display_view,'Time Series') %%Time series
-	
-	%%Check that we are looking at acoustic data
-	if isempty(strfind(handles.myfile,'Press'))
-		disp('Enter min and max frequency:');
-		tmp=ginput(2);
-		if ~isempty(tmp)&&size(tmp,1)==2
-			freq=sort(tmp(:,2))*1000;
-			minfreq=freq(1);maxfreq=freq(2);
-			%y=quick_filter(x(:,1),Fs,freq(1),freq(2))
-			frange=[0.8*minfreq minfreq maxfreq maxfreq+0.2*minfreq];
-			[N,Fo,Ao,W] = firpmord(frange,[0 1 0],[0.05 0.01 0.1],Fs);
-			B = firpm(N,Fo,Ao,W);
-			
-			y=filter(B,1,x(:,1)-mean(x(:,1)));
-		else
-			y=x(:,1)-mean(x(:,1));
-		end
-	else
-		y=x(:,1)/1000;
-	end
-	
-	t=(1:length(x(:,1)))/Fs;
-	plot(t,y);grid on;
-	xlabel('Time (sec)');ylabel('Amplitude');
+    
+    %%Check that we are looking at acoustic data
+    if isempty(strfind(handles.myfile,'Press'))
+        disp('Enter min and max frequency:');
+        tmp=ginput(2);
+        if ~isempty(tmp)&&size(tmp,1)==2
+            freq=sort(tmp(:,2))*1000;
+            minfreq=freq(1);maxfreq=freq(2);
+            %y=quick_filter(x(:,1),Fs,freq(1),freq(2))
+            frange=[0.8*minfreq minfreq maxfreq maxfreq+0.2*minfreq];
+            [N,Fo,Ao,W] = firpmord(frange,[0 1 0],[0.05 0.01 0.1],Fs);
+            B = firpm(N,Fo,Ao,W);
+            
+            y=filter(B,1,x(:,1)-mean(x(:,1)));
+        else
+            y=x(:,1)-mean(x(:,1));
+        end
+    else
+        y=x(:,1)/1000;
+    end
+    
+    t=(1:length(x(:,1)))/Fs;
+    plot(t,y);grid on;
+    xlabel('Time (sec)');ylabel('Amplitude');
 elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
 	fmax=1000*str2double(get(handles.edit_fmax,'String'));
 	fmin=1000*str2double(get(handles.edit_fmin,'String'));
-	param.ovlap=ovlap;
-	param.Nfft=Nfft;
-	prompt1={'ICI range (s)','Correlation sample time (s)','Teager-Kaiser treatment?','Incoherent=1, Coherent=0 ?'};
-	dlgTitle1='Parameters for correlogram...';
-	def1={'[0.01 .25]', '0.25','0','1'};
-	answer=inputdlg(prompt1,dlgTitle1,1,def1);
-	param.ici_range=eval(answer{1});
+    param.ovlap=ovlap;
+    param.Nfft=Nfft;
+    prompt1={'ICI range (s)','Correlation sample time (s)','Teager-Kaiser treatment?','Incoherent=1, Coherent=0 ?'};
+    dlgTitle1='Parameters for correlogram...';
+    def1={'[0.01 .25]', '0.25','0','1'};
+    answer=inputdlg(prompt1,dlgTitle1,1,def1);
+    param.ici_range=eval(answer{1});
 	param.time_sample=str2double(answer{2});
 	param.teager=str2double(answer{3});
 	alg_chc=str2double(answer{4});
-	
-	if alg_chc==1
-		[S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
-		[mean_corr_org,tindex,TT_plot,pwr,pwr_tot,yscale]= create_incoherent_correlogram(TT,FF,B,param,fmin,fmax);
-		
-		
-	else
-		param.Nfft=round(param.time_sample*Fs);
-		[mean_corr_eq,mean_corr_org,tindex,TT_plot,pwr]= create_coherent_correlogram(x(:,1),Fs,param,fmin,fmax);
-		
-		%
-		
-	end
-	
-	dX=tindex(2)-tindex(1);  %X axis of new correlation image
-	Ntime=length(tindex)-1;
-	imagesc(tindex(1:(end-1)),TT_plot,mean_corr_org);caxis([0 0.3]);
-	
-	%colorbar('east','ycolor','w');
-	axis('xy')
-	% title(sprintf('mean correlation value extracted between %6.2f and %6.2f Hz, %6.2f overlap',freq(Ifreq),freq(Ifreq+1),param.ovlap));
+    
+    if alg_chc==1
+        [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
+        [mean_corr_org,tindex,TT_plot,pwr,pwr_tot,yscale]= create_incoherent_correlogram(TT,FF,B,param,fmin,fmax);
+        
+        
+    else
+        param.Nfft=round(param.time_sample*Fs);
+        [mean_corr_eq,mean_corr_org,tindex,TT_plot,pwr]= create_coherent_correlogram(x(:,1),Fs,param,fmin,fmax);
+        
+        %
+        
+    end
+    
+    dX=tindex(2)-tindex(1);  %X axis of new correlation image
+    Ntime=length(tindex)-1;
+    imagesc(tindex(1:(end-1)),TT_plot,mean_corr_org);caxis([0 0.3]);
+    
+    %colorbar('east','ycolor','w');
+    axis('xy')
+    % title(sprintf('mean correlation value extracted between %6.2f and %6.2f Hz, %6.2f overlap',freq(Ifreq),freq(Ifreq+1),param.ovlap));
 	climm(1)=str2double(get(handles.edit_mindB,'String'));
 	climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
-	
-	if climm(1)>1
-		climm(1)=0;
-		set(handles.edit_mindB,'String','0');
-	end
-	if climm(2)>1
-		climm(2)=1;
-		set(handles.edit_dBspread,'String','1');
-	end
-	caxis(climm);
-	
-	if alg_chc==0  %coherent Correlogram
-		caxis([-20 0]);
-		set(handles.edit_mindB,'String','-20');
-		set(handles.edit_dBspread,'String','20');
-	end
-	
-	if get(handles.checkbox_grayscale,'Value')==1,
-		colormap(flipud(gray));
-	else
-		colormap(jet);
-	end
-	colorbar;
-	% set(gcf,'pos',[30   322  1229   426])
-	set(gca,'fontweight','bold','fontsize',14);
-	xlabel('Time (sec)');ylabel('Correlation lag (sec)');
+    
+    if climm(1)>1
+        climm(1)=0;
+        set(handles.edit_mindB,'String','0');
+    end
+    if climm(2)>1
+        climm(2)=1;
+        set(handles.edit_dBspread,'String','1');
+    end
+    caxis(climm);
+    
+    if alg_chc==0  %coherent Correlogram
+        caxis([-20 0]);
+        set(handles.edit_mindB,'String','-20');
+        set(handles.edit_dBspread,'String','20');
+    end
+    
+    if get(handles.checkbox_grayscale,'Value')==1,
+        colormap(flipud(gray));
+    else
+        colormap(jet);
+    end
+    colorbar;
+    % set(gcf,'pos',[30   322  1229   426])
+    set(gca,'fontweight','bold','fontsize',14);
+    xlabel('Time (sec)');ylabel('Correlation lag (sec)');
 end
 
 handles.x	=	x;
@@ -3602,22 +3602,22 @@ handles.Fs	=	Fs;
 %tmp=ginput(2)
 
 if strcmpi(handles.filetype,'gsi')
-	set(handles.pushbutton_GSIbearing,'vis','on');
-	set(handles.pushbutton_GSI_localization,'vis','on');
+    set(handles.pushbutton_GSIbearing,'vis','on');
+    set(handles.pushbutton_GSI_localization,'vis','on');
 else
-	set(handles.pushbutton_GSIbearing,'vis','off');
-	set(handles.pushbutton_GSI_localization,'vis','off');
+    set(handles.pushbutton_GSIbearing,'vis','off');
+    set(handles.pushbutton_GSI_localization,'vis','off');
 end
 
 if strcmpi(handles.filetype,'mdat')||strcmpi(handles.filetype,'wav')||strcmpi(handles.filetype,'mat')
-	set(handles.pushbutton_CSDM,'vis','on');
-	set(handles.pushbutton_Mode,'vis','on');
-	set(handles.pushbutton_tilt,'vis','on');
-	set(handles.pushbutton_modalfiltering,'vis','on');
+    set(handles.pushbutton_CSDM,'vis','on');
+    set(handles.pushbutton_Mode,'vis','on');
+    set(handles.pushbutton_tilt,'vis','on');
+    set(handles.pushbutton_modalfiltering,'vis','on');
 else
-	set(handles.pushbutton_CSDM,'vis','off');
-	set(handles.pushbutton_Mode,'vis','off');
-	set(handles.pushbutton_modalfiltering,'vis','off');
+    set(handles.pushbutton_CSDM,'vis','off');
+    set(handles.pushbutton_Mode,'vis','off');
+    set(handles.pushbutton_modalfiltering,'vis','off');
 end
 
 end
@@ -3635,12 +3635,12 @@ handles.tdate_max=	-1;
 %cd(handles.mydir);
 
 try
-	[x,t,Fs,tmin,tmax]=load_data(filetype,-1,-1,1,1,handles);
+    [x,t,Fs,tmin,tmax]=load_data(filetype,-1,-1,1,1,handles);
 catch %no file selected
-	%errordlg(sprintf('No %s file selected',filetype));
-	errorflag=1;
-	cd(mydir);
-	return
+    %errordlg(sprintf('No %s file selected',filetype));
+    errorflag=1;
+    cd(mydir);
+    return
 end
 
 
@@ -3681,106 +3681,106 @@ local_machine=deblank(local_machine);
 startup_info.calibration_DASAR2007_dir=[];
 
 if strcmp(local_machine,'macmussel.ucsd.edu')
+    
+    startup_info.base_directory='/Users/Shared/MATLAB/AllFile_specgram_viewer';   
 	
-	startup_info.base_directory='/Users/Shared/MATLAB/AllFile_specgram_viewer';
 	
-	
-	startup_info.default_directory='/Volumes/';
-	startup_info.default_inputfiledir='/Users/thode/Projects/Insta-array/Alaska_Sperm';
-	
-	%%Default annotation file
-	startup_info.annotation_file='annotated.txt';
-	startup_info.function_handles_filename='mt_specgram_handles.mat';
-	
-	%%Name of default multipath storage file
-	startup_info.multipath_filename='gui_multipath_selections.mat';
-	startup_info.calibration_DASAR2007_dir='';
+    startup_info.default_directory='/Volumes/';
+    startup_info.default_inputfiledir='/Users/thode/Projects/Insta-array/Alaska_Sperm';
+    
+    %%Default annotation file
+    startup_info.annotation_file='annotated.txt';
+    startup_info.function_handles_filename='mt_specgram_handles.mat';
+    
+    %%Name of default multipath storage file
+    startup_info.multipath_filename='gui_multipath_selections.mat';
+    startup_info.calibration_DASAR2007_dir='';
 elseif strfind(local_machine,'Jan-Straleys')
-	
-	startup_info.base_directory='/Users/janstraley/SEASWAP_2011';
-	
-	
-	startup_info.default_directory='/Users/janstraley/SEASWAP_2011';
-	startup_info.default_inputfiledir='/Users/janstraley/SEASWAP_2011';
-	
-	%%Default annotation file
-	startup_info.annotation_file='annotated.txt';
-	startup_info.function_handles_filename='mt_specgram_handles.mat';
-	
-	%%Name of default multipath storage file
-	startup_info.multipath_filename='gui_multipath_selections.mat';
-	startup_info.calibration_DASAR2007_dir='';
+    
+    startup_info.base_directory='/Users/janstraley/SEASWAP_2011';
+    
+    
+    startup_info.default_directory='/Users/janstraley/SEASWAP_2011';
+    startup_info.default_inputfiledir='/Users/janstraley/SEASWAP_2011';
+    
+    %%Default annotation file
+    startup_info.annotation_file='annotated.txt';
+    startup_info.function_handles_filename='mt_specgram_handles.mat';
+    
+    %%Name of default multipath storage file
+    startup_info.multipath_filename='gui_multipath_selections.mat';
+    startup_info.calibration_DASAR2007_dir='';
 elseif strfind(local_machine,'Janice')
-	
-	startup_info.base_directory='~/Desktop/MATLAB/AllFile_specgram_viewer';
-	
-	
-	startup_info.default_directory='~/Desktop';
-	startup_info.default_inputfiledir='/Users/thode/Projects/Insta-array/Alaska_Sperm';
-	
-	%%Default annotation file
-	startup_info.annotation_file='annotated.txt';
-	startup_info.function_handles_filename='mt_specgram_handles.mat';
-	
-	%%Name of default multipath storage file
-	startup_info.multipath_filename='gui_multipath_selections.mat';
-	startup_info.calibration_DASAR2007_dir='';
-	
+    
+    startup_info.base_directory='~/Desktop/MATLAB/AllFile_specgram_viewer';
+    
+    
+    startup_info.default_directory='~/Desktop';
+    startup_info.default_inputfiledir='/Users/thode/Projects/Insta-array/Alaska_Sperm';
+    
+    %%Default annotation file
+    startup_info.annotation_file='annotated.txt';
+    startup_info.function_handles_filename='mt_specgram_handles.mat';
+    
+    %%Name of default multipath storage file
+    startup_info.multipath_filename='gui_multipath_selections.mat';
+    startup_info.calibration_DASAR2007_dir='';
+    
 elseif strcmp(local_machine,'KatsMacPro.local')  %KatMacGSI
-	startup_info.base_directory='/Users/thode/MATLAB/AllFile_specgram_viewer';
-	
-	
-	startup_info.default_directory='/Volumes';
-	startup_info.default_inputfiledir='/Volumes';
-	
-	startup_info.annotation_file='annotated.txt';
-	startup_info.function_handles_filename='mt_specgram_handles.mat';
-	
-	%%Name of default multipath storage file
-	startup_info.multipath_filename='gui_multipath_selections.mat';
-	
-	
+    startup_info.base_directory='/Users/thode/MATLAB/AllFile_specgram_viewer';
+    
+    
+    startup_info.default_directory='/Volumes';
+    startup_info.default_inputfiledir='/Volumes';
+    
+    startup_info.annotation_file='annotated.txt';
+    startup_info.function_handles_filename='mt_specgram_handles.mat';
+    
+    %%Name of default multipath storage file
+    startup_info.multipath_filename='gui_multipath_selections.mat';
+    
+    
 elseif ~isempty(strfind('dgrebner',local_machine))
-	
-	startup_info.base_directory='/Users/dgrebner/Desktop/';
-	startup_info.default_directory=startup_info.base_directory;
-	startup_info.default_inputfiledir='/Users/thode/Projects/Insta-array/Alaska_Sperm';
-	startup_info.annotation_file='annotated.txt';
-	startup_info.calibration_DASAR2007_dir='';
-	
-	startup_info.function_handles_filename='mt_specgram_handles.mat';
-	
-	%%Name of default multipath storage file
-	startup_info.multipath_filename='gui_multipath_selections.mat';
+    
+    startup_info.base_directory='/Users/dgrebner/Desktop/';
+    startup_info.default_directory=startup_info.base_directory;
+    startup_info.default_inputfiledir='/Users/thode/Projects/Insta-array/Alaska_Sperm';
+    startup_info.annotation_file='annotated.txt';
+    startup_info.calibration_DASAR2007_dir='';
+    
+    startup_info.function_handles_filename='mt_specgram_handles.mat';
+    
+    %%Name of default multipath storage file
+    startup_info.multipath_filename='gui_multipath_selections.mat';
 elseif ~isempty(strfind('thode',local_machine))
-	
-	startup_info.base_directory='/Users/thode/Projects/Arctic_2010/Data/Bottom_Unit';
-	startup_info.default_directory=startup_info.base_directory;
-	startup_info.default_inputfiledir='/Users/thode/Projects/Insta-array/Alaska_Sperm';
-	startup_info.annotation_file='annotated.txt';
-	
-	startup_info.function_handles_filename='mt_specgram_handles.mat';
-	startup_info.calibration_DASAR2007_dir='/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/RawData';
-	
-	%%Name of default multipath storage file
-	startup_info.multipath_filename='gui_multipath_selections.mat';
+    
+    startup_info.base_directory='/Users/thode/Projects/Arctic_2010/Data/Bottom_Unit';
+    startup_info.default_directory=startup_info.base_directory;
+    startup_info.default_inputfiledir='/Users/thode/Projects/Insta-array/Alaska_Sperm';
+    startup_info.annotation_file='annotated.txt';
+    
+    startup_info.function_handles_filename='mt_specgram_handles.mat';
+    startup_info.calibration_DASAR2007_dir='/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/RawData';
+    
+    %%Name of default multipath storage file
+    startup_info.multipath_filename='gui_multipath_selections.mat';
 else
-	startup_info.base_directory='~/Desktop/MATLAB';
-	startup_info.default_directory='~/Desktop';
-	startup_info.default_inputfiledir='~/Desktop';
-	startup_info.annotation_file='annotated.txt';
-	
-	startup_info.function_handles_filename='mt_specgram_handles.mat';
-	
-	%%Name of default multipath storage file
-	startup_info.multipath_filename='gui_multipath_selections.mat';
-	
+    startup_info.base_directory='~/Desktop/MATLAB';
+    startup_info.default_directory='~/Desktop';
+    startup_info.default_inputfiledir='~/Desktop';
+    startup_info.annotation_file='annotated.txt';
+    
+    startup_info.function_handles_filename='mt_specgram_handles.mat';
+    
+    %%Name of default multipath storage file
+    startup_info.multipath_filename='gui_multipath_selections.mat';
+    
 end
 
 end
 
 function [x,t,Fs,tmin,tmax,head]	=	...
-	load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)
+    load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)
 persistent  keyword
 mydir=handles.mydir;
 myfile=handles.myfile;
@@ -3793,276 +3793,276 @@ tmax=[];
 head=[];
 filetype	=	upper(filetype);
 switch filetype
-	case 'MAT'
-		
-		simulated=load([mydir '/' myfile]);
-		Fs=simulated.fs;
-		
-		x=simulated.x_sweep';
-		if strcmp(Ichan,'all')
-			Ichan=1:size(x,2);
-		end
-		if max(Ichan)>max(size(x,2)),
-			disp(['Channel too high, restricting to ' int2str(max(size(x,2)))]);
-			Ichan=max(size(x,2));
-		end
-		
-		x=x(:,Ichan);
-		
-		
-		if tdate_start==-1
-			tmin=datenum(0);
-		elseif tdate_start>0 %We are trimming beginning time
-			tmin=tdate_start;
-			tmp=datevec(tdate_start);
-			dn=1+floor(Fs*tmp(end));
-			x=x(dn:end,:);
-			t=t(dn:end);
-		else
-			tmin=tdate_start;
-		end
-		
-		if tlen*Fs<size(x,1)
-			x=x(1:floor(tlen*Fs),:);
-		end
-		t=(1:length(x))/Fs;
-		
-		tmax=tmin+datenum(0,0,0,0,0,max(t));
+    case 'MAT'
+        
+        simulated=load([mydir '/' myfile]);
+        Fs=simulated.fs;
+        
+        x=simulated.x_sweep';
+        if strcmp(Ichan,'all')
+            Ichan=1:size(x,2);
+        end
+        if max(Ichan)>max(size(x,2)),
+            disp(['Channel too high, restricting to ' int2str(max(size(x,2)))]);
+            Ichan=max(size(x,2));
+        end
+        
+        x=x(:,Ichan);
+        
+        
+        if tdate_start==-1
+            tmin=datenum(0);
+        elseif tdate_start>0 %We are trimming beginning time
+            tmin=tdate_start;
+            tmp=datevec(tdate_start);
+            dn=1+floor(Fs*tmp(end));
+            x=x(dn:end,:);
+            t=t(dn:end);
+        else
+            tmin=tdate_start;
+        end
+        
+        if tlen*Fs<size(x,1)
+            x=x(1:floor(tlen*Fs),:);
+        end
+        t=(1:length(x))/Fs;
+        
+        tmax=tmin+datenum(0,0,0,0,0,max(t));
         head.geom.rd=simulated.rd;
-		head.Nchan=size(x,2);
-		x=x';
-	case 'GSI'
-		if strcmp(Ichan,'all')
-			Ichan=1:3;
-		end
-		if max(Ichan)>3,
-			disp('Channel too high, restricting to 3');
-			Ichan=3;
-		end
-		[x,t,head]=readGSIfile([mydir '/' myfile],tdate_start,tlen,Ichan,'datenum','nocalibrate');
-		if isempty(keyword)
-			keyword=input('Enter a keyword for GSI calibration [DASARC]:','s');
-			if isempty(keyword)
-				keyword='DASARC';
-			end
-		end
-		x=calibrate_GSI_signal(x, keyword);
-		
-		Fs=head.Fs;
-		
-		tmin=datenum(1970,1,1,0,0,head.ctbc);
-		tmax=tmin+datenum(0,0,1,0,0,0);
-		head.Nchan=length(Ichan);
-	case 'MT'
-		%[x,t,Fs]=load_mt_mult(handles.mydir,tdate_start,tlen);
-		head=read_mt_header([mydir '/' myfile]);
-		
-		tmin=head.tstart;
-		tmax=head.tend;
-		Fs=head.Fs;
-		if Ichan>1
-			disp('WARNING: load_data: MT can only have one channel');
-			Ichan=1;
-		end
-		if tdate_start>0
-			tdate_vec=datevec(tdate_start-tmin);
-			nsec=tdate_vec(6)+60*tdate_vec(5)+3600*tdate_vec(4);
-			[x,t]=load_mt([mydir '/' myfile],nsec,tlen);
-		end
-		head.Nchan=1;
-	case 'DAT'
-		[x,tmin,tmax,fs]=read_dat_file([mydir '/' myfile],[],-1,tlen,0);
-		
-		if isempty(fs)
-			fs=input('Enter sampling rate in Hz:');
-		end
-		Fs=fs;
-		[x,tmin,tmax]=read_dat_file([mydir '/' myfile],Fs,tdate_start,tlen,0); %output in uPa
-		%[x,tmin,tmax]=read_dat_file([mydir '/' myfile],Fs,tdate_start,tlen,1);  %Voltage output
-		
-		head.Nchan=1;
-		switch fs
-			case 50000
-				head.calcurv=[
-					1.179288464673746e+06
-					-3.417289147406752e+06
-					3.972100408634462e+06
-					-2.459193259685826e+06
-					8.904700994689314e+05
-					-1.924134277822444e+05
-					2.476608484423531e+04
-					-2.235739303825218e+03
-					2.904887584919255e+02
-					-5.381149759460806e+00
-					7.841554559708414e-03
-					];
-			case 6250
-				head.calcurv=[
-					-9.864342626384007e+06
-					2.675183405132254e+07
-					-3.072255757018830e+07
-					1.946983114345214e+07
-					-7.445224085881455e+06
-					1.766054734429601e+06
-					-2.570588847834060e+05
-					2.188411119767746e+04
-					-9.803725367146685e+02
-					1.959124505642275e+01
-					-2.811936435415921e-01];
-			case 12500
-				head.calcurv=[
-					9.262441626302190e+07
-					-2.151487191990283e+08
-					2.069375942078056e+08
-					-1.063702102525421e+08
-					3.153159716612202e+07
-					-5.458152352141772e+06
-					5.382152297627985e+05
-					-2.765563363629215e+04
-					6.113088605208859e+02
-					-1.301582987521525e+00
-					-1.634557871607174e-01];
-		end
-		
-	case 'ADI'
-		[x,tmin,tmax,fs]=read_adi_file(mydir,myfile,[],0,tlen,0);
-		
-		if isempty(fs)
-			fs=input('Enter sampling rate in Hz:');
-		end
-		Fs=fs;
-		[x,tmin,tmax]=read_adi_file(mydir,myfile,Fs,tdate_start,tlen,0); %Output in uPa
-		%[x,tmin,tmax]=read_adi_file(mydir,myfile,Fs,tdate_start,tlen,1);  %Output in voltage
-		
-		head.Nchan=1;
-		
-	case 'MDAT'
-		
+        head.Nchan=size(x,2);
+        x=x';
+    case 'GSI'
+        if strcmp(Ichan,'all')
+            Ichan=1:3;
+        end
+        if max(Ichan)>3,
+            disp('Channel too high, restricting to 3');
+            Ichan=3;
+        end
+        [x,t,head]=readGSIfile([mydir '/' myfile],tdate_start,tlen,Ichan,'datenum','nocalibrate');
+        if isempty(keyword)
+            keyword=input('Enter a keyword for GSI calibration [DASARC]:','s');
+            if isempty(keyword)
+                keyword='DASARC';
+            end
+        end
+        x=calibrate_GSI_signal(x, keyword);
+        
+        Fs=head.Fs;
+        
+        tmin=datenum(1970,1,1,0,0,head.ctbc);
+        tmax=tmin+datenum(0,0,1,0,0,0);
+        head.Nchan=length(Ichan);
+    case 'MT'
+        %[x,t,Fs]=load_mt_mult(handles.mydir,tdate_start,tlen);
+        head=read_mt_header([mydir '/' myfile]);
+        
+        tmin=head.tstart;
+        tmax=head.tend;
+        Fs=head.Fs;
+        if Ichan>1
+            disp('WARNING: load_data: MT can only have one channel');
+            Ichan=1;
+        end
+        if tdate_start>0
+            tdate_vec=datevec(tdate_start-tmin);
+            nsec=tdate_vec(6)+60*tdate_vec(5)+3600*tdate_vec(4);
+            [x,t]=load_mt([mydir '/' myfile],nsec,tlen);
+        end
+        head.Nchan=1;
+    case 'DAT'
+        [x,tmin,tmax,fs]=read_dat_file([mydir '/' myfile],[],-1,tlen,0);
+        
+        if isempty(fs)
+            fs=input('Enter sampling rate in Hz:');
+        end
+        Fs=fs;
+        [x,tmin,tmax]=read_dat_file([mydir '/' myfile],Fs,tdate_start,tlen,0); %output in uPa
+        %[x,tmin,tmax]=read_dat_file([mydir '/' myfile],Fs,tdate_start,tlen,1);  %Voltage output
+        
+        head.Nchan=1;
+        switch fs
+            case 50000
+                head.calcurv=[
+                    1.179288464673746e+06
+                    -3.417289147406752e+06
+                    3.972100408634462e+06
+                    -2.459193259685826e+06
+                    8.904700994689314e+05
+                    -1.924134277822444e+05
+                    2.476608484423531e+04
+                    -2.235739303825218e+03
+                    2.904887584919255e+02
+                    -5.381149759460806e+00
+                    7.841554559708414e-03
+                    ];
+            case 6250
+                head.calcurv=[
+                    -9.864342626384007e+06
+                    2.675183405132254e+07
+                    -3.072255757018830e+07
+                    1.946983114345214e+07
+                    -7.445224085881455e+06
+                    1.766054734429601e+06
+                    -2.570588847834060e+05
+                    2.188411119767746e+04
+                    -9.803725367146685e+02
+                    1.959124505642275e+01
+                    -2.811936435415921e-01];
+            case 12500
+                head.calcurv=[
+                    9.262441626302190e+07
+                    -2.151487191990283e+08
+                    2.069375942078056e+08
+                    -1.063702102525421e+08
+                    3.153159716612202e+07
+                    -5.458152352141772e+06
+                    5.382152297627985e+05
+                    -2.765563363629215e+04
+                    6.113088605208859e+02
+                    -1.301582987521525e+00
+                    -1.634557871607174e-01];
+        end
+        
+    case 'ADI'
+        [x,tmin,tmax,fs]=read_adi_file(mydir,myfile,[],0,tlen,0);
+        
+        if isempty(fs)
+            fs=input('Enter sampling rate in Hz:');
+        end
+        Fs=fs;
+        [x,tmin,tmax]=read_adi_file(mydir,myfile,Fs,tdate_start,tlen,0); %Output in uPa
+        %[x,tmin,tmax]=read_adi_file(mydir,myfile,Fs,tdate_start,tlen,1);  %Output in voltage
+        
+        head.Nchan=1;
+        
+    case 'MDAT'
+        
     
         [x,head]=read_synchronized_mdat_files(fullfile(mydir,myfile),tdate_start,tlen);
         Fs=head.fs;
         tmin=head.tfs;
         tmax=head.tfe;
         head.Nchan=size(x,2);
-			if strcmp(Ichan,'all')
+        if strcmp(Ichan,'all')
             Ichan=1:head.Nchan;
-			end
+        end
         if max(Ichan)>head.Nchan
             disp(sprintf('Channel too high, max channel %i',head.Nchan));
             Ichan=min(Ichan):head.Nchan;
-			end
+        end
         
-			try
+        try
             x=x(:,Ichan);
             for II=Ichan
                 fprintf('Logged depth of channel %i is %6.2f m\n',II,head.geom.rd(II));
-			end
-		end
+            end
+        end
         
         x=x';
-		head.calcurv=[
-			-3.826740371096994e+07
-			8.955964717194067e+07
-			-9.041409824956748e+07
-			5.195683344725087e+07
-			-1.873830725900567e+07
-			4.336813690670102e+06
-			-6.251710636164501e+05
-			5.339062841084976e+04
-			-2.452316303554637e+03
-			5.178423592184026e+01
-			-1.229223450332553e+00];
-		
-	case 'WAV'
-		Nsamples	=	wavread([mydir '/' myfile],'size');
-		[~,Fs]		=	wavread([mydir '/' myfile],1,'native');
-		Nsamples	=	Nsamples(1);
-		handles.Fs	=	Fs;
-		
-		%%Can we calibrate the data?
-		%%  load_wav often normalizes the data so the peak value is 1.
-		%sens0=157; %dB re 1 unit of wav entry
-		%sens=input('Enter sensitivity of entire system (flat-spectrum calibration) [180 dB re 1 unit]:');
-		%if isempty(sens)
-		%sens=sens0;
-		%end
-		%sens=10^(sens/20);
-		
-		%%Calibration for ADAT 24 attached to Sonotech hydrophone array
-		%//ADAT HD24 has 6.9 V Rms max input for 24 bit data
-		%//Factor of 2 from differential inputs...
-		%//Hydrophone gain set to Sonotech array -157 dB
-		%// Don't have cable attenuation  here...
-		sens=(6.9*sqrt(2)/16777215)*0.5*10^(157.0 / 20.0);
-		%freq_cal[i]=(1.0+2*Math.PI*f*(110e-9)*140.0);
-		
-		% Nov 15, 2011
-		%         Hi Aaron,
-		%
-		% I thumbed through my notes for a few minutes to refresh my memory on this project.  The attenuation problem can be hugely simplified by eliminating many of the parameters right away.  The preamp output impedance is ordinarily very small, and the cable insulation resistance and receiver input impedance will be very large.  All of the above parameters can generally be ignored.
-		%
-		% This really only leaves the cable resistance and capacitance and so becomes a fairly simple voltage divider problem.  From my notes, I measured the cable (the entire 800+ length) resistance to be ~70 ohms and the capacitance to be ~110 nF.  The model would look like a series resistance with a shunt capacitance, so:
-		%
-		% R = 140 ohms (round trip)
-		% X = 1/(2*pi*f*C)
-		%
-		% So, the 6 dB down frequency will be when R= X, so:
-		% f = 1/(2*pi*C*R) = ~10 kHz.
-		%
-		% And the attenuation at any frequency:
-		% X/(R + X)  or 1/(1+ 2*pi*f*C*R)
-		%
-		% The cable attenuation seen by the vector sensor will essentially look like a single pole low pass filter with Fc = 10 kHz:
-		% 5   kHz: -3 dB
-		% 10 kHz: -6 dB
-		% 20 kHz: -9 dB
-		%
-		% This is consistent with my notes where I measured the cable attenuation to roll off by 3 dB/octave starting at 4-5 kHz.  The above is for the case of the vector sensor driving the entire length of the array.  For the other hydrophones driving shorter lengths of cable, the calculations will be the same but you will need to use different R and C values in the equation 20 log (1/(1+ 2*pi*f*C*R)) to compute the new attenuation values vs frequency.
-		%
-		% Jeff
-		
-		head.cable_factor=2*pi*(110e-9)*140.0;  %Unit resistance 140 ohm, capacitance 110 nF
-		
-		if tstart_min<0
-			try
-				tmin	=	convert_date(myfile,'_');
-				tmax	=	convert_date(myfile,'_') + datenum(0,0,0,0,0,Nsamples/Fs);
-			catch
-				disp([myfile ': convert_date failure']);
-				minn	=	input('Enter start date in format [yr mo day hr min sec]: ');
-				if isempty(minn)
-					minn=zeros(1,6);
-				end
-				tmin	=	datenum(minn);
-				tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
-			end
-		else
-			tmin		=	tstart_min;
-			tmax		=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
-			tdate_vec	=	datevec(tdate_start - tmin);
-			nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);
-			N1			=	1 + round(nsec*handles.Fs);
-			N2			=	N1 + round(tlen*handles.Fs);
-			[x,Fs]		=	wavread([mydir '/' myfile],[N1 N2],'native');
-			
-			if ~strcmp(Ichan,'all')
-				x		=	x(:,Ichan);
-			end
-			
-			t	=	(1:length(x))/Fs;
-		end
-		x			=	double(x)*sens;
-		head.Nchan	=	size(x,2);
-		
+        head.calcurv=[
+            -3.826740371096994e+07
+            8.955964717194067e+07
+            -9.041409824956748e+07
+            5.195683344725087e+07
+            -1.873830725900567e+07
+            4.336813690670102e+06
+            -6.251710636164501e+05
+            5.339062841084976e+04
+            -2.452316303554637e+03
+            5.178423592184026e+01
+            -1.229223450332553e+00];
+        
+    case 'WAV'
+        Nsamples	=	wavread([mydir '/' myfile],'size');
+        [~,Fs]		=	wavread([mydir '/' myfile],1,'native');
+        Nsamples	=	Nsamples(1);
+        handles.Fs	=	Fs;
+        
+        %%Can we calibrate the data?
+        %%  load_wav often normalizes the data so the peak value is 1.
+        %sens0=157; %dB re 1 unit of wav entry
+        %sens=input('Enter sensitivity of entire system (flat-spectrum calibration) [180 dB re 1 unit]:');
+        %if isempty(sens)
+        %sens=sens0;
+        %end
+        %sens=10^(sens/20);
+        
+        %%Calibration for ADAT 24 attached to Sonotech hydrophone array
+        %//ADAT HD24 has 6.9 V Rms max input for 24 bit data
+        %//Factor of 2 from differential inputs...
+        %//Hydrophone gain set to Sonotech array -157 dB
+        %// Don't have cable attenuation  here...
+        sens=(6.9*sqrt(2)/16777215)*0.5*10^(157.0 / 20.0);
+        %freq_cal[i]=(1.0+2*Math.PI*f*(110e-9)*140.0);
+        
+        % Nov 15, 2011
+        %         Hi Aaron,
+        %
+        % I thumbed through my notes for a few minutes to refresh my memory on this project.  The attenuation problem can be hugely simplified by eliminating many of the parameters right away.  The preamp output impedance is ordinarily very small, and the cable insulation resistance and receiver input impedance will be very large.  All of the above parameters can generally be ignored.
+        %
+        % This really only leaves the cable resistance and capacitance and so becomes a fairly simple voltage divider problem.  From my notes, I measured the cable (the entire 800+ length) resistance to be ~70 ohms and the capacitance to be ~110 nF.  The model would look like a series resistance with a shunt capacitance, so:
+        %
+        % R = 140 ohms (round trip)
+        % X = 1/(2*pi*f*C)
+        %
+        % So, the 6 dB down frequency will be when R= X, so:
+        % f = 1/(2*pi*C*R) = ~10 kHz.
+        %
+        % And the attenuation at any frequency:
+        % X/(R + X)  or 1/(1+ 2*pi*f*C*R)
+        %
+        % The cable attenuation seen by the vector sensor will essentially look like a single pole low pass filter with Fc = 10 kHz:
+        % 5   kHz: -3 dB
+        % 10 kHz: -6 dB
+        % 20 kHz: -9 dB
+        %
+        % This is consistent with my notes where I measured the cable attenuation to roll off by 3 dB/octave starting at 4-5 kHz.  The above is for the case of the vector sensor driving the entire length of the array.  For the other hydrophones driving shorter lengths of cable, the calculations will be the same but you will need to use different R and C values in the equation 20 log (1/(1+ 2*pi*f*C*R)) to compute the new attenuation values vs frequency.
+        %
+        % Jeff
+        
+        head.cable_factor=2*pi*(110e-9)*140.0;  %Unit resistance 140 ohm, capacitance 110 nF
+        
+        if tstart_min<0
+            try
+                tmin	=	convert_date(myfile,'_');
+                tmax	=	convert_date(myfile,'_') + datenum(0,0,0,0,0,Nsamples/Fs);
+            catch
+                disp([myfile ': convert_date failure']);
+                minn	=	input('Enter start date in format [yr mo day hr min sec]: ');
+                if isempty(minn)
+                    minn=zeros(1,6);
+                end
+                tmin	=	datenum(minn);
+                tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
+            end
+        else
+            tmin		=	tstart_min;
+            tmax		=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
+            tdate_vec	=	datevec(tdate_start - tmin);
+            nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);
+            N1			=	1 + round(nsec*handles.Fs);
+            N2			=	N1 + round(tlen*handles.Fs);
+            [x,Fs]		=	wavread([mydir '/' myfile],[N1 N2],'native');
+            
+            if ~strcmp(Ichan,'all')
+                x		=	x(:,Ichan);
+            end
+            
+            t	=	(1:length(x))/Fs;
+        end
+        x			=	double(x)*sens;
+        head.Nchan	=	size(x,2);
+        
 end
 
 
 %%%Optional Teager-Kaiser filtering...
 if teager
-	%%Assume that x is in form [ channel time]
-	x=x(:,2:end-1).^2-x(:,1:end-2).*x(:,3:end);
+    %%Assume that x is in form [ channel time]
+    x=x(:,2:end-1).^2-x(:,1:end-2).*x(:,3:end);
 end
-		
+
 
 end  %function load_data
 
@@ -4077,30 +4077,30 @@ function [y,t,head]=readGSIfile(rawfile,cbegin,tlen,nchan,formatt,calibrate)
 % calibrate = String 'calibrate' to convert Volts to microP;
 
 if strfind(rawfile,'.sio')
-	
-	[y,t,head]=readsiof(rawfile,cbegin,tlen,formatt);
-	y=y-0.5*(2^16);  %Remove DC bias in A/D converter
-	
+    
+    [y,t,head]=readsiof(rawfile,cbegin,tlen,formatt);
+    y=y-0.5*(2^16);  %Remove DC bias in A/D converter
+    
 elseif strfind(rawfile,'.gsi')
-	[y,t,head]=readgsi(rawfile,cbegin,tlen,formatt);
-	if isempty(y)  %request time is befine file start
-		dt=cbegin-head.ctbc;
-		tlen=tlen+dt;
-		[y,t,head]=readgsi(rawfile,0,tlen,formatt);
-		
-	end
-	y=y(nchan,:);
-	if strcmp(calibrate,'calibrate'),
-		y=y-0.5*(2^16);  %Remove DC bias in A/D converter
-		
-		y=y*(2.5/65535)*(10^(150/20));
-	end
-	y=y.';
-	
-	if (abs(size(y,1)-floor(head.Fs*tlen))>2),
-		disp('End of file reached, setting y to empty');
-		y=[];
-	end
+    [y,t,head]=readgsi(rawfile,cbegin,tlen,formatt);
+    if isempty(y)  %request time is befine file start
+        dt=cbegin-head.ctbc;
+        tlen=tlen+dt;
+        [y,t,head]=readgsi(rawfile,0,tlen,formatt);
+        
+    end
+    y=y(nchan,:);
+    if strcmp(calibrate,'calibrate'),
+        y=y-0.5*(2^16);  %Remove DC bias in A/D converter
+        
+        y=y*(2.5/65535)*(10^(150/20));
+    end
+    y=y.';
+    
+    if (abs(size(y,1)-floor(head.Fs*tlen))>2),
+        disp('End of file reached, setting y to empty');
+        y=[];
+    end
 end
 
 end
@@ -4123,7 +4123,7 @@ mydir=pwd;
 disp('Click on two extreme corners, click below axis twice to reject:');
 tmp=ginput(2);
 if (isempty(tmp)||any(tmp(:,2)<0))
-	return
+    return
 end
 tsec=min(tmp(:,1));
 n=round(Fs*sort(tmp(:,1)));
@@ -4135,19 +4135,19 @@ Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
 [thet0,kappa,sd]=extract_bearings(x(n(1):n(2),:),0.25,Nfft,Fs,freq(1),freq(2),50);
 
 if ~isempty(strfind('T2007',handles.myfile))
-	cal07flag=1;
-	handles.calibration_DASAR2007_dir='/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/RawData';
-	
-	brefa_table=calibrate_bearing_Shell2007(handles.calibration_DASAR2007_dir,handles.myfile);
+    cal07flag=1;
+    handles.calibration_DASAR2007_dir='/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/RawData';
+    
+    brefa_table=calibrate_bearing_Shell2007(handles.calibration_DASAR2007_dir,handles.myfile);
 else
-	cal07flag=0;
+    cal07flag=0;
 end
 
 if cal07flag==0
-	thet=bnorm(thet0+head.brefa);
+    thet=bnorm(thet0+head.brefa);
 else
-	[junk,Icol]=calibrate_bearing_Shell2007(handles.calibration_DASAR2007_dir,handles.myfile,1);
-	thet= interp1(0:360,brefa_table(:,Icol),bnorm(thet0));
+    [junk,Icol]=calibrate_bearing_Shell2007(handles.calibration_DASAR2007_dir,handles.myfile,1);
+    thet= interp1(0:360,brefa_table(:,Icol),bnorm(thet0));
 end
 
 %handles.bearing=thet;
@@ -4174,30 +4174,30 @@ tm=datenum(str((end-13):(end-5)),14)-datenum('00:00:00',14);
 day=str2double(str((end-15):(end-14)));
 month=(str((end-19):(end-16)));
 switch deblank(month),
-	case 'Jan'
-		mn=1;
-	case 'Feb'
-		mn=2;
-	case 'Mar'
-		mn=3;
-	case 'Apr'
-		mn=4;
-	case 'May'
-		mn=5;
-	case 'Jun'
-		mn=6;
-	case 'Jul'
-		mn=7;
-	case 'Aug'
-		mn=8;
-	case 'Sep'
-		mn=9;
-	case 'Oct'
-		mn=10;
-	case 'Nov'
-		mn=11;
-	case 'Dec'
-		mn=12;
+    case 'Jan'
+        mn=1;
+    case 'Feb'
+        mn=2;
+    case 'Mar'
+        mn=3;
+    case 'Apr'
+        mn=4;
+    case 'May'
+        mn=5;
+    case 'Jun'
+        mn=6;
+    case 'Jul'
+        mn=7;
+    case 'Aug'
+        mn=8;
+    case 'Sep'
+        mn=9;
+    case 'Oct'
+        mn=10;
+    case 'Nov'
+        mn=11;
+    case 'Dec'
+        mn=12;
 end
 
 tabs=tm+datenum(year,mn,day,0,0,0);
@@ -4236,13 +4236,13 @@ a_eqC2 = conv(a,aa);
 b_eqC2 = conv(b,bb);
 
 if plot_data==1,
-	ff = [logspace(-2,log10(500),1000)]';
-	[h_eqC2,w] = freqz(b_eqC2,a_eqC2,ff*pi*(2/Fs));
-	figure
-	semilogx(w/pi *(Fs/2),20*log10(abs(h_eqC2)),'k')
-	grid on
-	xlabel('Frequency, Hz')
-	ylabel('gain, dB V/V')
+    ff = [logspace(-2,log10(500),1000)]';
+    [h_eqC2,w] = freqz(b_eqC2,a_eqC2,ff*pi*(2/Fs));
+    figure
+    semilogx(w/pi *(Fs/2),20*log10(abs(h_eqC2)),'k')
+    grid on
+    xlabel('Frequency, Hz')
+    ylabel('gain, dB V/V')
 end
 
 end
@@ -4277,7 +4277,7 @@ function [numd,dend] = DASAR_Shell_2007_equalization(Fs,plot_on)
 
 %%
 if(Fs ~= 1000)
-	error('designed & tested for Fs = 1000 Hz only')
+    error('designed & tested for Fs = 1000 Hz only')
 end
 %plot_on=1;
 %% equalization filter for the high-pass filter formed by PZT ceramic and shunt resistor
@@ -4298,11 +4298,11 @@ dens1 = [1/p1b 1]; % s-plane denominator coefs
 [numd1,dend1] = bilinear(nums1,dens1,Fs);
 
 if(plot_on)
-	hFVT = fvtool(numd1,dend1);
-	set(hFVT,'NumberofPoints',8192,'FrequencyScale','Log')
-	set(hFVT,'NormalizedFrequency','off','Fs',Fs)
-	legend(hFVT,'First Equalization Filter')
-	pause
+    hFVT = fvtool(numd1,dend1);
+    set(hFVT,'NumberofPoints',8192,'FrequencyScale','Log')
+    set(hFVT,'NormalizedFrequency','off','Fs',Fs)
+    legend(hFVT,'First Equalization Filter')
+    pause
 end
 
 %% equalization filter for the high-pass filter formed by preamplifier (non-inverting gain stage)
@@ -4322,11 +4322,11 @@ dens2 = [1/p2b 1];
 [numd2,dend2] = bilinear(nums2,dens2,Fs);
 
 if(plot_on)
-	hFVT = fvtool(numd2,dend2);
-	set(hFVT,'NumberofPoints',8192,'FrequencyScale','Log')
-	set(hFVT,'NormalizedFrequency','off','Fs',Fs)
-	legend(hFVT,'Second Equalization Filter')
-	pause
+    hFVT = fvtool(numd2,dend2);
+    set(hFVT,'NumberofPoints',8192,'FrequencyScale','Log')
+    set(hFVT,'NormalizedFrequency','off','Fs',Fs)
+    legend(hFVT,'Second Equalization Filter')
+    pause
 end
 
 %% cascade the two filters
@@ -4342,13 +4342,13 @@ dend = conv(dend1,dend2);
 
 %%
 if(plot_on)
-	% freqress(nums,dens,logspace(-3,2,1000))
-	hFVT = fvtool(numd,dend);
-	set(hFVT,'NumberofPoints',8192,'FrequencyScale','Log')
-	set(hFVT,'NormalizedFrequency','off','Fs',Fs)
-	legend(hFVT,'Final (composite) Equalization Filter')
-	orient landscape
-	print -djpeg DASAR2007_equalization.jpg
+    % freqress(nums,dens,logspace(-3,2,1000))
+    hFVT = fvtool(numd,dend);
+    set(hFVT,'NumberofPoints',8192,'FrequencyScale','Log')
+    set(hFVT,'NormalizedFrequency','off','Fs',Fs)
+    legend(hFVT,'Final (composite) Equalization Filter')
+    orient landscape
+    print -djpeg DASAR2007_equalization.jpg
 end
 
 end
@@ -4382,31 +4382,31 @@ kappa=[];sd=[];thet=[];
 filter_chc='butter';
 
 if strcmp(filter_chc,'FIR')
-	transband=0.1*(fmax-fmin); %Hz
-	filter_min=max([0.5*transband 0.8*fmin]);
-	filter_max=min([500-0.5*transband 1.2*fmax]);
-	[n,fo,mo,w] = firpmord( [filter_min+0.5*transband*[-1 1] filter_max+0.5*transband*[-1 1]], [0 1 0], [0.01 0.1 0.01], Fs );
-	b = firpm(n,fo,mo,w);
-	
-	% design and apply filter to pass only between e1 and e2
-	
-	for I=1:3,
-		y(:,I)=y(:,I)-mean(y(:,I));
-		x(:,I)=filtfilt(b,1,y(:,I));
-	end
-	
+    transband=0.1*(fmax-fmin); %Hz
+    filter_min=max([0.5*transband 0.8*fmin]);
+    filter_max=min([500-0.5*transband 1.2*fmax]);
+    [n,fo,mo,w] = firpmord( [filter_min+0.5*transband*[-1 1] filter_max+0.5*transband*[-1 1]], [0 1 0], [0.01 0.1 0.01], Fs );
+    b = firpm(n,fo,mo,w);
+    
+    % design and apply filter to pass only between e1 and e2
+    
+    for I=1:3,
+        y(:,I)=y(:,I)-mean(y(:,I));
+        x(:,I)=filtfilt(b,1,y(:,I));
+    end
+    
 else
-	w1=max([0.01 fmin*2/Fs]);
-	w2=min( [fmax*2/Fs 0.99]);
-	
-	[B,A]=butter(2,[w1 w2]);
-	for I=1:3,
-		y(:,I)=y(:,I)-mean(y(:,I));
-		x(:,I)=filter(B,A,y(:,I));
-	end
+    w1=max([0.01 fmin*2/Fs]);
+    w2=min( [fmax*2/Fs 0.99]);
+    
+    [B,A]=butter(2,[w1 w2]);
+    for I=1:3,
+        y(:,I)=y(:,I)-mean(y(:,I));
+        x(:,I)=filter(B,A,y(:,I));
+    end
 end
 if bufferTime>0,
-	x=x(ceil(1+bufferTime*Fs):(end-floor(bufferTime*Fs)),:);
+    x=x(ceil(1+bufferTime*Fs):(end-floor(bufferTime*Fs)),:);
 end
 
 vx=(x(:,1).*x(:,2));
@@ -4445,9 +4445,9 @@ mu = 180/pi*atan2(mux(1),mux(2));
 
 U = ceil(n .* rand(n,B));          % The guts of UNIDRND.M without error checking.
 for i = 1:B,
-	%U = ceil(n .* rand(n,1));          % The guts of UNIDRND.M without error checking.
-	%xb = x(U,:);
-	mux_hat(i,:) = vm_ests_uneq(x(U(:,i),:),options,flag); % Estimation accounting for lengths.
+    %U = ceil(n .* rand(n,1));          % The guts of UNIDRND.M without error checking.
+    %xb = x(U,:);
+    mux_hat(i,:) = vm_ests_uneq(x(U(:,i),:),options,flag); % Estimation accounting for lengths.
 end
 
 [junk,kappa,sd] = vm_ests(mux_hat,options);     % Estimation ignoring lengths.
@@ -4618,11 +4618,11 @@ function [Ksout,Ns,EE_sort,VV]=extractKsbest_contour(x,ovlap,Nfft,chann, frange,
 EE_sort=[];VV=[];
 figure;
 if ~exist('nowin', 'var'),
-	nowin=0;
+    nowin=0;
 elseif  nowin==1
-	nowin=1;
+    nowin=1;
 else
-	nowin=0;
+    nowin=0;
 end
 
 Nel=length(chann);
@@ -4645,87 +4645,87 @@ Kstot=zeros(Nel,Nel,length(f));
 
 %Select appropriate frequency bin
 for I=1:length(frange),
-	[junk,findex(I)]=min(abs(f-frange(I)));
-	frange(I)=f(findex(I));
+    [junk,findex(I)]=min(abs(f-frange(I)));
+    frange(I)=f(findex(I));
 end
 
 for I=1:length(fbad)
-	[tmp,findexjunk(I)]=min(abs(f-fbad(I)));
-	fbad(I)=f(findexjunk(I));
+    [tmp,findexjunk(I)]=min(abs(f-fbad(I)));
+    fbad(I)=f(findexjunk(I));
 end
 
 if Ns<0,
-	disp('Signal too short for one shapnot, will center pad for FFT:');
-	%pause;
-	Ns=1;Nx=size(x,1);
-	x0=zeros(Nfft,size(x,2));
-	index=floor(Nfft/2-(Nx/2));
-	index=(index:(index+Nx-1));
-	x0(index,:)=x;
-	x=x0;
-	clear x0
-	M=size(x,1);
+    disp('Signal too short for one shapnot, will center pad for FFT:');
+    %pause;
+    Ns=1;Nx=size(x,1);
+    x0=zeros(Nfft,size(x,2));
+    index=floor(Nfft/2-(Nx/2));
+    index=(index:(index+Nx-1));
+    x0(index,:)=x;
+    x=x0;
+    clear x0
+    M=size(x,1);
 end
 if nowin==0,
-	win=kaiser(M,2.5);
+    win=kaiser(M,2.5);
 else
-	win=ones(M,1);
+    win=ones(M,1);
 end
 
 %Determine the frequency with greatest average power near your bin!
 Pt=[];
 t=[];
 for I=0:(Ns-1),
-	index=round(I*M*(1-ovlap)+1);
-	t(I+1)=index(1)/Fs;
-	xindex=(index:(index+M-1));
-	xh=x(xindex,chann);
-	for Ic=1:size(xh,2),
-		xh(:,Ic)=xh(:,Ic)-mean(xh(:,Ic));
-		xh(:,Ic)=xh(:,Ic).*win;
-	end
-	Xh=fft(xh,Nfft);
-	Pwr=abs(Xh).^2;
-	Pt=sum(Pwr,2);
-	if ~isempty(fbad)
-		Pt(findexjunk)=0; %Remove bad freqencies.
-		Pt(findexjunk+1)=0;
-		Pt(findexjunk-1)=0;
-	end
-	%Pt=cat(2,Pt,Pwr);
-	%end
-	%Pt=sum(Pt,2);
-	for If=1:length(findex),
-		subplot(length(findex),1,If);
-		
-		%plot(f(findex(If)+bins),Pt(findex(If)+bins));
-		[junk,fi]=max(Pt(findex(If)+bins));
-		findex(If)=findex(If)+bins(fi);
-		fcount(findex(If))=fcount(findex(If))+1;
-		fcontour(I+1,If)=f(findex(If));
-		fpower(findex(If))=fpower(findex(If))+Pt(findex(If));
-		disp(f(findex(If)));
-		pgoal=Xh(findex(If),:);
-		%Make pgoal a vertical array
-		%pgoal=conj(pgoal);   %Test to see if conjugation is the problem
-		%   PREVIOUS STATEMENT COMMENTED OUT BY A THODE MARCH 15, 2004
-		%     HE ALSO CHANGED write_covmat.m to remove conjugation as well
-		
-		pgoal=pgoal.';        %Rotate so vector is vertical, like KRAKEN
-		Kstot(:,:,findex(If))=Kstot(:,:,findex(If))+pgoal*pgoal';
-		%Ksout.pgoal
-	end
-	%title(int2str(Ns));
-	%pause(0.25);
-	disp('');
+    index=round(I*M*(1-ovlap)+1);
+    t(I+1)=index(1)/Fs;
+    xindex=(index:(index+M-1));
+    xh=x(xindex,chann);
+    for Ic=1:size(xh,2),
+        xh(:,Ic)=xh(:,Ic)-mean(xh(:,Ic));
+        xh(:,Ic)=xh(:,Ic).*win;
+    end
+    Xh=fft(xh,Nfft);
+    Pwr=abs(Xh).^2;
+    Pt=sum(Pwr,2);
+    if ~isempty(fbad)
+        Pt(findexjunk)=0; %Remove bad freqencies.
+        Pt(findexjunk+1)=0;
+        Pt(findexjunk-1)=0;
+    end
+    %Pt=cat(2,Pt,Pwr);
+    %end
+    %Pt=sum(Pt,2);
+    for If=1:length(findex),
+        subplot(length(findex),1,If);
+        
+        %plot(f(findex(If)+bins),Pt(findex(If)+bins));
+        [junk,fi]=max(Pt(findex(If)+bins));
+        findex(If)=findex(If)+bins(fi);
+        fcount(findex(If))=fcount(findex(If))+1;
+        fcontour(I+1,If)=f(findex(If));
+        fpower(findex(If))=fpower(findex(If))+Pt(findex(If));
+        disp(f(findex(If)));
+        pgoal=Xh(findex(If),:);
+        %Make pgoal a vertical array
+        %pgoal=conj(pgoal);   %Test to see if conjugation is the problem
+        %   PREVIOUS STATEMENT COMMENTED OUT BY A THODE MARCH 15, 2004
+        %     HE ALSO CHANGED write_covmat.m to remove conjugation as well
+        
+        pgoal=pgoal.';        %Rotate so vector is vertical, like KRAKEN
+        Kstot(:,:,findex(If))=Kstot(:,:,findex(If))+pgoal*pgoal';
+        %Ksout.pgoal
+    end
+    %title(int2str(Ns));
+    %pause(0.25);
+    disp('');
 end
 
 %%Collapse Kstot to non-zero components if desired
 Igood=find(fcount>0);
 
 if exist('keep_zeros', 'var') %%Keep all frequency bins, even if no power...
-	%Igood=[min(Igood):max(Igood)];
-	Igood=1:length(fcount);
+    %Igood=[min(Igood):max(Igood)];
+    Igood=1:length(fcount);
 end
 fcount=fcount(Igood);
 fpower=fpower(Igood);
@@ -4735,8 +4735,8 @@ Kstot=Kstot(:,:,Igood);
 %Normalize by sample size, if necessary
 Iavg=find(fcount>1);
 for I=1:length(Iavg),
-	Kstot(:,:,Iavg(I))=Kstot(:,:,Iavg(I))/fcount(Iavg(I));
-	fpower(Iavg(I))=fpower(Iavg(I))/fcount(Iavg(I));
+    Kstot(:,:,Iavg(I))=Kstot(:,:,Iavg(I))/fcount(Iavg(I));
+    fpower(Iavg(I))=fpower(Iavg(I))/fcount(Iavg(I));
 end
 
 %Normalize the |X(f)|^2 term to make units power spectral density (power
@@ -4745,20 +4745,20 @@ Kstot=Kstot/(Fs*Nfft);
 %keyboard;
 
 if Ns>1
-	for J=1:length(freq)
-		Ks=squeeze(Kstot(:,:,J));
-		[V,D,FLAG]=eigs(Ks,4,'LM');
-		%keyboard;
-		D=real(diag(D));
-		%%sqrt(D(1)*V(:,1)) gives scaled eigenvector
-		%D_sort=sort(D);
-		%D=flipud(D_sort)
-		pgoal(:,J)=V(:,1)*sqrt(abs(D(1)));
-		SN(1,J)=10*log10(abs(D(1)/D(2)));
-		if fcount(J)>0
-			disp(['Est. S/N for ' num2str(freq(J)) ' is ' num2str(SN(1,J)) 'dB']);
-		end
-	end
+    for J=1:length(freq)
+        Ks=squeeze(Kstot(:,:,J));
+        [V,D,FLAG]=eigs(Ks,4,'LM');
+        %keyboard;
+        D=real(diag(D));
+        %%sqrt(D(1)*V(:,1)) gives scaled eigenvector
+        %D_sort=sort(D);
+        %D=flipud(D_sort)
+        pgoal(:,J)=V(:,1)*sqrt(abs(D(1)));
+        SN(1,J)=10*log10(abs(D(1)/D(2)));
+        if fcount(J)>0
+            disp(['Est. S/N for ' num2str(freq(J)) ' is ' num2str(SN(1,J)) 'dB']);
+        end
+    end
 end
 
 Ksout.Kstot=Kstot;
@@ -4806,26 +4806,26 @@ VV=[];
 EE_sort=[];
 MAXF=Inf;
 if ~exist('threshold','var')
-	threshold = -Inf;
+    threshold = -Inf;
 end
 
 if ~exist('tilt','var')
-	tiltdata.tilt=0; %
-	tiltdata.rd=ones(length(chann),1);
+    tiltdata.tilt=0; %
+    tiltdata.rd=ones(length(chann),1);
 end
 if size(tiltdata.rd,2)>1
-	tiltdata.rd=tiltdata.rd';
+    tiltdata.rd=tiltdata.rd';
 end
 sintilt=sin(tiltdata.tilt*pi/180);
 if ~exist('nowin','var')
-	nowin=0;
-	disp('The signal will be windowed');
+    nowin=0;
+    disp('The signal will be windowed');
 elseif nowin==1,
-	nowin=1;
-	disp('The signal will NOT be windowed');
+    nowin=1;
+    disp('The signal will NOT be windowed');
 else
-	nowin=0;
-	disp('The signal will be windowed');
+    nowin=0;
+    disp('The signal will be windowed');
 end
 
 Nel=length(chann);
@@ -4839,66 +4839,66 @@ findex=max([1 frange(1)]):min([Nfft/2 frange(2)]);
 f=findex*(Fs/Nfft);
 
 if length(findex)<MAXF
-	Kstot=zeros(Nel,Nel,length(findex));
+    Kstot=zeros(Nel,Nel,length(findex));
 else
-	disp('frange too long to make Kstot\n just making pgoal');
+    disp('frange too long to make Kstot\n just making pgoal');
 end
 power=zeros(Ns,1);
 Nf=length(findex);
 if	~exist('Isnap', 'var')|| Isnap<0
-	Isnap=0:Ns-1; %average all
+    Isnap=0:Ns-1; %average all
 end
 
 if Ns<=0,
-	disp('Signal too short for one shapnot, will center pad for FFT:');
-	%pause;
-	Ns=1;Isnap=0;Nx=size(x,1);
-	x0=zeros(Nfft,size(x,2));
-	index=floor(Nfft/2-(Nx/2));
-	index=(index:(index+Nx-1));
-	x0(index,:)=x;
-	x=x0;
-	clear x0
-	M=size(x,1);
+    disp('Signal too short for one shapnot, will center pad for FFT:');
+    %pause;
+    Ns=1;Isnap=0;Nx=size(x,1);
+    x0=zeros(Nfft,size(x,2));
+    index=floor(Nfft/2-(Nx/2));
+    index=(index:(index+Nx-1));
+    x0(index,:)=x;
+    x=x0;
+    clear x0
+    M=size(x,1);
 end
 if nowin==0,
-	win=kaiser(M,2.5);
+    win=kaiser(M,2.5);
 else
-	win=ones(M,1);
+    win=ones(M,1);
 end
 
 for I=Isnap
-	index=round(I*M*(1-ovlap)+1);
-	xindex=(index:(index+M-1));
-	xh=x(xindex,chann);
-	for Ic=1:length(chann)
-		xh(:,Ic)=xh(:,Ic)-mean(xh(:,Ic));
-		xh(:,Ic)=xh(:,Ic).*win;
-	end
-	Xh=fft(xh,Nfft);
-	pgoal=Xh(findex,:);
-	%Make pgoal a vertical array
-	%pgoal=pgoal(:,chann);   %Reject elements ;
-	%pgoal=conj(pgoal);   %Test to see if conjugation is the problem
-	pgoal=pgoal.';        %Columns are now single-frequency array snapshots
-	%pgoal=flipud(pgoal);  %Puts topmost element first, according to lewis
-	
-	
-	power(I+1)=(Fs/Nfft)*sum(sum(abs(pgoal).^2))/(Fs*Nfft);
-	
-	if length(findex)<MAXF&&threshold<=10*log10(abs(power(I+1)))
-		for J=1:Nf
-			%disp(f(J));
-			
-			tiltvec=exp(1i*2*pi*f(J)*sintilt*tiltdata.rd/1500);
-			ptemp=pgoal(:,J).*tiltvec;
-			Kstemp=ptemp*ptemp'; %Top LH cornertop element autocor
-			Kstot(:,:,J)=Kstot(:,:,J)+Kstemp;
-			
-		end
-	else
-		power(I+1)=NaN;
-	end
+    index=round(I*M*(1-ovlap)+1);
+    xindex=(index:(index+M-1));
+    xh=x(xindex,chann);
+    for Ic=1:length(chann)
+        xh(:,Ic)=xh(:,Ic)-mean(xh(:,Ic));
+        xh(:,Ic)=xh(:,Ic).*win;
+    end
+    Xh=fft(xh,Nfft);
+    pgoal=Xh(findex,:);
+    %Make pgoal a vertical array
+    %pgoal=pgoal(:,chann);   %Reject elements ;
+    %pgoal=conj(pgoal);   %Test to see if conjugation is the problem
+    pgoal=pgoal.';        %Columns are now single-frequency array snapshots
+    %pgoal=flipud(pgoal);  %Puts topmost element first, according to lewis
+    
+    
+    power(I+1)=(Fs/Nfft)*sum(sum(abs(pgoal).^2))/(Fs*Nfft);
+    
+    if length(findex)<MAXF&&threshold<=10*log10(abs(power(I+1)))
+        for J=1:Nf
+            %disp(f(J));
+            
+            tiltvec=exp(1i*2*pi*f(J)*sintilt*tiltdata.rd/1500);
+            ptemp=pgoal(:,J).*tiltvec;
+            Kstemp=ptemp*ptemp'; %Top LH cornertop element autocor
+            Kstot(:,:,J)=Kstot(:,:,J)+Kstemp;
+            
+        end
+    else
+        power(I+1)=NaN;
+    end
 end  %I=Isnap
 
 figure
@@ -4906,13 +4906,13 @@ tt=Isnap*(1-ovlap)*Nfft/Fs;
 plot(tt,10*log10(abs(power)));
 grid on
 if ~isinf(threshold)
-	hold on
-	line([min(tt) max(tt)],threshold*[1 1]);
+    hold on
+    line([min(tt) max(tt)],threshold*[1 1]);
 end
 xlabel('Time (s)');ylabel('dB power');
 
 if length(findex)>MAXF,
-	Kstot=[];
+    Kstot=[];
 end
 
 %Normalize to have units of power spectral density...pwr per Hz
@@ -4924,15 +4924,15 @@ Kstot=Kstot/(Fs*Nfft);
 
 %SNR=zeros(1,Nf);
 if Ns>1
-	EE_sort=zeros(Nel,Nf);
-	VV=zeros(Nel,Nel,Nf);
-	for If=1:Nf
-		[VV0,EE]=eig(Kstot(:,:,If));
-		EE=diag(EE);
-		[EE_sort(:,If),Isort]=sort(EE,1,'descend');
-		VV(:,:,If)=VV0(:,Isort);
-		
-	end
+    EE_sort=zeros(Nel,Nf);
+    VV=zeros(Nel,Nel,Nf);
+    for If=1:Nf
+        [VV0,EE]=eig(Kstot(:,:,If));
+        EE=diag(EE);
+        [EE_sort(:,If),Isort]=sort(EE,1,'descend');
+        VV(:,:,If)=VV0(:,Isort);
+        
+    end
 end
 
 % if Ns<=1
@@ -4944,31 +4944,31 @@ end
 function [B,wout]=conventional_beamforming(Ks,angles,freq,Lz,c,yesnorm)
 B=zeros(length(freq),length(angles));
 if size(Lz,2)>1
-	Lz=Lz.';
+    Lz=Lz.';
 end
 
 if nargout==2
-	wout=zeros(length(Lz),length(freq),length(angles));
+    wout=zeros(length(Lz),length(freq),length(angles));
 end
 winn=hanning(length(Lz));
 for If=1:length(freq)
-	for Iang=1:length(angles)
-		% lambda=1500/freq(If);
-		w=exp((-1i*2*pi*Lz*freq(If)/c)*sin(angles(Iang)*pi/180));
-		w=w.*winn;
-		
-		w=w/norm(w);
-		K=squeeze(Ks(:,:,If));
-		if exist('yesnorm', 'var')
-			K=K/norm(K);
-		end
-		B(If,Iang)=real(w'*K*w);
-		if nargout==2
-			wout(:,If,Iang)=w;
-		end
-	end
-	
-	
+    for Iang=1:length(angles)
+        % lambda=1500/freq(If);
+        w=exp((-1i*2*pi*Lz*freq(If)/c)*sin(angles(Iang)*pi/180));
+        w=w.*winn;
+        
+        w=w/norm(w);
+        K=squeeze(Ks(:,:,If));
+        if exist('yesnorm', 'var')
+            K=K/norm(K);
+        end
+        B(If,Iang)=real(w'*K*w);
+        if nargout==2
+            wout(:,If,Iang)=w;
+        end
+    end
+    
+    
 end
 
 %plot(angles,10*log10(B(If,:)));
@@ -4977,20 +4977,20 @@ end
 function B=MV_beamforming(Ks,angles,freq,Lz,c)
 B=zeros(length(freq),length(angles));
 if size(Lz,2)>1,
-	Lz=Lz.';
+    Lz=Lz.';
 end
 for If=1:length(freq),
-	for Iang=1:length(angles)
-		% lambda=1500/freq(If);
-		w=exp((1i*2*pi*Lz*freq(If)/c)*sin(angles(Iang)*pi/180));
-		
-		%B(If,Iang)=real(w'*Ks{If}*w)/(norm(Ks{If})*norm(w).^2);
-		w=w/norm(w);
-		B(If,Iang)=1./real(w'*(squeeze(Ks(:,:,If))\w));
-		
-	end
-	
-	
+    for Iang=1:length(angles)
+        % lambda=1500/freq(If);
+        w=exp((1i*2*pi*Lz*freq(If)/c)*sin(angles(Iang)*pi/180));
+        
+        %B(If,Iang)=real(w'*Ks{If}*w)/(norm(Ks{If})*norm(w).^2);
+        w=w/norm(w);
+        B(If,Iang)=1./real(w'*(squeeze(Ks(:,:,If))\w));
+        
+    end
+    
+    
 end
 
 %plot(angles,10*log10(B(If,:)));
@@ -5001,7 +5001,7 @@ function R=derive_reflection_coefficient2(Kstot,angles,freq,rd,c)
 
 tilt=input('Enter tilt estimate in deg (0):');
 if isempty(tilt)
-	tilt=0;
+    tilt=0;
 end
 
 % angles=angles0+tilt;
@@ -5034,42 +5034,42 @@ colorbar('fontweight','bold','fontsize',14)
 
 
 for It=1:length(tilt)
-	[junk,Iang]=min(abs(angles-tilt(It)));
-	
-	%R is bottom/surface, or negative over positive
-	%upp=flipud(B(1:(Iang-1),:));  %Negative angles point towards bottom
-	%downn=B((Iang+1):end,:);
-	%Nmin=min([size(downn,1) size(upp,1)]);
-	%R=downn(1:Nmin,:)./upp(1:Nmin,:);
-	
-	downn=flipud(B(1:(Iang-1),:));  %Negative angles point towards bottom
-	upp=B((Iang+1):end,:); %Positive angles point towards surface
-	Nmin=min([size(downn,1) size(upp,1)]);
-	R=downn(1:Nmin,:)./upp(1:Nmin,:);
-	
-	%%Note that R is the power reflection coefficient (Harrison and Simmons, Eq. (2)), so 10*logR please..
-	R=-10*log10(abs(R))';
-	angle_graze=angles(Iang+(1:Nmin))-tilt(It);
-	figure
-	
-	subplot(3,1,1)
-	imagesc(10*log10(abs(upp')))
-	subplot(3,1,2)
-	imagesc(10*log10(abs(downn')))
-	subplot(3,1,3)
-	imagesc(angle_graze,freq,R);
-	caxis([0 15]);
-	set(gca,'fontweight','bold','fontsize',14);
-	grid on;colorbar;axis('xy')
-	xlabel('Grazing angle (deg)');
-	ylabel('Frequency (Hz)')
-	title(sprintf('reflection loss (dB), tilt %6.2f',tilt(It)))
-	
+    [junk,Iang]=min(abs(angles-tilt(It)));
+    
+    %R is bottom/surface, or negative over positive
+    %upp=flipud(B(1:(Iang-1),:));  %Negative angles point towards bottom
+    %downn=B((Iang+1):end,:);
+    %Nmin=min([size(downn,1) size(upp,1)]);
+    %R=downn(1:Nmin,:)./upp(1:Nmin,:);
+    
+    downn=flipud(B(1:(Iang-1),:));  %Negative angles point towards bottom
+    upp=B((Iang+1):end,:); %Positive angles point towards surface
+    Nmin=min([size(downn,1) size(upp,1)]);
+    R=downn(1:Nmin,:)./upp(1:Nmin,:);
+    
+    %%Note that R is the power reflection coefficient (Harrison and Simmons, Eq. (2)), so 10*logR please..
+    R=-10*log10(abs(R))';
+    angle_graze=angles(Iang+(1:Nmin))-tilt(It);
+    figure
+    
+    subplot(3,1,1)
+    imagesc(10*log10(abs(upp')))
+    subplot(3,1,2)
+    imagesc(10*log10(abs(downn')))
+    subplot(3,1,3)
+    imagesc(angle_graze,freq,R);
+    caxis([0 15]);
+    set(gca,'fontweight','bold','fontsize',14);
+    grid on;colorbar;axis('xy')
+    xlabel('Grazing angle (deg)');
+    ylabel('Frequency (Hz)')
+    title(sprintf('reflection loss (dB), tilt %6.2f',tilt(It)))
+    
 end
 
 yes=input('Save?');
 if ~isempty(yes)
-	save(sprintf('Refl_%s.mat',num2str(mean(tilt))),'angle_graze','freq','R','tilt','rd','c','Kstot','angles','Lz');
+    save(sprintf('Refl_%s.mat',num2str(mean(tilt))),'angle_graze','freq','R','tilt','rd','c','Kstot','angles','Lz');
 end
 % disp('Select a frequency:');
 % tmp=ginput(1);
@@ -5087,20 +5087,20 @@ conj_flag=1;  %If one, conjugate data...
 %%%If SNRmin is a sclar, it is a dB SNR value threshold to select frequencies
 %       If SNRmin is a vector, it is a list of frequencies.
 if length(SNRmin)==1
-	Igood=find(SNR>=SNRmin);
-	freq=freq(Igood);
-	disp(sprintf('Frequencies to process at %i dB SNR: %s',SNRmin,mat2str(freq,4)));
-	
+    Igood=find(SNR>=SNRmin);
+    freq=freq(Igood);
+    disp(sprintf('Frequencies to process at %i dB SNR: %s',SNRmin,mat2str(freq,4)));
+    
 else
-	
-	Igood=zeros(length(SNRmin),1);  %Iwant will be indicies in model frequencies that match FFT bins in index
-	
-	for If=1:length(SNRmin)
-		[junk,Igood(If)]=min(abs(SNRmin(If)-freq));
-	end
-	freq=freq(Igood);
-	disp(sprintf('Frequencies to process, manually selected: %s',mat2str(freq,4)));
-	if length(unique(Igood))~=length(Igood),disp('WARNING! Frequencies requested via SNRmin not available...');end
+    
+    Igood=zeros(length(SNRmin),1);  %Iwant will be indicies in model frequencies that match FFT bins in index
+    
+    for If=1:length(SNRmin)
+        [junk,Igood(If)]=min(abs(SNRmin(If)-freq));
+    end
+    freq=freq(Igood);
+    disp(sprintf('Frequencies to process, manually selected: %s',mat2str(freq,4)));
+    if length(unique(Igood))~=length(Igood),disp('WARNING! Frequencies requested via SNRmin not available...');end
 end
 
 Kstot=Kstot(:,:,Igood);
@@ -5112,7 +5112,7 @@ model=load(model_name);
 
 Iwant=zeros(length(freq),1);  %Iwant will be indicies in model frequencies that match FFT bins in index
 for If=1:length(freq)
-	[junk,Iwant(If)]=min(abs(model.freq-freq(If)));
+    [junk,Iwant(If)]=min(abs(model.freq-freq(If)));
 end
 
 
@@ -5121,12 +5121,12 @@ end
 %%Remove bad channels, if any
 Igood=zeros(1,length(rd));
 for I=1:length(rd)
-	[junk,Igood(I)]=min(abs(model.rd-rd(I)));
+    [junk,Igood(I)]=min(abs(model.rd-rd(I)));
 end
 
 Igood_source=zeros(1,length(depths));
 for I=1:length(depths)
-	[junk,Igood_source(I)]=min(abs(model.rd-depths(I)));
+    [junk,Igood_source(I)]=min(abs(model.rd-depths(I)));
 end
 
 model.sd=model.rd(Igood_source);
@@ -5147,95 +5147,95 @@ rd_cum=-(rd-min(rd))./(max(rd)-min(rd));
 % Irtest=25;
 % Iztest=5;
 for Itilt=1:length(tilt_offset)
-	fprintf('tilt: %6.2f\n',tilt_offset(Itilt));
-	tilt_matrix=exp(-1i*tilt_offset(Itilt)*rd_cum'*kk); %[depths frequency]
-	
-	for If=1:length(freq)
-		ck=(model.kr{1}(Iwant(If),:).');
-		tiltt=tilt_matrix(:,If);
-		Ks=squeeze(Kstot(:,:,If));
-		Ks=Ks/trace(Ks);
-		if conj_flag==1
-			Ks=conj(Ks);  %Need to do this since MATLAB and SAGA definitions of Fourier Transform different than Comp. Ocean. Acoust.
-		end
-		for Iz=1:length(depths)
-			
-			[junk,isd]=min(abs(model.sd-depths(Iz)));
-			a = squeeze(model.U( isd, Iwant(If), : ));
-			phi = squeeze(model.Urd(:,Iwant(If),:)) * diag( a, 0 );	% scale modes by a
-			
-			% ******************************************************
-			% form pressure field
-			% ******************************************************
-			
-			phase = diag( 1.0 ./ sqrt( ck ) ) * exp( 1i * ck * ranges ) * diag( sqrt( 2 * pi ./ ranges ) );
-			
-			Ibad = isnan(real(phase));
-			phase(Ibad)=0;
-			
-			p0 = phi * phase;  % [rd Nm] x [Nm ranges] = [rd ranges]
-			
-			p=(tiltt*ones(1,length(ranges))).*p0;
-			%Add tilt correction here..
-			
-			%temp=squeeze(Kstot(:,:,If))*p;  % [rd rd] x [rd ranges] =[rd ranges]
-			for Ir=1:length(ranges)
-				replica=p(:,Ir)/norm(p(:,Ir));
-				amb(Iz,Ir,If)=real(replica'*Ks*replica);
-				
-				%             if Iztest==Iz&&Irtest==Ir
-				%                 testdata(:,:,If)=p(:,Ir)*p(:,Ir)';
-				%             end
-			end
-			
-		end
-	end
-	
-	max_corr=squeeze(max(max(amb)))';
-	amb_tot=sum(amb,3)/length(freq);
-	%Iamb=find(max_corr>0.7);amb_tot=sum(amb(:,:,Iamb),3)/length(Iamb);  %Trim poor results
-	figure
-	%     for I=1:length(freq)
-	%         imagesc(ranges,depths,squeeze(amb(:,:,I)));
-	%         colorbar;caxis([0 1]);
-	%         title(sprintf('Frequency: %6.2f',freq(I)));
-	%         pause
-	%     end
-	%imagesc(ranges,depths,amb_tot);caxis([0 1]);
-	contourf(ranges/1000,depths,amb_tot,0:0.1:1);
-	caxis([0.2 1]);
-	cmap=colormap;colormap(cmap(1:4:end,:));
-	set(gca,'fontweight','bold','fontsize',14);xlabel('range (km)');ylabel('depth (m)');grid on
+    fprintf('tilt: %6.2f\n',tilt_offset(Itilt));
+    tilt_matrix=exp(-1i*tilt_offset(Itilt)*rd_cum'*kk); %[depths frequency]
+    
+    for If=1:length(freq)
+        ck=(model.kr{1}(Iwant(If),:).');
+        tiltt=tilt_matrix(:,If);
+        Ks=squeeze(Kstot(:,:,If));
+        Ks=Ks/trace(Ks);
+        if conj_flag==1
+            Ks=conj(Ks);  %Need to do this since MATLAB and SAGA definitions of Fourier Transform different than Comp. Ocean. Acoust.
+        end
+        for Iz=1:length(depths)
+            
+            [junk,isd]=min(abs(model.sd-depths(Iz)));
+            a = squeeze(model.U( isd, Iwant(If), : ));
+            phi = squeeze(model.Urd(:,Iwant(If),:)) * diag( a, 0 );	% scale modes by a
+            
+            % ******************************************************
+            % form pressure field
+            % ******************************************************
+            
+            phase = diag( 1.0 ./ sqrt( ck ) ) * exp( 1i * ck * ranges ) * diag( sqrt( 2 * pi ./ ranges ) );
+            
+            Ibad = isnan(real(phase));
+            phase(Ibad)=0;
+            
+            p0 = phi * phase;  % [rd Nm] x [Nm ranges] = [rd ranges]
+            
+            p=(tiltt*ones(1,length(ranges))).*p0;
+            %Add tilt correction here..
+            
+            %temp=squeeze(Kstot(:,:,If))*p;  % [rd rd] x [rd ranges] =[rd ranges]
+            for Ir=1:length(ranges)
+                replica=p(:,Ir)/norm(p(:,Ir));
+                amb(Iz,Ir,If)=real(replica'*Ks*replica);
+                
+                %             if Iztest==Iz&&Irtest==Ir
+                %                 testdata(:,:,If)=p(:,Ir)*p(:,Ir)';
+                %             end
+            end
+            
+        end
+    end
+    
+    max_corr=squeeze(max(max(amb)))';
+    amb_tot=sum(amb,3)/length(freq);
+    %Iamb=find(max_corr>0.7);amb_tot=sum(amb(:,:,Iamb),3)/length(Iamb);  %Trim poor results
+    figure
+    %     for I=1:length(freq)
+    %         imagesc(ranges,depths,squeeze(amb(:,:,I)));
+    %         colorbar;caxis([0 1]);
+    %         title(sprintf('Frequency: %6.2f',freq(I)));
+    %         pause
+    %     end
+    %imagesc(ranges,depths,amb_tot);caxis([0 1]);
+    contourf(ranges/1000,depths,amb_tot,0:0.1:1);
+    caxis([0.2 1]);
+    cmap=colormap;colormap(cmap(1:4:end,:));
+    set(gca,'fontweight','bold','fontsize',14);xlabel('range (km)');ylabel('depth (m)');grid on
     colorbar('fontweight','bold','fontsize',14);
     %title(sprintf('Frequencies: %s',mat2str(round(freq),4)));
-	axis('ij')
-	if length(SNRmin)>1
-		SNRmin=NaN;
-	end
-	if length(freq)<6
-		titlestr=sprintf('Tilt: %6.2f, Frequencies to process at %i dB SNR: %s',tilt_offset(Itilt),SNRmin,mat2str(freq,4));
-	else
-		titlestr=sprintf('Tilt: %6.2f, %i frequencies to process at %i dB SNR',tilt_offset(Itilt),length(freq),SNRmin);
-		
-	end
-	%     if conj_flag==1
-	%         titlestr=[titlestr ' Conjugated Kstot'];
-	%
-	%     end
-	title(titlestr);
-	tmp=[freq' squeeze(max(max(amb)))];
-	fprintf('Frequency: %6.2f, Correlations:  %6.2f\n',tmp');
-	fprintf('Total corr: %6.2f \n',max(max(amb_tot)));
-	
+    axis('ij')
+    if length(SNRmin)>1
+        SNRmin=NaN;
+    end
+    if length(freq)<6
+        titlestr=sprintf('Tilt: %6.2f, Frequencies to process at %i dB SNR: %s',tilt_offset(Itilt),SNRmin,mat2str(freq,4));
+    else
+        titlestr=sprintf('Tilt: %6.2f, %i frequencies to process at %i dB SNR',tilt_offset(Itilt),length(freq),SNRmin);
+        
+    end
+    %     if conj_flag==1
+    %         titlestr=[titlestr ' Conjugated Kstot'];
+    %
+    %     end
+    title(titlestr);
+    tmp=[freq' squeeze(max(max(amb)))];
+    fprintf('Frequency: %6.2f, Correlations:  %6.2f\n',tmp');
+    fprintf('Total corr: %6.2f \n',max(max(amb_tot)));
+    
 	save_result=input('Enter any character to save images and write CSDM to file: ');
-	if ~isempty(save_result)
-		savename=sprintf('MFP_result_%s_tilt%4.2f_Nfreqs%i_SNRmin%i',data_name,tilt_offset(Itilt),length(freq),SNRmin);
-		save([savename '.mat'], 'ranges','depths','amb','amb_tot','SNRmin','freq','data_name','model_name');
-		
+    if ~isempty(save_result)
+        savename=sprintf('MFP_result_%s_tilt%4.2f_Nfreqs%i_SNRmin%i',data_name,tilt_offset(Itilt),length(freq),SNRmin);
+        save([savename '.mat'], 'ranges','depths','amb','amb_tot','SNRmin','freq','data_name','model_name');
+        
 		figure(gcf)
 		orient tall
-		print('-djpeg',[savename '.jpg']);
-	end
+        print('-djpeg',[savename '.jpg']);
+    end
 end %tilt
 end
 
@@ -5244,9 +5244,9 @@ function [MFP_replica_file_out,range_str_out,default_tilt_out,default_SNR_out]=l
 %%MFP replicas can be divided into Pekeris models, and more complex models...
 
 if strcmp(getenv('USER'),'thode')
-	model_dir='/Users/thode/Projects/Arctic_2010/PropagationModeling.dir/';
+    model_dir='/Users/thode/Projects/Arctic_2010/PropagationModeling.dir/';
 elseif strcmp(getenv('USER'),'shabadi');
-	model_dir='/Users/shabadi/Documents/Shima-SIO/PropagationModeling.dir/';
+    model_dir='/Users/shabadi/Documents/Shima-SIO/PropagationModeling.dir/';
 end
 %%%%%%%%Short-Range Estimate%%%%%%%%%%%%%%%%
 MFP_replica_file{2}{1}=[model_dir 'Depth55m_Fixed.dir/ShallowBeaufortWhaleInversionSSP_ShortRange_CSDM_Nfft2048_20100820T014239_eigenvector_10to500Hz.mat'];
@@ -5290,8 +5290,8 @@ default_tilt{5}{1}='3.93';
 range_str{5}{1}='30000:100:40000';
 range_str{5}{1}='100:100:40000';
 default_SNR{5}{1}=[99.1800  102.2000  105.3000  108.3000  111.4000  114.4000  117.5000  120.5000 ...
-	123.6000  126.6000  129.7000  132.8000  135.8000  138.9000  141.9000  145.0000 ...
-	148.0000  151.1000  154.1000  157.2000  160.2000 ];
+    123.6000  126.6000  129.7000  132.8000  135.8000  138.9000  141.9000  145.0000 ...
+    148.0000  151.1000  154.1000  157.2000  160.2000 ];
 %default_SNR=default_SNR(1:(end-1));
 % default_SNR=default_SNR((end-3):end)
 
@@ -5303,16 +5303,16 @@ default_SNR{5}{2}=default_SNR{5}{1};
 
 %Averaged Pekeris model...
 for I=2:5
-	%%Averaged Pekeris model
-	MFP_replica_file{I}{3}=[model_dir '/Depth55m_Fixed.dir/ShallowBeaufortPekeris_arctic_pekeris1673_KRAKEN_flat55m_10to500Hz.mat'];
-	default_tilt{I}{3}=default_tilt{I}{2};
-	range_str{I}{3}=range_str{I}{2};
-	default_SNR{I}{3}=default_SNR{I}{2};
-	
+    %%Averaged Pekeris model
+    MFP_replica_file{I}{3}=[model_dir '/Depth55m_Fixed.dir/ShallowBeaufortPekeris_arctic_pekeris1673_KRAKEN_flat55m_10to500Hz.mat'];
+    default_tilt{I}{3}=default_tilt{I}{2};
+    range_str{I}{3}=range_str{I}{2};
+    default_SNR{I}{3}=default_SNR{I}{2};
+    
 end
 
 yes=menu('Which inversion?','Blank...','Whale Close Range inversion', ...
-	'Whale 7km Range inversion','Whale 15km Range inversion','Whale 35km Range inversion');
+    'Whale 7km Range inversion','Whale 15km Range inversion','Whale 35km Range inversion');
 
 MFP_replica_file_out=MFP_replica_file{yes};
 default_tilt_out=default_tilt{yes};
@@ -5322,11 +5322,11 @@ default_SNR_out=default_SNR{yes};
 yes=menu('Which model?','Detailed model','Inverted Pekeris','Average Pekeris','All');
 
 if yes<4
-	MFP_replica_file_out=MFP_replica_file_out(yes);
-	default_tilt_out=default_tilt_out(yes);
-	range_str_out=range_str_out(yes);
-	default_SNR_out=default_SNR_out(yes);
-	
+    MFP_replica_file_out=MFP_replica_file_out(yes);
+    default_tilt_out=default_tilt_out(yes);
+    range_str_out=range_str_out(yes);
+    default_SNR_out=default_SNR_out(yes);
+    
 end
 
 
@@ -5348,7 +5348,7 @@ teager=param.teager;  %Apply teager-kaiser operation to spectrogram before proce
 %freq=flo:bandwidth:fhigh;
 B=10*log10(B+eps);
 if teager
-	B=B(:,2:end-1).^2-(B(:,1:end-2).*B(:,3:end));
+    B=B(:,2:end-1).^2-(B(:,1:end-2).*B(:,3:end));
 end
 dT= TT(2)- TT(1);
 dF= FF(2)- FF(1);
@@ -5370,37 +5370,37 @@ pwr_tot=zeros(Ntime);
 xcovv=zeros(length(Igood),length(I_range));
 
 for I=1:Ntime
-	if rem(I,100)==0,disp(sprintf('%6.2f percent done',100*I/Ntime));end
-	
-	try
-		A= B(Igood,Iindex(I)+(0:(Ncol-1)));
-		
-		[N,M] = size(A);  %Autocorrelate columns
-		X=fft(A'-ones(M,1)*mean(A'), 2^nextpow2(2*M-1));
-		tmp=ifft(abs(X).^2);
-		
-		tmp1=[tmp(end-maxlag+1:end,:);tmp(1:maxlag+1,:)];
-		tmp=tmp1./(ones(size(tmp1,1),1)*tmp1(maxlag+1,:));
-		
-		xcovv=tmp(I_range,:);
-		%end
-		mean_corr(:,I)=median(xcovv')';
-		pwr(I,:)=sum(A)/length(Igood);
-		pwr_tot(I)=max(pwr(I,:));
-	catch
-		xcovv=[];
-		%mean_corr(I,:)=[];
-	end
-	%     figure(2);
-	%     subplot(2,1,1)
-	%     imagesc([], FF(Igood)/1000,A);
-	%     subplot(2,1,2)
-	%     imagesc(TT_plot, FF(Igood)/1000,xcovv{I});
-	%     caxis([0 1]);
-	%     colorbar
-	%     pause(0.25);
-	
-	
+    if rem(I,100)==0,disp(sprintf('%6.2f percent done',100*I/Ntime));end
+    
+    try
+        A= B(Igood,Iindex(I)+(0:(Ncol-1)));
+        
+        [N,M] = size(A);  %Autocorrelate columns
+        X=fft(A'-ones(M,1)*mean(A'), 2^nextpow2(2*M-1));
+        tmp=ifft(abs(X).^2);
+        
+        tmp1=[tmp(end-maxlag+1:end,:);tmp(1:maxlag+1,:)];
+        tmp=tmp1./(ones(size(tmp1,1),1)*tmp1(maxlag+1,:));
+        
+        xcovv=tmp(I_range,:);
+        %end
+        mean_corr(:,I)=median(xcovv')';
+        pwr(I,:)=sum(A)/length(Igood);
+        pwr_tot(I)=max(pwr(I,:));
+    catch
+        xcovv=[];
+        %mean_corr(I,:)=[];
+    end
+    %     figure(2);
+    %     subplot(2,1,1)
+    %     imagesc([], FF(Igood)/1000,A);
+    %     subplot(2,1,2)
+    %     imagesc(TT_plot, FF(Igood)/1000,xcovv{I});
+    %     caxis([0 1]);
+    %     colorbar
+    %     pause(0.25);
+    
+    
 end  %Ntime
 end
 
@@ -5426,8 +5426,8 @@ y=filtfilt(Bfilt,1,x-mean(x));
 %Adaptive filter option
 
 if teager==1
-	y=y(2:end-1).^2-(y(1:end-2).*y(3:end));
-	
+    y=y(2:end-1).^2-(y(1:end-2).*y(3:end));
+    
 end
 
 index1=1:round((Nfft-ovlap)):length(y);
@@ -5436,19 +5436,19 @@ Ncoll=length(index1)-1;
 XC=zeros(Nfft+1,Ncoll);
 pwrr=zeros(1,Ncoll);
 for I=1:Ncoll
-	try
-		Indexx=index1(I)+(0:(Nfft-1));
-		tmp=xcov((hilbert(hanning(length(Indexx)).*y(Indexx))),'coeff');  %Delphine, note that this should be windowed...
-		
-		XC(:,I)=tmp((Nfft-1):end);
-		pwrr(I)=tmp(Nfft-1);
-		%%Mulitpath can generate strong correlations.  Surface-reflected paths should have negative
-		%%correlations.  Therefore, only keep levels greater than zero.
-		%Iplus=find(XC(:,I)<=0);
-		%XC(Iplus,I)=0;
-	catch
-		disp('Problem');
-	end
+    try
+        Indexx=index1(I)+(0:(Nfft-1));
+        tmp=xcov((hilbert(hanning(length(Indexx)).*y(Indexx))),'coeff');  %Delphine, note that this should be windowed...
+        
+        XC(:,I)=tmp((Nfft-1):end);
+        pwrr(I)=tmp(Nfft-1);
+        %%Mulitpath can generate strong correlations.  Surface-reflected paths should have negative
+        %%correlations.  Therefore, only keep levels greater than zero.
+        %Iplus=find(XC(:,I)<=0);
+        %XC(Iplus,I)=0;
+    catch
+        disp('Problem');
+    end
 end
 XC=10*log10(abs(XC));
 
@@ -5463,8 +5463,8 @@ XC_eq=zeros(size(XC));
 eq=mean(XC(2:Inoise,:));  %Original equalization estimate
 
 for I=1:size(XC,1)
-	eq=(1-alpha).*eq+alpha.*XC(I,:);
-	XC_eq(I,:)=XC(I,:)-eq;
+    eq=(1-alpha).*eq+alpha.*XC(I,:);
+    XC_eq(I,:)=XC(I,:)-eq;
 end
 
 %%Trim away portions of autocorrelation that will not have creaks (ici_range)
@@ -5490,14 +5490,14 @@ function  [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM
 
 
 if nargin==3,
-	VM=[];
-	A=[];
-	B=[];
-	ANG=[];
+    VM=[];
+    A=[];
+    B=[];
+    ANG=[];
 elseif nargin==4,
-	A=[];
-	B=[];
-	ANG=[];
+    A=[];
+    B=[];
+    ANG=[];
 end
 %Convert to km
 VM=VM/1000;
@@ -5506,7 +5506,7 @@ A=A/1000;
 B=B/1000;
 
 if ~exist('linel', 'var')
-	linel=35; %length of bearing lines in km
+    linel=35; %length of bearing lines in km
 end
 %subplot(3,1,LL);
 xg=mean(DASAR_coords(:,1));
@@ -5522,24 +5522,24 @@ grid on;
 
 %Convert bearings from nautical to mathematical frame.
 if ~isempty(bearings)
-	bearings=(90-bearings(Igood))*pi/180;
-	for I=1:length(Igood)
-		XX=DASAR_coords(Igood(I),1)+[0 linel*cos(bearings(I))]-xg;
-		YY=DASAR_coords(Igood(I),2)+[0 linel*sin(bearings(I))]-yg;
-		line(XX,YY);
-	end
+    bearings=(90-bearings(Igood))*pi/180;
+    for I=1:length(Igood)
+        XX=DASAR_coords(Igood(I),1)+[0 linel*cos(bearings(I))]-xg;
+        YY=DASAR_coords(Igood(I),2)+[0 linel*sin(bearings(I))]-yg;
+        line(XX,YY);
+    end
 end
 if ~isempty(VM)
-	VMn=[VM(:,1)-xg VM(:,2)-yg];
-	plot(VMn(1),VMn(2),'ks','markerfacecolor',[0 0 0],'markersize',5);
+    VMn=[VM(:,1)-xg VM(:,2)-yg];
+    plot(VMn(1),VMn(2),'ks','markerfacecolor',[0 0 0],'markersize',5);
 end
 
 
 %Plot error elipps
 if ~isempty(A)
-	%ELLIPSE(ra,rb,ang,x0,y0)
-	h=ellipse(A,B,ANG,VM(1)-xg,VM(2)-yg,'k');
-	set(h,'linewidth',0.5);
+    %ELLIPSE(ra,rb,ang,x0,y0)
+    h=ellipse(A,B,ANG,VM(1)-xg,VM(2)-yg,'k');
+    set(h,'linewidth',0.5);
 end
 
 hold off;
@@ -5589,13 +5589,13 @@ function h=ellipse(ra,rb,ang,x0,y0,C,Nb)
 % Check the number of input arguments
 
 if nargin<1,
-	ra=[];
+    ra=[];
 end;
 if nargin<2,
-	rb=[];
+    rb=[];
 end;
 if nargin<3,
-	ang=[];
+    ang=[];
 end;
 
 %if nargin==1,
@@ -5603,16 +5603,16 @@ end;
 %end;
 
 if nargin<5,
-	x0=[];
-	y0=[];
+    x0=[];
+    y0=[];
 end;
 
 if nargin<6,
-	C=[];
+    C=[];
 end
 
 if nargin<7,
-	Nb=[];
+    Nb=[];
 end
 
 % set up the default values
@@ -5637,62 +5637,62 @@ Nb=Nb(:);
 if ischar(C),C=C(:);end;
 
 if length(ra)~=length(rb),
-	error('length(ra)~=length(rb)');
+    error('length(ra)~=length(rb)');
 end;
 if length(x0)~=length(y0),
-	error('length(x0)~=length(y0)');
+    error('length(x0)~=length(y0)');
 end;
 
 % how many inscribed elllipses are plotted
 
 if length(ra)~=length(x0)
-	maxk=length(ra)*length(x0);
+    maxk=length(ra)*length(x0);
 else
-	maxk=length(ra);
+    maxk=length(ra);
 end;
 
 % drawing loop
 
 for k=1:maxk
-	
-	if length(x0)==1
-		xpos=x0;
-		ypos=y0;
-		radm=ra(k);
-		radn=rb(k);
-		if length(ang)==1
-			an=ang;
-		else
-			an=ang(k);
-		end;
-	elseif length(ra)==1
-		xpos=x0(k);
-		ypos=y0(k);
-		radm=ra;
-		radn=rb;
-		an=ang;
-	elseif length(x0)==length(ra)
-		xpos=x0(k);
-		ypos=y0(k);
-		radm=ra(k);
-		radn=rb(k);
-		an=ang(k);
-	else
-		rada=ra(fix((k-1)/size(x0,1))+1);
-		radb=rb(fix((k-1)/size(x0,1))+1);
-		an=ang(fix((k-1)/size(x0,1))+1);
-		xpos=x0(rem(k-1,size(x0,1))+1);
-		ypos=y0(rem(k-1,size(y0,1))+1);
-	end;
-	
-	co=cos(an);
-	si=sin(an);
-	the=linspace(0,2*pi,Nb(rem(k-1,size(Nb,1))+1,:)+1);
-	%  x=radm*cos(the)*co-si*radn*sin(the)+xpos;
-	%  y=radm*cos(the)*si+co*radn*sin(the)+ypos;
-	h(k)=line(radm*cos(the)*co-si*radn*sin(the)+xpos,radm*cos(the)*si+co*radn*sin(the)+ypos);
-	set(h(k),'color',C(rem(k-1,size(C,1))+1,:));
-	
+    
+    if length(x0)==1
+        xpos=x0;
+        ypos=y0;
+        radm=ra(k);
+        radn=rb(k);
+        if length(ang)==1
+            an=ang;
+        else
+            an=ang(k);
+        end;
+    elseif length(ra)==1
+        xpos=x0(k);
+        ypos=y0(k);
+        radm=ra;
+        radn=rb;
+        an=ang;
+    elseif length(x0)==length(ra)
+        xpos=x0(k);
+        ypos=y0(k);
+        radm=ra(k);
+        radn=rb(k);
+        an=ang(k);
+    else
+        rada=ra(fix((k-1)/size(x0,1))+1);
+        radb=rb(fix((k-1)/size(x0,1))+1);
+        an=ang(fix((k-1)/size(x0,1))+1);
+        xpos=x0(rem(k-1,size(x0,1))+1);
+        ypos=y0(rem(k-1,size(y0,1))+1);
+    end;
+    
+    co=cos(an);
+    si=sin(an);
+    the=linspace(0,2*pi,Nb(rem(k-1,size(Nb,1))+1,:)+1);
+    %  x=radm*cos(the)*co-si*radn*sin(the)+xpos;
+    %  y=radm*cos(the)*si+co*radn*sin(the)+ypos;
+    h(k)=line(radm*cos(the)*co-si*radn*sin(the)+xpos,radm*cos(the)*si+co*radn*sin(the)+ypos);
+    set(h(k),'color',C(rem(k-1,size(C,1))+1,:));
+    
 end;
 
 end
@@ -5709,9 +5709,9 @@ function c = cond2(A)
 
 s = svd(A);
 if any(s == 0)   % Handle singular matrix
-	c = Inf;
+    c = Inf;
 else
-	c = max(s)./min(s);
+    c = max(s)./min(s);
 end
 end
 
@@ -5741,26 +5741,26 @@ dp = VM-MD;
 theta = atan2(dp(2),dp(1));     % 4-quadrant inverse tangent: angle from MD to VM
 detS = det(S);
 if isnan(S(1)) || (detS<=0) || min(diag(S))<0,
-	area = nan;  a = nan;  b = nan;  ang = nan;  angax = nan;
+    area = nan;  a = nan;  b = nan;  ang = nan;  angax = nan;
 else
-	area = pi*sqrt(detS)*critval;
-	[V,L] = eig(S);
-	d = 2*sqrt(critval*diag(L));  % Lengths of both axes.
-	[d,i] = sort(d);
-	a = d(2);  b = d(1);          % a & b: major & minor axis lengths, respectively.
-	v = V(:,i(2));                % dominant eigenvector
-	angax = atan(v(2)/v(1));      % Absolute orientation of ellipse major axis
-	if angax<0,                   % Returns an angle between 0 and pi following
-		angax = angax+pi;           %    math convention (0 radians = 90 degrees, East;
-	end                           %    pi radians = 270 degrees, West).
-	ang = angax;
-	if ((theta>-pi/2) && (theta<pi/2)  && (ang>(pi/2+theta))), % Adjust angle for
-		ang = ang-pi;                                          %   estimated position
-	elseif ((theta>=pi/2) && (ang<(theta-pi/2))),             %   relative to center
-		ang = ang+pi;                                          %   of DASAR array.
-	elseif ((theta<=-pi/2) && (ang<(3*pi/2+theta))),
-		ang = ang+pi;
-	end
+    area = pi*sqrt(detS)*critval;
+    [V,L] = eig(S);
+    d = 2*sqrt(critval*diag(L));  % Lengths of both axes.
+    [d,i] = sort(d);
+    a = d(2);  b = d(1);          % a & b: major & minor axis lengths, respectively.
+    v = V(:,i(2));                % dominant eigenvector
+    angax = atan(v(2)/v(1));      % Absolute orientation of ellipse major axis
+    if angax<0,                   % Returns an angle between 0 and pi following
+        angax = angax+pi;           %    math convention (0 radians = 90 degrees, East;
+    end                           %    pi radians = 270 degrees, West).
+    ang = angax;
+    if ((theta>-pi/2) && (theta<pi/2)  && (ang>(pi/2+theta))), % Adjust angle for
+        ang = ang-pi;                                          %   estimated position
+    elseif ((theta>=pi/2) && (ang<(theta-pi/2))),             %   relative to center
+        ang = ang+pi;                                          %   of DASAR array.
+    elseif ((theta<=-pi/2) && (ang<(3*pi/2+theta))),
+        ang = ang+pi;
+    end
 end
 end
 
@@ -5788,124 +5788,124 @@ function [VM,Qhat,w,outcome] = vmmle_r(angle,dasar,r,k)
 %   the reason for failure.
 
 if nargin<3,
-	r = 'm';
+    r = 'm';
 end
 if nargin<4||all(k==0)          % Estimate kappa from the data
-	kest = true;
+    kest = true;
 else
-	kest = false;
+    kest = false;
 end
 r = lower(r);
 robust = strfind('mah',r);
 if isempty(robust),
-	error('Input r must be either "m", "a", or "h"');
+    error('Input r must be either "m", "a", or "h"');
 end
 failed = {'less than 2 bearings','negative variance estimates',...
-	'solution behind DASARs','failed to converge'};
+    'solution behind DASARs','failed to converge'};
 n = length(angle);
 
 if n<=1  %If only one set of bearings present...
-	outcome = failed{1};
+    outcome = failed{1};
 else
-	cond_num = 1e15;       % For test of singularity.
-	tc = 1.5;              % Tuning constant for robust versions.
-	dist1 = 1;             % Was 0.1
-	maxiter = 50;
-	x = dasar(:,1);
-	y = dasar(:,2);
-	iter = 0;
-	theta = (90-angle)*pi/180;  %Mathematical angle defined
-	theta = (theta<-pi)*2*pi + theta;
-	s = sin(theta);
-	c = cos(theta);
-	z = s.*x - c.*y;
-	sstar = s';
-	cstar = c';
-	w = ones(1,n);
-	M1 = [sstar; -cstar]*[s -c];
-	converge = 0;
-	if cond2(M1)<cond_num,
-		M2 = [sstar; -cstar]* z;
-		xyhat = M1\M2;
-		while (~converge)&&(iter<maxiter),
-			iter = iter+1;
-			xyold = xyhat;
-			% d = dist(xyhat', [x y]');
-			
-			for JJ=1:length(x)
-				d(JJ)=sqrt((xyhat(1)-x(JJ)).^2+(xyhat(2)-y(JJ)).^2);
-			end
-			if (robust>1) && (n>2), % Need 3 or more bearings to calculate weights for
-				dxy = repmat(xyhat',n,1)-[x y];      % robust methods
-				muhat = cart2pol(dxy(:,1),dxy(:,2));
-				Cd = cos([theta-muhat]');
-				if kest,
-					Cbar = abs(w*Cd'/sum(w))^(n/(n-2));  % Abs is ad hoc but may avoid temporary numeric problems in iteration
-					k = inv(2*(1-Cbar)+(1-Cbar)^2*(0.48794-0.82905*Cbar-1.3915*Cbar^2)/Cbar);
-				end
-				t = sqrt(2*k'.*(1-Cd));
-				if robust==2,
-					phit = tc*sin(t/tc).*(abs(t)<tc*pi);
-				else
-					phit = sign(t).*min(abs(t),tc);
-				end
-				same = (Cd==1);     % Take care when estimated & observed bearings
-				t(same) = 1;        %   are identical; avoid division by zero.
-				phit(same) = 1;     %   Usually occurs with just 2 intersecting bearings.
-				w = phit./t;
-			end    %  if robust>1
-			sstar = w.*(xyhat(2)-y')./(d.^3);
-			cstar = w.*(xyhat(1)-x')./(d.^3);
-			M1 = [sstar; (-cstar)]*[s -c];
-			if ((n-sum(~w))>1) && (cond2(M1)<cond_num),
-				M2 = [sstar; -cstar]*z;
-				xyhat = M1\M2;
-				converge = sum(abs(xyhat-xyold)<dist1)==2;
-			else
-				break    % If either condition above occurs, convergence will very
-			end        %    likely fail, so break out of while loop.
-		end  % while
-	end    % if cond2
-	if converge,
-		dxy = repmat(xyhat',n,1)-[x y];
-		muhat = cart2pol(dxy(:,1),dxy(:,2));
-		Cd = cos([theta-muhat]');
-		if kest && (n>2),
-			Cbar = (w*Cd'/sum(w))^(n/(n-2));   % Exponent is small sample size correction
-			k = inv(2*(1-Cbar)+(1-Cbar)^2*(0.48794-0.82905*Cbar-1.3915*Cbar^2)/Cbar);
-		end
-		if Cd*w'>0,             % Weighted average of cosine differences (check
-			VM = xyhat';          %   on bad solutions behind DASARs)
-			if kest && (n==2),     % Cannot estimate Qhat with only 2 bearings
-				Qhat = nan*ones(2);
-				outcome = 'successful; 2 bearings; no Kappa';
-			else
-				k = k';
-				cv = -(k.*sstar*c + k.*cstar*s)/2;
-				M3 = [k.*sstar*s cv; cv k.*cstar*c];
-				Qhat = inv(M3);
-			end
-			if ~kest || (n>2),
-				if all(diag(Qhat)>0),
-					outcome = 'successful';       % Successful solution
-				else
-					outcome = failed{2};        % Implausible variance estimate(s)
-				end
-			end
-		else
-			outcome = failed{3};          % Bad solution behind DASARs
-		end % if all(Cd>0)
-	else
-		outcome = failed{4};            % No convergence
-	end   % if converge
+    cond_num = 1e15;       % For test of singularity.
+    tc = 1.5;              % Tuning constant for robust versions.
+    dist1 = 1;             % Was 0.1
+    maxiter = 50;
+    x = dasar(:,1);
+    y = dasar(:,2);
+    iter = 0;
+    theta = (90-angle)*pi/180;  %Mathematical angle defined
+    theta = (theta<-pi)*2*pi + theta;
+    s = sin(theta);
+    c = cos(theta);
+    z = s.*x - c.*y;
+    sstar = s';
+    cstar = c';
+    w = ones(1,n);
+    M1 = [sstar; -cstar]*[s -c];
+    converge = 0;
+    if cond2(M1)<cond_num,
+        M2 = [sstar; -cstar]* z;
+        xyhat = M1\M2;
+        while (~converge)&&(iter<maxiter),
+            iter = iter+1;
+            xyold = xyhat;
+            % d = dist(xyhat', [x y]');
+            
+            for JJ=1:length(x)
+                d(JJ)=sqrt((xyhat(1)-x(JJ)).^2+(xyhat(2)-y(JJ)).^2);
+            end
+            if (robust>1) && (n>2), % Need 3 or more bearings to calculate weights for
+                dxy = repmat(xyhat',n,1)-[x y];      % robust methods
+                muhat = cart2pol(dxy(:,1),dxy(:,2));
+                Cd = cos([theta-muhat]');
+                if kest,
+                    Cbar = abs(w*Cd'/sum(w))^(n/(n-2));  % Abs is ad hoc but may avoid temporary numeric problems in iteration
+                    k = inv(2*(1-Cbar)+(1-Cbar)^2*(0.48794-0.82905*Cbar-1.3915*Cbar^2)/Cbar);
+                end
+                t = sqrt(2*k'.*(1-Cd));
+                if robust==2,
+                    phit = tc*sin(t/tc).*(abs(t)<tc*pi);
+                else
+                    phit = sign(t).*min(abs(t),tc);
+                end
+                same = (Cd==1);     % Take care when estimated & observed bearings
+                t(same) = 1;        %   are identical; avoid division by zero.
+                phit(same) = 1;     %   Usually occurs with just 2 intersecting bearings.
+                w = phit./t;
+            end    %  if robust>1
+            sstar = w.*(xyhat(2)-y')./(d.^3);
+            cstar = w.*(xyhat(1)-x')./(d.^3);
+            M1 = [sstar; (-cstar)]*[s -c];
+            if ((n-sum(~w))>1) && (cond2(M1)<cond_num),
+                M2 = [sstar; -cstar]*z;
+                xyhat = M1\M2;
+                converge = sum(abs(xyhat-xyold)<dist1)==2;
+            else
+                break    % If either condition above occurs, convergence will very
+            end        %    likely fail, so break out of while loop.
+        end  % while
+    end    % if cond2
+    if converge,
+        dxy = repmat(xyhat',n,1)-[x y];
+        muhat = cart2pol(dxy(:,1),dxy(:,2));
+        Cd = cos([theta-muhat]');
+        if kest && (n>2),
+            Cbar = (w*Cd'/sum(w))^(n/(n-2));   % Exponent is small sample size correction
+            k = inv(2*(1-Cbar)+(1-Cbar)^2*(0.48794-0.82905*Cbar-1.3915*Cbar^2)/Cbar);
+        end
+        if Cd*w'>0,             % Weighted average of cosine differences (check
+            VM = xyhat';          %   on bad solutions behind DASARs)
+            if kest && (n==2),     % Cannot estimate Qhat with only 2 bearings
+                Qhat = nan*ones(2);
+                outcome = 'successful; 2 bearings; no Kappa';
+            else
+                k = k';
+                cv = -(k.*sstar*c + k.*cstar*s)/2;
+                M3 = [k.*sstar*s cv; cv k.*cstar*c];
+                Qhat = inv(M3);
+            end
+            if ~kest || (n>2),
+                if all(diag(Qhat)>0),
+                    outcome = 'successful';       % Successful solution
+                else
+                    outcome = failed{2};        % Implausible variance estimate(s)
+                end
+            end
+        else
+            outcome = failed{3};          % Bad solution behind DASARs
+        end % if all(Cd>0)
+    else
+        outcome = failed{4};            % No convergence
+    end   % if converge
 end     % if n<=1
 
 
 if isempty(strfind(outcome,'successful'));
 %if ~isempty(strfind(failed,outcome))
-	VM = [nan nan];
-	Qhat = nan*ones(2);
-	w = zeros(1,n);
+    VM = [nan nan];
+    Qhat = nan*ones(2);
+    w = zeros(1,n);
 end
 end
 
@@ -5920,7 +5920,7 @@ function [brefa_table,Icol]=calibrate_bearing_Shell2007(cal_dir,fname,no_load_ta
 brefa_table=[];
 Islash=1+max(strfind(fname,'/'));
 if ~isempty(Islash)
-	fname=fname(Islash:end);
+    fname=fname(Islash:end);
 end
 site=str2double(fname(2));
 dasar=lower(fname(5));
@@ -5948,13 +5948,13 @@ Icol=double(dasar)-96;
 
 
 if nargin==2
-	cal_dir=sprintf('%s/S%i07gsif/Caloutput07s%i/Bgrid07s%i.mat',cal_dir,site,site,site);
-	load(cal_dir);
-	brefa_table=bgridt;
-	
-	%     if site==1  %DASAR 1B failed, not reflected in bgrid table...
-	%        brefa_table=[brefa_table(:,1) zeros(size(bgridt,1),1) brefa_table(:,2:end)];
-	%     end
+    cal_dir=sprintf('%s/S%i07gsif/Caloutput07s%i/Bgrid07s%i.mat',cal_dir,site,site,site);
+    load(cal_dir);
+    brefa_table=bgridt;
+    
+    %     if site==1  %DASAR 1B failed, not reflected in bgrid table...
+    %        brefa_table=[brefa_table(:,1) zeros(size(bgridt,1),1) brefa_table(:,2:end)];
+    %     end
 end
 
 end
@@ -5980,20 +5980,20 @@ function status=write_covmat(freqvec,Cov,depth,srcname,titlestr)
 
 [n,m,F]= size(Cov);
 if(m ~= n)
-	fprintf(1,'size(Cov) = [%d %d], length(freqvec)=%d\n', ...
-		size(Cov),length(freqvec));
-	error('sizes of Cov and freqvec are not compatible');
+    fprintf(1,'size(Cov) = [%d %d], length(freqvec)=%d\n', ...
+        size(Cov),length(freqvec));
+    error('sizes of Cov and freqvec are not compatible');
 end
 if(F ~=length(freqvec))
-	fprintf(1,'size(Cov) = [%d %d], length(freqvec)=%d\n', ...
-		size(Cov),length(freqvec));
-	error('sizes of 3Cov and freqvec are not compatible');
+    fprintf(1,'size(Cov) = [%d %d], length(freqvec)=%d\n', ...
+        size(Cov),length(freqvec));
+    error('sizes of 3Cov and freqvec are not compatible');
 end
 
 if(n ~= length(depth))
-	fprintf(1,'size(Cov) = [%d %d], length(freqvec)=%d\n', ...
-		size(Cov),length(freqvec));
-	error('sizes of Cov and depth are not compatible');
+    fprintf(1,'size(Cov) = [%d %d], length(freqvec)=%d\n', ...
+        size(Cov),length(freqvec));
+    error('sizes of Cov and depth are not compatible');
 end
 
 
@@ -6004,19 +6004,19 @@ end
 fidout =  fopen(sprintf('%s.in',srcname),'w');
 
 for ifreq=1:length(freqvec)
-	fprintf(fidout,' %s\n',titlestr);
-	fprintf(fidout,' %f     0.000 dB\n',freqvec(ifreq));
-	fprintf(fidout,' %d\n',n);
-	fprintf(fidout,' %8.2f\n',depth);
-	%   cols = [ (ifreq-1)*n+1:ifreq*n ];
-	%   Cx = Cov(:,cols); % cut one cov-matrix out of the bunch
-	Cx=squeeze(Cov(:,:,ifreq));
-	for row=1:n
-		for col=1:n
-			fprintf(fidout,'%10d%10d (%E,%E) \n',row,col, ...
-				real(Cx(row,col)),imag(Cx(row,col)));
-		end
-	end
+    fprintf(fidout,' %s\n',titlestr);
+    fprintf(fidout,' %f     0.000 dB\n',freqvec(ifreq));
+    fprintf(fidout,' %d\n',n);
+    fprintf(fidout,' %8.2f\n',depth);
+    %   cols = [ (ifreq-1)*n+1:ifreq*n ];
+    %   Cx = Cov(:,cols); % cut one cov-matrix out of the bunch
+    Cx=squeeze(Cov(:,:,ifreq));
+    for row=1:n
+        for col=1:n
+            fprintf(fidout,'%10d%10d (%E,%E) \n',row,col, ...
+                real(Cx(row,col)),imag(Cx(row,col)));
+        end
+    end
 end
 fprintf(fidout,'!  \n');
 status=fclose(fidout);
@@ -6026,11 +6026,11 @@ end
 function audio_stop(player, ~, handles)
 %	Set controls
 ispaused	=	(player.CurrentSample > 1) &&...
-	(player.CurrentSample < player.TotalSamples);
+    (player.CurrentSample < player.TotalSamples);
 if	~ispaused
-	set(handles.pushbutton_playsound, 'String', 'Play');
-	set(handles.pushbutton_pausesound, 'String', 'Pause');
-	set(handles.pushbutton_pausesound, 'Enable', 'off');
+    set(handles.pushbutton_playsound, 'String', 'Play');
+    set(handles.pushbutton_pausesound, 'String', 'Pause');
+    set(handles.pushbutton_pausesound, 'Enable', 'off');
 end
 
 end
@@ -6056,7 +6056,7 @@ end
 function	disable_notes_nav(handles, opt)
 
 if	nargin < 2 || isempty(opt)
-	opt		=	'off';
+    opt		=	'off';
 end
 
 set(handles.pushbutton_notes_first, 'Enable', opt);
@@ -6073,24 +6073,24 @@ function	handles		=	load_notes_file(handles, new_folder)
 
 %	First check that current notes are saved before proceeding
 if	~handles.notes.saved && ~handles.notes.readonly
-	qtitle	=	'Unsaved changes';
-	qstring	=	{'Warning: current changes to notes not saved!'...
-		'Write to file before continuing?'};
-	str1	=	'Yes';
-	str2	=	'No';
-	button	=	questdlg(qstring, qtitle, str1, str2, str1);
-	
-	switch	button
-		case	str1
-			%	Save file
-			pushbutton_notes_save_Callback(handles.pushbutton_notes_save,...
-				[], handles);
-			handles		=	guidata(handles.pushbutton_notes_save);
-		case	str2
-			%	Don't bother
-		otherwise
-			error('This should not be reached');
-	end
+    qtitle	=	'Unsaved changes';
+    qstring	=	{'Warning: current changes to notes not saved!'...
+        'Write to file before continuing?'};
+    str1	=	'Yes';
+    str2	=	'No';
+    button	=	questdlg(qstring, qtitle, str1, str2, str1);
+    
+    switch	button
+        case	str1
+            %	Save file
+            pushbutton_notes_save_Callback(handles.pushbutton_notes_save,...
+                [], handles);
+            handles		=	guidata(handles.pushbutton_notes_save);
+        case	str2
+            %	Don't bother
+        otherwise
+            error('This should not be reached');
+    end
 end
 
 
@@ -6106,9 +6106,9 @@ set(handles.checkbox_notes_delete, 'Enable', opt);
 
 %	Switch to new folder and check for existing files
 if	exist('new_folder','var') && ~isempty(new_folder)
-	folder_name	=	new_folder;
+    folder_name	=	new_folder;
 else
-	folder_name	=	handles.notes.folder_name;
+    folder_name	=	handles.notes.folder_name;
 end
 [~,fname,~]		=	fileparts(handles.myfile);
 
@@ -6129,11 +6129,11 @@ Nf			=	length(file_exts);
 file_found	=	true(Nf,1);
 
 for ii	=	1:Nf
-	%	Find all existing files
-	file_listings{ii}	=	dir(fullfile(folder_name, [fname '*' file_exts{ii}]));
-	if isempty(file_listings{ii})
-		file_found(ii)	=	false;
-	end
+    %	Find all existing files
+    file_listings{ii}	=	dir(fullfile(folder_name, [fname '*' file_exts{ii}]));
+    if isempty(file_listings{ii})
+        file_found(ii)	=	false;
+    end
 end
 %	Limit options to available files
 file_opts		=	file_opts(file_found);
@@ -6143,153 +6143,153 @@ file_listings	=	file_listings(file_found);
 
 choice	=	0;
 if	~isempty(file_listings)
-	if length(file_listings) == 1
-		choice	=	1;
-	else
-		%	Ask user to choose which list
-		choice	=	menu('Select a file type:', file_opts);
-	end
+    if length(file_listings) == 1
+        choice	=	1;
+    else
+        %	Ask user to choose which list
+        choice	=	menu('Select a file type:', file_opts);
+    end
 end
 
 if	choice	==	0
-	listing		=	[];
-	manual_flag	=	true;
+    listing		=	[];
+    manual_flag	=	true;
 else
-	listing		=	file_listings{choice};
-	manual_flag	=	file_flag{choice};
+    listing		=	file_listings{choice};
+    manual_flag	=	file_flag{choice};
 end
 
 
 sel_names	=	[];
 
 if	~isempty(listing)
-	%	Ask user which file(s) to load
-	N_files		=	length(listing);
-	list_files	=	cell(N_files,1);
-	for	ii	=	1:N_files
-		list_names{ii}	=	listing(ii).name;
-	end
-	
-	%AARON note: example of listdlg
-	[Sel, OK]	=	listdlg('ListString', list_names,...
-		'Name', 'Available notes',...
-		'PromptString', 'Select file(s) to load:',...
-		'OKString', 'Load',...
-		'CancelString', 'New');
-	if	(OK == 0) || isempty(Sel)
-		sel_names	=	[];
-	else
-		sel_names	=	list_names(Sel);
-		
-		%	If just one file, then make it the target of future saves
-		if	length(Sel) == 1 && manual_flag
-			
-			file_name	=	sel_names{1};
-		elseif length(Sel) == 1 && ~manual_flag
-			%%keep file name
-			
-			
-		elseif	length(Sel) > 1
-			%	Otherwise new merged file
-			user_name	=	'merged';
+    %	Ask user which file(s) to load
+    N_files		=	length(listing);
+    list_files	=	cell(N_files,1);
+    for	ii	=	1:N_files
+        list_names{ii}	=	listing(ii).name;
+    end
+    
+    %AARON note: example of listdlg
+    [Sel, OK]	=	listdlg('ListString', list_names,...
+        'Name', 'Available notes',...
+        'PromptString', 'Select file(s) to load:',...
+        'OKString', 'Load',...
+        'CancelString', 'New');
+    if	(OK == 0) || isempty(Sel)
+        sel_names	=	[];
+    else
+        sel_names	=	list_names(Sel);
+        
+        %	If just one file, then make it the target of future saves
+        if	length(Sel) == 1 && manual_flag
+            
+            file_name	=	sel_names{1};
+        elseif length(Sel) == 1 && ~manual_flag
+            %%keep file name
+            
+            
+        elseif	length(Sel) > 1
+            %	Otherwise new merged file
+            user_name	=	'merged';
             file_name	=	[fname '-' user_name '.mat'];
-		end
-	end
-	
-	%	Make sure file name for new files is unique
-	if	length(Sel) ~= 1	%i.e. we're not working with a specific file
-		ii	=	0;
-		while	any(strcmp(file_name, list_names))
-			ii	=	ii + 1;
+        end
+    end
+    
+    %	Make sure file name for new files is unique
+    if	length(Sel) ~= 1	%i.e. we're not working with a specific file
+        ii	=	0;
+        while	any(strcmp(file_name, list_names))
+            ii	=	ii + 1;
             file_name	=	[fname '-' user_name '-' num2str(ii) '.mat'];
-		end
-	end
-	
+        end
+    end
+    
 end
 
 
 %	New file with default data template
 [Defaults.Description, Defaults.Template, edit_fields]	=	load_default_template();
 Defaults.Events		=	Defaults.Template;
-GUI_params			=	[];
+GUI_params	=	[];
 handles.notes.edit_fields	=	edit_fields;
 
 
 if isempty(listing) || isempty(sel_names)
-	%	Create defaults if none already present
-	%	Default prompt
-	
-	Data				=	Defaults;
-	Data.Events			=	[];
-	
-	handles.notes.Data	=	Data;
-	handles.notes.show	=	false;
-	opt					=	'off';
-	
-	
-	%	Load selected files and merge data
+    %	Create defaults if none already present
+    %	Default prompt
+    
+    Data				=	Defaults;
+    Data.Events			=	[];
+    
+    handles.notes.Data	=	Data;
+    handles.notes.show	=	false;
+    opt					=	'off';
+    
+    
+    %	Load selected files and merge data
 else
-	Data	=	[];
-	for	ii	=	1:length(sel_names)
-		file_path		=	fullfile(folder_name, sel_names{ii});
-		
-		%%AARON changes
-		if manual_flag
-			LSfile		=	load(file_path);
-		else  %import automated file
-			[auto,head]		=	readEnergySummary(file_path, Inf);
-			
-			LSfile.Data			=	Defaults;
-			LSfile.Data.param	=	head;
-			hh	=	waitbar(0,sprintf('Importing %s...',sel_names{ii}));
-			for JJ = 1:length(auto.ctime)
-				if rem(JJ,500) == 0
-					waitbar(JJ/length(auto.ctime),hh);
-				end
-				LSfile.Data.Events(JJ)			=	Template;
-				LSfile.Data.Events(JJ).start_time=	datenum(1970,1,1,0,0,auto.ctime(JJ));
-				LSfile.Data.Events(JJ).author	=	'JAVA Energy Processor';
-				LSfile.Data.Events(JJ).duration	=	num2str(auto.features(end,JJ));
-				LSfile.Data.Events(JJ).min_freq	=	num2str(auto.features(1,JJ));
-				LSfile.Data.Events(JJ).max_freq	=	num2str(auto.features(3,JJ));
-			end
-			close(hh);
-			
-		end
-		
-		%	Check and merge event data
-		if	isempty(Data)
-			Data	=	check_notes(LSfile.Data);
-		else
-			nData	=	check_notes(LSfile.Data);
-			Data	=	merge_data(Data, nData);
-		end
-		
-		%	Load gui parameters if present, and only from first encountered
-		if	isfield(LSfile, 'GUI_params')
-			if isempty(GUI_params)
-				GUI_params	=	LSfile.GUI_params;
-			end
-		end
-		
-	end
-	
-	%	Always merge with current template data, to update old notes with
-	%	new fields
-	Data	=	merge_data(Defaults, Data);
-	Data.Events(1)	=	[];
-	
-	
-	if	length(Sel) > 1
-		%	Since this is a new merged file, turn save on, and read_only off
-		handles.notes.saved	=	false;
-		set(handles.checkbox_notes_readonly, 'Value', 0);
-		checkbox_notes_readonly_Callback(handles.checkbox_notes_readonly, [], handles);
-	end
-	
-	handles.notes.Data	=	Data;
-	handles.notes.show	=	true;
-	opt				=	'on';
+    Data	=	[];
+    for	ii	=	1:length(sel_names)
+        file_path		=	fullfile(folder_name, sel_names{ii});
+        
+        %%AARON changes
+        if manual_flag
+            LSfile		=	load(file_path);
+        else  %import automated file
+            [auto,head]		=	readEnergySummary(file_path, Inf);
+            
+            LSfile.Data			=	Defaults;
+            LSfile.Data.param	=	head;
+            hh	=	waitbar(0,sprintf('Importing %s...',sel_names{ii}));
+            for JJ = 1:length(auto.ctime)
+                if rem(JJ,500) == 0
+                    waitbar(JJ/length(auto.ctime),hh);
+                end
+                LSfile.Data.Events(JJ)			=	Template;
+                LSfile.Data.Events(JJ).start_time=	datenum(1970,1,1,0,0,auto.ctime(JJ));
+                LSfile.Data.Events(JJ).author	=	'JAVA Energy Processor';
+                LSfile.Data.Events(JJ).duration	=	num2str(auto.features(end,JJ));
+                LSfile.Data.Events(JJ).min_freq	=	num2str(auto.features(1,JJ));
+                LSfile.Data.Events(JJ).max_freq	=	num2str(auto.features(3,JJ));
+            end
+            close(hh);
+            
+        end
+        
+        %	Check and merge event data
+        if	isempty(Data)
+            Data	=	check_notes(LSfile.Data);
+        else
+            nData	=	check_notes(LSfile.Data);
+            Data	=	merge_data(Data, nData);
+        end
+        
+        %	Load gui parameters if present, and only from first encountered
+        if	isfield(LSfile, 'GUI_params')
+            if isempty(GUI_params)
+                GUI_params	=	LSfile.GUI_params;
+            end
+        end
+        
+    end
+    
+    %	Always merge with current template data, to update old notes with
+    %	new fields
+    Data	=	merge_data(Defaults, Data);
+    Data.Events(1)	=	[];
+    
+    
+    if	length(Sel) > 1
+        %	Since this is a new merged file, turn save on, and read_only off
+        handles.notes.saved	=	false;
+        set(handles.checkbox_notes_readonly, 'Value', 0);
+        checkbox_notes_readonly_Callback(handles.checkbox_notes_readonly, [], handles);
+    end
+    
+    handles.notes.Data	=	Data;
+    handles.notes.show	=	true;
+    opt				=	'on';
 end
 
 %	enable relevant buttons
@@ -6297,7 +6297,7 @@ disable_notes_nav(handles,opt);
 set(handles.checkbox_notes_show, 'Value', handles.notes.show);
 set(handles.checkbox_notes_show, 'Enable', opt);
 if	handles.fig_updated
-	set(handles.pushbutton_notes_new, 'Enable', 'on');
+    set(handles.pushbutton_notes_new, 'Enable', 'on');
 end
 
 handles.notes.folder_name	=	folder_name;
@@ -6313,15 +6313,15 @@ Times	=	handles.tdate_start + datenum(0,0,0,0,0,Times);
 %	Jit, only do this if existing Event data is loaded
 handles.notes.i_sel		=	[];
 if	~isempty(Data.Events)
-	%	Event times
-	Start_Times	=	cell2mat({Data.Events.start_time});
-	
-	%	AARON Find closest event
-	[~, i_show]	=	min(abs(Start_Times - Times));
-	
-	if ~isempty(i_show)
-		handles.notes.i_sel	=	i_show;
-	end
+    %	Event times
+    Start_Times	=	cell2mat({Data.Events.start_time});
+    
+    %	AARON Find closest event
+    [~, i_show]	=	min(abs(Start_Times - Times));
+    
+    if ~isempty(i_show)
+        handles.notes.i_sel	=	i_show;
+    end
 end
 
 %	Load previous window settings, if present
@@ -6342,7 +6342,7 @@ end
 function	handles		=	load_gui_params(handles, GUI_params)
 
 if	isempty(GUI_params)
-	return;
+    return;
 end
 
 %	FFT_parameters
@@ -6373,8 +6373,8 @@ end
 function	GUI_params		=	save_gui_params(handles)
 
 if	isempty(handles)
-	GUI_params	=	[];
-	return;
+    GUI_params	=	[];
+    return;
 end
 
 %	FFT_parameters
@@ -6426,8 +6426,8 @@ names		=	fieldnames(Event);
 N_fields	=	length(names);
 defaults	=	cell(N_fields,1);
 for	ii	=	1:N_fields
-	value	=	Event.(names{ii});
-	defaults{ii}	=	num2str(value);
+    value	=	Event.(names{ii});
+    defaults{ii}	=	num2str(value);
 end
 
 %	Size of each prompt field
@@ -6438,7 +6438,7 @@ num_lines(end)	=	2;
 dlgTitle	=	['Annotation for event at ' datestr(OldEvent.start_time)];
 
 if	length(Description) ~= N_fields
-	error('# of Descriptors differs from # of fields');
+    error('# of Descriptors differs from # of fields');
 end
 
 %	Create input dialogbox
@@ -6447,13 +6447,13 @@ answer		=	inputdlg(Description, dlgTitle, num_lines, defaults, options);
 
 
 if	isempty(answer)
-	NewEvent	=	[];
-	return;
+    NewEvent	=	[];
+    return;
 end
 
 NewEvent	=	OldEvent;
 for	ii	=	1:N_fields
-	NewEvent.(names{ii})	=	answer{ii};
+    NewEvent.(names{ii})	=	answer{ii};
 end
 
 
@@ -6505,10 +6505,10 @@ i_time_noise1	=	(Tmin-duration_noise <= T) & (T < Tmin);
 i_time_noise2	=	(Tmax < T) & (T <= Tmax+duration_noise);
 %Shift one column earlier to avoid picking up first signal FFT bin
 if (sum(i_time_noise1)*dT < 0.9*duration_noise) ||...
-		(sum(i_time_noise2)*dT < 0.9*duration_noise)
-	disp('Selected signal too close to start of window; SNR cannot be computed');
-	params_extract	=	[];
-	return
+        (sum(i_time_noise2)*dT < 0.9*duration_noise)
+    disp('Selected signal too close to start of window; SNR cannot be computed');
+    params_extract	=	[];
+    return
 end
 PSD_noise   =  [B(i_freq,i_time_noise1) B(i_freq,i_time_noise2)];
 
@@ -6544,22 +6544,22 @@ function	[Event_set, ii]		=	add_event(Event_set, Event)
 
 %	If new set, just return the single event
 if	isempty(Event_set)
-	Event_set	=	Event;
-	ii			=	1;
+    Event_set	=	Event;
+    ii			=	1;
 else
-	%	Append new event(s)
-	N			=	length(Event_set) + 1;
-	Event_set	=	[Event_set(:); Event(:)];
-	Start_times	=	cell2mat({Event_set.start_time});
-	%	Check if already sorted, i.e. sequential additions
-	if	issorted(Start_times)
-		ii	=	N;	%	index of 1st inserted item
-	else
-		[~,I]		=	sort(Start_times);
-		Event_set	=	Event_set(I);
-		%	Find new index of 1st inserted event
-		ii			=	find(I == N);
-	end
+    %	Append new event(s)
+    N			=	length(Event_set) + 1;
+    Event_set	=	[Event_set(:); Event(:)];
+    Start_times	=	cell2mat({Event_set.start_time});
+    %	Check if already sorted, i.e. sequential additions
+    if	issorted(Start_times)
+        ii	=	N;	%	index of 1st inserted item
+    else
+        [~,I]		=	sort(Start_times);
+        Event_set	=	Event_set(I);
+        %	Find new index of 1st inserted event
+        ii			=	find(I == N);
+    end
 end
 
 end
@@ -6568,45 +6568,45 @@ end
 function	Data	=	check_notes(Data)
 
 if	isempty(Data)
-	return;
+    return;
 end
 
 req_fields	=	{'Description', 'Template', 'Events'};
 if	~isstruct(Data) || ~all(isfield(Data, req_fields))
-	errmsg	=	'Existing Data must be a structure containing the fields: \n ';
-	for		ii	=	1:length(req_fields)
-		errmsg	=	[errmsg req_fields{ii} ', ']; %#ok<AGROW>
-	end
-	errmsg(end)		=	[];		errmsg(end)		=	[];
-	error(errmsg, []);
+    errmsg	=	'Existing Data must be a structure containing the fields: \n ';
+    for		ii	=	1:length(req_fields)
+        errmsg	=	[errmsg req_fields{ii} ', ']; %#ok<AGROW>
+    end
+    errmsg(end)		=	[];		errmsg(end)		=	[];
+    error(errmsg, []);
 end
 
 if	~iscell(Data.Description)
-	error('Description must be a cell array of strings');
+    error('Description must be a cell array of strings');
 end
 
 if	~isstruct(Data.Template)
-	error('Template must be a struct with the desired data field names');
+    error('Template must be a struct with the desired data field names');
 end
 
 N		=	length(Data.Description);
 names	=	fieldnames(Data.Template);
 if	N ~= length(names)
-	error('# of fields in Template do not match # of descriptions');
+    error('# of fields in Template do not match # of descriptions');
 end
 
 if	~strcmp(names{1}, 'start_time')
-	error('First field in Template (and Events) must be start_time');
+    error('First field in Template (and Events) must be start_time');
 end
 
 if	isempty(Data.Events)
-	return;
+    return;
 else
-	names2	=	fieldnames(Data.Events);
+    names2	=	fieldnames(Data.Events);
 end
 
 if	~strcmp(names, names2)
-	error('Template and Events have differring structures');
+    error('Template and Events have differring structures');
 end
 
 %	At this point assume most everything is ok
@@ -6618,16 +6618,16 @@ end
 % hh = waitbar(0,sprintf('Checking Data'));
 
 for ii	=	2:N
-	
-	%	!?!? Existing strings are automatically passed through, but do I
-	%	need to specifically check for data types other than numeric?
-	Data.Template.(names{ii})		=	num2str(Data.Template.(names{ii}));
-	for	jj	=	1:length(Data.Events)
-		%         if rem(jj,200)==0
-		%             waitbar((ii*length(Data.Events)+jj)/(N*length(Data.Events)),hh);
-		%         end
-		Data.Events(jj).(names{ii})		=	num2str(Data.Events(jj).(names{ii}));
-	end
+    
+    %	!?!? Existing strings are automatically passed through, but do I
+    %	need to specifically check for data types other than numeric?
+    Data.Template.(names{ii})		=	num2str(Data.Template.(names{ii}));
+    for	jj	=	1:length(Data.Events)
+        %         if rem(jj,200)==0
+        %             waitbar((ii*length(Data.Events)+jj)/(N*length(Data.Events)),hh);
+        %         end
+        Data.Events(jj).(names{ii})		=	num2str(Data.Events(jj).(names{ii}));
+    end
 end
 %close(hh)
 
@@ -6649,10 +6649,10 @@ Data.Description	=	[Data1.Description(i1), Data2.Description(i2)];
 Data1.Events(end+1)	=	Data1.Events(end);
 Data2.Events(end+1)	=	Data2.Events(end);
 for	ii	=	1:length(names)
-	Data1.Events(end).(names{ii})	=	[];
-	Data2.Events(end).(names{ii})	=	[];
-	
-	Data.Template.(names{ii})		=	[];
+    Data1.Events(end).(names{ii})	=	[];
+    Data2.Events(end).(names{ii})	=	[];
+    
+    Data.Template.(names{ii})		=	[];
 end
 %	Delete dummy entries
 Data1.Events(end)	=	[];
@@ -6660,10 +6660,10 @@ Data2.Events(end)	=	[];
 
 %	Populate template with default values from each set
 for ii	=	1:length(i1)
-	Data.Template.(names1{i1(ii)})	=	Data1.Template.(names1{i1(ii)});
+    Data.Template.(names1{i1(ii)})	=	Data1.Template.(names1{i1(ii)});
 end
 for ii	=	1:length(i2)
-	Data.Template.(names2{i2(ii)})	=	Data2.Template.(names2{i2(ii)});
+    Data.Template.(names2{i2(ii)})	=	Data2.Template.(names2{i2(ii)});
 end
 
 %	Merge records, now that they are field consistent
@@ -6744,25 +6744,25 @@ set(handles.text_notenum, 'String', msg);
 
 %%If no notes are opened, leave gracefully
 if isempty(handles.notes.file_name)
-	return
+    return
 end
 
 %	Try deleting existing events from window
 try
-	delete(handles.notes.h_show);
+    delete(handles.notes.h_show);
 end
 
 
 %	Disable edit, next/prev buttons if nothing is shown
 if	isempty(handles.notes.Data) || isempty(handles.notes.Data.Events)...
-		|| ~handles.notes.show
-	set(handles.pushbutton_notes_edit,'Enable','off');
-	set(handles.checkbox_notes_delete,'Enable','off');
-	%	Disable prev/next buttons
-	disable_notes_nav(handles);
-	return;
+        || ~handles.notes.show
+    set(handles.pushbutton_notes_edit,'Enable','off');
+    set(handles.checkbox_notes_delete,'Enable','off');
+    %	Disable prev/next buttons
+    disable_notes_nav(handles);
+    return;
 end
-Events		=	handles.notes.Data.Events;
+Events	=	handles.notes.Data.Events;
 Description	=	handles.notes.Data.Description;
 
 h_axes	=	handles.axes1;
@@ -6781,29 +6781,29 @@ h_show	=	[];
 sel_vis	=	false;
 axes(h_axes);
 for	ii	=	1:length(i_show)
-	ie		=	i_show(ii);
-	event	=	Events(ie);
-	x		=	event.start_time - Times(1);	x	=	x*24*60*60;
+    ie		=	i_show(ii);
+    event	=	Events(ie);
+    x		=	event.start_time - Times(1);	x	=	x*24*60*60;
 	y		=	str2double(num2str(event.min_freq))/1000;
 	width	=	str2double(num2str(event.duration));
 	height	=	(str2double(num2str(event.max_freq))...
 							- str2double(num2str(event.min_freq)))/1000;
-	
-	%AARON fix for dodgy detections
-	height	=	max([1e-5 height]);
-	width	=	max([1e-5 width]);
-	
-	h_show(ii)	=	rectangle('Position',[x,y,width,height],...
-		'Curvature',[0.3],...
-		'LineWidth',2,'LineStyle','-',...
-		'EdgeColor','w'); %#ok<AGROW>
-	
-	%	Highlight selected event with a different color
-	if	ie == handles.notes.i_sel
-		set(h_show(ii),'EdgeColor', 'm');
-		sel_vis		=	true;
+    
+    %AARON fix for dodgy detections
+    height	=	max([1e-5 height]);
+    width	=	max([1e-5 width]);
+    
+    h_show(ii)	=	rectangle('Position',[x,y,width,height],...
+        'Curvature',[0.3],...
+        'LineWidth',2,'LineStyle','-',...
+        'EdgeColor','w'); %#ok<AGROW>
+    
+    %	Highlight selected event with a different color
+    if	ie == handles.notes.i_sel
+        set(h_show(ii),'EdgeColor', 'm');
+        sel_vis		=	true;
 		handles.notes.h_info	=	show_event_info(event, Description, handles.notes.h_info);
-	end
+    end
 end
 
 handles.notes.i_show	=	i_show;
@@ -6812,18 +6812,18 @@ guidata(h_axes, handles);
 
 %	Enable prev/next buttons
 if	length(Events) >= 1
-	disable_notes_nav(handles,'on');
+    disable_notes_nav(handles,'on');
 else	%	Disable prev/next buttons
-	disable_notes_nav(handles,'off');
+    disable_notes_nav(handles,'off');
 end
 
 %	Enable edit/delete, if selected event is visible
 if sel_vis
-	set(handles.pushbutton_notes_edit,'Enable','on');
-	set(handles.checkbox_notes_delete,'Enable','on');
+    set(handles.pushbutton_notes_edit,'Enable','on');
+    set(handles.checkbox_notes_delete,'Enable','on');
 else
-	set(handles.pushbutton_notes_edit,'Enable','off');
-	set(handles.checkbox_notes_delete,'Enable','off');
+    set(handles.pushbutton_notes_edit,'Enable','off');
+    set(handles.checkbox_notes_delete,'Enable','off');
 end
 
 end
@@ -6876,7 +6876,7 @@ set(handles.pushbutton_pausesound,'Enable','off'); %always off at first
 
 %	enable new note button
 if	~isempty(handles.notes.file_path)
-	set(handles.pushbutton_notes_new,'Enable',opt);
+    set(handles.pushbutton_notes_new,'Enable',opt);
 end
 
 %	enable next/prev window increment
@@ -6906,35 +6906,35 @@ end
 %	Helper function to get current users id/name
 function	user_name	=	getusername()
 if	isunix || ismac
-	user_name = getenv('USER');
+    user_name = getenv('USER');
 elseif ispc
-	user_name = getenv('USERNAME');
+    user_name = getenv('USERNAME');
 else
-	error('Unregognized system');
+    error('Unregognized system');
 end
 end
 
 %	helper function for default template
 function	[Description, Template, edit_fields]	=	load_default_template()
 Description	=	{'Start Time',...
-	'Author',...
-	'Pulse or FM?',...
-	'Call Type',...
-	'Min Freq (Hz)',...
-	'Max Freq (Hz)',...
-	'Duration (s)',...
-	'Noise SEL (dB re 1 uPa^2-s)',...
-	'Noise rms (dB re 1 uPa)',...
-	'Noise peak PSD (dB re 1uPa^2/Hz)',...
-	'Signal SEL (dB re 1 uPa^2-s)',...
-	'Signal rms (dB re 1 uPa)',...
-	'Signal peak PSD (dB re 1uPa^2/Hz)',...
-	'Signal SNR (dB rms)', ...
-	'# of pulses',...
-	'# of harmonics',...
-	'Modulation (Hz)',...
-	'Confidence (1-5)',...
-	'Comments'};
+    'Author',...
+    'Pulse or FM?',...
+    'Call Type',...
+    'Min Freq (Hz)',...
+    'Max Freq (Hz)',...
+    'Duration (s)',...
+    'Noise SEL (dB re 1 uPa^2-s)',...
+    'Noise rms (dB re 1 uPa)',...
+    'Noise peak PSD (dB re 1uPa^2/Hz)',...
+    'Signal SEL (dB re 1 uPa^2-s)',...
+    'Signal rms (dB re 1 uPa)',...
+    'Signal peak PSD (dB re 1uPa^2/Hz)',...
+    'Signal SNR (dB rms)', ...
+    '# of pulses',...
+    '# of harmonics',...
+    'Modulation (Hz)',...
+    'Confidence (1-5)',...
+    'Comments'};
 
 %	Default values
 Template.start_time			=	0;
@@ -6973,141 +6973,141 @@ function x=calibrate_GSI_signal(xin, keyword,RawFileName)
 %keyboard
 
 if isempty(xin)
-	x=[];
-	return
+    x=[];
+    return
 end
 if strcmp(keyword,'short')||~isempty(strfind(keyword,'DASAR2007'))
-	[numd,dend] = DASAR_Shell_2007_equalization(1000,0);
-	filt.a=dend;
-	filt.b=numd;
-	amp_Scale = (2.5/65535)*(10^(149/20));
-	Nchan=size(xin,2);
-	
-	for I=1:Nchan
-		%xt=xin(:,I)-median(xin(:,I));%disp('subratc medi')
-		xt=xin(:,I)-(2^15);
-		x(:,I) = amp_Scale*filter(filt.b,filt.a,xt);
-		%x(:,I) = amp_Scale*filter(filt.a,filt.b,xt);
-	end
+    [numd,dend] = DASAR_Shell_2007_equalization(1000,0);
+    filt.a=dend;
+    filt.b=numd;
+    amp_Scale = (2.5/65535)*(10^(149/20));
+    Nchan=size(xin,2);
+    
+    for I=1:Nchan
+        %xt=xin(:,I)-median(xin(:,I));%disp('subratc medi')
+        xt=xin(:,I)-(2^15);
+        x(:,I) = amp_Scale*filter(filt.b,filt.a,xt);
+        %x(:,I) = amp_Scale*filter(filt.a,filt.b,xt);
+    end
 elseif strcmp(keyword,'short')||~isempty(strfind(keyword,'DASARC'))
-	%     x=xin.*(2.5/(2^16-1));  %x in Volts
-	Nchan=size(xin,2);
-	%      %%This is a 10 Hz high pass filter
-	filt.a=[1.000000000000000e+00    -2.911197067426073e+00     2.826172902227507e+00    -9.149758348014339e-01];
-	filt.b=[5.140662826979191e-01    -9.510226229911504e-01     3.598463978885433e-01     7.710994240468787e-02];
-	amp_Scale = (2.5/65535)*(10^(149/20));
-	
-	for I=1:Nchan
-		%xt=xin(:,I)-median(xin(:,I));%disp('subratc medi')
-		xt=xin(:,I)-(2^15);
-		x(:,I) = amp_Scale*filter(filt.b,filt.a,xt);
-	end
+    %     x=xin.*(2.5/(2^16-1));  %x in Volts
+    Nchan=size(xin,2);
+    %      %%This is a 10 Hz high pass filter
+    filt.a=[1.000000000000000e+00    -2.911197067426073e+00     2.826172902227507e+00    -9.149758348014339e-01];
+    filt.b=[5.140662826979191e-01    -9.510226229911504e-01     3.598463978885433e-01     7.710994240468787e-02];
+    amp_Scale = (2.5/65535)*(10^(149/20));
+    
+    for I=1:Nchan
+        %xt=xin(:,I)-median(xin(:,I));%disp('subratc medi')
+        xt=xin(:,I)-(2^15);
+        x(:,I) = amp_Scale*filter(filt.b,filt.a,xt);
+    end
 elseif strcmp(keyword,'filter')
-	error('calibrate_GSI_signal: filter no longer a valid keyword...')
+    error('calibrate_GSI_signal: filter no longer a valid keyword...')
 elseif ~isempty(strfind(keyword,'NorthStar08')),
-	
-	%%This has a 10 Hz high pass filter
-	filt.a=[1.000000000000000e+00    -2.911197067426073e+00     2.826172902227507e+00    -9.149758348014339e-01];
-	filt.b=[5.140662826979191e-01    -9.510226229911504e-01     3.598463978885433e-01     7.710994240468787e-02];
-	
-	%     % oml = oml - mean(oml); % uPa     get rid of DC. not needed, filter has zero @ DC
-	% x = (2.5/65535)* (10^(134/20))*filter(filt.b,filt.a,xin); % uPa     equalize
-	if ~isempty(strfind(RawFileName,'NS08A0'))||~isempty(strfind(RawFileName,'NA08Cx'))
-		amp_Scale = (2.5/65535)*(10^(134/20));
-	else
-		amp_Scale = (2.5/65535)*(10^(148.8/20));
-	end
-	%amp_Scale=1;
-	x = amp_Scale*filter(filt.b,filt.a,xin);
-	%
-	%     The Northstar deployments consist of 14 units, 12 of which are DASAR-Cs (built in 2008), and the other two DASAR-As (built in 2003).
-	% These DASAR-As are identical to the Liberty DASAR-As with which you are already familiar.
-	% By location, the breakdown is as follows (all units are DASAR-C unless marked otherwise):
-	%
-	% NA08A0 SN45
-	% NA08B0 SN51
-	% NA08C0 SN36
-	% NA08D0 SN37
-	% NA08E0 SN48
-	% NA08F0 SN47
-	% NA08G0 SN65
-	% NA08H0 SN52
-	% NA08I0 SN49
-	% NA08J0 SN50
-	% NS08A0 SN2 DASAR-A
-	% NS08B0 SN58
-	% NS08C0 SN59
-	% NA08Cx SN1 DASAR-A
-	% Response equalization for both types of DASAR (in the band 10 to 450 Hz) is very similar, with the only difference being a scalar gain value.
-	% The hydrophone to ADC gain is
-	% -149 dB V/uPa @ 100 Hz for the DASAR-C
-	% -134 dB V/uPa @ 100 Hz for the DASAR-A
-	%
-	% You have the code to equalization both of these. For your convenience I have copied the relevant email message below...
-	%
-	% ------------------------
-	% Aaron -
-	%
-	% For equalization of the omni channel on the BP DASAR-Cs, at sample rate 1 kHz and good for 10 Hz to 450 Hz analysis, you can use the
-	%same IIR filter and coefficient values as were used on the Liberty DASAR-As. The only major difference is a change in gross sensitivity:
-	% the DASAR-Cs are about 1/5 as sensitive as the DASAR-As. The same equalization can be used for all DASAR-Cs. Measurements in the Greeneridge
-	% in-air loudspeaker test box showed all 65 units to be fairly close in sensitivity, with deviations looking no worse than the uncertainty in the calibration itself.
-	%
-	% The DASAR-Cs start rolling off below about 4 Hz (with a high-pass characteristic), so I don't recommend doing any analysis below that frequency without different equalization. You should be OK with these coef values since you are staying between 10 and 450 Hz.
-	%
-	% This equalization as shown includes a second order high-pass filter with break freq 1 Hz. You have the code to change it to 10 Hz if desired.
-	%
-	% Again, only one line changes going from DASAR-A to DASAR-C...
-	%
-	% om = x * 2.5/65536; % convert from counts to V
-	% oml = 10^(148.8/20)*om; % uPa    convert from V to uPa   (WAS: 134 for DASAR-As, IS: 148.8 for DASAR-Cs)
-	%
-	% % this cascades the integrator with a 1 Hz high pass to cut low freqs
-	% % -0.2 db at 100 Hz (ideally 0 db)
-	% % -8.3 db at 250 Hz (ideally 20*log10(100/250)= -7.96
-	% b = [0.53503845807280  -0.98982114743468   0.37452692065096   0.08025576871092]; % 11/13/2005
-	% a = [1.00000000000000  -2.99111429220165   2.98226788807059  -0.99115359586894]; % 11/13/2005
-	% % oml = oml - mean(oml); % uPa     get rid of DC. not needed, filter has zero @ DC
-	% oml =  filter(b,a,oml); % uPa     equalize
+    
+    %%This has a 10 Hz high pass filter
+    filt.a=[1.000000000000000e+00    -2.911197067426073e+00     2.826172902227507e+00    -9.149758348014339e-01];
+    filt.b=[5.140662826979191e-01    -9.510226229911504e-01     3.598463978885433e-01     7.710994240468787e-02];
+    
+    %     % oml = oml - mean(oml); % uPa     get rid of DC. not needed, filter has zero @ DC
+    % x = (2.5/65535)* (10^(134/20))*filter(filt.b,filt.a,xin); % uPa     equalize
+    if ~isempty(strfind(RawFileName,'NS08A0'))||~isempty(strfind(RawFileName,'NA08Cx'))
+        amp_Scale = (2.5/65535)*(10^(134/20));
+    else
+        amp_Scale = (2.5/65535)*(10^(148.8/20));
+    end
+    %amp_Scale=1;
+    x = amp_Scale*filter(filt.b,filt.a,xin);
+    %
+    %     The Northstar deployments consist of 14 units, 12 of which are DASAR-Cs (built in 2008), and the other two DASAR-As (built in 2003).
+    % These DASAR-As are identical to the Liberty DASAR-As with which you are already familiar.
+    % By location, the breakdown is as follows (all units are DASAR-C unless marked otherwise):
+    %
+    % NA08A0 SN45
+    % NA08B0 SN51
+    % NA08C0 SN36
+    % NA08D0 SN37
+    % NA08E0 SN48
+    % NA08F0 SN47
+    % NA08G0 SN65
+    % NA08H0 SN52
+    % NA08I0 SN49
+    % NA08J0 SN50
+    % NS08A0 SN2 DASAR-A
+    % NS08B0 SN58
+    % NS08C0 SN59
+    % NA08Cx SN1 DASAR-A
+    % Response equalization for both types of DASAR (in the band 10 to 450 Hz) is very similar, with the only difference being a scalar gain value.
+    % The hydrophone to ADC gain is
+    % -149 dB V/uPa @ 100 Hz for the DASAR-C
+    % -134 dB V/uPa @ 100 Hz for the DASAR-A
+    %
+    % You have the code to equalization both of these. For your convenience I have copied the relevant email message below...
+    %
+    % ------------------------
+    % Aaron -
+    %
+    % For equalization of the omni channel on the BP DASAR-Cs, at sample rate 1 kHz and good for 10 Hz to 450 Hz analysis, you can use the
+    %same IIR filter and coefficient values as were used on the Liberty DASAR-As. The only major difference is a change in gross sensitivity:
+    % the DASAR-Cs are about 1/5 as sensitive as the DASAR-As. The same equalization can be used for all DASAR-Cs. Measurements in the Greeneridge
+    % in-air loudspeaker test box showed all 65 units to be fairly close in sensitivity, with deviations looking no worse than the uncertainty in the calibration itself.
+    %
+    % The DASAR-Cs start rolling off below about 4 Hz (with a high-pass characteristic), so I don't recommend doing any analysis below that frequency without different equalization. You should be OK with these coef values since you are staying between 10 and 450 Hz.
+    %
+    % This equalization as shown includes a second order high-pass filter with break freq 1 Hz. You have the code to change it to 10 Hz if desired.
+    %
+    % Again, only one line changes going from DASAR-A to DASAR-C...
+    %
+    % om = x * 2.5/65536; % convert from counts to V
+    % oml = 10^(148.8/20)*om; % uPa    convert from V to uPa   (WAS: 134 for DASAR-As, IS: 148.8 for DASAR-Cs)
+    %
+    % % this cascades the integrator with a 1 Hz high pass to cut low freqs
+    % % -0.2 db at 100 Hz (ideally 0 db)
+    % % -8.3 db at 250 Hz (ideally 20*log10(100/250)= -7.96
+    % b = [0.53503845807280  -0.98982114743468   0.37452692065096   0.08025576871092]; % 11/13/2005
+    % a = [1.00000000000000  -2.99111429220165   2.98226788807059  -0.99115359586894]; % 11/13/2005
+    % % oml = oml - mean(oml); % uPa     get rid of DC. not needed, filter has zero @ DC
+    % oml =  filter(b,a,oml); % uPa     equalize
 elseif ~isempty(strfind(keyword,'Liberty08')>0)
-	%om = xin * 2.5/65535; % convert from counts to V
-	%om = (10^(134/20))*om; % uPa    convert from V to uPa
-	%
-	%     % this cascades the integrator with a 1 Hz high pass to cut low freqs
-	%     % -0.2 db at 100 Hz (ideally 0 db)
-	%     % -8.3 db at 250 Hz (ideally 20*log10(100/250)= -7.96
-	% filt.b = [0.53503845807280  -0.98982114743468   0.37452692065096   0.08025576871092]; % 11/13/2005
-	%filt.a = [1.00000000000000  -2.99111429220165   2.98226788807059  -0.99115359586894]; % 11/13/2005
-	
-	
-	%This has a 10 Hz high pass filter
-	
-	filt.a=[1.000000000000000e+00    -2.911197067426073e+00     2.826172902227507e+00    -9.149758348014339e-01];
-	filt.b=[5.140662826979191e-01    -9.510226229911504e-01     3.598463978885433e-01     7.710994240468787e-02];
-	
-	%     % oml = oml - mean(oml); % uPa     get rid of DC. not needed, filter has zero @ DC
-	% x = (2.5/65535)* (10^(134/20))*filter(filt.b,filt.a,xin); % uPa     equalize
-	amp_Scale = (2.5/65535)*(10^(134/20));
-	%amp_Scale=1;
-	x = amp_Scale*filter(filt.b,filt.a,xin);
-	
-	%     keyboard;
+    %om = xin * 2.5/65535; % convert from counts to V
+    %om = (10^(134/20))*om; % uPa    convert from V to uPa
+    %
+    %     % this cascades the integrator with a 1 Hz high pass to cut low freqs
+    %     % -0.2 db at 100 Hz (ideally 0 db)
+    %     % -8.3 db at 250 Hz (ideally 20*log10(100/250)= -7.96
+    % filt.b = [0.53503845807280  -0.98982114743468   0.37452692065096   0.08025576871092]; % 11/13/2005
+    %filt.a = [1.00000000000000  -2.99111429220165   2.98226788807059  -0.99115359586894]; % 11/13/2005
+    
+    
+    %This has a 10 Hz high pass filter
+    
+    filt.a=[1.000000000000000e+00    -2.911197067426073e+00     2.826172902227507e+00    -9.149758348014339e-01];
+    filt.b=[5.140662826979191e-01    -9.510226229911504e-01     3.598463978885433e-01     7.710994240468787e-02];
+    
+    %     % oml = oml - mean(oml); % uPa     get rid of DC. not needed, filter has zero @ DC
+    % x = (2.5/65535)* (10^(134/20))*filter(filt.b,filt.a,xin); % uPa     equalize
+    amp_Scale = (2.5/65535)*(10^(134/20));
+    %amp_Scale=1;
+    x = amp_Scale*filter(filt.b,filt.a,xin);
+    
+    %     keyboard;
 end
 
 if 1==0,
-	Fs=1000;
-	Nfft=256;
-	A=fft(filt.a,Nfft);
-	B=fft(filt.b,Nfft);
-	F=linspace(0.1,Fs,Nfft);
-	F=F(1:(Nfft/2));
-	W=20*log10(abs(B./A));
-	W=W(1:(Nfft/2));
-	freqz(filt.b,filt.a,Nfft,Fs)
-	hold on;plot(F,W,'r')
-	
-	figure;semilogx(F,W);xlim([1 1000]);grid on
-	
+    Fs=1000;
+    Nfft=256;
+    A=fft(filt.a,Nfft);
+    B=fft(filt.b,Nfft);
+    F=linspace(0.1,Fs,Nfft);
+    F=F(1:(Nfft/2));
+    W=20*log10(abs(B./A));
+    W=W(1:(Nfft/2));
+    freqz(filt.b,filt.a,Nfft,Fs)
+    hold on;plot(F,W,'r')
+    
+    figure;semilogx(F,W);xlim([1 1000]);grid on
+    
 end
 end
 
