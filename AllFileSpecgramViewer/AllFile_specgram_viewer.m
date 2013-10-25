@@ -172,7 +172,7 @@ handles		=	load_and_display_spectrogram(handles);
 handles				=	plot_events(handles);
 
 %	Update static date text
-set(handles.text_datestr_demo,'String',datestr(handles.tdate_start,0));
+set(handles.text_datestr_demo,'String',datestr(handles.tdate_start));
 
 %	Audio object is no longer valid
 handles.audio_stale		=	true;
