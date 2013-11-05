@@ -6,7 +6,7 @@
 %%Start intelligent search for a timestamp in string name...
 
 
-function tstart=convert_date(data,delimiter),
+function tstart=convert_date(data,delimiter)
 
 mt_style_flag=~isempty(findstr('Sound',data));
 fname_bounds=findstr(data,delimiter);

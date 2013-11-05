@@ -1121,7 +1121,8 @@ prompt={'Number of selections'};
 def={'3'};
 start_time=handles.tdate_start;
 lineNo=1;
-answer=inputdlg(prompt,dlgTitle,lineNo,def);
+answer=inputdlg(prompt,'',lineNo,def);
+tmp=ginput(str2num(answer{1}));
 disp('Absolute times:')
 disp(datestr(start_time+datenum(0,0,0,0,0,tmp(:,1)),0));
 disp('Relative times and frequencies:');
@@ -1619,8 +1620,8 @@ if yes>1
                 error('Cannot select multiple environmental models during MFP');
             end
             
-            head.geom.rd=get_VA_2010_depths_and_offset(2010,handles.myfile,MFP_replica_file{1});
-            %head.geom.rd=head.geom.rd;
+            %head.geom.rd=get_VA_2010_depths_and_offset(2010,handles.myfile,MFP_replica_file{1});
+            head.geom.rd=head.geom.rd;
             
             def1={MFP_replica_file{1}, default_tilt{1},range_str{1},'1:1:55','0','2048',['[' num2str(default_SNR{1}) ']'],'yes',num2str(head.geom.rd)};
             answer=inputdlg(prompt1,dlgTitle1,1,def1);
@@ -3402,6 +3403,10 @@ cla;
 
 %tdate_start		=	handles.tdate_start;
 tlen	=	handles.tlen;
+if isempty(tlen)
+    tlen    =   str2double(get(handles.edit_winlen,'String'));
+    handles.tlen=tlen;
+end
 mydir	=	pwd;
 Ichan	=	str2double(get(handles.edit_chan,'String'));  %Hardwire first channel
 
@@ -7201,8 +7206,8 @@ save temp
 
 
 %depth_shift=-2;  %How much to shift my estimated depth by
-%freq_want=[84 104];
-freq_want=[120:5:145];
+freq_want=[84 104];
+%freq_want=[120:5:145];
 
 Nfft_filt=2^nextpow2(MM(1));
 %Nfft_filt=512;
