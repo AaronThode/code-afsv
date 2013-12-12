@@ -1626,13 +1626,13 @@ if yes>1
             def1={MFP_replica_file{1}, default_tilt{1},range_str{1},'1:1:55','0','2048',['[' num2str(default_SNR{1}) ']'],'yes',num2str(head.geom.rd)};
             answer=inputdlg(prompt1,dlgTitle1,1,def1);
             model_name=answer{1};
-            tilt_offset=str2double(answer{2});
-            ranges=str2double(answer{3});
-            depths=str2double(answer{4});
-            plot_chc=str2double(answer{5});
-            Nfft2=str2double(answer{6});
-            SNRmin=str2double(answer{7});  %May also be frequency
-            head.geom.rd=str2double(answer{9});
+            tilt_offset=str2num(answer{2});
+            ranges=str2num(answer{3});
+            depths=str2num(answer{4});
+            plot_chc=str2num(answer{5});
+            Nfft2=str2num(answer{6});
+            SNRmin=str2num(answer{7});  %May also be frequency
+            head.geom.rd=str2num(answer{9});
             Ksout.Nfft=Nfft;
             Ksout.ovlap=ovlap;
             
@@ -2053,14 +2053,14 @@ if length(MFP_scenario)>1  %Multiple runs..
     dlgTitle1='Parameters for modal beamforming...';
     def1={range_str{1},'0.1','0.025','0','2048','1:1:55',default_tilt{1},'3'};
     answer=inputdlg(prompt1,dlgTitle1,1,def1);
-    range_guess=str2double(answer{1});
+    range_guess=str2num(answer{1});
     maxdelay(1)=str2double(answer{2});
     maxdelay(2)=maxdelay(1);
     maxdelay(3)=str2double(answer{3});
     plot_chc=str2double(answer{4});
     Nfft2=str2double(answer{5});
-    depths=str2double(answer{6});
-    tilt_offset=str2double(answer{7});
+    depths=str2num(answer{6});
+    tilt_offset=str2num(answer{7});
     Maxmodes=str2double(answer{8});
     
     
@@ -2084,14 +2084,14 @@ for Imodel=1:length(MFP_scenario)
         answer=inputdlg(prompt1,dlgTitle1,1,def1);
         model=load(answer{1});
         disp(['Loaded ',answer{1}]);
-        tilt_offset=str2double(answer{2});
-        range_guess=str2double(answer{3});
+        tilt_offset=str2num(answer{2});
+        range_guess=str2num(answer{3});
         maxdelay(1)=str2double(answer{4});
         maxdelay(2)=maxdelay(1);
         maxdelay(3)=str2double(answer{5});
         plot_chc=str2double(answer{6});
         Nfft2=str2double(answer{7});
-        depths=str2double(answer{8});
+        depths=str2num(answer{8});
         Maxmodes=str2double(answer{9});
     else
         
@@ -2663,7 +2663,7 @@ end %Imodel
             
             for Imm=1:Maxmodes
                 [Bbeam,FF1,TT] = specgram(yout(:,Imm),Nfft2,Fs,Nfft2,round(0.9*Nfft2)); %B(freq,time,element);
-                figure(1)
+                figure(10*Itilt+1)
                 set(gcf,'units','norm','pos',[ 0.1589    0.3345    0.2216    0.6102]);
                 
                 subplot(Maxmodes,1,Imm);
@@ -3954,7 +3954,7 @@ switch filetype
         end
         if max(Ichan)>head.Nchan
             disp(sprintf('Channel too high, max channel %i',head.Nchan));
-            Ichan=min(Ichan):head.Nchan;
+            Ichan=head.Nchan;
         end
         
         try
@@ -5268,9 +5268,9 @@ default_SNR{2}{2}=default_SNR{2}{1};
 MFP_replica_file{3}{1}=[model_dir '/Depth55m_Fixed.dir/ShallowBeaufortWhaleInversionSSP_MidRange_CSDM_Nfft2048_20100831T004830_eigenvector_10to500Hz.mat'];
 default_tilt{3}{1}='1.35';
 range_str{3}{1}='5000:100:10000';
-%default_SNR{3}{1}=[112.9 116 119 122.1 164.8 167.8 170.9 174 177 180.1 235 238];  %Original 12 frequencies
+default_SNR{3}{1}=[112.9 116 119 122.1 164.8 167.8 170.9 174 177 180.1 235 238];  %Original 12 frequencies
 %used for inversion
-default_SNR{3}{1}=[116 119 122.1 164.8 167.8 170.9 174 177 180.1 ]; %Plotting results
+%default_SNR{3}{1}=[116 119 122.1 164.8 167.8 170.9 174 177 180.1 ]; %Plotting results
 
 MFP_replica_file{3}{2}=[model_dir '/Depth_55m_fixed_Pekeris.dir/ShallowBeaufortPekeris_MidRange_arctic_pekeris1638_KRAKEN_flat55m_10to500Hz.mat'];
 default_tilt{3}{2}='1.585';
@@ -7153,10 +7153,8 @@ Nfft=(contents{get(handles.popupmenu_Nfft,'Value')});
 
 
 prompt={'Range guess(m)','water speed (m/s)','Nfft','N_window','N_window_w', ...
-    'Time to clip off front (to ensure time 0 is first mode arrival)', 'Number of FM contour points:'};
-
+    'Time to clip off front of deconvolved signal (to ensure time 0 is first mode arrival)', 'Number of FM contour points:'};
 def={'15000','1490',Nfft,'2*floor(0.5*31*Fs/200)+1','2*floor(0.5*301*Fs/200)+1','0.8','3'};
-
 dlgTitle	=	sprintf('Warping parameters');
 lineNo		=	ones(size(prompt));
 answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
@@ -7190,6 +7188,8 @@ modes=warp_transform(1,hilbert(y.'),r_guess,c1,Fs, Nfft, N_window,N_window_w,n_l
 %close all
 MM=size(modes.s_filt);
 if MM(1)>0
+    
+    %%mode_stack is unwarped time series that should be mode-dominated
     mode_stack=zeros(MM(1),MM(2),length(Nchan));
     %sw_stack=zeros(length(Nchan),length(s_w));
     for I=Nchan
@@ -7206,31 +7206,47 @@ save temp
 
 
 %depth_shift=-2;  %How much to shift my estimated depth by
-freq_want=[84 104];
+%freq_want=[84 104];
 %freq_want=[120:5:145];
+prompt={'Frequencies at which to extract modes (Hz):'};
+def={'[84 104]'};
+dlgTitle	=	sprintf('Frequencies to extract modes');
+lineNo		=	ones(size(prompt));
+answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
+
+if	isempty(answer)
+    return;
+end
+
+freq_want=eval(answer{1});
 
 Nfft_filt=2^nextpow2(MM(1));
 %Nfft_filt=512;
-Uwarp=fft(mode_stack,Nfft_filt);
+Uwarp=fft(mode_stack,Nfft_filt);  %Spectrum of each mode arrival
 Fwarp=linspace(0,Fs,Nfft_filt);
 Igood=find(Fwarp>=(minfreq)&(Fwarp<=(maxfreq)));
 Uwarp=Uwarp(Igood,:,:);
-%Get sign
+%Sum energy in each modal arrival. Assign sign later.
 Umode_broadband=squeeze(sum(mode_stack.^2,1))';
 
 Nc=length(Nchan);
 Nf=length(Igood);
 %Ifreq_plot=[1 Nf/4 Nf/2 3*Nf/4 Nf];
 
-%Be sure to pick frequency with most power.
-Fpower=squeeze(sum(sum(shiftdim(abs(Uwarp).^2,1))));
+%Option: pick frequency with most power.
+%Fpower=squeeze(sum(sum(shiftdim(abs(Uwarp).^2,1))));
 %Ifreq_plot=[1 Nf/2  Nf];
 %Ifreq_plot=round(([ 84 98 105]-minfreq)*Nfft_filt/Fs);
 Ifreq_plot=round((freq_want-minfreq)*Nfft_filt/Fs);
 
 freq_plot=Fwarp(Igood(Ifreq_plot));
 Nplot=length(freq_plot);
+
+%Cyle through each mode and extract mode shape from various frequencies,
+    % as well as broadband time series
 for Im=1:MM(2)
+    
+    %normalize both individual-frequency based and broadband modes.
     Umode=squeeze(Uwarp(:,Im,:)).';
     Umode_broadband(:,Im)=Umode_broadband(:,Im)/norm(Umode_broadband(:,Im));
     Umode_broadband(:,Im)=sqrt(Umode_broadband(:,Im));
@@ -7239,14 +7255,17 @@ for Im=1:MM(2)
         Umode(:,II)=Umode(:,II)/norm(Umode(:,II));
     end
     
+    %Extact phase along array
     Uang_uncorrected=angle(Umode./(ones(Nc,1)*Umode(end,:)));
     if Im==1
-        Umode1=Umode;
+        Umode1=Umode;  %We assume that mode 1 phase arises from tilt
     end
     
     tmp=(Umode.*conj(Umode1));  %Remove tilt or phase offsets
-    Uang=angle(tmp./(ones(Nc,1)*tmp(end,:)));
+    Uang=angle(tmp./(ones(Nc,1)*tmp(end,:)));  %Reference phase to bottom element
     
+    %Determine sign of mode: observe when corrected phase 
+    %   (relative to bottom mode) exceeds pi/2
     sgn_chnge=-(abs(Uang(:,Ifreq_plot))>pi/2);
     sgn_chnge=2*sgn_chnge+1;  %Convert 0 and -1 to 1 and -1;
     if Nplot>1
@@ -7293,8 +7312,9 @@ for Im=1:MM(2)
     set(gca,'fontweight','bold','fontsize',14);
     title(sprintf('Normalized mode %i',Im));
     ylabel('depth(m)');
-    title('Amplitude');
+    title(sprintf('Inverted mode %i',Im));
     axis('ij')
+    legend('broadband');
     
     
 end
