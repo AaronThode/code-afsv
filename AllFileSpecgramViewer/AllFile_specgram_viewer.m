@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 01-Aug-2013 11:43:50
+% Last Modified by GUIDE v2.5 11-Dec-2013 15:22:44
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -149,46 +149,10 @@ varargout{1} = handles.output;
 
 
 end
-% --- Executes on button press in pushbutton_update.
-function pushbutton_update_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton_update (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-%	Stop audio playback if it's running
-if	~isempty(handles.audioplayer) && isplaying(handles.audioplayer)
-    stop(handles.audioplayer);
-end
-
-%	Disable update buttons while loading/processing
-set(handles.pushbutton_update, 'Enable', 'off');
-set(handles.pushbutton_next, 'Enable', 'off');
-set(handles.pushbutton_prev, 'Enable', 'off');
-
-%	Call actual function to produce figure
-handles		=	load_and_display_spectrogram(handles);
-
-%	Call helper function to overlay event notes
-handles				=	plot_events(handles);
-
-%	Update static date text
-set(handles.text_datestr_demo,'String',datestr(handles.tdate_start));
-
-%	Audio object is no longer valid
-handles.audio_stale		=	true;
-handles.fig_updated		=	true;
-
-%	Turn on buttons that required Update
-toggle_initial_buttons(handles, 'on');
-
-%	Renable buttons
-set(handles.pushbutton_update, 'Enable', 'on');
-set(handles.pushbutton_next, 'Enable', 'on');
-set(handles.pushbutton_prev, 'Enable', 'on');
 
 
-guidata(hObject, handles);
-end
+
+%%	GUI menu item callbacks
 
 % --------------------------------------------------------------------
 function FileMenu_Callback(hObject, eventdata, handles)
@@ -197,6 +161,7 @@ function FileMenu_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 end
+
 % --------------------------------------------------------------------
 function OpenMenuItem_Callback(hObject, eventdata, handles)
 % hObject    handle to OpenMenuItem (see GCBO)
@@ -311,6 +276,7 @@ function PrintMenuItem_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 printdlg(handles.figure1)
 end
+
 % --------------------------------------------------------------------
 function CloseMenuItem_Callback(hObject, eventdata, handles)
 % hObject    handle to CloseMenuItem (see GCBO)
@@ -325,6 +291,294 @@ end
 
 delete(handles.figure1)
 
+end
+
+% --------------------------------------------------------------------
+function OpenMenuItem_inputfile_Callback(hObject, eventdata, handles)
+% hObject    handle to menu_inputfile (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%handles.mydir = uigetdir(handles.inputdir);
+mydir=pwd;
+cd(handles.inputdir);
+handles.inputfilename=uigetfile('*','Select input file:');
+handles.fid=fopen(handles.inputfilename);
+set(handles.pushbutton_fileread, 'Enable', 'On');
+cd(mydir);
+guidata(hObject, handles);
+
+end
+
+% --------------------------------------------------------------------
+function Menu_processors_Callback(hObject, eventdata, handles)
+% hObject    handle to Menu_processors (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+end
+
+% --------------------------------------------------------------------
+function MenuItem_psd_Callback(hObject, eventdata, handles)
+% hObject    handle to MenuItem_psd (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+	Batch_type	=	get(hObject, 'Label');
+	Batch_mode	=	input_batchmode(Batch_type);
+	
+	if	isempty(Batch_mode)
+		errordlg('Processing cancelled!');
+		return;
+	end
+	
+	Batch_vars.A	=	'Aa';	Batch_desc{1}	=	'1st var desc';
+	Batch_vars.B	=	'Bb';	Batch_desc{2}	=	'2nd var desc';
+	Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
+	Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
+	Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
+	
+	Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
+	
+	if	isempty(Batch_vars)
+		errordlg('Processing cancelled!');
+		return;
+	end
+	
+	switch	Batch_mode
+		case 'Visible'
+			h	=	msgbox(['Processing all data within window for ' Batch_type]);
+		case 'File'
+			h	=	msgbox(['Processing all data in whole file for ' Batch_type]);
+		case 'Folder'
+			h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
+		otherwise
+			error('Batch mode not recognized');
+	end
+	
+
+end
+
+% --------------------------------------------------------------------
+function MenuItem_metrics_Callback(hObject, eventdata, handles)
+% hObject    handle to MenuItem_metrics (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+	Batch_type	=	get(hObject, 'Label');
+	Batch_mode	=	input_batchmode(Batch_type);
+	
+	if	isempty(Batch_mode)
+		errordlg('Processing cancelled!');
+		return;
+	end
+	
+	Batch_vars.A	=	'Aa';	Batch_desc{1}	=	'1st var desc';
+	Batch_vars.B	=	'Bb';	Batch_desc{2}	=	'2nd var desc';
+	Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
+	Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
+	Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
+	
+	Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
+	
+	if	isempty(Batch_vars)
+		errordlg('Processing cancelled!');
+		return;
+	end
+	
+	switch	Batch_mode
+		case 'Visible'
+			h	=	msgbox(['Processing all data within window for ' Batch_type]);
+		case 'File'
+			h	=	msgbox(['Processing all data in whole file for ' Batch_type]);
+		case 'Folder'
+			h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
+		otherwise
+			error('Batch mode not recognized');
+	end
+end
+
+% --------------------------------------------------------------------
+function MenuItem_eventdet_Callback(hObject, eventdata, handles)
+% hObject    handle to MenuItem_eventdet (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+	Batch_type	=	get(hObject, 'Label');
+	Batch_mode	=	input_batchmode(Batch_type);
+	
+	if	isempty(Batch_mode)
+		errordlg('Processing cancelled!');
+		return;
+	end
+	
+	Batch_vars.A	=	'Aa';	Batch_desc{1}	=	'1st var desc';
+	Batch_vars.B	=	'Bb';	Batch_desc{2}	=	'2nd var desc';
+	Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
+	Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
+	Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
+	
+	Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
+	
+	if	isempty(Batch_vars)
+		errordlg('Processing cancelled!');
+		return;
+	end
+	
+	switch	Batch_mode
+		case 'Visible'
+			h	=	msgbox(['Processing all data within window for ' Batch_type]);
+		case 'File'
+			h	=	msgbox(['Processing all data in whole file for ' Batch_type]);
+		case 'Folder'
+			h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
+		otherwise
+			error('Batch mode not recognized');
+	end
+end
+
+% --------------------------------------------------------------------
+function MenuItem_boatdet_Callback(hObject, eventdata, handles)
+% hObject    handle to MenuItem_boatdet (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+	Batch_type	=	get(hObject, 'Label');
+	Batch_mode	=	input_batchmode(Batch_type);
+	
+	if	isempty(Batch_mode)
+		errordlg('Processing cancelled!');
+		return;
+	end
+	
+	Batch_vars.A	=	'Aa';	Batch_desc{1}	=	'1st var desc';
+	Batch_vars.B	=	'Bb';	Batch_desc{2}	=	'2nd var desc';
+	Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
+	Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
+	Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
+	
+	Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
+	
+	if	isempty(Batch_vars)
+		errordlg('Processing cancelled!');
+		return;
+	end
+	
+	switch	Batch_mode
+		case 'Visible'
+			h	=	msgbox(['Processing all data within window for ' Batch_type]);
+		case 'File'
+			h	=	msgbox(['Processing all data in whole file for ' Batch_type]);
+		case 'Folder'
+			h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
+		otherwise
+			error('Batch mode not recognized');
+	end
+end
+
+% Ask user for mode of processing operations
+function	Batch_mode	=	input_batchmode(Batch_type)
+	
+	Mode_options	=	{'Visible', 'File', 'Folder'};
+	qstring	=	'What data would you like to process?';
+	title	=	Batch_type;
+	
+	button	=	questdlg(qstring, title ,...
+				Mode_options{1}, Mode_options{2}, Mode_options{3},...
+				Mode_options{1});
+
+	Batch_mode	=	button;
+end
+
+% Asks user for specified batch processing parameters
+function	Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type)
+
+if	isstruct(Batch_vars)
+	names		=	fieldnames(Batch_vars);
+elseif	iscell(Batch_vars)
+	names		=	Batch_vars;
+	Batch_vars	=	struct;
+else
+	error('Batch_vars must be either a structure, or cell array of variable names');
+end
+
+N_fields	=	length(names);
+if	length(Batch_desc) ~= N_fields
+    error('# of Descriptors differs from # of fields');
+end
+
+%	Default values
+defaults	=	cell(N_fields,1);
+if	isstruct(Batch_vars)
+	for	ii	=	1:N_fields
+		value	=	Batch_vars.(names{ii});
+		defaults{ii}	=	num2str(value);
+	end
+end
+
+%	Size of each prompt field
+num_lines		=	1;
+
+%	Title for window
+dlgTitle	=	['Please enter the required parameters for processing ' Batch_type];
+
+
+%	Create input dialogbox
+answer		=	inputdlg(Batch_desc, dlgTitle, num_lines, defaults);
+
+
+%	Put variables into output structure
+if	isempty(answer)
+    Batch_vars	=	[];
+    return;
+end
+
+for	ii	=	1:N_fields
+    Batch_vars.(names{ii})	=	answer{ii};
+end
+end
+
+
+%%	Button callbacks
+
+% --- Executes on button press in pushbutton_update.
+function pushbutton_update_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_update (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%	Stop audio playback if it's running
+if	~isempty(handles.audioplayer) && isplaying(handles.audioplayer)
+    stop(handles.audioplayer);
+end
+
+%	Disable update buttons while loading/processing
+set(handles.pushbutton_update, 'Enable', 'off');
+set(handles.pushbutton_next, 'Enable', 'off');
+set(handles.pushbutton_prev, 'Enable', 'off');
+
+%	Call actual function to produce figure
+handles		=	load_and_display_spectrogram(handles);
+
+%	Call helper function to overlay event notes
+handles				=	plot_events(handles);
+
+%	Update static date text
+set(handles.text_datestr_demo,'String',datestr(handles.tdate_start));
+
+%	Audio object is no longer valid
+handles.audio_stale		=	true;
+handles.fig_updated		=	true;
+
+%	Turn on buttons that required Update
+toggle_initial_buttons(handles, 'on');
+
+%	Renable buttons
+set(handles.pushbutton_update, 'Enable', 'on');
+set(handles.pushbutton_next, 'Enable', 'on');
+set(handles.pushbutton_prev, 'Enable', 'on');
+
+
+guidata(hObject, handles);
 end
 
 % --- Executes during object creation, after setting all properties.
@@ -1176,22 +1430,7 @@ else
 end
 
 end
-% --------------------------------------------------------------------
-function OpenMenuItem_inputfile_Callback(hObject, eventdata, handles)
-% hObject    handle to menu_inputfile (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
-%handles.mydir = uigetdir(handles.inputdir);
-mydir=pwd;
-cd(handles.inputdir);
-handles.inputfilename=uigetfile('*','Select input file:');
-handles.fid=fopen(handles.inputfilename);
-set(handles.pushbutton_fileread, 'Enable', 'On');
-cd(mydir);
-guidata(hObject, handles);
-
-end
 % --- Executes on button press in checkbox_restart.
 function checkbox_restart_Callback(hObject, eventdata, handles)
 % hObject    handle to checkbox_restart (see GCBO)
@@ -7816,4 +8055,5 @@ end
 
 
 end
+
 
