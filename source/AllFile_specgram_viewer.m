@@ -1695,7 +1695,8 @@ end
 prompt1={'File of locations','Site','UTM location to compute range'};
 dlgTitle1='Parameters for GSI localization...';
 %def1={'/Volumes/ThodePortable2/2010_Beaufort_Shell_DASAR/DASAR_locations_2010.mat', '5','[4.174860699660919e+05 7.817274204098196e+06]'};
-def1={'/Volumes/Data/Shell2010_GSI_Data/DASARlocations/DASAR_locations_2010.mat', '5','[4.174860699660919e+05 7.817274204098196e+06]'};
+%'/Volumes/Data/Shell2010_GSI_Data/DASARlocations/DASAR_locations_2010.mat',
+def1={[filesep fullfile('Volumes','Data','Shell2010_GSI_Data','DASARlocations','DASAR_locations_2010.mat')], '5','[4.174860699660919e+05 7.817274204098196e+06]'};
 answer=inputdlg(prompt1,dlgTitle1,1,def1);
 locs=load(answer{1});
 Isite=str2double(answer{2});
@@ -1759,10 +1760,10 @@ ovlap=min([1-1/Nfft ovlap]);
 
 fmin=str2double(get(handles.edit_fmin,'String'));
 fmax=str2double(get(handles.edit_fmax,'String'));
-chann=input('Enter channel indicies (remember that channels have been flipped, 1 is now shallowest) (1:Nchan):');
-if isempty(chann)
-    chann=1:head.Nchan; %For 2008 short-term vertical array
-end
+%chann=input('Enter channel indicies (remember that channels have been flipped, 1 is now shallowest) (1:Nchan):');
+%if isempty(chann)
+    chann=1:head.Nchan; %We now assume that any bad channels are marked in the LOG files.
+%end
 
 Ichc=menu('Enter type of frequency processing:','Contour','All');
 
@@ -1848,8 +1849,8 @@ if yes>1
         case 6
             %Simple Pekeris waveguide determined from DASAR cutoff frequencies
             
-            prompt1={'Model file..','tilt offsets (deg)','ranges (m)', 'depths (m):','plot intermediate images?', ...
-                'Nfft for plotting:','SNR_cutoff or list of frequencies..','Primary Eigenvector only?','receiver depths (m):'};
+            prompt1={'Model file..','tilt offset between top and bottom phone (m)','ranges (m)', 'depths (m):','plot intermediate images?', ...
+                'Nfft for plotting:','Frequency SNR_cutoff (dB), or array with specific frequencies to process..','Primary Eigenvector only?','receiver depths (m):'};
             
             dlgTitle1='Parameters for matched field processing...';
             
@@ -5343,7 +5344,7 @@ else
         [junk,Igood(If)]=min(abs(SNRmin(If)-freq));
     end
     freq=freq(Igood);
-    disp(sprintf('Frequencies to process, manually selected: %s',mat2str(freq,4)));
+    disp(sprintf('Frequencies to process, hard wired: %s',mat2str(freq,4)));
     if length(unique(Igood))~=length(Igood),disp('WARNING! Frequencies requested via SNRmin not available...');end
 end
 
@@ -5474,10 +5475,12 @@ for Itilt=1:length(tilt_offset)
 	save_result=input('Enter any character to save images and write CSDM to file: ');
     if ~isempty(save_result)
         savename=sprintf('MFP_result_%s_tilt%4.2f_Nfreqs%i_SNRmin%i',data_name,tilt_offset(Itilt),length(freq),SNRmin);
+        disp(savename)
         save([savename '.mat'], 'ranges','depths','amb','amb_tot','SNRmin','freq','data_name','model_name');
         
 		figure(gcf)
-		orient tall
+		orient landscape
+        
         print('-djpeg',[savename '.jpg']);
     end
 end %tilt
@@ -5491,45 +5494,60 @@ if strcmp(getenv('USER'),'thode')
     model_dir='/Users/thode/Projects/Arctic_2010/PropagationModeling.dir/';
 elseif strcmp(getenv('USER'),'shabadi');
     model_dir='/Users/shabadi/Documents/Shima-SIO/PropagationModeling.dir/';
+elseif strcmp(getenv('USERNAME'),'bonnelju');
+    model_dir=fullfile('C:','Users','bonnelju','Desktop','SanDiego','PropagationModeling.dir');
+    %model_dir='C:\Users\bonnelju\Desktop\SanDiego\PropagationModeling.dir\';
 end
+
 %%%%%%%%Short-Range Estimate%%%%%%%%%%%%%%%%
-MFP_replica_file{2}{1}=[model_dir 'Depth55m_Fixed.dir/ShallowBeaufortWhaleInversionSSP_ShortRange_CSDM_Nfft2048_20100820T014239_eigenvector_10to500Hz.mat'];
+MFP_replica_file{2}{1}=fullfile(model_dir,'Depth55m_Fixed.dir','ShallowBeaufortWhaleInversionSSP_ShortRange_CSDM_Nfft2048_20100820T014239_eigenvector_10to500Hz.mat');
+%MFP_replica_file{2}{1}=[model_dir 'Depth55m_Fixed.dir/ShallowBeaufortWhaleInversionSSP_ShortRange_CSDM_Nfft2048_20100820T014239_eigenvector_10to500Hz.mat'];
 default_tilt{2}{1}='1.94';
 range_str{2}{1}='100:5:5000';
 default_SNR{2}{1}=[45.78 76.29 88.5 170.9 210.6 253.3];
 
-MFP_replica_file{2}{2}=[model_dir '/Depth_55m_fixed_Pekeris.dir/ShallowBeaufortPekeris_ShortRange_arctic_pekeris1707_KRAKEN_flat55m_10to500Hz.mat'];
+MFP_replica_file{2}{2}=fullfile(model_dir,'Depth_55m_fixed_Pekeris.dir','ShallowBeaufortPekeris_ShortRange_arctic_pekeris1707_KRAKEN_flat55m_10to500Hz.mat');
+%MFP_replica_file{2}{2}=[model_dir '/Depth_55m_fixed_Pekeris.dir/ShallowBeaufortPekeris_ShortRange_arctic_pekeris1707_KRAKEN_flat55m_10to500Hz.mat'];
 default_tilt{2}{2}='2.41';
 range_str{2}{2}=range_str{2}{1};
 default_SNR{2}{2}=default_SNR{2}{1};
 
 %%%%%%%%%%%%%Medium range 7 km est%%%%%%%%%%%%%%%%
-MFP_replica_file{3}{1}=[model_dir '/Depth55m_Fixed.dir/ShallowBeaufortWhaleInversionSSP_MidRange_CSDM_Nfft2048_20100831T004830_eigenvector_10to500Hz.mat'];
+MFP_replica_file{3}{1}=fullfile(model_dir,'Depth55m_Fixed.dir','ShallowBeaufortWhaleInversionSSP_MidRange_CSDM_Nfft2048_20100831T004830_eigenvector_10to500Hz.mat');
+%MFP_replica_file{3}{1}=[model_dir '/Depth55m_Fixed.dir/ShallowBeaufortWhaleInversionSSP_MidRange_CSDM_Nfft2048_20100831T004830_eigenvector_10to500Hz.mat'];
+%/Users/thode/Projects/Arctic_2010/MidRangeMFPInversion.dir/Thermocline_11dB_eigenvector_inversion.dir/RunAA
+%SSP EOF included, 40 pop, thermocline depth fixed, depth restricted to 55 m, gradient greater than -50 m/s
+%receiver depth limited to +/1 m/s.
 default_tilt{3}{1}='1.35';
 range_str{3}{1}='5000:100:10000';
 default_SNR{3}{1}=[112.9 116 119 122.1 164.8 167.8 170.9 174 177 180.1 235 238];  %Original 12 frequencies
 %used for inversion
 %default_SNR{3}{1}=[116 119 122.1 164.8 167.8 170.9 174 177 180.1 ]; %Plotting results
 
-MFP_replica_file{3}{2}=[model_dir '/Depth_55m_fixed_Pekeris.dir/ShallowBeaufortPekeris_MidRange_arctic_pekeris1638_KRAKEN_flat55m_10to500Hz.mat'];
+MFP_replica_file{3}{2}=fullfile(model_dir,'Depth_55m_fixed_Pekeris.dir','ShallowBeaufortPekeris_MidRange_arctic_pekeris1638_KRAKEN_flat55m_10to500Hz.mat');
+%MFP_replica_file{3}{2}=[model_dir '/Depth_55m_fixed_Pekeris.dir/ShallowBeaufortPekeris_MidRange_arctic_pekeris1638_KRAKEN_flat55m_10to500Hz.mat'];
 default_tilt{3}{2}='1.585';
 range_str{3}{2}=range_str{3}{1};
 default_SNR{3}{2}=default_SNR{3}{1};
 
 %%%%%%%%%%%%%%%%%Long range estimate (17 km)%%%%%%%%%%%%%%%%%%%%%%%%
-MFP_replica_file{4}{1}=[model_dir '/Depth55m_Fixed.dir/ShallowBeaufortWhaleInversionSSP_FarRange_CSDM_Nfft8192_20100831T105013_10to500Hz.mat'];
+MFP_replica_file{4}{1}=fullfile(model_dir,'Depth55m_Fixed.dir','ShallowBeaufortWhaleInversionSSP_FarRange_CSDM_Nfft8192_20100831T105013_10to500Hz.mat');
+%MFP_replica_file{4}{1}=[model_dir '/Depth55m_Fixed.dir/ShallowBeaufortWhaleInversionSSP_FarRange_CSDM_Nfft8192_20100831T105013_10to500Hz.mat'];
 default_tilt{4}{1}='1.35';
 range_str{4}{1}='5000:100:20000';
 %default_SNR=12;
 default_SNR{4}{1}=[74.01 78.58 85.45 88.5 90.03 92.32 93.08 95.37 99.95 103 107.6 109.9];
 
-MFP_replica_file{4}{2}=[model_dir '/Depth_55m_fixed_Pekeris.dir/ShallowBeaufortPekeris_FarRange_arctic_pekeris1692_KRAKEN_flat55m_10to500Hz.mat'];
+MFP_replica_file{4}{2}=fullfile(model_dir,'Depth_55m_fixed_Pekeris.dir','ShallowBeaufortPekeris_FarRange_arctic_pekeris1692_KRAKEN_flat55m_10to500Hz.mat');
+%MFP_replica_file{4}{2}=[model_dir '/Depth_55m_fixed_Pekeris.dir/ShallowBeaufortPekeris_FarRange_arctic_pekeris1692_KRAKEN_flat55m_10to500Hz.mat'];
 default_tilt{4}{2}='1.585';
 range_str{4}{2}=range_str{4}{1};
 default_SNR{4}{2}=default_SNR{4}{1};
 
 %%%%%%%%%%%%%%%%%35 km range estimate%%%%%%%%%%%%%%%%
-MFP_replica_file{5}{1}=[model_dir '/Depth55m_Fixed.dir/ShallowBeaufortWhaleInversionSSP_UltraRange_CSDM_Nfft8192_20100831T105748_10to500Hz.mat'];
+MFP_replica_file{5}{1}=fullfile(model_dir,'Depth55m_Fixed.dir','ShallowBeaufortWhaleInversionSSP_UltraRange_CSDM_Nfft8192_20100831T105748_10to500Hz.mat');
+%MFP_replica_file{5}{1}=[model_dir '/Depth55m_Fixed.dir/ShallowBeaufortWhaleInversionSSP_UltraRange_CSDM_Nfft8192_20100831T105748_10to500Hz.mat'];
+
 default_tilt{5}{1}='3.93';
 range_str{5}{1}='30000:100:40000';
 range_str{5}{1}='100:100:40000';
@@ -5539,7 +5557,8 @@ default_SNR{5}{1}=[99.1800  102.2000  105.3000  108.3000  111.4000  114.4000  11
 %default_SNR=default_SNR(1:(end-1));
 % default_SNR=default_SNR((end-3):end)
 
-MFP_replica_file{5}{2}=[model_dir '/Depth_55m_fixed_Pekeris.dir/ShallowBeaufortPekeris_UltraRange_arctic_pekeris1553_KRAKEN_flat55m_10to500Hz.mat'];
+MFP_replica_file{5}{2}=fullfile(model_dir,'Depth_55m_fixed_Pekeris.dir','ShallowBeaufortPekeris_UltraRange_arctic_pekeris1553_KRAKEN_flat55m_10to500Hz.mat');
+%MFP_replica_file{5}{2}=[model_dir '/Depth_55m_fixed_Pekeris.dir/ShallowBeaufortPekeris_UltraRange_arctic_pekeris1553_KRAKEN_flat55m_10to500Hz.mat'];
 default_tilt{5}{2}='3.34';
 range_str{5}{2}=range_str{5}{1};
 default_SNR{5}{2}=default_SNR{5}{1};
@@ -5548,7 +5567,7 @@ default_SNR{5}{2}=default_SNR{5}{1};
 %Averaged Pekeris model...
 for I=2:5
     %%Averaged Pekeris model
-    MFP_replica_file{I}{3}=[model_dir '/Depth55m_Fixed.dir/ShallowBeaufortPekeris_arctic_pekeris1673_KRAKEN_flat55m_10to500Hz.mat'];
+    MFP_replica_file{I}{3}=fullfile(model_dir,'Depth_55m_fixed_Pekeris.dir','ShallowBeaufortPekeris_arctic_pekeris1673_KRAKEN_flat55m_10to500Hz.mat');
     default_tilt{I}{3}=default_tilt{I}{2};
     range_str{I}{3}=range_str{I}{2};
     default_SNR{I}{3}=default_SNR{I}{2};
