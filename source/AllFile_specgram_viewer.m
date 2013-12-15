@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 11-Dec-2013 15:22:44
+% Last Modified by GUIDE v2.5 13-Dec-2013 15:57:06
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -359,8 +359,8 @@ function MenuItem_psd_Callback(hObject, eventdata, handles)
 end
 
 % --------------------------------------------------------------------
-function MenuItem_metrics_Callback(hObject, eventdata, handles)
-% hObject    handle to MenuItem_metrics (see GCBO)
+function MenuItem_spectrum_Callback(hObject, eventdata, handles)
+% hObject    handle to MenuItem_spectrum (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
@@ -372,11 +372,11 @@ function MenuItem_metrics_Callback(hObject, eventdata, handles)
 		return;
 	end
 	
-	Batch_vars.A	=	'Aa';	Batch_desc{1}	=	'1st var desc';
-	Batch_vars.B	=	'Bb';	Batch_desc{2}	=	'2nd var desc';
-	Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
-	Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
-	Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
+	Batch_vars.mean	=	'yes';	Batch_desc{1}	=	'Enter yes for spectrum';
+	Batch_vars.percentile	=	'[10 50 90]';	Batch_desc{2}	=	'Percentile display';
+	%Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
+	%Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
+	%Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
 	
 	Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
 	
@@ -389,12 +389,70 @@ function MenuItem_metrics_Callback(hObject, eventdata, handles)
 		case 'Visible'
 			h	=	msgbox(['Processing all data within window for ' Batch_type]);
 		case 'File'
-			h	=	msgbox(['Processing all data in whole file for ' Batch_type]);
+			h	=	msgbox(sprintf('Processing all data in %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
 		case 'Folder'
 			h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
 		otherwise
 			error('Batch mode not recognized');
-	end
+    end
+% %
+
+% handles.sgram.T		=	TT;
+%     handles.sgram.F		=	FF;
+%     handles.sgram.B		=	B;
+%     handles.sgram.Nfft	=	Nfft;
+%     handles.sgram.ovlap	=	ovlap;
+%     handles.sgram.Fs	=	Fs;
+
+%%Make a new figure and plot spectrum.
+Ileg=1;
+line_width=2;
+SS_mean=[];
+hprint=figure;
+   
+if strcmp(Batch_vars.mean,'yes')
+    SS_mean=mean(handles.sgram.B');
+    plot(handles.sgram.F,10*log10(SS_mean),'k','linewidth',line_width);grid on
+    set(gca,'fontweight','bold','fontsize',14);
+    xlabel('Frequency(Hz)');ylabel(' PSD (dB re 1 uPa^2/Hz)');
+    hold on
+    leg_str{Ileg}='mean';Ileg=Ileg+1;
+    
+end
+
+percentile=str2num(Batch_vars.percentile)/100;
+if ~isempty(percentile)
+    xsort=sort(handles.sgram.B');
+    Iout=round(percentile*size(xsort,1));
+    SS_percentile=xsort(Iout,:);
+    plot(handles.sgram.F,10*log10(SS_percentile),'linewidth',line_width);
+    set(gca,'fontweight','bold','fontsize',14);
+    xlabel('Frequency(Hz)');ylabel(' PSD (dB re 1 uPa^2/Hz)');
+    
+    for II=1:length(percentile)
+        leg_str{Ileg}=num2str(100*percentile(II));
+        Ileg=Ileg+1;
+    end
+    
+end
+legend(leg_str);
+titlestr=(sprintf('Start time: %s, Time processed: %6.2f sec',datestr(handles.tdate_start),handles.tlen));
+title(titlestr);
+ylimm=ylim;
+ylimm(1)=0;
+ylim(ylimm);
+
+yess=menu('Save Spectrum Data and figure?','Yes','No');
+if yess==1
+    F=handles.sgram.F;
+    save_str=sprintf('Spectrum_%s_%i', datestr(handles.tdate_start,30),handles.tlen);
+    save(save_str,'F','percentile','leg_str','SS_percentile','SS_mean','titlestr');
+    h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
+    
+    orient landscape
+    print(hprint,'-djpeg',save_str);
+end
+
 end
 
 % --------------------------------------------------------------------
@@ -3694,7 +3752,11 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
     %[B,FF,TT]=specgram(x(:,1),Nfft,Fs,hanning(Nfft),round(ovlap*Nfft));
     [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
     %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
-    handles.sgram.T		=	TT;
+%     For real signals, variable 'B'
+%     returns the one-sided modified periodogram estimate of the PSD of each
+%     segment; for complex signals and in the case when a vector of
+%     frequencies is specified, it returns the two-sided PSD.  
+     handles.sgram.T		=	TT;
     handles.sgram.F		=	FF;
     handles.sgram.B		=	B;
     handles.sgram.Nfft	=	Nfft;
@@ -5481,7 +5543,7 @@ for Itilt=1:length(tilt_offset)
 		figure(gcf)
 		orient landscape
         
-        print('-djpeg',[savename '.jpg']);
+        print(gcf,'-djpeg',[savename '.jpg']);
     end
 end %tilt
 end
