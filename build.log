@@ -1,0 +1,455 @@
+ant:
+
+<mkdir dir="H:\Work\matlab\AllFile_specgram_viewer\build\AllFile_specgram_viewer_Win32\distrib" />
+<mkdir dir="H:\Work\matlab\AllFile_specgram_viewer\build\AllFile_specgram_viewer_Win32\src" />
+mcc -o AllFile_specgram_viewer_Win32 -W WinMain:AllFile_specgram_viewer_Win32 -T link:exe -d H:\Work\matlab\AllFile_specgram_viewer\build\AllFile_specgram_viewer_Win32\src -w enable:specified_file_mismatch -w enable:repeated_file -w enable:switch_ignored -w enable:missing_lib_sentinel -w enable:demo_license -v H:\Work\matlab\AllFile_specgram_viewer\source\AllFile_specgram_viewer.m -a H:\Work\matlab\AllFile_specgram_viewer\source\AllFile_specgram_viewer.fig -a H:\Work\matlab\AllFile_specgram_viewer\source\deps
+Compiler version: 4.18 (R2012b)
+Processing C:\MATLAB\Win32\R2012b\toolbox\matlab\mcc.enc
+Processing C:\MATLAB\Win32\R2012b\toolbox\signal\mcc.enc
+Processing C:\MATLAB\Win32\R2012b\toolbox\images\mcc.enc
+Processing H:\Work\matlab\AllFile_specgram_viewer\source\AllFile_specgram_viewer.fig
+Processing C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\general\mcc.enc
+Processing C:\MATLAB\Win32\R2012b\toolbox\matlab\guide\guideopts.fig
+Processing C:\MATLAB\Win32\R2012b\toolbox\shared\imageslib\mcc.enc
+Processing C:\MATLAB\Win32\R2012b\toolbox\control\mcc.enc
+Processing C:\MATLAB\Win32\R2012b\toolbox\matlab\winfun\actxcontrolselect.fig
+Processing C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\mcc.enc
+Processing C:\MATLAB\Win32\R2012b\toolbox\matlab\winfun\actxcontrolcreateproperty.fig
+Processing C:\MATLAB\Win32\R2012b\toolbox\ident\mcc.enc
+Processing C:\MATLAB\Win32\R2012b\toolbox\shared\spcuilib\mcc.enc
+Processing C:\MATLAB\Win32\R2012b\toolbox\dsp\mcc.enc
+Processing C:\MATLAB\Win32\R2012b\toolbox\stats\mcc.enc
+Processing C:\MATLAB\Win32\R2012b\toolbox\fixedpoint\mcc.enc
+Processing C:\MATLAB\Win32\R2012b\toolbox\optim\mcc.enc
+Processing C:\MATLAB\Win32\R2012b\toolbox\matlab\system\mcc.enc
+Processing C:\MATLAB\Win32\R2012b\toolbox\shared\optimlib\mcc.enc
+Processing C:\MATLAB\Win32\R2012b\toolbox\distcomp\mcc.enc
+Processing include files...
+2 item(s) added.
+Processing directories installed with MCR...
+The file H:\Work\matlab\AllFile_specgram_viewer\build\AllFile_specgram_viewer_Win32\src\mccExcludedFiles.log contains a list of functions excluded from the CTF archive.
+0 item(s) added.
+Generating MATLAB path for the compiled application...
+Created 99 path items.
+Begin validation of MEX files: Mon Dec 16 12:43:29 2013
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\activeset.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\barrierqplp.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\dsp_blocks_2.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\dsp_core_blocks.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\dsp_fixpt_3.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\dsp_rt.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\dsp_sim_common.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\dspcg.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\dspfft.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\frommmfile.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\ippl.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\iptutil.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\libippmwipt.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\libmwSpcuilib_res.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\libmwslicot.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\neighborhood.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\networkdevice.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\optimutil.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\scopesutil.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\sldirectshow.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\bin\win32\tommfile.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\distcomp\@distcomp\dctCmdWindowSize.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\distcomp\bin\win32\DotnetUtilities.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\distcomp\bin\win32\HpcServerSoaClient.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\distcomp\bin\win32\MdcsServiceProxy.dll'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\distcomp\cluster\+parallel\+internal\+cluster\workerShutdown.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\distcomp\distcomp\dct_psfcns.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\distcomp\distcomp\distcompByteBuffer2MxArray.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\distcomp\distcomp\distcompMakeByteBufferHandle.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\distcomp\distcomp\distcompMxArray2ByteBuffer.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\distcomp\distcomp\distcompdeserialize.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\distcomp\distcomp\distcompserialize.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\distcomp\distcomp\getUncPathFromMappedDrive.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\distcomp\distcomp\pct_unsetenvmex.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\distcomp\private\dctPathAndClearNotification.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\distcomp\private\dctRegisterMpiFunctions.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\dsp\dsputilities\dspmex\firdecimfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\dsp\dsputilities\dspmex\firinterpfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\dsp\dsputilities\dspmex\firsrcfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\dsp\dsputilities\dspmex\firtdecimfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\dsp\dsputilities\dspmex\latticecafilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\dsp\dsputilities\dspmex\latticecapcfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\dsp\dsputilities\dspmex\mdspbiquad.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\dsp\dsputilities\dspmex\mdspfirdn2.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\dsp\dsputilities\dspmex\mdspupfir2.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\dsp\dsputilities\dspmex\sfirdecimfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\dsp\dsputilities\dspmex\sfirinterpfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\dsp\dsputilities\dspmex\sfirsrcfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\dsp\dsputilities\dspmex\sfirtdecimfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\ident\nlident\@linear\soevaluate.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\ident\nlident\@wavenet\soevaluate.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\images\images\private\imapplymatrixc.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\images\images\private\parityscan.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\images\iptformats\private\bitparse.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\images\iptformats\private\dicom_decode_rle_segment.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\images\iptformats\private\dicomlookup_helper.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\images\iptformats\private\dicomparse.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\images\iptformats\private\rnitfc.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\images\iptformats\private\tobits.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\optim\optim\private\activesetqp.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\HamEig.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\HamGenEig.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\bdschur.mexw32'.
+Found MATLAB file 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\bdschur.m'.
+MEX file
+'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\bdschur.mexw32'
+is valid. It contains 'mexFunction.'
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\ddaeresp.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\ddaesim.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\frdelay.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\frkernel.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\hlyapslv.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\lyapslv.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\matscale.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\mimozero.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\normrank.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\quadgp1.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\quadgp2.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\rrqrf.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\ssfresp.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\ssresp.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\sssim.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\sylvslv.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\tfresp.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\tfsim.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\triperm.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\zpkboderesp.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\zpkfresp.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\zpkresp.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\shared\controllib\engine\numerics\zpksim.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\buffer.mexw32'.
+Found MATLAB file 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\buffer.m'.
+MEX file
+'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\buffer.mexw32'
+is valid. It contains 'mexFunction.'
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\df1filter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\df1sosfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\df1tfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\df1tsosfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\df2filter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\df2sosfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\df2tfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\df2tsosfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\dfantisymmetricfirfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\dffirfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\dffirtfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\dfsymmetricfirfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\latticeallpassfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\latticearfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\latticearmafilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\latticemamaxphasefilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\latticemaminphasefilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\private\goertzelmex.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\private\sosfiltmex.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\private\upfirdnmex.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\sdf1filter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\sdf1sosfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\sdf1tfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\sdf1tsosfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\sdf2filter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\sdf2sosfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\sdf2tfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\sdf2tsosfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\sdfantisymmetricfirfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\sdffirfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\sdffirtfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\sdfsymmetricfirfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\slatticeallpassfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\slatticearfilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\slatticearmafilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\slatticemamaxphasefilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\slatticemaminphasefilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\signal\signal\statespacefilter.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\stats\stats\@sobolset\private\DNToMatrix.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\stats\stats\@sobolset\private\MatrixToDN.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\stats\stats\@sobolset\private\computeDN.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\stats\stats\@sobolset\private\convertToDouble.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\stats\stats\@sobolset\private\matrixBitXor.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\stats\stats\@sobolset\private\sobolIndexed.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\stats\stats\@sobolset\private\sobolNet.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\stats\stats\@sobolset\private\sobolPoint.mexw32'.
+No conflicting MATLAB file found.
+Validating 'C:\MATLAB\Win32\R2012b\toolbox\stats\stats\@sobolset\private\sobolSequence.mexw32'.
+No conflicting MATLAB file found.
+End validation of MEX files: Mon Dec 16 12:43:30 2013
+Warning: Adding path "H:\Work\matlab\AllFile_specgram_viewer\source" to
+Compiler path instance.
+Parsing file "H:\Work\matlab\AllFile_specgram_viewer\source\AllFile_specgram_viewer.m"
+    (Referenced from: "Compiler Command Line").
+Parsing file "C:\MATLAB\Win32\R2012b\toolbox\compiler\deploy\deployprint.m"
+    (Referenced from: "Compiler Command Line").
+Parsing file "C:\MATLAB\Win32\R2012b\toolbox\compiler\deploy\printdlg.m"
+    (Referenced from: "Compiler Command Line").
+Deleting 134 temporary MEX authorization files.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_29348_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_12604_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_1290_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_12365_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_31278_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_14970_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_23806_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_21419_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_31656_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_11161_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_58_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_106_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_17231_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_20744_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_14129_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_24958_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_6879_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_24671_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_25889_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_6278_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_13575_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_2153_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_27846_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_22679_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_27930_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_32672_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_4108_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_7739_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_7563_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_13944_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_12039_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_10425_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_7051_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_9281_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_27851_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_6295_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_15525_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_29463_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_23839_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_22366_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_24139_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_19579_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_3379_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_11421_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_24411_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_13088_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_22276_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_9264_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_3796_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_8796_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_20381_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_10690_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_26950_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_9678_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_4143_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_32145_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_19079_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_5187_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_5476_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_26225_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_15719_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_2411_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_26536_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_29146_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_10481_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_17684_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_9511_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_27784_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_7526_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_11542_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_17499_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_25601_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_27484_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_7761_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_30356_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_30169_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_3467_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_15587_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_26308_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_12245_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_30002_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_9565_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_11850_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_14506_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_5571_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_1720_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_25671_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_7872_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_2199_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_1853_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_32504_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_1077_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_6369_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_28834_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_24387_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_19493_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_19425_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_26486_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_14991_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_11561_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_14682_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_12735_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_22233_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_19741_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_18501_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_20705_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_19716_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_18983_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_9159_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_29377_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_17777_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_21748_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_31841_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_32299_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_25296_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_16453_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_26983_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_15985_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_20278_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_10667_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_32435_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_29269_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_8047_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_8078_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_27290_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_26740_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_24885_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_16937_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_149_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_12319_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_25569_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_20352_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_20839_12060.auth'.
+Removing: 'C:\Users\jit\AppData\Local\Temp\mathworks_tmp_12060_24153_12060.auth'.
+Generating file "H:\Work\matlab\AllFile_specgram_viewer\build\AllFile_specgram_viewer_Win32\src\readme.txt".
+copy 'H:\Work\matlab\AllFile_specgram_viewer\build\AllFile_specgram_viewer_Win32\src\readme.txt' 'H:\Work\matlab\AllFile_specgram_viewer\build\AllFile_specgram_viewer_Win32\distrib\readme.txt'
+copy 'H:\Work\matlab\AllFile_specgram_viewer\build\AllFile_specgram_viewer_Win32\src\AllFile_specgram_viewer_Win32.exe' 'H:\Work\matlab\AllFile_specgram_viewer\build\AllFile_specgram_viewer_Win32\distrib\AllFile_specgram_viewer_Win32.exe'
