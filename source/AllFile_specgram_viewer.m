@@ -385,11 +385,46 @@ function MenuItem_spectrum_Callback(hObject, eventdata, handles)
 	if	isempty(Batch_vars)
 		errordlg('Processing cancelled!');
 		return;
-    end
-    
-    %Graphic parameters
-     line_width=2;
-           
+	end
+	
+	switch	Batch_mode
+		case 'Process Visible Window'
+			h	=	msgbox(['Processing all data within window for ' Batch_type]);
+		case 'Start Bulk Processing File'
+			h	=	msgbox(sprintf('Processing all data in %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
+		case 'Start Bulk Processing Folder'
+			h	=	msgbox(sprintf('Processing all data in folder %s for %s',handles.mydir,Batch_type));
+        case 'Load Bulk Processing'
+            
+		otherwise
+			error('Batch mode not recognized');
+	end
+% %
+
+% handles.sgram.T		=	TT;
+%     handles.sgram.F		=	FF;
+%     handles.sgram.B		=	B;
+%     handles.sgram.Nfft	=	Nfft;
+%     handles.sgram.ovlap	=	ovlap;
+%     handles.sgram.Fs	=	Fs;
+
+%%Make a new figure and plot spectrum.
+Ileg=1;
+SS_mean=[];
+hprint=figure;
+ 
+%Graphic parameters
+line_width=2;
+
+if strcmp(Batch_vars.mean,'yes')
+    SS_mean=mean(handles.sgram.B');
+    plot(handles.sgram.F,10*log10(SS_mean),'k','linewidth',line_width);grid on
+    set(gca,'fontweight','bold','fontsize',14);
+    xlabel('Frequency(Hz)');ylabel(' PSD (dB re 1 uPa^2/Hz)');
+    hold on
+    leg_str{Ileg}='mean';Ileg=Ileg+1;
+end
+         
     switch	Batch_mode
         case 'Process Visible Window'
             h	=	msgbox(['Processing all data within window for ' Batch_type]);
@@ -469,7 +504,7 @@ function MenuItem_spectrum_Callback(hObject, eventdata, handles)
             
             write_Java_script('PSD',param);
             ! ./masterPSD.scr > outt.txt &
-            
+            return
         case 'Load Bulk Processing'
             Batch_vars_bulkload.start_time	=	'file start';	Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
             Batch_vars_bulkload.end_time	=	'all';    Batch_desc{2}	=	'Time to end loading (e.g. "here," "datenum(2011,1,2,0,0,0)",  "file end" for current file end, or "all" to import entire folder)';
@@ -689,12 +724,7 @@ function MenuItem_spectrum_Callback(hObject, eventdata, handles)
             error('Batch mode not recognized');
     end
     
-    
-    
-% Melania Guerra and Aaron Thode
-%
-
-    
+ 
     
 end
 
