@@ -419,7 +419,8 @@ switch	Batch_mode
         return
     case 'Load Bulk Processing'
         Batch_vars_bulkload.start_time	=	'file start';	Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
-        Batch_vars_bulkload.end_time	=	'all';    Batch_desc{2}	=	'Time to end loading (e.g. "here," "datenum(2011,1,2,0,0,0)",  "file end" for current file end, or "all" to import entire folder)';
+        Batch_vars_bulkload.end_time	=	'all';    
+        Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "all" to import entire folder)';
         Batch_vars_bulkload.append      =   'separate';   Batch_desc{3} =  '"Join" will append separate files into one figure (for continuous data), while "separate" makes a separate figure per file (default, for duty cycle)';
        
         Batch_vars_bulkload	=	input_batchparams(Batch_vars_bulkload, Batch_desc, Batch_type);
@@ -447,7 +448,7 @@ switch	Batch_mode
             %If we move into next file, start at the beginning
             tabs_loop_begin=0;
             
-            if Batch_vars_bulkload.separate==1
+            if Batch_vars_bulkload.separate==1&&~isempty(Tabs_all)
                [hprint(Iplot),save_tag{Iplot}]=image_PSD; 
                PSD_all=[];Tabs_all=[];
                Iplot=Iplot+1;
@@ -480,14 +481,22 @@ end
 
 
     function [hprint,save_tag]=image_PSD
+        
+        if isempty(Tabs_all)
+            hprint=-1;save_tag=-1;
+            return
+        end
         PSD_all=10*log10(PSD_all);
+        
         
         hprint=figure;
         imagesc(Tabs_all,F/1000,PSD_all);axis('xy')
         fmin=str2num(get(handles.edit_fmin,'String'));
         fmax=str2num(get(handles.edit_fmax,'String'));
-        ylimm=[fmin fmax];
-        ylim(ylimm);
+        if fmax>0
+            ylimm=[fmin fmax];
+            ylim(ylimm);
+        end
         colorbar
         
         cmin=eval(get(handles.edit_mindB,'string'));
@@ -629,8 +638,10 @@ switch	Batch_mode
     case 'Load Bulk Processing'
         
         
-        Batch_vars_bulkload.start_time	=	'file start';	Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
-        Batch_vars_bulkload.end_time	=	'all';    Batch_desc{2}	=	'Time to end loading (e.g. "here," "datenum(2011,1,2,0,0,0)",  "file end" for current file end, or "all" to import entire folder)';
+        Batch_vars_bulkload.start_time	=	'file start';	
+        Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
+        Batch_vars_bulkload.end_time	=	'all';    
+        Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "all" to import entire folder)';
         
         
         Batch_vars_bulkload.dB_bins = '30:2:140';        Batch_desc{3} = 'vector of dB levels to build long-term histograms';
@@ -770,9 +781,13 @@ end
 end
 
 function [tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles,Batch_vars_bulkload)
-
+ %Note that a file does not have to be loaded for this to work...
 dialog_title	=	'Select Bulk file to load: Note that I am looking in current directory, not data directory';
-[pathstr,token,extt] = fileparts(handles.myfile);
+if isfield(handles,'myfile')
+    [~,token,extt] = fileparts(handles.myfile);
+else
+    token=[];
+end
 FileName = uigetfile([token '*.psd'],dialog_title);
 if isnumeric(FileName)
     disp('No file selected');
@@ -820,7 +835,8 @@ switch lower(Batch_vars_bulkload.start_time)
                 errordlg('Can''t process start_time','Bulk Processing Menu Error');
                 return;
             end
-            
+           
+       
         end
 end
 
@@ -851,8 +867,11 @@ switch lower(Batch_vars_bulkload.end_time)
                 return;
                 
             end
+        elseif isnumeric(str2num(Batch_vars_bulkload.end_time))  %%Assume end time is duration in hours after start time
+            tabs_end=tabs_start+datenum(0,0,0,str2num(Batch_vars_bulkload.end_time),0,0);
         end
 end
+       
 
 end
 
