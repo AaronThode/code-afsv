@@ -6274,8 +6274,8 @@ Icol=double(dasar)-96;
 
 if nargin==2
     cal_dir=sprintf('%s/S%i07gsif/Caloutput07s%i/Bgrid07s%i.mat',cal_dir,site,site,site);
-    load(cal_dir);
-    brefa_table=bgridt;
+    data=load(cal_dir);
+    brefa_table=data.bgridt;
     
     %     if site==1  %DASAR 1B failed, not reflected in bgrid table...
     %        brefa_table=[brefa_table(:,1) zeros(size(bgridt,1),1) brefa_table(:,2:end)];
@@ -8022,7 +8022,7 @@ for icol=1:tcol
     ti= t(icol);
     tau=-min([round(N/2)-1,Lh,ti-1]):min([round(N/2)-1,Lh,xrow-ti]);
     indices= rem(N+tau,N)+1;
-    if trace, disprog(icol,tcol,10); end;
+    %if trace, disprog(icol,tcol,10); end;
     tfr(indices,icol)=x(ti+tau,1).*conj(h(Lh+1+tau));
 end;
 tfr=fft(tfr);
