@@ -324,7 +324,7 @@ function MenuItem_psd_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 	Batch_type	=	get(hObject, 'Label');
-	Batch_mode	=	input_batchmode(Batch_type);
+	[Batch_mode, mode_chc]	=	input_batchmode(Batch_type);
 	
 	if	isempty(Batch_mode)
 		errordlg('Processing cancelled!');
@@ -342,14 +342,15 @@ function MenuItem_psd_Callback(hObject, eventdata, handles)
 	if	isempty(Batch_vars)
 		errordlg('Processing cancelled!');
 		return;
-	end
+    end
 	
+    %Mode_options	=	{'Process Visible Window', 'Start Bulk Processing File', 'Start Bulk Processing Folder','Load Bulk Processing'};
 	switch	Batch_mode
-		case 'Visible'
+		case 'Process Visible Window'
 			h	=	msgbox(['Processing all data within window for ' Batch_type]);
-		case 'File'
+		case 'Start Bulk Processing File'
 			h	=	msgbox(['Processing all data in whole file for ' Batch_type]);
-		case 'Folder'
+		case 'Start Bulk Processing Folder'
 			h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
 		otherwise
 			error('Batch mode not recognized');
@@ -372,87 +373,329 @@ function MenuItem_spectrum_Callback(hObject, eventdata, handles)
 		return;
 	end
 	
-	Batch_vars.mean	=	'yes';	Batch_desc{1}	=	'Enter yes for spectrum';
+	Batch_vars.mean	=	'yes';	Batch_desc{1}	=	'Enter yes for averaged spectrum (instead of just percentiles)';
 	Batch_vars.percentile	=	'[10 50 90]';	Batch_desc{2}	=	'Percentile display';
-	%Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
+    %Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
 	%Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
 	%Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
 	
 	Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
-	
+    percentile=str2num(Batch_vars.percentile)/100;
+           
 	if	isempty(Batch_vars)
 		errordlg('Processing cancelled!');
 		return;
-	end
-	
-	switch	Batch_mode
-		case 'Visible'
-			h	=	msgbox(['Processing all data within window for ' Batch_type]);
-		case 'File'
-			h	=	msgbox(sprintf('Processing all data in %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
-		case 'Folder'
-			h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
-		otherwise
-			error('Batch mode not recognized');
-    end
-% %
-
-% handles.sgram.T		=	TT;
-%     handles.sgram.F		=	FF;
-%     handles.sgram.B		=	B;
-%     handles.sgram.Nfft	=	Nfft;
-%     handles.sgram.ovlap	=	ovlap;
-%     handles.sgram.Fs	=	Fs;
-
-%%Make a new figure and plot spectrum.
-Ileg=1;
-line_width=2;
-SS_mean=[];
-hprint=figure;
-   
-if strcmp(Batch_vars.mean,'yes')
-    SS_mean=mean(handles.sgram.B');
-    plot(handles.sgram.F,10*log10(SS_mean),'k','linewidth',line_width);grid on
-    set(gca,'fontweight','bold','fontsize',14);
-    xlabel('Frequency(Hz)');ylabel(' PSD (dB re 1 uPa^2/Hz)');
-    hold on
-    leg_str{Ileg}='mean';Ileg=Ileg+1;
-    
-end
-
-percentile=str2num(Batch_vars.percentile)/100;
-if ~isempty(percentile)
-    xsort=sort(handles.sgram.B');
-    Iout=round(percentile*size(xsort,1));
-    SS_percentile=xsort(Iout,:);
-    plot(handles.sgram.F,10*log10(SS_percentile),'linewidth',line_width);
-    set(gca,'fontweight','bold','fontsize',14);
-    xlabel('Frequency(Hz)');ylabel(' PSD (dB re 1 uPa^2/Hz)');
-    
-    for II=1:length(percentile)
-        leg_str{Ileg}=num2str(100*percentile(II));
-        Ileg=Ileg+1;
     end
     
-end
-legend(leg_str);
-titlestr=(sprintf('Start time: %s, Time processed: %6.2f sec',datestr(handles.tdate_start),handles.tlen));
-title(titlestr);
-ylimm=ylim;
-ylimm(1)=0;
-ylim(ylimm);
+    %Graphic parameters
+     line_width=2;
+           
+    switch	Batch_mode
+        case 'Process Visible Window'
+            h	=	msgbox(['Processing all data within window for ' Batch_type]);
+            
+            %%Make a new figure and plot spectrum.
+            Ileg=1;
+            SS_mean=[];
+            hprint=figure;
+            
+            if strcmp(Batch_vars.mean,'yes')
+                SS_mean=mean(handles.sgram.B');
+                plot(handles.sgram.F,10*log10(SS_mean),'k','linewidth',line_width);grid on
+                set(gca,'fontweight','bold','fontsize',14);
+                xlabel('Frequency(Hz)');ylabel(' PSD (dB re 1 uPa^2/Hz)');
+                hold on
+                leg_str{Ileg}='mean';Ileg=Ileg+1;
+                
+            end
+            
+            if ~isempty(percentile)
+                xsort=sort(handles.sgram.B');
+                Iout=round(percentile*size(xsort,1));
+                SS_percentile=xsort(Iout,:);
+                plot(handles.sgram.F,10*log10(SS_percentile),'linewidth',line_width);
+                set(gca,'fontweight','bold','fontsize',14);
+                xlabel('Frequency(Hz)');ylabel(' PSD (dB re 1 uPa^2/Hz)');
+                
+                for II=1:length(percentile)
+                    leg_str{Ileg}=num2str(100*percentile(II));
+                    Ileg=Ileg+1;
+                end
+                
+            end
+            legend(leg_str);
+            titlestr=(sprintf('Start time: %s, Time processed: %6.2f sec',datestr(handles.tdate_start),handles.tlen));
+            title(titlestr);
+            ylimm=ylim;
+            ylimm(1)=0;
+            ylim(ylimm);
+            
+            yess=menu('Save Spectrum Data and figure?','Yes','No');
+            if yess==1
+                F=handles.sgram.F;
+                save_str=sprintf('Spectrum_%s_%s', datestr(handles.tdate_start,30),datestr(handles.tdate_start+datenum(0,0,0,0,0,handles.tlen),30));
+                save(save_str,'F','percentile','leg_str','SS_percentile','SS_mean','titlestr');
+                h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
+                
+                orient landscape
+                print(hprint,'-djpeg',save_str);
+            end
+            
+            return
+        case {'Start Bulk Processing File','Start Bulk Processing Folder'}
+            
+            if strcmp(Batch_mode,'Start Bulk Processing File')
+                h	=	msgbox(sprintf('Processing all data in %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
+                param.exten=['*' handles.myfile];
+            else
+                h	=	msgbox(sprintf('Processing all data in %s\n for %s',fullfile(handles.mydir), Batch_type));
+                
+                param.exten=['*' handles.myext];
+            end
+            param.dir_out='.';
+            param.file_dir=handles.mydir;
+            contents=get(handles.popupmenu_Nfft,'String');
+            param.Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
+            contents=get(handles.popupmenu_ovlap,'String');
+            param.ovlap=round(param.Nfft*str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100);
+            param.Fs=handles.sgram.Fs;
+            param.channel=str2num(get(handles.edit_chan,'String'));
+            param.dumpsize=100000;
+            param.nstart=0;
+            param.nsamples=0;
+            param.f_low=1000*str2num(get(handles.edit_fmin,'String'));
+            param.f_high=1000*str2num(get(handles.edit_fmax,'String'));
+            param.sec_avg=param.Nfft/param.Fs;
+            
+            write_Java_script('PSD',param);
+            ! ./masterPSD.scr > outt.txt &
+            
+        case 'Load Bulk Processing'
+            Batch_vars_bulkload.start_time	=	'file start';	Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
+            Batch_vars_bulkload.end_time	=	'all';    Batch_desc{2}	=	'Time to end loading (e.g. "here," "datenum(2011,1,2,0,0,0)",  "file end" for current file end, or "all" to import entire folder)';
+            
+            
+            Batch_vars_bulkload.dB_bins = '30:2:140';        Batch_desc{3} = 'vector of dB levels to build long-term histograms';
+            Batch_vars_bulkload.duty_cycle='0';        Batch_desc{4} = 'Type "1" to process a duty cycle (e.g. diel or weekend analysis)';
+            Batch_vars_bulkload.cycle_duration='0';     Batch_desc{5}='Duty cycle:  Hours in a complete cycle.  Cycle begins at date/time in first row above.  Example: "24*7" defines a week';
+            Batch_vars_bulkload.process_duration='0';   Batch_desc{6}='Duty cycle:  Hours to process, beginning at the start of a cycle.  Example: "24*2" defines a weekend';
+            
+            Batch_vars_bulkload	=	input_batchparams(Batch_vars_bulkload, Batch_desc, Batch_type);
+            duty_cycle_chc=logical(eval(Batch_vars_bulkload.duty_cycle));
+            
+            if	isempty(Batch_vars_bulkload)
+                errordlg('Processing cancelled!');
+                return;
+            end
+            
+            
+            
+            %%Locate example of PSD file desired (in case more than one PSD
+            %%computation conducted on same file in same folder%%
+            
+            dialog_title	=	'Select Bulk file to load: Note that I am looking in current directory, not data directory';
+            [pathstr,token,extt] = fileparts(handles.myfile);
+            FileName = uigetfile([token '*.psd'],dialog_title);
+            Iscore=min(strfind(FileName,'_chan'));
+            
+            token2=FileName((Iscore+1):end);  %PSD files having the same input parameters..
+            
+            Other_FileNames=dir(['*_' token2]);
+            Icurrent_file=find(strcmp(FileName,{Other_FileNames.name})>0);  %Location of current file in list of PSD files
+            Nfiles=length({Other_FileNames(Icurrent_file:end).name});  %Number of files that include current time and all times afterward.
+            
+            [~,~,~,~,params]=read_Java_PSD(Other_FileNames(Icurrent_file).name,0,Inf,1);
+            tabs_end=params.tend_file;  %datenumber of end of data in focal file (assuming all filenames have chronological order)
+            tabs_start=params.tstart_file;  %datenumber of start of data in focal file (assuming all filenames have chronological order)
+            
+            [~,~,~,~,params]=read_Java_PSD(Other_FileNames(end).name,0,Inf,1);
+            tabs_folder_end=params.tend_file;  %datenumber of end of data in folder (assuming all filenames have chronological order)
+            [~,FF,~,~,params]=read_Java_PSD(Other_FileNames(1).name,0,10);
+            tabs_folder_start=params.tstart_file;  %datenumber of start of data in folder (assuming all filenames have chronological order)
+            
+            fprintf('Folder start time: %s, File start time: %s, File end time: %s, Folder end time: %s\n', ...
+                datestr(tabs_folder_start,30),datestr(tabs_start,30),datestr(tabs_end,30),datestr(tabs_folder_end,30));
+            if isnumeric(FileName)
+                disp('No file selected');
+                return;
+            end
+            
+            %%Translate start time
+            switch lower(Batch_vars_bulkload.start_time)
+                case {'here'}  %Use edit window
+                    tabs_start=datenum(get(handles.edit_datestr,'String'));
+                case 'file start'  %start of file
+                    % Keep tabs_start the same--this trick allows us from loading the original data!
+                otherwise %check for datenum
+                    if strfind(Batch_vars_bulkload.start_time,'datenum')
+                        try
+                            tabs_start_want=eval(Batch_vars_bulkload.start_time);
+                            if tabs_start_want<tabs_folder_start || tabs_start_want<tabs_folder_end
+                                errordlg('Can''t request a time outside selected file''s start time','Bulk Processing Menu Error');
+                                return;
+                            end
+                            
+                            tabs_start=tabs_start_want;
+                        catch
+                            errordlg('Can''t process start_time','Bulk Processing Menu Error');
+                            return;
+                        end
+                        
+                    end
+            end
+            
+            
+            %%Translate end time
+            switch lower(Batch_vars_bulkload.end_time)
+                case 'here' %Use edit window
+                    tabs_end=datenum(get(handles.edit_datestr,'String'))+datenum(0,0,0,0,0,str2num(get(handles.edit_winlen,'string')));
+                    Nfiles=Icurrent_file;  %Load one file only
+                case 'all'
+                    %Use tabs_end extracted from PSD file
+                    tabs_end=tabs_folder_end;
+                case 'file end'  %end of file
+                    %tabs_end=Inf;
+                    Nfiles=Icurrent_file;  %Load one file only.
+                otherwise %check for datenum
+                    if strfind(Batch_vars_bulkload.end_time,'datenum')
+                        try
+                            tabs_end_want=eval(Batch_vars_bulkload.end_time);
+                            if tabs_end_want<tabs_folder_start || tabs_end_want<tabs_folder_end
+                                errordlg('Can''t request a time outside selected file''s start time','Bulk Processing Menu Error');
+                                return
+                            end
+                            
+                            tabs_end=tabs_end_want;
+                            
+                        catch
+                            errordlg('Can''t process end_time','Bulk Processing Menu Error');
+                            return;
+                            
+                        end
+                    end
+            end
 
-yess=menu('Save Spectrum Data and figure?','Yes','No');
-if yess==1
-    F=handles.sgram.F;
-    save_str=sprintf('Spectrum_%s_%i', datestr(handles.tdate_start,30),handles.tlen);
-    save(save_str,'F','percentile','leg_str','SS_percentile','SS_mean','titlestr');
-    h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
+            %%Translate duty cycle...
+            if duty_cycle_chc
+                cycle_duration=datenum(0,0,0,eval(Batch_vars_bulkload.cycle_duration),0,0);
+                process_duration=datenum(0,0,0,eval(Batch_vars_bulkload.process_duration),0,0);
+                
+                current_cycle_start=tabs_start;
+                %next_cycle_start=tabs_start+cycle_duration;
+                process_end=tabs_start+process_duration;
+            
+            end
+            
+            
+            %Start processing
+            dB_bins=str2num(Batch_vars_bulkload.dB_bins);
+            hist_total=zeros(length(FF),length(dB_bins));
+            tabs_loop_begin=tabs_start;
+            for I=Icurrent_file:Nfiles
+                fname=Other_FileNames(I).name;
+                fprintf('Processing %s...\n',fname);
+                [PSD,F,Tsec,Tabs,params]=read_Java_PSD(fname,tabs_loop_begin,Inf);  %Read an entire file into memory
+                Istrip=find(Tabs<=tabs_end);
+                PSD=PSD(:,Istrip);Tabs=Tabs(Istrip);
+                
+                
+                %%Extract processing times.
+                
+                if ~duty_cycle_chc
+                    Igood=1:length(Tabs);
+                else
+                    Igood=[];
+                    while current_cycle_start<max(Tabs)
+                        Igood=[Igood find(Tabs>=current_cycle_start&Tabs<=process_end)];  %This has to be true for first file
+                        current_cycle_start=current_cycle_start+cycle_duration;
+                        process_end=process_end+cycle_duration;
+                    end
+                    
+                    %%Back up a step in case desired process time runs into
+                    %%next file
+                    current_cycle_start=current_cycle_start-cycle_duration;
+                    process_end=process_end-cycle_duration;
+                end
+                
+                %If we move to next file, start at the beginning
+                tabs_loop_begin=0;
+                
+                if isempty(Igood)
+                    continue
+                end
+                
+                PSD=10*log10(PSD);
+                
+                for If=1:length(FF)
+                    Ncount=histc(PSD(If,Igood),dB_bins);
+                    hist_total(If,:)=hist_total(If,:)+Ncount;
+                end
+                
+                
+                
+            end  %Icurrent_file
+            
+            %%%%%Convert bulk histogram into percentile distribution.
+            cum_dist=cumsum(hist_total');
+            cum_dist=cum_dist./(ones(length(dB_bins),1)*max(cum_dist));
+            
+            CC=contourc(FF,dB_bins,cum_dist,percentile);
+            
+            SS_percentile=zeros(length(percentile),length(FF));
+            for Ip=1:length(percentile)
+               Npt=CC(2,1);
+               p_check{Ip}=num2str(CC(1,1));
+               SS_raw{Ip}=CC(2,2:(Npt+1));
+               Freq{Ip}=CC(1,2:(Npt+1));
+               CC=CC(:,(Npt+2):end);
+               SS_percentile(Ip,:)=interp1(Freq{Ip},SS_raw{Ip},FF);
+               
+            end
+            
+            %%Debug check
+            hprint=figure;
+            subplot(2,1,1)
+            imagesc(FF,dB_bins,cum_dist);colorbar;
+            hold on
+            for Ip=1:length(percentile)
+               plot(Freq{Ip},SS_raw{Ip},'y');
+          
+            end
+            plot(FF,SS_percentile,'o');
+            titlestr=(sprintf('Start time: %s, End Time: %s ',datestr(tabs_start,30),datestr(tabs_end,30)));
+            title(titlestr);
+            
+            grid on
+            
+            subplot(2,1,2)
+            plot(FF,SS_percentile,'linewidth',line_width);
+            grid on
+            set(gca,'fontweight','bold','fontsize',14);
+            xlabel('Frequency(Hz)');ylabel(' PSD (dB re 1 uPa^2/Hz)');
+            legend(p_check);
+            
+            yess=menu('Save Spectrum Data and figure?','Yes','No');
+            if yess==1
+                F=FF;
+                leg_str=p_check;
+                save_str=sprintf('Spectrum_%s_%s', datestr(tabs_start,30),datestr(tabs_end,30));
+                save(save_str,'F','percentile','leg_str','SS_percentile','titlestr','Batch_vars','Batch_vars_bulkload');
+                h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
+                
+                orient landscape
+                print(hprint,'-djpeg',save_str);
+            end
+        otherwise
+            error('Batch mode not recognized');
+    end
     
-    orient landscape
-    print(hprint,'-djpeg',save_str);
-end
+    
+    
+% Melania Guerra and Aaron Thode
+%
 
+    
+    
 end
 
 % --------------------------------------------------------------------
@@ -483,11 +726,11 @@ function MenuItem_eventdet_Callback(hObject, eventdata, handles)
 	end
 	
 	switch	Batch_mode
-		case 'Visible'
+		case 'Process Visible Window'
 			h	=	msgbox(['Processing all data within window for ' Batch_type]);
-		case 'File'
+		case 'Start Bulk Processing File'
 			h	=	msgbox(['Processing all data in whole file for ' Batch_type]);
-		case 'Folder'
+		case 'Start Bulk Processing Folder'
 			h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
 		otherwise
 			error('Batch mode not recognized');
@@ -521,30 +764,47 @@ function MenuItem_boatdet_Callback(hObject, eventdata, handles)
 		return;
 	end
 	
-	switch	Batch_mode
-		case 'Visible'
+	switch Batch_mode
+		case 'Process Visible Window'
 			h	=	msgbox(['Processing all data within window for ' Batch_type]);
-		case 'File'
+		case 'Start Bulk Processing File'
 			h	=	msgbox(['Processing all data in whole file for ' Batch_type]);
-		case 'Folder'
+		case 'Start Bulk Processing Folder'
 			h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
 		otherwise
 			error('Batch mode not recognized');
 	end
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Ask user for mode of processing operations
-function	Batch_mode	=	input_batchmode(Batch_type)
-	
-	Mode_options	=	{'Visible', 'File', 'Folder'};
-	qstring	=	'What data would you like to process?';
-	title	=	Batch_type;
-	
-	button	=	questdlg(qstring, title ,...
-				Mode_options{1}, Mode_options{2}, Mode_options{3},...
-				Mode_options{1});
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function	[Batch_mode]	=	input_batchmode(Batch_type)
+	%Mode_options	=	{'Process Visible Window', 'Start Bulk Processing File', 'Start Bulk Processing Folder','Load Bulk Processing'};
+Mode_options	=	{'Process Visible Window', 'Start Bulk Processing', 'Load Bulk Processing'};
+qstring	=	'Which operation do you want?';
+title	=	Batch_type;
 
-	Batch_mode	=	button;
+button	=	questdlg(qstring, title ,...
+    Mode_options{1}, Mode_options{2}, Mode_options{3},...
+    Mode_options{1});
+
+Batch_mode	=	button;
+
+switch Batch_mode
+    case 'Start Bulk Processing'
+        Mode_options	=	{'File','Folder'};
+        title	=	Batch_type;
+        
+        button	=	questdlg(qstring, title ,...
+            Mode_options{1}, Mode_options{2}, ...
+            Mode_options{1});
+        
+        Batch_mode	=	[Batch_mode ' ' button];
+        
+end
+
+        
 end
 
 % Asks user for specified batch processing parameters
@@ -3185,7 +3445,9 @@ pushbutton_update_Callback(handles.pushbutton_update,eventdata,handles);
 
 end
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%Beginning of annoation subroutines %%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%	new annotation stuff
 
 % --- Executes on button press in pushbutton_notes_last.
