@@ -419,7 +419,8 @@ switch	Batch_mode
         return
     case 'Load Bulk Processing'
         Batch_vars_bulkload.start_time	=	'file start';	Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
-        Batch_vars_bulkload.end_time	=	'all';    Batch_desc{2}	=	'Time to end loading (e.g. "here," "datenum(2011,1,2,0,0,0)",  "file end" for current file end, or "all" to import entire folder)';
+        Batch_vars_bulkload.end_time	=	'all';    
+        Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "all" to import entire folder)';
         Batch_vars_bulkload.append      =   'separate';   Batch_desc{3} =  '"Join" will append separate files into one figure (for continuous data), while "separate" makes a separate figure per file (default, for duty cycle)';
        
         Batch_vars_bulkload	=	input_batchparams(Batch_vars_bulkload, Batch_desc, Batch_type);
@@ -447,7 +448,7 @@ switch	Batch_mode
             %If we move into next file, start at the beginning
             tabs_loop_begin=0;
             
-            if Batch_vars_bulkload.separate==1
+            if Batch_vars_bulkload.separate==1&&~isempty(Tabs_all)
                [hprint(Iplot),save_tag{Iplot}]=image_PSD; 
                PSD_all=[];Tabs_all=[];
                Iplot=Iplot+1;
@@ -480,14 +481,22 @@ end
 
 
     function [hprint,save_tag]=image_PSD
+        
+        if isempty(Tabs_all)
+            hprint=-1;save_tag=-1;
+            return
+        end
         PSD_all=10*log10(PSD_all);
+        
         
         hprint=figure;
         imagesc(Tabs_all,F/1000,PSD_all);axis('xy')
         fmin=str2num(get(handles.edit_fmin,'String'));
         fmax=str2num(get(handles.edit_fmax,'String'));
-        ylimm=[fmin fmax];
-        ylim(ylimm);
+        if fmax>0
+            ylimm=[fmin fmax];
+            ylim(ylimm);
+        end
         colorbar
         
         cmin=eval(get(handles.edit_mindB,'string'));
@@ -629,8 +638,10 @@ switch	Batch_mode
     case 'Load Bulk Processing'
         
         
-        Batch_vars_bulkload.start_time	=	'file start';	Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
-        Batch_vars_bulkload.end_time	=	'all';    Batch_desc{2}	=	'Time to end loading (e.g. "here," "datenum(2011,1,2,0,0,0)",  "file end" for current file end, or "all" to import entire folder)';
+        Batch_vars_bulkload.start_time	=	'file start';	
+        Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
+        Batch_vars_bulkload.end_time	=	'all';    
+        Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "all" to import entire folder)';
         
         
         Batch_vars_bulkload.dB_bins = '30:2:140';        Batch_desc{3} = 'vector of dB levels to build long-term histograms';
@@ -770,9 +781,13 @@ end
 end
 
 function [tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles,Batch_vars_bulkload)
-
+ %Note that a file does not have to be loaded for this to work...
 dialog_title	=	'Select Bulk file to load: Note that I am looking in current directory, not data directory';
-[pathstr,token,extt] = fileparts(handles.myfile);
+if isfield(handles,'myfile')
+    [~,token,extt] = fileparts(handles.myfile);
+else
+    token=[];
+end
 FileName = uigetfile([token '*.psd'],dialog_title);
 if isnumeric(FileName)
     disp('No file selected');
@@ -820,7 +835,8 @@ switch lower(Batch_vars_bulkload.start_time)
                 errordlg('Can''t process start_time','Bulk Processing Menu Error');
                 return;
             end
-            
+           
+       
         end
 end
 
@@ -851,8 +867,11 @@ switch lower(Batch_vars_bulkload.end_time)
                 return;
                 
             end
+        elseif isnumeric(str2num(Batch_vars_bulkload.end_time))  %%Assume end time is duration in hours after start time
+            tabs_end=tabs_start+datenum(0,0,0,str2num(Batch_vars_bulkload.end_time),0,0);
         end
 end
+       
 
 end
 
@@ -7860,722 +7879,5 @@ end
 %%%%%%%%%%%%TIMEWARP functions below %%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% --- Executes on button press in pushbutton_timewarp.
-function pushbutton_timewarp_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton_timewarp (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-tdate_start=handles.tdate_start;
-tlen=handles.tlen;
-%yes_wav=get(handles.togglebutton_getwav,'value');
-
-mydir=pwd;
-Ichan	=	str2double(get(handles.edit_chan,'String'));  %Hardwire first channel
-
-if ~strcmp(handles.filetype,'MDAT')
-    [x0,~,Fs,~,~,hdr]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
-    Ichan=1;Nchan=1;
-else
-    Nchan=1:16;
-    %Ichan=16-Ichan;  %Fix this; why upside down?
-    [x0,~,Fs,~,~,hdr]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Nchan,handles);
-    Nchan=1:size(x0,1);
-end
-
-RR=10;  %Decimation factor
-for I=Nchan
-    x(I,:)=decimate(x0(I,:),RR,'FIR');
-end
-Fs=Fs/RR;
-
-contents=get(handles.popupmenu_Nfft,'String');
-Nfft=(contents{get(handles.popupmenu_Nfft,'Value')});
-
-
-prompt={'Range guess(m)','water speed (m/s)','Nfft','N_window','N_window_w', ...
-    'Time to clip off front of deconvolved signal (to ensure time 0 is first mode arrival)', 'Number of FM contour points:'};
-def={'15000','1490',Nfft,'2*floor(0.5*31*Fs/200)+1','2*floor(0.5*301*Fs/200)+1','0.8','3'};
-dlgTitle	=	sprintf('Warping parameters');
-lineNo		=	ones(size(prompt));
-answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
-
-if	isempty(answer)
-    return;
-end
-
-r_guess=eval(answer{1});
-c1=eval(answer{2});
-Nfft=eval(answer{3});
-N_window=round(eval(answer{4}));
-N_window_w=round(eval(answer{5}));
-n_limit=eval(answer{6});
-Npts=eval(answer{7});
-
-%Select FM-sweep guess...
-fprintf('Select %i points from lowest-order mode (best guess of original FM structure:\n)',Npts);
-tmp=ginput(Npts);
-fstart=(tmp(1:(end-1),2)*1000);
-fend=(tmp(2:end,2)*1000);
-tsweep=abs(tmp(2:end,1)-tmp(1:(end-1),1));
-
-minfreq=min([fstart(1) fend(end)]); maxfreq=max([fstart(1) fend(end)]);
-frange=[0.8*minfreq minfreq maxfreq maxfreq+0.2*minfreq];
-[N,Fo,Ao,W] = firpmord(frange,[0 1 0],[0.05 0.01 0.1],Fs);
-B = firpm(N,Fo,Ao,W);
-y=filter(B,1,x(Ichan,:)-mean(x(Ichan,:)));
-%[s_w,mode_t,spectro_w,time_w, freq_w, filter_mask, Fe_w]=
-modes=warp_transform(1,hilbert(y.'),r_guess,c1,Fs, Nfft, N_window,N_window_w,n_limit,tsweep,fstart,fend,[],hdr.geom.rd(Ichan));
-%close all
-MM=size(modes.s_filt);
-if MM(1)>0
-    
-    %%mode_stack is unwarped time series that should be mode-dominated
-    mode_stack=zeros(MM(1),MM(2),length(Nchan));
-    %sw_stack=zeros(length(Nchan),length(s_w));
-    for I=Nchan
-        fprintf('%i of %i channels\n',I,length(Nchan));
-        y=filter(B,1,x(I,:)-mean(x(I,:)));
-        tmp=warp_transform(0,hilbert(y.'),r_guess,c1,Fs, Nfft, N_window,N_window_w,n_limit,tsweep,fstart,fend,modes.spectro_mask,hdr.geom.rd(I));
-        mode_stack(:,:,I)=tmp.s_filt;
-        
-    end
-end
-close(10:11)
-clear tmp
-save temp
-
-
-%depth_shift=-2;  %How much to shift my estimated depth by
-%freq_want=[84 104];
-%freq_want=[120:5:145];
-prompt={'Frequencies at which to extract modes (Hz):'};
-def={'[84 104]'};
-dlgTitle	=	sprintf('Frequencies to extract modes');
-lineNo		=	ones(size(prompt));
-answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
-
-if	isempty(answer)
-    return;
-end
-
-freq_want=eval(answer{1});
-
-Nfft_filt=2^nextpow2(MM(1));
-%Nfft_filt=512;
-Uwarp=fft(mode_stack,Nfft_filt);  %Spectrum of each mode arrival
-Fwarp=linspace(0,Fs,Nfft_filt);
-Igood=find(Fwarp>=(minfreq)&(Fwarp<=(maxfreq)));
-Uwarp=Uwarp(Igood,:,:);
-%Sum energy in each modal arrival. Assign sign later.
-Umode_broadband=squeeze(sum(mode_stack.^2,1))';
-
-Nc=length(Nchan);
-Nf=length(Igood);
-%Ifreq_plot=[1 Nf/4 Nf/2 3*Nf/4 Nf];
-
-%Option: pick frequency with most power.
-%Fpower=squeeze(sum(sum(shiftdim(abs(Uwarp).^2,1))));
-%Ifreq_plot=[1 Nf/2  Nf];
-%Ifreq_plot=round(([ 84 98 105]-minfreq)*Nfft_filt/Fs);
-Ifreq_plot=round((freq_want-minfreq)*Nfft_filt/Fs);
-
-freq_plot=Fwarp(Igood(Ifreq_plot));
-Nplot=length(freq_plot);
-
-%Cyle through each mode and extract mode shape from various frequencies,
-% as well as broadband time series
-for Im=1:MM(2)
-    
-    %normalize both individual-frequency based and broadband modes.
-    Umode=squeeze(Uwarp(:,Im,:)).';
-    Umode_broadband(:,Im)=Umode_broadband(:,Im)/norm(Umode_broadband(:,Im));
-    Umode_broadband(:,Im)=sqrt(Umode_broadband(:,Im));
-    
-    for II=1:Nf
-        Umode(:,II)=Umode(:,II)/norm(Umode(:,II));
-    end
-    
-    %Extact phase along array
-    Uang_uncorrected=angle(Umode./(ones(Nc,1)*Umode(end,:)));
-    if Im==1
-        Umode1=Umode;  %We assume that mode 1 phase arises from tilt
-    end
-    
-    tmp=(Umode.*conj(Umode1));  %Remove tilt or phase offsets
-    Uang=angle(tmp./(ones(Nc,1)*tmp(end,:)));  %Reference phase to bottom element
-    
-    %Determine sign of mode: observe when corrected phase
-    %   (relative to bottom mode) exceeds pi/2
-    sgn_chnge=-(abs(Uang(:,Ifreq_plot))>pi/2);
-    sgn_chnge=2*sgn_chnge+1;  %Convert 0 and -1 to 1 and -1;
-    if Nplot>1
-        sgn_chnge=median(sgn_chnge')';
-    end
-    Umode_broadband(:,Im)=sgn_chnge.*Umode_broadband(:,Im);
-    Umode_shape(:,:,Im)=(sgn_chnge*ones(1,Nplot)).*abs(Umode(:,Ifreq_plot));
-    
-    %end
-    %tmp=sum(Umode.^2);
-    %[junk,Imax]=max(tmp);
-    
-    figure(20);
-    subplot(MM(2),3,3*Im-2);
-    plot(abs(Umode(:,Ifreq_plot)),hdr.geom.rd,'o-');grid;axis('ij')
-    set(gca,'fontweight','bold','fontsize',14);
-    title(sprintf('%s: abs value of mode %i',datestr(tdate_start),Im));
-    if Im==1
-        ylabel('depth (m)');
-    end
-    
-    subplot(MM(2),3,3*Im-1);
-    plot((Uang_uncorrected(:,Ifreq_plot)),hdr.geom.rd,'o-');grid;axis('ij')
-    set(gca,'fontweight','bold','fontsize',14);
-    title(sprintf('uncorrected phase of mode %i',Im));
-    if Im==1
-        ylabel('depth (m)');
-    end
-    
-    subplot(MM(2),3,3*Im);
-    plot((Uang(:,Ifreq_plot)),hdr.geom.rd,'o-');grid;axis('ij')
-    set(gca,'fontweight','bold','fontsize',14);
-    title(sprintf('tilt-corrected phase of mode %i',Im));
-    xlabel('Phase (rad)');
-    %     plot(Umode_fin(:,Ifreq_plot),hdr.geom.rd,'o-');grid;axis('ij')
-    %     title(sprintf('Recovered mode %i',Im));
-    if Im==1
-        ylabel('depth (m)');
-    end
-    
-    figure(19)
-    subplot(1,MM(2),Im)
-    plot(Umode_broadband(:,Im),hdr.geom.rd,'k',squeeze(Umode_shape(:,:,Im)),hdr.geom.rd,'g');grid on
-    set(gca,'fontweight','bold','fontsize',14);
-    title(sprintf('Normalized mode %i',Im));
-    ylabel('depth(m)');
-    title(sprintf('Inverted mode %i',Im));
-    axis('ij')
-    legend('broadband');
-    
-    
-end
-
-%%Plot recovered tilt
-U1_phase=angle(Umode1./(ones(Nc,1)*Umode1(end,:)));
-U1_tilt=unwrap(U1_phase)./(ones(Nc,1)*2*pi*Fwarp(Igood)/1420);
-
-%Simple broadband calculations
-xt1=squeeze(mode_stack(:,1,:));
-RR=10;
-maxlag=round(50*RR*Fs/1490);
-
-for I=1:(Nc-1)
-    y1=resample(xt1(:,I),RR,1);
-    y2=resample(xt1(:,I+1),RR,1);
-    [cc,lags]=xcov(y1,y2,maxlag);
-    [junk,Imax]=max(abs(cc));
-    tilt_broadband(I+1)=1490*lags(Imax)/(RR*Fs);
-    
-end
-tilt_broadband=cumsum(tilt_broadband);
-tilt_broadband=tilt_broadband-tilt_broadband(end);  %Make bottom phone the origin
-
-figure(18)
-subplot(1,2,1)
-plot(U1_phase(:,Ifreq_plot),hdr.geom.rd);axis('ij');grid
-xlabel('rad');ylabel('depth (m)');
-title('Array tilt in terms of mode 1 phase');
-
-subplot(1,2,2);
-plot(U1_tilt(:,Ifreq_plot),hdr.geom.rd);axis('ij');grid
-hold on
-plot(tilt_broadband,hdr.geom.rd,'ko')
-title('Array tilt in terms of mode 1 offset');
-xlabel('m offset');ylabel('depth (m)');
-grid on
-legend(strvcat(num2str(freq_plot','%2.1f'),'broadband'));
-
-figure(20)
-legend(num2str(freq_plot','%2.1f'));
-
-
-for II=18:20
-    figure(II)
-    orient landscape
-    print('-djpeg',sprintf('ModeTiltWarpInversion_%i',II));
-end
-end
-
-
-%warp_transform.m
-function modes= warp_transform(plot_chc,s_ok,r_guess,c1,Fe, Nfft, N_window,N_window_w,t_trim, ...
-    t_sweep,fstart,fend,spectro_mask_in,rd) % You need a long window to see the warped modes)
-% The time-frequency representations that are used in this script are computed using a free
-% toolbox that you can find here : http://tftb.nongnu.org/
-% Be sure to add the tftb-01 folder to your matlab file if you want this to
-% work !
-% Inputs:
-%  plot_chc:  If 1, make plots
-%  s_ok: input signal, single channel
-%  r_guess: initial guess of signal range, in meters
-%  c1: initial estimate of water sound speed, m/s
-%  Fe: sampling rate, Hz
-%  Nfft: FFT size
-%  N_window:  number of FFT window points for original time series
-%  N_window_w: number of FFT window points for warped time series
-%  t_trim: number of sec to remove from time series after source deconvolution estimate
-%  fstart: vector of start frequencies of piecemeal linear FM sweeps, Hz
-%  fend: vector of end frequencies of pieceal FM sweeps, Hz
-%  t_sweep: duration of these sweeps, sec
-%  spectro_mask_in:  masking window for filtering, externally provided from processing a different channel.
-% pt: propagated signal in a Pekeris waveguide with parameters
-%       c1, c2, rho1, rho2: sound speed / density
-%       D: depth
-%       r: range
-%       zs, zr: source/receiver depth
-% Fe: sampling frequency
-%  Output:
-%       modes:
-%           s_w:  warped deconvolved input signal
-%           s_filt: IFFT of mode-selections
-%           spectro_w: spectrogram of s_w, evaluated for every time sample
-%           spectro_mask: blocked out region of interest for inverse filtering.  3D arrays
-%           time_w, freq_w: time and frequency scale for spectro_w
-%           Fe_w:  Effective sampling rate in Hz for s_w
-
-
-%N_window=31; % you need a short window to see the modes
-%N_window_w=301; % You need a long window to see the warped modes
-%t_trim=400;% Don't forget to change that if you consider other data
-
-if size(s_ok,2)>1
-    s_ok=s_ok.';
-end
-
-if ~exist('rd')
-    rd=[];
-end
-N_ok=length(s_ok);
-Nfft_ok=2^nextpow2(N_ok);
-% Looking at the received signal, you can guess that the source is a piecewise linear FM
-% downsweep. This is wrong but it shows you that you don't need to know
-% the source exactly
-%source_est=fmlin(160,0.5,0.01);
-
-iflaw=[];
-for I=1:length(fstart)
-    iflaw_seg=linspace(fstart(I)/Fe,fend(I)/Fe,round(Fe*t_sweep(I)));
-    iflaw=[iflaw; iflaw_seg(2:end)'];
-end
-
-%source_est=fmlin(round(t_sweep*Fe),fstart/Fe,fend/Fe);
-source_est=fmodany(iflaw);
-
-source_est_f=fft(source_est,Nfft_ok);
-phi=angle(source_est_f);
-
-% Phase correction for estimated source signal
-
-%Trim front of signal to ensure first mode arrival is time zero, if necessary...
-%s_ok=s_ok(round(Fe*t_trim):end);
-
-sig_prop_f=fft(s_ok,Nfft_ok);
-sig_rec_f=sig_prop_f.*exp(-1i*phi); % note that only source phase is deconvoluted
-sig_rec_t=ifft(sig_rec_f,Nfft_ok); % Signal in time domain after source deconvolution
-
-
-% STFT computation of original data
-tfr=tfrstft(s_ok,1:N_ok,Nfft,hamming(N_window));
-spectro=abs(tfr).^2;
-% Time and frequency axis of the original signal
-time=0:1/Fe:(N_ok-1)/Fe;
-freq=0:Fe/Nfft:Fe-Fe/Nfft;
-
-%Trim front of signal to ensure first mode arrival is time zero, if necessary...
-sig_rec_t=sig_rec_t(round(Fe*t_trim):end);
-
-tfr_sig_rec=tfrstft(sig_rec_t,1:N_ok,Nfft,hamming(N_window));
-
-% Figure
-
-if plot_chc==1
-    figure(10)
-    subplot(2,2,1);
-    imagesc(time, freq, 10*log10(spectro));caxis([80 130])
-    set(gca,'fontweight','bold','fontsize',14);
-    axis xy
-    ylim([0 Fe/2])
-    xlabel('Time (sec)')
-    ylabel('Frequency (Hz)')
-    title(sprintf('Original signal at %2.0f m depth',rd))
-    colorbar
-    
-    subplot(2,2,2)
-    imagesc(time, freq, 20*log10(abs(tfr_sig_rec)))
-    set(gca,'fontweight','bold','fontsize',14);
-    
-    axis xy
-    ylim([0 Fe/2])
-    xlabel('Time (sec)')
-    ylabel('Frequency (Hz)')
-    title('Signal after source deconvolution')
-    colorbar
-    orient landscape
-    caxis([80 130])
-    %print('-djpeg',sprintf('DeconvSpectrogram_depth%2.0fm',rd));
-    
-end
-
-for Iguess=1:length(r_guess)
-    time=r_guess(Iguess)/c1:1/Fe:r_guess(Iguess)/c1+(N_ok-1)/Fe;
-    
-    % The warped signal will be s_w
-    [s_w, Fe_w]=warp_temp(sig_rec_t,Fe,r_guess(Iguess),c1);
-    M=length(s_w);
-    
-    tfr_w=tfrstft(s_w,1:M,Nfft,hamming(N_window_w));
-    spectro_w=abs(tfr_w).^2;
-    % Time and frequency axis of the warped signal
-    time_w=0:1/Fe_w:(M-1)/Fe_w;
-    freq_w=0:Fe_w/Nfft:Fe_w-Fe_w/Nfft; % this is actually not exact, but precise enough for a rough example
-    % Figure
-    
-    if plot_chc==1
-        subplot(2,2,3)
-        imagesc(time_w, freq_w, spectro_w)
-        set(gca,'fontweight','bold','fontsize',14);
-        
-        axis xy
-        ylim([0 50])
-        xlabel('Warped time (sec)')
-        ylabel('Corresponding warped frequency (Hz)')
-        title(sprintf('Warped signal square amp. assuming range %6.2f',r_guess(Iguess)))
-        caxis([1e10 5e11]);colorbar
-        
-        subplot(2,2,4)
-        imagesc(time_w, freq_w, 10*log10(abs(spectro_w)))
-        set(gca,'fontweight','bold','fontsize',14);
-        
-        axis xy
-        ylim([0 50])
-        xlabel('Warped time (sec)')
-        ylabel('Corresponding warped frequency (Hz)')
-        title('dB value');
-        caxis([80 120]);colorbar;
-        
-        orient landscape
-        print('-djpeg',sprintf('WarpedSpectrogram_range%2.0fkm_depth%2.0fm',r_guess(Iguess)/1000,rd));
-        
-    end
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Filtering
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% To make it easier, filtering will be done by hand using the roipoly tool.
-% See Matlab help for more information
-
-% We work on a smaller TFR to make it easier
-
-if ~exist('spectro_mask_in')||isempty(spectro_mask_in)
-    %figure(5)
-    spectro_mask_in=[];
-    %RTF=abs(tfr_w).^2;%RTF=RTF/max(max(RTF));
-    figure(10);
-    %imagesc(time_w, freq_w, 10*log10(RTF));axis xy;caxis([90 120]); colorbar; ylim([0 50])
-    BW_flag=0;
-    Nroi=input('Enter number of modes to select, or return to skip:');
-    modes.s_filt=[];
-    modes.spectro_mask=[];
-    if isempty(Nroi)
-        return
-    end
-else
-    BW_flag=1;
-    spectro_mask=spectro_mask_in;
-    Nroi=size(spectro_mask,3);
-    fprintf('Input spectro_mask detected with %i modes.\n',Nroi);
-end
-
-s_filt=zeros(length(s_ok),Nroi);
-for J=1:Nroi
-    
-    if BW_flag==0
-        figure(10);
-        BW0 = roipoly ;
-        spectro_mask(:,:,J)=BW0;
-    else
-        BW0=squeeze(spectro_mask(:,:,J));
-    end
-    % To create a time-frequency mask, click several times on the spectrogram
-    % to define the region you want to filter. The last click must be a
-    % double-click to validate the mask creation
-    %masque=zeros(size(tfr_w));
-    %masque(1:n_limit-1,:)=spectro_mask;
-    
-    % Note that the mask is applied on the STFT (not on the spectrogram)
-    mode_rtf_warp=BW0.*tfr_w;
-    
-    %%The trick below works if the FFT spectrogram is computed for every sample...
-    [mode_temp_warp]=real(sum(mode_rtf_warp,1));
-    s_filt(:,J)=iwarp_temp(mode_temp_warp,Fe_w,r_guess,c1,Fe,N_ok)';
-    
-    if plot_chc==1
-        figure(11);
-        
-        subplot(Nroi,2,2*J-1)
-        %RTF=abs(mode_rtf_warp/max(max(abs(tfr_w))));RTF=RTF./max(max(RTF));
-        RTF=20*log10(abs(mode_rtf_warp));
-        imagesc(time_w, freq_w, RTF);axis xy;ylim([0 50]);
-        caxis([90 120]);colorbar
-        
-        subplot(Nroi,2,2*J);
-        [~,FF,TT,BB] = spectrogram(s_filt(:,J),hanning(32),round(0.5*32),32,Fe);
-        imagesc(TT,FF,10*log10(BB));%
-        axis('xy');
-        caxis([90 120]);colorbar
-        title(sprintf('Recovered mode %i at depth: %6.2f m',J,rd));
-        if J==Nroi
-            orient tall
-            print('-djpeg',sprintf('warp_tranform_%2.0fm',round(rd)))
-        end
-    end
-end
-
-modes.s_w=s_w;
-modes.s_filt=s_filt;
-modes.spectro_w=spectro_w;
-modes.time_w=time_w;
-modes.freq_w=freq_w;
-modes.spectro_mask=spectro_mask;
-modes.Fe_w=Fe_w;
-
-end  %warp_transform
-
-
-function [ t_w ] = warp_t(t,r,c)
-
-t_w=sqrt(t.^2+r^2/c^2);
-
-end
-
-function [ t ] = iwarp_t(t_w,r,c)
-
-t=sqrt(t_w.^2-r^2/c^2);
-end
-
-
-function [tfr,t,f] = tfrstft(x,t,N,h,trace)
-%TFRSTFT Short time Fourier transform.
-%	[TFR,T,F]=TFRSTFT(X,T,N,H,TRACE) computes the short-time Fourier
-%	transform of a discrete-time signal X.  The overlap is very large:
-%        A FFT is computed for every time sample, with one sample change.
-%
-%	X     : signal (analytic; only has positive frequencies)
-%	T     : time instant(s)          (default : 1:length(X)).
-%	N     : number of frequency bins (default : length(X)).
-%	H     : frequency smoothing window, H being normalized so as to
-%	        be  of unit energy.      (default : Hamming(N/4)).
-%           Number of time points per FFT column
-%	TRACE : if nonzero, the progression of the algorithm is shown
-%	                                 (default : 0).
-%	TFR   : time-frequency decomposition (complex values). The
-%	        frequency axis is graduated from -0.5 to 0.5.
-%	F     : vector of normalized frequencies.
-%
-%	Example :
-%	 sig=[fmconst(128,0.2);fmconst(128,0.4)]; tfr=tfrstft(sig);
-%	 subplot(211); imagesc(abs(tfr));
-%	 subplot(212); imagesc(angle(tfr));
-%
-%	See also all the time-frequency representations listed in
-%	 the file CONTENTS (TFR*)
-
-%	F. Auger, May-August 1994, July 1995.
-%	Copyright (c) 1996 by CNRS (France).
-%
-%	------------------- CONFIDENTIAL PROGRAM --------------------
-%	This program can not be used without the authorization of its
-%	author(s). For any comment or bug report, please send e-mail to
-%	f.auger@ieee.org
-
-[xrow,xcol] = size(x);
-if (nargin < 1),
-    error('At least 1 parameter is required');
-elseif (nargin <= 2),
-    N=xrow;
-end;
-
-hlength=floor(N/4);
-hlength=hlength+1-rem(hlength,2);
-
-if (nargin == 1),
-    t=1:xrow; h = tftb_window(hlength); trace=0;
-elseif (nargin == 2) || (nargin == 3),
-    h = tftb_window(hlength); trace = 0;
-elseif (nargin == 4),
-    trace = 0;
-end;
-
-if (N<0),
-    error('N must be greater than zero');
-end;
-[trow,tcol] = size(t);
-if (xcol~=1),
-    error('X must have one column');
-elseif (trow~=1),
-    error('T must only have one row');
-elseif (2^nextpow2(N)~=N),
-    fprintf('For a faster computation, N should be a power of two\n');
-end;
-
-[hrow,hcol]=size(h); Lh=(hrow-1)/2;
-if (hcol~=1)||(rem(hrow,2)==0)
-    error('H must be a smoothing window with odd length');
-end;
-
-h=h/norm(h);
-
-tfr= zeros (N,tcol) ;
-if trace, disp('Short-time Fourier transform'); end;
-for icol=1:tcol
-    ti= t(icol);
-    tau=-min([round(N/2)-1,Lh,ti-1]):min([round(N/2)-1,Lh,xrow-ti]);
-    indices= rem(N+tau,N)+1;
-    %if trace, disprog(icol,tcol,10); end;
-    tfr(indices,icol)=x(ti+tau,1).*conj(h(Lh+1+tau));
-end;
-tfr=fft(tfr);
-if trace, fprintf('\n'); end;
-
-if (nargout==0),
-    %tfrqview(abs(tfr).^2,x,t,'tfrstft',h);
-elseif (nargout==3),
-    if rem(N,2)==0,
-        f=[0:N/2-1 -N/2:-1]'/N;
-    else
-        f=[0:(N-1)/2 -(N-1)/2:-1]'/N;
-    end;
-end
-
-
-
-
-end
-
-function [s_w, Fe_w]=warp_temp(s,Fe,r,c)
-
-% Time warping function using isovelocity waveguide as a warping model.
-% Inputs:
-% s : signal that will be warped
-% Fe : sampling frequency of s
-% r : warping parameter (source/receiver range)
-% c : warping parameter (water sound speed)
-% Outputs :
-% s_w : warped signal
-% Fe_w : sampling frequency of s_w (i.e. sampling frequency
-%        of the warped-time domain)
-
-% NB : warping actually has a single parameter : r/c
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %%%%%%%%%%%%%%% Important %%%%%%%%%%%%%%%%%%%%%%%%
-% Signal s should be defined such that its first sample
-% corresponds to the first modal arrival. In an isovelocity or Pekeris
-% waveguide, if an impulsive source explodes at time ts, then first sample
-% of s should be take at time ts+r/c. Warping is way more sensitive to
-% that setting than to the actual parameters r and c
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%% Step 1: preliminary computations
-s=real(s);
-N=length(s);
-dt=1/Fe;
-
-tmax=(N-1)/Fe+r/c;
-tmin=r/c;
-
-%% Step 2: new time step
-dt_w=iwarp_t(tmax,r,c)-iwarp_t(tmax-dt,r,c);
-
-%% Step 3: new sampling frequency
-Fe_w=2/dt_w;
-
-%% Step 4: new number of points
-t_w_max=iwarp_t(tmax,r,c);
-t_w_min=0;
-M= ceil(t_w_max*Fe_w);
-
-
-%% Step 5: warped signal computation
-
-s_w=zeros(M,1);
-
-for m=1:M
-    
-    t_w=m/Fe_w;
-    % energy conservation
-    toto=sqrt(Fe/Fe_w)*sqrt(t_w/sqrt(t_w^2+r^2/c^2));
-    
-    % linear interpolation of signal from original time domain
-    n=(warp_t(t_w,r,c)-r/c)*Fe;
-    n1=floor(n);
-    n2=n1+1;
-    dn=n-n1;
-    
-    if n2<=N && n1>0
-        a=(s(n1)-s(n2))/(n1-n2);
-        val=s(n1)+a*dn;
-        s_w(m)=toto*val;
-    end
-    
-end
-
-
-end
-
-function [s_r]=iwarp_temp(s_w,Fe_w,r,c,Fe,N)
-
-% Inverse (time) warping function using isovelocity waveguide as a warping model.
-% Inputs :
-% s_w : (warped) signal that will be unwarped
-% Fe_w : sampling frequency of s_w
-% r : warping parameter (source/receiver distance)
-% c : warping parameter (source/receiver distance)
-% Fe : sampling frequency of the new unwarped signal s
-% N : number of points of the new unwarped signal s
-% Sorties :
-% s : signal after inverse warping
-
-
-%%
-
-M=length(s_w);
-s_r=zeros(N,1);
-
-for n=1:N
-    
-    t=n/Fe+r/c;
-    % Energy conservation
-    toto=sqrt(Fe_w/Fe)*sqrt(t/sqrt(t^2-r^2/c^2));
-    
-    % Interpolation
-    m=(iwarp_t(t,r,c))*Fe_w;
-    m1=floor(m);
-    m2=m1+1;
-    dm=m-m1;
-    
-    if m2<=M && m1>0
-        a=(s_w(m1)-s_w(m2))/(m1-m2);
-        val=s_w(m1)+a*dm;
-        s_r(n)=toto*val;
-    end
-    
-end
-
-
-end
 
 
