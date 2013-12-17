@@ -37,19 +37,19 @@ function varargout = AllFile_specgram_viewer(varargin)
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
 gui_State = struct('gui_Name',       mfilename, ...
-	'gui_Singleton',  gui_Singleton, ...
-	'gui_OpeningFcn', @AllFile_specgram_viewer_OpeningFcn, ...
-	'gui_OutputFcn',  @AllFile_specgram_viewer_OutputFcn, ...
-	'gui_LayoutFcn',  [] , ...
-	'gui_Callback',   []);
+    'gui_Singleton',  gui_Singleton, ...
+    'gui_OpeningFcn', @AllFile_specgram_viewer_OpeningFcn, ...
+    'gui_OutputFcn',  @AllFile_specgram_viewer_OutputFcn, ...
+    'gui_LayoutFcn',  [] , ...
+    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
-	gui_State.gui_Callback = str2func(varargin{1});
+    gui_State.gui_Callback = str2func(varargin{1});
 end
 
 if nargout
-	[varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
 else
-	gui_mainfcn(gui_State, varargin{:});
+    gui_mainfcn(gui_State, varargin{:});
 end
 
 end
@@ -80,15 +80,15 @@ handles.mydir			=	startupinfo.default_directory;
 handles.inputdir		=	startupinfo.default_inputfiledir;
 handles.annotation_file	=	startupinfo.annotation_file;
 try
-	handles.calibration_DASAR2007_dir	=	startup_info.calibration_DASAR2007_dir;
+    handles.calibration_DASAR2007_dir	=	startup_info.calibration_DASAR2007_dir;
 catch
-	disp('2007 calibration directory not defined');
+    disp('2007 calibration directory not defined');
 end
 set(handles.text_filename,'String',[handles.mydir ]);
 
 mydir	=	pwd;
 try
-	cd(handles.mydir);
+    cd(handles.mydir);
 end
 handles.filetype	=	'mt';
 [handles,errorflag] =	set_slider_controls(handles,handles.filetype); %#ok<*NASGU>
@@ -323,39 +323,184 @@ function MenuItem_psd_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-	Batch_type	=	get(hObject, 'Label');
-	Batch_mode	=	input_batchmode(Batch_type);
-	
-	if	isempty(Batch_mode)
-		errordlg('Processing cancelled!');
-		return;
-	end
-	
-	Batch_vars.A	=	'Aa';	Batch_desc{1}	=	'1st var desc';
-	Batch_vars.B	=	'Bb';	Batch_desc{2}	=	'2nd var desc';
-	Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
-	Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
-	Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
-	
-	Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
-	
-	if	isempty(Batch_vars)
-		errordlg('Processing cancelled!');
-		return;
-	end
-	
-	switch	Batch_mode
-		case 'Visible'
-			h	=	msgbox(['Processing all data within window for ' Batch_type]);
-		case 'File'
-			h	=	msgbox(['Processing all data in whole file for ' Batch_type]);
-		case 'Folder'
-			h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
-		otherwise
-			error('Batch mode not recognized');
-	end
-	
+Batch_type	=	get(hObject, 'Label');
+Batch_mode	=	input_batchmode(Batch_type);
 
+if	isempty(Batch_mode)
+    errordlg('Processing cancelled!');
+    return;
+end
+
+if isempty(strfind(Batch_mode,'Load'))
+    Batch_vars.sec_avg	=	'2';	Batch_desc{1}	=	'Seconds to average PSD for long-term display';
+    Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
+    if	isempty(Batch_vars)
+        errordlg('Processing cancelled!');
+        return;
+    end
+
+    sec_avg=str2num(Batch_vars.sec_avg);
+end
+
+
+switch	Batch_mode
+    case 'Process Visible Window'
+        h	=	msgbox(['Processing all data within window for ' Batch_type]);
+        
+        
+        dT=handles.sgram.T(2)-handles.sgram.T(1);
+        Ncol=max([1 floor(sec_avg/dT)]);
+        Itime=1:Ncol:length(handles.sgram.T);
+        Tnew=handles.sgram.T(Itime);
+        F=handles.sgram.F;
+        PSD=zeros(length(F),length(Itime)-1);
+        for I=1:(length(Itime)-1)
+            PSD(:,I)=mean(handles.sgram.B(:,Itime(I):Itime(I+1)),2);
+        end
+        PSD=10*log10(PSD);
+        hprint=figure;
+        
+        imagesc(Tnew,F/1000,PSD);axis('xy')
+        set(gca,'fontweight','bold','fontsize',14);
+        xlabel('Time (sec)');ylabel(' Frequency (kHz)');
+        
+        titlestr=(sprintf('PSD Start time: %s, Time processed: %6.2f sec',datestr(handles.tdate_start),handles.tlen));
+        title(titlestr);
+        
+        
+        fmin=str2num(get(handles.edit_fmin,'String'));
+        fmax=str2num(get(handles.edit_fmax,'String'));
+        ylimm=[fmin fmax];
+        ylim(ylimm);
+        colorbar
+        cmin=eval(get(handles.edit_mindB,'string'));
+        cmax=cmin+eval(get(handles.edit_dBspread,'string'));
+        caxis([cmin cmax]);
+        
+        yess=menu('Save PSD Data and figure?','Yes','No');
+        if yess==1
+            
+            save_str=sprintf('PSD_plot_%s_%s', datestr(handles.tdate_start,30),datestr(handles.tdate_start+datenum(0,0,0,0,0,handles.tlen),30));
+            save(save_str,'F','titlestr','Tnew','PSD','cmin','cmax','ylimm');
+            h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
+            
+            orient landscape
+            print(hprint,'-djpeg',save_str);
+        end
+        
+        return
+    case {'Start Bulk Processing File','Start Bulk Processing Folder'}
+        
+        if strcmp(Batch_mode,'Start Bulk Processing File')
+            h	=	msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
+            param.exten=['*' handles.myfile];
+        else
+            h	=	msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type));
+            
+            param.exten=['*' handles.myext];
+        end
+        param.dir_out='.';
+        param.file_dir=handles.mydir;
+        contents=get(handles.popupmenu_Nfft,'String');
+        param.Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
+        contents=get(handles.popupmenu_ovlap,'String');
+        param.ovlap=round(param.Nfft*str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100);
+        param.Fs=handles.sgram.Fs;
+        param.channel=str2num(get(handles.edit_chan,'String'));
+        param.dumpsize=100000;
+        param.nstart=0;
+        param.nsamples=0;
+        param.f_low=1000*str2num(get(handles.edit_fmin,'String'));
+        param.f_high=1000*str2num(get(handles.edit_fmax,'String'));
+        param.sec_avg=eval(Batch_vars.sec_avg);
+        
+        write_Java_script('PSD',param);
+        ! ./masterPSD.scr > outt.txt &
+        return
+    case 'Load Bulk Processing'
+        Batch_vars_bulkload.start_time	=	'file start';	Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
+        Batch_vars_bulkload.end_time	=	'all';    Batch_desc{2}	=	'Time to end loading (e.g. "here," "datenum(2011,1,2,0,0,0)",  "file end" for current file end, or "all" to import entire folder)';
+        Batch_vars_bulkload.append      =   'separate';   Batch_desc{3} =  '"Join" will append separate files into one figure (for continuous data), while "separate" makes a separate figure per file (default, for duty cycle)';
+       
+        Batch_vars_bulkload	=	input_batchparams(Batch_vars_bulkload, Batch_desc, Batch_type);
+        if	isempty(Batch_vars_bulkload)
+            errordlg('Processing cancelled!');
+            return;
+        end
+        Batch_vars_bulkload.separate=~isempty(strfind(Batch_vars_bulkload.append,'separate'));
+       
+        %Load bulk run time and file data
+        [tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
+      
+     
+        %Start processing
+        tabs_loop_begin=tabs_start;
+        PSD_all=[];Tabs_all=[];
+        Iplot=1;
+        for I=Icurrent_file:Nfiles
+            fname=Other_FileNames(I).name;
+            fprintf('Processing %s...\n',fname);
+            [PSD,F,Tsec,Tabs,params]=read_Java_PSD(fname,tabs_loop_begin,Inf);  %Read an entire file into memory
+            Istrip=find(Tabs<=tabs_end);
+            PSD_all=[PSD_all PSD(:,Istrip)];Tabs_all=[Tabs_all Tabs(Istrip)];
+            
+            %If we move into next file, start at the beginning
+            tabs_loop_begin=0;
+            
+            if Batch_vars_bulkload.separate==1
+               [hprint(Iplot),save_tag{Iplot}]=image_PSD; 
+               PSD_all=[];Tabs_all=[];
+               Iplot=Iplot+1;
+            end
+        end  %Icurrent_file
+        
+        if Batch_vars_bulkload.separate==0
+           [hprint(1),save_tag{1}]=image_PSD; 
+        end
+        
+        yess=menu('Save PSD Data and figure?','Yes','No');
+        if yess==1
+            
+            Nfigs=sort(get(0,'Child'));
+            Nfigs=Nfigs(Nfigs<150)
+            for II=1:length(Nfigs)
+                
+                save_str=sprintf('PSD_%s', save_tag{II});
+                save(save_str,'F','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','ylimm','climm','sec_avg');
+                h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
+                
+                orient landscape
+                print(hprint(II),'-djpeg',save_str);
+            end
+            
+        end
+    otherwise
+        error('Batch mode not recognized');
+end
+
+
+    function [hprint,save_tag]=image_PSD
+        PSD_all=10*log10(PSD_all);
+        
+        hprint=figure;
+        imagesc(Tabs_all,F/1000,PSD_all);axis('xy')
+        fmin=str2num(get(handles.edit_fmin,'String'));
+        fmax=str2num(get(handles.edit_fmax,'String'));
+        ylimm=[fmin fmax];
+        ylim(ylimm);
+        colorbar
+        
+        cmin=eval(get(handles.edit_mindB,'string'));
+        cmax=cmin+eval(get(handles.edit_dBspread,'string'));
+        climm=[cmin cmax];
+        caxis(climm);
+        xlim([min(Tabs_all) max(Tabs_all)]);
+        datetick('x',14,'keeplimits')
+        sec_avg=params.Nsamps*params.dn/params.Fs;
+        titlestr=(sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f',datestr(min(Tabs_all),30),datestr(max(Tabs_all),30),sec_avg));
+        title(titlestr);
+        save_tag=[datestr(min(Tabs_all),30) '_' datestr(max(Tabs_all),30)];
+    end
 end
 
 % --------------------------------------------------------------------
@@ -364,37 +509,29 @@ function MenuItem_spectrum_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-	Batch_type	=	get(hObject, 'Label');
-	Batch_mode	=	input_batchmode(Batch_type);
-	
-	if	isempty(Batch_mode)
-		errordlg('Processing cancelled!');
-		return;
-	end
-	
-	Batch_vars.mean	=	'yes';	Batch_desc{1}	=	'Enter yes for spectrum';
-	Batch_vars.percentile	=	'[10 50 90]';	Batch_desc{2}	=	'Percentile display';
-	%Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
-	%Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
-	%Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
-	
-	Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
-	
-	if	isempty(Batch_vars)
-		errordlg('Processing cancelled!');
-		return;
-	end
-	
-	switch	Batch_mode
-		case 'Visible'
-			h	=	msgbox(['Processing all data within window for ' Batch_type]);
-		case 'File'
-			h	=	msgbox(sprintf('Processing all data in %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
-		case 'Folder'
-			h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
-		otherwise
-			error('Batch mode not recognized');
+Batch_type	=	get(hObject, 'Label');
+Batch_mode	=	input_batchmode(Batch_type);
+
+if	isempty(Batch_mode)
+    errordlg('Processing cancelled!');
+    return;
+end
+
+if isempty(strfind(Batch_mode,'Start Bulk'))
+    Batch_vars.mean	=	'yes';	Batch_desc{1}	=	'Enter yes for averaged linear spectrum (instead of just percentiles)';
+    Batch_vars.percentile	=	'[10 50 90]';	Batch_desc{2}	=	'Percentile display';
+    %Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
+    %Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
+    %Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
+    
+    Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
+    percentile=str2num(Batch_vars.percentile)/100;
+    
+    if	isempty(Batch_vars)
+        errordlg('Processing cancelled!');
+        return;
     end
+end
 % %
 
 % handles.sgram.T		=	TT;
@@ -405,52 +542,316 @@ function MenuItem_spectrum_Callback(hObject, eventdata, handles)
 %     handles.sgram.Fs	=	Fs;
 
 %%Make a new figure and plot spectrum.
-Ileg=1;
+
+%Graphic parameters
 line_width=2;
-SS_mean=[];
-hprint=figure;
-   
-if strcmp(Batch_vars.mean,'yes')
-    SS_mean=mean(handles.sgram.B');
-    plot(handles.sgram.F,10*log10(SS_mean),'k','linewidth',line_width);grid on
-    set(gca,'fontweight','bold','fontsize',14);
-    xlabel('Frequency(Hz)');ylabel(' PSD (dB re 1 uPa^2/Hz)');
-    hold on
-    leg_str{Ileg}='mean';Ileg=Ileg+1;
-    
+
+
+switch	Batch_mode
+    case 'Process Visible Window'
+        h	=	msgbox(['Processing all data within window for ' Batch_type]);
+        
+        %%Make a new figure and plot spectrum.
+        Ileg=1;
+        SS_mean=[];
+        hprint=figure;
+        
+        if strcmp(Batch_vars.mean,'yes')
+            SS_mean=mean(handles.sgram.B');
+            plot(handles.sgram.F,10*log10(SS_mean),'k','linewidth',line_width);grid on
+            hold on
+            leg_str{Ileg}='mean';Ileg=Ileg+1;
+            
+        end
+        
+        if ~isempty(percentile)
+            xsort=sort(handles.sgram.B,2)';
+            Iout=round(percentile*size(xsort,1));
+            SS_percentile=xsort(Iout,:);
+            plot(handles.sgram.F,10*log10(SS_percentile),'linewidth',line_width);
+            
+            for II=1:length(percentile)
+                leg_str{Ileg}=num2str(100*percentile(II));
+                Ileg=Ileg+1;
+            end
+            
+        end
+        set(gca,'fontweight','bold','fontsize',14);
+        xlabel('Frequency(Hz)');ylabel(' PSD (dB re 1 uPa^2/Hz)');
+        
+        legend(leg_str);
+        titlestr=(sprintf('Start time: %s, Time processed: %6.2f sec',datestr(handles.tdate_start),handles.tlen));
+        title(titlestr);
+        ylimm=ylim;
+        ylimm(1)=0;
+        ylim(ylimm);
+        
+        yess=menu('Save Spectrum Data and figure?','Yes','No');
+        if yess==1
+            F=handles.sgram.F;
+            save_str=sprintf('Spectrum_%s_%s', datestr(handles.tdate_start,30),datestr(handles.tdate_start+datenum(0,0,0,0,0,handles.tlen),30));
+            save(save_str,'F','percentile','leg_str','SS_percentile','SS_mean','titlestr');
+            h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
+            
+            orient landscape
+            print(hprint,'-djpeg',save_str);
+        end
+        
+        return
+    case {'Start Bulk Processing File','Start Bulk Processing Folder'}
+        
+        if strcmp(Batch_mode,'Start Bulk Processing File')
+            h	=	msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
+            param.exten=['*' handles.myfile];
+        else
+            h	=	msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type));
+            
+            param.exten=['*' handles.myext];
+        end
+        param.dir_out='.';
+        param.file_dir=handles.mydir;
+        contents=get(handles.popupmenu_Nfft,'String');
+        param.Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
+        contents=get(handles.popupmenu_ovlap,'String');
+        param.ovlap=round(param.Nfft*str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100);
+        param.Fs=handles.sgram.Fs;
+        param.channel=str2num(get(handles.edit_chan,'String'));
+        param.dumpsize=100000;
+        param.nstart=0;
+        param.nsamples=0;
+        param.f_low=1000*str2num(get(handles.edit_fmin,'String'));
+        param.f_high=1000*str2num(get(handles.edit_fmax,'String'));
+        param.sec_avg=param.Nfft/param.Fs;
+        
+        write_Java_script('PSD',param);
+        ! ./masterPSD.scr > outt.txt &
+        return
+    case 'Load Bulk Processing'
+        
+        
+        Batch_vars_bulkload.start_time	=	'file start';	Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
+        Batch_vars_bulkload.end_time	=	'all';    Batch_desc{2}	=	'Time to end loading (e.g. "here," "datenum(2011,1,2,0,0,0)",  "file end" for current file end, or "all" to import entire folder)';
+        
+        
+        Batch_vars_bulkload.dB_bins = '30:2:140';        Batch_desc{3} = 'vector of dB levels to build long-term histograms';
+        Batch_vars_bulkload.duty_cycle='0';        Batch_desc{4} = 'Type "1" to process a duty cycle (e.g. diel or weekend analysis)';
+        Batch_vars_bulkload.cycle_duration='0';     Batch_desc{5}='Duty cycle:  Hours in a complete cycle.  Cycle begins at date/time in first row above.  Example: "24*7" defines a week';
+        Batch_vars_bulkload.process_duration='0';   Batch_desc{6}='Duty cycle:  Hours to process, beginning at the start of a cycle.  Example: "24*2" defines a weekend';
+        
+        Batch_vars_bulkload	=	input_batchparams(Batch_vars_bulkload, Batch_desc, Batch_type);
+        duty_cycle_chc=logical(eval(Batch_vars_bulkload.duty_cycle));
+        
+        if	isempty(Batch_vars_bulkload)
+            errordlg('Processing cancelled!');
+            return;
+        end
+        
+        
+        % Load bulk run information
+        [tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
+       
+        
+        %%Translate duty cycle...
+        if duty_cycle_chc
+            cycle_duration=datenum(0,0,0,eval(Batch_vars_bulkload.cycle_duration),0,0);
+            process_duration=datenum(0,0,0,eval(Batch_vars_bulkload.process_duration),0,0);
+            
+            current_cycle_start=tabs_start;
+            %next_cycle_start=tabs_start+cycle_duration;
+            process_end=tabs_start+process_duration;
+            
+        end
+        
+        
+        %Start processing
+        dB_bins=str2num(Batch_vars_bulkload.dB_bins);
+        hist_total=zeros(length(FF),length(dB_bins));
+        tabs_loop_begin=tabs_start;
+        for I=Icurrent_file:Nfiles
+            fname=Other_FileNames(I).name;
+            fprintf('Processing %s...\n',fname);
+            [PSD,F,Tsec,Tabs,params]=read_Java_PSD(fname,tabs_loop_begin,Inf);  %Read an entire file into memory
+            Istrip=find(Tabs<=tabs_end);
+            PSD=PSD(:,Istrip);Tabs=Tabs(Istrip);
+            
+            
+            %%Extract processing times.
+            
+            if ~duty_cycle_chc
+                Igood=1:length(Tabs);
+            else
+                Igood=[];
+                while current_cycle_start<max(Tabs)
+                    Igood=[Igood find(Tabs>=current_cycle_start&Tabs<=process_end)];  %This has to be true for first file
+                    current_cycle_start=current_cycle_start+cycle_duration;
+                    process_end=process_end+cycle_duration;
+                end
+                
+                %%Back up a step in case desired process time runs into
+                %%next file
+                current_cycle_start=current_cycle_start-cycle_duration;
+                process_end=process_end-cycle_duration;
+            end
+            
+            %If we move to next file, start at the beginning
+            tabs_loop_begin=0;
+            
+            if isempty(Igood)
+                continue
+            end
+            
+            PSD=10*log10(PSD);
+            
+            for If=1:length(FF)
+                Ncount=histc(PSD(If,Igood),dB_bins);
+                hist_total(If,:)=hist_total(If,:)+Ncount;
+            end
+            
+            
+            
+        end  %Icurrent_file
+        
+        %%%%%Convert bulk histogram into percentile distribution.
+        cum_dist=cumsum(hist_total');
+        cum_dist=cum_dist./(ones(length(dB_bins),1)*max(cum_dist));
+        
+        CC=contourc(FF,dB_bins,cum_dist,percentile);
+        
+        SS_percentile=zeros(length(percentile),length(FF));
+        for Ip=1:length(percentile)
+            Npt=CC(2,1);
+            p_check{Ip}=num2str(CC(1,1));
+            SS_raw{Ip}=CC(2,2:(Npt+1));
+            Freq{Ip}=CC(1,2:(Npt+1));
+            CC=CC(:,(Npt+2):end);
+            SS_percentile(Ip,:)=interp1(Freq{Ip},SS_raw{Ip},FF);
+            
+        end
+        
+        %%Debug check
+        hprint=figure;
+        subplot(2,1,1)
+        imagesc(FF,dB_bins,cum_dist);colorbar;
+        hold on
+        for Ip=1:length(percentile)
+            plot(Freq{Ip},SS_raw{Ip},'y');
+            
+        end
+        plot(FF,SS_percentile,'o');
+        titlestr=(sprintf('Start time: %s, End Time: %s ',datestr(tabs_start,30),datestr(tabs_end,30)));
+        title(titlestr);
+        
+        grid on
+        
+        subplot(2,1,2)
+        plot(FF,SS_percentile,'linewidth',line_width);
+        grid on
+        set(gca,'fontweight','bold','fontsize',14);
+        xlabel('Frequency(Hz)');ylabel(' PSD (dB re 1 uPa^2/Hz)');
+        legend(p_check);
+        
+        yess=menu('Save Spectrum Data and figure?','Yes','No');
+        if yess==1
+            F=FF;
+            leg_str=p_check;
+            save_str=sprintf('Spectrum_%s_%s', datestr(tabs_start,30),datestr(tabs_end,30));
+            save(save_str,'F','percentile','leg_str','SS_percentile','titlestr','Batch_vars','Batch_vars_bulkload');
+            h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
+            
+            orient landscape
+            print(hprint,'-djpeg',save_str);
+        end
+    otherwise
+        error('Batch mode not recognized');
 end
 
-percentile=str2num(Batch_vars.percentile)/100;
-if ~isempty(percentile)
-    xsort=sort(handles.sgram.B');
-    Iout=round(percentile*size(xsort,1));
-    SS_percentile=xsort(Iout,:);
-    plot(handles.sgram.F,10*log10(SS_percentile),'linewidth',line_width);
-    set(gca,'fontweight','bold','fontsize',14);
-    xlabel('Frequency(Hz)');ylabel(' PSD (dB re 1 uPa^2/Hz)');
-    
-    for II=1:length(percentile)
-        leg_str{Ileg}=num2str(100*percentile(II));
-        Ileg=Ileg+1;
-    end
-    
-end
-legend(leg_str);
-titlestr=(sprintf('Start time: %s, Time processed: %6.2f sec',datestr(handles.tdate_start),handles.tlen));
-title(titlestr);
-ylimm=ylim;
-ylimm(1)=0;
-ylim(ylimm);
 
-yess=menu('Save Spectrum Data and figure?','Yes','No');
-if yess==1
-    F=handles.sgram.F;
-    save_str=sprintf('Spectrum_%s_%i', datestr(handles.tdate_start,30),handles.tlen);
-    save(save_str,'F','percentile','leg_str','SS_percentile','SS_mean','titlestr');
-    h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
-    
-    orient landscape
-    print(hprint,'-djpeg',save_str);
+
+end
+
+function [tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles,Batch_vars_bulkload)
+
+dialog_title	=	'Select Bulk file to load: Note that I am looking in current directory, not data directory';
+[pathstr,token,extt] = fileparts(handles.myfile);
+FileName = uigetfile([token '*.psd'],dialog_title);
+if isnumeric(FileName)
+    disp('No file selected');
+    return;
+end
+Iscore=min(strfind(FileName,'_chan'));
+
+token2=FileName((Iscore+1):end);  %PSD files having the same input parameters..
+
+Other_FileNames=dir(['*_' token2]);
+Icurrent_file=find(strcmp(FileName,{Other_FileNames.name})>0);  %Location of current file in list of PSD files
+Nfiles=length({Other_FileNames(Icurrent_file:end).name});  %Number of files that include current time and all times afterward.
+
+[~,~,~,~,params]=read_Java_PSD(Other_FileNames(Icurrent_file).name,0,Inf,1);
+tabs_end=params.tend_file;  %datenumber of end of data in focal file (assuming all filenames have chronological order)
+tabs_start=params.tstart_file;  %datenumber of start of data in focal file (assuming all filenames have chronological order)
+
+[~,~,~,~,params]=read_Java_PSD(Other_FileNames(end).name,0,Inf,1);
+tabs_folder_end=params.tend_file;  %datenumber of end of data in folder (assuming all filenames have chronological order)
+[~,FF,~,~,params]=read_Java_PSD(Other_FileNames(1).name,0,10);
+tabs_folder_start=params.tstart_file;  %datenumber of start of data in folder (assuming all filenames have chronological order)
+
+fprintf('Folder start time: %s, File start time: %s, File end time: %s, Folder end time: %s\n', ...
+    datestr(tabs_folder_start,30),datestr(tabs_start,30),datestr(tabs_end,30),datestr(tabs_folder_end,30));
+
+
+
+%%Translate start time
+switch lower(Batch_vars_bulkload.start_time)
+    case {'here'}  %Use edit window
+        tabs_start=datenum(get(handles.edit_datestr,'String'));
+    case 'file start'  %start of file
+        % Keep tabs_start the same--this trick allows us from loading the original data!
+    otherwise %check for datenum
+        if strfind(Batch_vars_bulkload.start_time,'datenum')
+            try
+                tabs_start_want=eval(Batch_vars_bulkload.start_time);
+                if tabs_start_want<tabs_folder_start || tabs_start_want<tabs_folder_end
+                    errordlg('Can''t request a time outside selected file''s start time','Bulk Processing Menu Error');
+                    return;
+                end
+                
+                tabs_start=tabs_start_want;
+            catch
+                errordlg('Can''t process start_time','Bulk Processing Menu Error');
+                return;
+            end
+            
+        end
+end
+
+
+%%Translate end time
+switch lower(Batch_vars_bulkload.end_time)
+    case 'here' %Use edit window
+        tabs_end=datenum(get(handles.edit_datestr,'String'))+datenum(0,0,0,0,0,str2num(get(handles.edit_winlen,'string')));
+        Nfiles=Icurrent_file;  %Load one file only
+    case 'all'
+        tabs_end=tabs_folder_end;
+    case 'file end'  %end of file
+        %tabs_end=Inf;
+        Nfiles=Icurrent_file;  %Load one file only.
+    otherwise %check for datenum
+        if strfind(Batch_vars_bulkload.end_time,'datenum')
+            try
+                tabs_end_want=eval(Batch_vars_bulkload.end_time);
+                if tabs_end_want<tabs_folder_start || tabs_end_want<tabs_folder_end
+                    errordlg('Can''t request a time outside selected file''s start time','Bulk Processing Menu Error');
+                    return
+                end
+                
+                tabs_end=tabs_end_want;
+                
+            catch
+                errordlg('Can''t process end_time','Bulk Processing Menu Error');
+                return;
+                
+            end
+        end
 end
 
 end
@@ -461,37 +862,37 @@ function MenuItem_eventdet_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-	Batch_type	=	get(hObject, 'Label');
-	Batch_mode	=	input_batchmode(Batch_type);
-	
-	if	isempty(Batch_mode)
-		errordlg('Processing cancelled!');
-		return;
-	end
-	
-	Batch_vars.A	=	'Aa';	Batch_desc{1}	=	'1st var desc';
-	Batch_vars.B	=	'Bb';	Batch_desc{2}	=	'2nd var desc';
-	Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
-	Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
-	Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
-	
-	Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
-	
-	if	isempty(Batch_vars)
-		errordlg('Processing cancelled!');
-		return;
-	end
-	
-	switch	Batch_mode
-		case 'Visible'
-			h	=	msgbox(['Processing all data within window for ' Batch_type]);
-		case 'File'
-			h	=	msgbox(['Processing all data in whole file for ' Batch_type]);
-		case 'Folder'
-			h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
-		otherwise
-			error('Batch mode not recognized');
-	end
+Batch_type	=	get(hObject, 'Label');
+Batch_mode	=	input_batchmode(Batch_type);
+
+if	isempty(Batch_mode)
+    errordlg('Processing cancelled!');
+    return;
+end
+
+Batch_vars.A	=	'Aa';	Batch_desc{1}	=	'1st var desc';
+Batch_vars.B	=	'Bb';	Batch_desc{2}	=	'2nd var desc';
+Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
+Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
+Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
+
+Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
+
+if	isempty(Batch_vars)
+    errordlg('Processing cancelled!');
+    return;
+end
+
+switch	Batch_mode
+    case 'Process Visible Window'
+        h	=	msgbox(['Processing all data within window for ' Batch_type]);
+    case 'Start Bulk Processing File'
+        h	=	msgbox(['Processing all data in whole file for ' Batch_type]);
+    case 'Start Bulk Processing Folder'
+        h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
+    otherwise
+        error('Batch mode not recognized');
+end
 end
 
 % --------------------------------------------------------------------
@@ -500,63 +901,80 @@ function MenuItem_boatdet_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-	Batch_type	=	get(hObject, 'Label');
-	Batch_mode	=	input_batchmode(Batch_type);
-	
-	if	isempty(Batch_mode)
-		errordlg('Processing cancelled!');
-		return;
-	end
-	
-	Batch_vars.A	=	'Aa';	Batch_desc{1}	=	'1st var desc';
-	Batch_vars.B	=	'Bb';	Batch_desc{2}	=	'2nd var desc';
-	Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
-	Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
-	Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
-	
-	Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
-	
-	if	isempty(Batch_vars)
-		errordlg('Processing cancelled!');
-		return;
-	end
-	
-	switch	Batch_mode
-		case 'Visible'
-			h	=	msgbox(['Processing all data within window for ' Batch_type]);
-		case 'File'
-			h	=	msgbox(['Processing all data in whole file for ' Batch_type]);
-		case 'Folder'
-			h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
-		otherwise
-			error('Batch mode not recognized');
-	end
+Batch_type	=	get(hObject, 'Label');
+Batch_mode	=	input_batchmode(Batch_type);
+
+if	isempty(Batch_mode)
+    errordlg('Processing cancelled!');
+    return;
 end
 
-% Ask user for mode of processing operations
-function	Batch_mode	=	input_batchmode(Batch_type)
-	
-	Mode_options	=	{'Visible', 'File', 'Folder'};
-	qstring	=	'What data would you like to process?';
-	title	=	Batch_type;
-	
-	button	=	questdlg(qstring, title ,...
-				Mode_options{1}, Mode_options{2}, Mode_options{3},...
-				Mode_options{1});
+Batch_vars.A	=	'Aa';	Batch_desc{1}	=	'1st var desc';
+Batch_vars.B	=	'Bb';	Batch_desc{2}	=	'2nd var desc';
+Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
+Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
+Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
 
-	Batch_mode	=	button;
+Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
+
+if	isempty(Batch_vars)
+    errordlg('Processing cancelled!');
+    return;
+end
+
+switch Batch_mode
+    case 'Process Visible Window'
+        h	=	msgbox(['Processing all data within window for ' Batch_type]);
+    case 'Start Bulk Processing File'
+        h	=	msgbox(['Processing all data in whole file for ' Batch_type]);
+    case 'Start Bulk Processing Folder'
+        h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
+    otherwise
+        error('Batch mode not recognized');
+end
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Ask user for mode of processing operations
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function	[Batch_mode]	=	input_batchmode(Batch_type)
+%Mode_options	=	{'Process Visible Window', 'Start Bulk Processing File', 'Start Bulk Processing Folder','Load Bulk Processing'};
+Mode_options	=	{'Process Visible Window', 'Start Bulk Processing', 'Load Bulk Processing'};
+qstring	=	'Which operation do you want?';
+title	=	Batch_type;
+
+button	=	questdlg(qstring, title ,...
+    Mode_options{1}, Mode_options{2}, Mode_options{3},...
+    Mode_options{1});
+
+Batch_mode	=	button;
+
+switch Batch_mode
+    case 'Start Bulk Processing'
+        Mode_options	=	{'File','Folder'};
+        title	=	Batch_type;
+        
+        button	=	questdlg(qstring, title ,...
+            Mode_options{1}, Mode_options{2}, ...
+            Mode_options{1});
+        
+        Batch_mode	=	[Batch_mode ' ' button];
+        
+end
+
+
 end
 
 % Asks user for specified batch processing parameters
 function	Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type)
 
 if	isstruct(Batch_vars)
-	names		=	fieldnames(Batch_vars);
+    names		=	fieldnames(Batch_vars);
 elseif	iscell(Batch_vars)
-	names		=	Batch_vars;
-	Batch_vars	=	struct;
+    names		=	Batch_vars;
+    Batch_vars	=	struct;
 else
-	error('Batch_vars must be either a structure, or cell array of variable names');
+    error('Batch_vars must be either a structure, or cell array of variable names');
 end
 
 N_fields	=	length(names);
@@ -567,10 +985,10 @@ end
 %	Default values
 defaults	=	cell(N_fields,1);
 if	isstruct(Batch_vars)
-	for	ii	=	1:N_fields
-		value	=	Batch_vars.(names{ii});
-		defaults{ii}	=	num2str(value);
-	end
+    for	ii	=	1:N_fields
+        value	=	Batch_vars.(names{ii});
+        defaults{ii}	=	num2str(value);
+    end
 end
 
 %	Size of each prompt field
@@ -680,7 +1098,7 @@ if	~isempty(new_date)
     end
     newval	=	(new_date-tmin)/(tmax-tmin);
     handles.tdate_start		=	new_date;
-	set(hObject,'String', datestr(new_date, 0));
+    set(hObject,'String', datestr(new_date, 0));
     set(handles.slider_datestr,'Value',newval);
     guidata(hObject, handles);
 end
@@ -1140,14 +1558,14 @@ if	audio_stale
     handles.hline			=	hline;
     
     %	set callbacks for audioplayer
-	player.StopFcn = {@audio_stop, handles};
-	player.TimerFcn = {@audio_timer, handles}; % timer callback function (defined below)
+    player.StopFcn = {@audio_stop, handles};
+    player.TimerFcn = {@audio_timer, handles}; % timer callback function (defined below)
     player.TimerPeriod = 0.01; % period of the timer in seconds
     
 end
 
 %	start playback
-    play(player);
+play(player);
 
 %	Set controls
 set(hObject, 'String', 'Stop');
@@ -1240,10 +1658,10 @@ if strcmpi(handles.filetype,'MDAT')
         tdate_start=handles.tdate_start;
         tlen=handles.tlen;
         contents=get(handles.popupmenu_Nfft,'String');
-		Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
+        Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
         
         contents=get(handles.popupmenu_ovlap,'String');
-		ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
+        ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
         ovlap=min([1-1/Nfft ovlap]);
         
         mydir=pwd;
@@ -1270,8 +1688,8 @@ if strcmpi(handles.filetype,'MDAT')
             %axes(handles.axes1);
             imagesc(TT,FF,10*log10(B));%
             axis('xy')
-			fmax=str2double(get(handles.edit_fmax,'String'));
-			fmin=str2double(get(handles.edit_fmin,'String'));
+            fmax=str2double(get(handles.edit_fmax,'String'));
+            fmin=str2double(get(handles.edit_fmin,'String'));
             if fmax==0,
                 ylim([0 Fs/2]);
                 set(handles.edit_fmax,'String',num2str(Fs/2));
@@ -1279,8 +1697,8 @@ if strcmpi(handles.filetype,'MDAT')
                 ylim([fmin fmax]*1000);
             end
             %ylim([0 1]);axis('xy')
-			climm(1)=str2double(get(handles.edit_mindB,'String'));
-			climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
+            climm(1)=str2double(get(handles.edit_mindB,'String'));
+            climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
             caxis(climm);
             if get(handles.checkbox_grayscale,'Value')==1,
                 colormap(flipud(gray));
@@ -1478,7 +1896,7 @@ if	tline ~= -1
         end
         newval	=	(new_date-tmin)/(tmax-tmin);
         handles.tdate_start		=	new_date;
-		set(hObject,'String', datestr(new_date,0));
+        set(hObject,'String', datestr(new_date,0));
         set(handles.slider_datestr,'Value',newval);
         guidata(hObject, handles);
     end
@@ -1820,7 +2238,7 @@ fmin=str2double(get(handles.edit_fmin,'String'));
 fmax=str2double(get(handles.edit_fmax,'String'));
 %chann=input('Enter channel indicies (remember that channels have been flipped, 1 is now shallowest) (1:Nchan):');
 %if isempty(chann)
-    chann=1:head.Nchan; %We now assume that any bad channels are marked in the LOG files.
+chann=1:head.Nchan; %We now assume that any bad channels are marked in the LOG files.
 %end
 
 Ichc=menu('Enter type of frequency processing:','Contour','All');
@@ -2401,14 +2819,14 @@ for Imodel=1:length(MFP_scenario)
     maxdelay(4:Maxmodes)=maxdelay(3);
     
     %disp('Save signal sample if you wish...');
-   % keyboard
-   %following operation is now done in load_data...
-   %data.x=flipud(data.x); %Shallowest data now first...
-   
-   %%AARON:  REMOVE THIS!
-   %head.geom.rd=head.geom.rd+2;
-   %disp('WARNING WARNING WARNING I added 2 m depth to array elements!!!!!!');
-   
+    % keyboard
+    %following operation is now done in load_data...
+    %data.x=flipud(data.x); %Shallowest data now first...
+    
+    %%AARON:  REMOVE THIS!
+    %head.geom.rd=head.geom.rd+2;
+    %disp('WARNING WARNING WARNING I added 2 m depth to array elements!!!!!!');
+    
     Igood	=	zeros(1,length(head.geom.rd));
     for I = 1:length(head.geom.rd)
         [junk, Igood(I)]		=	min(abs(model.rd-head.geom.rd(I)));
@@ -3003,23 +3421,23 @@ end %Imodel
                 ylabel('Hz'); xlabel('Time (s)');
                 
                 axis('xy');ylim([minfreq maxfreq]);
-                    caxis([70 120]-30);grid on
-                    %caxis([-150 -70])
-                    if Imm==1
+                caxis([70 120]-30);grid on
+                %caxis([-150 -70])
+                if Imm==1
                     %title(sprintf('Mode %i, modal beamforming and dispersion correction: vertical tilt: %6.2f deg',Imm, tilt));
-                    end
-                    if Imm<Maxmodes
-                        set(gca,'xticklabel',[]);
-                        xlabel('');
-                        
-                    end
-                    set(gca,'units','norm');
-                    poss=get(gca,'pos');
-                    poss(4)=.27;
+                end
+                if Imm<Maxmodes
+                    set(gca,'xticklabel',[]);
+                    xlabel('');
                     
-                    %set(gca,'pos',poss,'xtick',0:0.25:3);
-                    text(0.25,110,sprintf('Mode %i',Imm),'color','w','fontsize',14,'fontweight','bold');
-                    title(sprintf('Phase Correction, Range: %6.2f km, Tilt: %6.2f deg',range_guess(Ir)/1000,tilt_offset(Itilt)));
+                end
+                set(gca,'units','norm');
+                poss=get(gca,'pos');
+                poss(4)=.27;
+                
+                %set(gca,'pos',poss,'xtick',0:0.25:3);
+                text(0.25,110,sprintf('Mode %i',Imm),'color','w','fontsize',14,'fontweight','bold');
+                title(sprintf('Phase Correction, Range: %6.2f km, Tilt: %6.2f deg',range_guess(Ir)/1000,tilt_offset(Itilt)));
             end
             colorbar('south','fontweight','bold','fontsize',14);
             
@@ -3185,7 +3603,9 @@ pushbutton_update_Callback(handles.pushbutton_update,eventdata,handles);
 
 end
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%Beginning of annoation subroutines %%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%	new annotation stuff
 
 % --- Executes on button press in pushbutton_notes_last.
@@ -3471,8 +3891,8 @@ params_extract	=	extract_automated_fields(Times, Freq, handles);
 if isempty(params_extract)
     errordlg({'SNR and level could not be extracted:';...
         'Time window is too small';...
-		'Show larger time window and retry'});
-	delete(hrec);
+        'Show larger time window and retry'});
+    delete(hrec);
     return
 end
 
@@ -3604,7 +4024,7 @@ else
         end
     end
     
-	Event	=	edit_event(Event, handles.notes.Data.Description, handles.notes.edit_fields);
+    Event	=	edit_event(Event, handles.notes.Data.Description, handles.notes.edit_fields);
     if	isempty(Event)
         return;
     else
@@ -3752,11 +4172,11 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
     %[B,FF,TT]=specgram(x(:,1),Nfft,Fs,hanning(Nfft),round(ovlap*Nfft));
     [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
     %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
-%     For real signals, variable 'B'
-%     returns the one-sided modified periodogram estimate of the PSD of each
-%     segment; for complex signals and in the case when a vector of
-%     frequencies is specified, it returns the two-sided PSD.  
-     handles.sgram.T		=	TT;
+    %     For real signals, variable 'B'
+    %     returns the one-sided modified periodogram estimate of the PSD of each
+    %     segment; for complex signals and in the case when a vector of
+    %     frequencies is specified, it returns the two-sided PSD.
+    handles.sgram.T		=	TT;
     handles.sgram.F		=	FF;
     handles.sgram.B		=	B;
     handles.sgram.Nfft	=	Nfft;
@@ -3783,8 +4203,8 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
     end
     grid on
     axis('xy')
-	fmax=str2double(get(handles.edit_fmax,'String'));
-	fmin=str2double(get(handles.edit_fmin,'String'));
+    fmax=str2double(get(handles.edit_fmax,'String'));
+    fmin=str2double(get(handles.edit_fmin,'String'));
     if fmax==0,
         ylim([0 Fs/2000]);
         set(handles.edit_fmax,'String',num2str(Fs/2000));
@@ -3792,8 +4212,8 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
         ylim([fmin fmax]);
     end
     %ylim([0 1]);axis('xy')
-	climm(1)=str2double(get(handles.edit_mindB,'String'));
-	climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
+    climm(1)=str2double(get(handles.edit_mindB,'String'));
+    climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
     %%If switching from correlogram, reset to suggested values
     if climm(1)==0&&climm(2)<1
         climm=[40 70];
@@ -3841,8 +4261,8 @@ elseif strcmp(handles.display_view,'Time Series') %%Time series
     plot(t,y);grid on;
     xlabel('Time (sec)');ylabel('Amplitude');
 elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
-	fmax=1000*str2double(get(handles.edit_fmax,'String'));
-	fmin=1000*str2double(get(handles.edit_fmin,'String'));
+    fmax=1000*str2double(get(handles.edit_fmax,'String'));
+    fmin=1000*str2double(get(handles.edit_fmin,'String'));
     param.ovlap=ovlap;
     param.Nfft=Nfft;
     prompt1={'ICI range (s)','Correlation sample time (s)','Teager-Kaiser treatment?','Incoherent=1, Coherent=0 ?'};
@@ -3850,9 +4270,9 @@ elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
     def1={'[0.01 .25]', '0.25','0','1'};
     answer=inputdlg(prompt1,dlgTitle1,1,def1);
     param.ici_range=eval(answer{1});
-	param.time_sample=str2double(answer{2});
-	param.teager=str2double(answer{3});
-	alg_chc=str2double(answer{4});
+    param.time_sample=str2double(answer{2});
+    param.teager=str2double(answer{3});
+    alg_chc=str2double(answer{4});
     
     if alg_chc==1
         [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
@@ -3874,8 +4294,8 @@ elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
     %colorbar('east','ycolor','w');
     axis('xy')
     % title(sprintf('mean correlation value extracted between %6.2f and %6.2f Hz, %6.2f overlap',freq(Ifreq),freq(Ifreq+1),param.ovlap));
-	climm(1)=str2double(get(handles.edit_mindB,'String'));
-	climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
+    climm(1)=str2double(get(handles.edit_mindB,'String'));
+    climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
     
     if climm(1)>1
         climm(1)=0;
@@ -3989,9 +4409,9 @@ startup_info.calibration_DASAR2007_dir=[];
 
 if strcmp(local_machine,'macmussel.ucsd.edu')
     
-    startup_info.base_directory='/Users/Shared/MATLAB/AllFile_specgram_viewer';   
-	
-	
+    startup_info.base_directory='/Users/Shared/MATLAB/AllFile_specgram_viewer';
+    
+    
     startup_info.default_directory='/Volumes/';
     startup_info.default_inputfiledir='/Users/thode/Projects/Insta-array/Alaska_Sperm';
     
@@ -4245,7 +4665,7 @@ switch filetype
         
     case 'MDAT'
         
-    
+        
         [x,head]=read_synchronized_mdat_files(fullfile(mydir,myfile),tdate_start,tlen);
         Fs=head.fs;
         tmin=head.tfs;
@@ -5534,14 +5954,14 @@ for Itilt=1:length(tilt_offset)
     fprintf('Frequency: %6.2f, Correlations:  %6.2f\n',tmp');
     fprintf('Total corr: %6.2f \n',max(max(amb_tot)));
     
-	save_result=input('Enter any character to save images and write CSDM to file: ');
+    save_result=input('Enter any character to save images and write CSDM to file: ');
     if ~isempty(save_result)
         savename=sprintf('MFP_result_%s_tilt%4.2f_Nfreqs%i_SNRmin%i',data_name,tilt_offset(Itilt),length(freq),SNRmin);
         disp(savename)
         save([savename '.mat'], 'ranges','depths','amb','amb_tot','SNRmin','freq','data_name','model_name');
         
-		figure(gcf)
-		orient landscape
+        figure(gcf)
+        orient landscape
         
         print(gcf,'-djpeg',[savename '.jpg']);
     end
@@ -6227,7 +6647,7 @@ end     % if n<=1
 
 
 if isempty(strfind(outcome,'successful'));
-%if ~isempty(strfind(failed,outcome))
+    %if ~isempty(strfind(failed,outcome))
     VM = [nan nan];
     Qhat = nan*ones(2);
     w = zeros(1,n);
@@ -6367,13 +6787,13 @@ hline	=	handles.hline;
 
 % check if sound is playing, then only plot new marker
 if strcmp(player.Running, 'on')
-	% get the currently playing sample #
-	x	=	player.CurrentSample;
-	Fs	=	handles.audioFs;
-	
-	% change position of marker line
-	set(hline,'XData',x/Fs*[1 1]);
-	drawnow expose;
+    % get the currently playing sample #
+    x	=	player.CurrentSample;
+    Fs	=	handles.audioFs;
+    
+    % change position of marker line
+    set(hline,'XData',x/Fs*[1 1]);
+    drawnow expose;
 end
 end
 
@@ -6724,7 +7144,7 @@ end
 function	NewEvent	=	edit_event(Event, Description, edit_fields)
 
 if	nargin < 3
-	edit_fields	=	[];
+    edit_fields	=	[];
 end
 
 %	Start time included in window title, should not be part of input
@@ -6734,16 +7154,16 @@ Description(1)	=	[];
 
 %	only keep those fields we want to edit
 if	~isempty(edit_fields)
-	keep	=	[];
-	names	=	fieldnames(Event);
-	for	ii	=	1:length(names)
-		if	any(strcmp(names{ii},edit_fields))
-			keep	=	[keep; ii];
-		else
-			Event	=	rmfield(Event, names{ii});
-		end
-	end
-	Description		=	Description(keep);
+    keep	=	[];
+    names	=	fieldnames(Event);
+    for	ii	=	1:length(names)
+        if	any(strcmp(names{ii},edit_fields))
+            keep	=	[keep; ii];
+        else
+            Event	=	rmfield(Event, names{ii});
+        end
+    end
+    Description		=	Description(keep);
 end
 
 %	Generate default strings from field values
@@ -7014,23 +7434,23 @@ end
 %	Remove obsolute fields from old events, but save data into comments
 function	Data		=	clean_data(Data, obsolete_fields)
 if	nargin < 2
-	obsolete_fields		=	{'noise_db', 'peak_db'};	% default list
+    obsolete_fields		=	{'noise_db', 'peak_db'};	% default list
 end
 if	ischar(obsolete_fields)
-	temp				=	{obsolete_fields};
-	obsolete_fields		=	temp;
-	clear temp;
+    temp				=	{obsolete_fields};
+    obsolete_fields		=	temp;
+    clear temp;
 end
 
 %	Find which obsolete fields are present
 names	=	fieldnames(Data.Events);
 for	ii	=	1:length(obsolete_fields)
-	test	=	strcmp(obsolete_fields{ii}, names);
-	if	any(test)
-		i_of(ii)	=	find(test);
-	else
-		i_of(ii)	=	0;
-	end
+    test	=	strcmp(obsolete_fields{ii}, names);
+    if	any(test)
+        i_of(ii)	=	find(test);
+    else
+        i_of(ii)	=	0;
+    end
 end
 %	reduce set to those present, and needing removal
 obsolete_fields(~logical(i_of))	=	[];
@@ -7038,15 +7458,15 @@ i_of(~logical(i_of))			=	[];
 
 %	loop through events, and append info to comments
 for	ie	=	1:length(Data.Events)
-	event		=	Data.Events(ie);
-	comments	=	event.comments;
-	for ii	=	1:length(obsolete_fields)
-		name		=	obsolete_fields{ii};
-		new_txt		=	num2str(event.(name));
-		comments	=	sprintf([comments '\n' name '=' new_txt]);
-	end
-	event.comments	=	comments;
-	Data.Events(ie)	=	event;
+    event		=	Data.Events(ie);
+    comments	=	event.comments;
+    for ii	=	1:length(obsolete_fields)
+        name		=	obsolete_fields{ii};
+        new_txt		=	num2str(event.(name));
+        comments	=	sprintf([comments '\n' name '=' new_txt]);
+    end
+    event.comments	=	comments;
+    Data.Events(ie)	=	event;
 end
 
 %	remove obsolete fields
@@ -7109,10 +7529,10 @@ for	ii	=	1:length(i_show)
     ie		=	i_show(ii);
     event	=	Events(ie);
     x		=	event.start_time - Times(1);	x	=	x*24*60*60;
-	y		=	str2double(num2str(event.min_freq))/1000;
-	width	=	str2double(num2str(event.duration));
-	height	=	(str2double(num2str(event.max_freq))...
-							- str2double(num2str(event.min_freq)))/1000;
+    y		=	str2double(num2str(event.min_freq))/1000;
+    width	=	str2double(num2str(event.duration));
+    height	=	(str2double(num2str(event.max_freq))...
+        - str2double(num2str(event.min_freq)))/1000;
     
     %AARON fix for dodgy detections
     height	=	max([1e-5 height]);
@@ -7127,7 +7547,7 @@ for	ii	=	1:length(i_show)
     if	ie == handles.notes.i_sel
         set(h_show(ii),'EdgeColor', 'm');
         sel_vis		=	true;
-		handles.notes.h_info	=	show_event_info(event, Description, handles.notes.h_info);
+        handles.notes.h_info	=	show_event_info(event, Description, handles.notes.h_info);
     end
 end
 
@@ -7157,13 +7577,13 @@ end
 function	hdlg	=	show_event_info(Event, Description, hdlg)
 
 if nargin < 3 || isempty(hdlg) || ~ishandle(hdlg)
-	hdlg	=	dialog('Windowstyle', 'normal');
-	pos		=	get(hdlg, 'Position');
-	pos(3)	=	pos(3)/2;
-	set(hdlg,'Position',pos);
+    hdlg	=	dialog('Windowstyle', 'normal');
+    pos		=	get(hdlg, 'Position');
+    pos(3)	=	pos(3)/2;
+    set(hdlg,'Position',pos);
 else
-	figure(hdlg);
-	clf(hdlg);
+    figure(hdlg);
+    clf(hdlg);
 end
 
 %	Fetch details
@@ -7171,8 +7591,8 @@ Title	=	'Annotation details';
 names	=	fieldnames(Event);
 Message	=	[Description(:).'; names(:).'];
 for	ii	=	1:length(names)
-	temp			=	num2str(Event.(names{ii}));
-	Message{2,ii}	=	[char(9) char(9) temp(:).'];
+    temp			=	num2str(Event.(names{ii}));
+    Message{2,ii}	=	[char(9) char(9) temp(:).'];
 end
 %	comments don't need to be indented
 Message{2,ii}	=	temp;
@@ -7182,12 +7602,12 @@ Message{2,1}	=	datestr(Event.(names{1}), 'yyyy-mm-dd HH:MM:SS.FFF');
 %	Put details in window
 set(hdlg, 'Name', Title);
 htxt	=	uicontrol(hdlg, 'Style', 'edit',...
-				'Enable', 'on',...
-				'Units', 'normalized',...;
-				'Position', [0 0 1 1],...
-				'Max', 2, 'Min', 0,...;
-				'HorizontalAlignment','left',...
-				'String', Message(:));
+    'Enable', 'on',...
+    'Units', 'normalized',...;
+    'Position', [0 0 1 1],...
+    'Max', 2, 'Min', 0,...;
+    'HorizontalAlignment','left',...
+    'String', Message(:));
 
 
 end
@@ -7563,7 +7983,7 @@ freq_plot=Fwarp(Igood(Ifreq_plot));
 Nplot=length(freq_plot);
 
 %Cyle through each mode and extract mode shape from various frequencies,
-    % as well as broadband time series
+% as well as broadband time series
 for Im=1:MM(2)
     
     %normalize both individual-frequency based and broadband modes.
@@ -7584,7 +8004,7 @@ for Im=1:MM(2)
     tmp=(Umode.*conj(Umode1));  %Remove tilt or phase offsets
     Uang=angle(tmp./(ones(Nc,1)*tmp(end,:)));  %Reference phase to bottom element
     
-    %Determine sign of mode: observe when corrected phase 
+    %Determine sign of mode: observe when corrected phase
     %   (relative to bottom mode) exceeds pi/2
     sgn_chnge=-(abs(Uang(:,Ifreq_plot))>pi/2);
     sgn_chnge=2*sgn_chnge+1;  %Convert 0 and -1 to 1 and -1;
@@ -7651,10 +8071,10 @@ maxlag=round(50*RR*Fs/1490);
 for I=1:(Nc-1)
     y1=resample(xt1(:,I),RR,1);
     y2=resample(xt1(:,I+1),RR,1);
-   [cc,lags]=xcov(y1,y2,maxlag);
-   [junk,Imax]=max(abs(cc));
-   tilt_broadband(I+1)=1490*lags(Imax)/(RR*Fs);
-   
+    [cc,lags]=xcov(y1,y2,maxlag);
+    [junk,Imax]=max(abs(cc));
+    tilt_broadband(I+1)=1490*lags(Imax)/(RR*Fs);
+    
 end
 tilt_broadband=cumsum(tilt_broadband);
 tilt_broadband=tilt_broadband-tilt_broadband(end);  %Make bottom phone the origin
@@ -7823,7 +8243,7 @@ for Iguess=1:length(r_guess)
         subplot(2,2,3)
         imagesc(time_w, freq_w, spectro_w)
         set(gca,'fontweight','bold','fontsize',14);
-    
+        
         axis xy
         ylim([0 50])
         xlabel('Warped time (sec)')
@@ -7834,7 +8254,7 @@ for Iguess=1:length(r_guess)
         subplot(2,2,4)
         imagesc(time_w, freq_w, 10*log10(abs(spectro_w)))
         set(gca,'fontweight','bold','fontsize',14);
-    
+        
         axis xy
         ylim([0 50])
         xlabel('Warped time (sec)')
