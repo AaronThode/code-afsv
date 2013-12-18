@@ -332,7 +332,7 @@ if	isempty(Batch_mode)
 end
 
 if isempty(strfind(Batch_mode,'Load'))
-    Batch_vars.sec_avg	=	'2';	Batch_desc{1}	=	'Seconds to average PSD for long-term display';
+    Batch_vars.sec_avg	=	'2';	Batch_desc{1}	=	'Seconds to average PSD for long-term display, if "0" no averaging' ;
     Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
     if	isempty(Batch_vars)
         errordlg('Processing cancelled!');
@@ -340,6 +340,7 @@ if isempty(strfind(Batch_mode,'Load'))
     end
 
     sec_avg=str2num(Batch_vars.sec_avg);
+
 end
 
 
@@ -412,7 +413,11 @@ switch	Batch_mode
         param.nsamples=0;
         param.f_low=1000*str2num(get(handles.edit_fmin,'String'));
         param.f_high=1000*str2num(get(handles.edit_fmax,'String'));
-        param.sec_avg=eval(Batch_vars.sec_avg);
+        if sec_avg>0
+            param.sec_avg=sec_avg;
+        else
+            param.sec_avg=param.Nfft/param.Fs;  %Make a spectrogram--no averaging
+        end
         
         write_Java_script('PSD',param);
         ! ./masterPSD.scr > outt.txt &
@@ -421,14 +426,33 @@ switch	Batch_mode
         Batch_vars_bulkload.start_time	=	'file start';	Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
         Batch_vars_bulkload.end_time	=	'all';    
         Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "all" to import entire folder)';
-        Batch_vars_bulkload.append      =   'separate';   Batch_desc{3} =  '"Join" will append separate files into one figure (for continuous data), while "separate" makes a separate figure per file (default, for duty cycle)';
+        Batch_vars_bulkload.time_window      =   'file';   
+        Batch_desc{3} =  'hours to display in a single window; "all" means put in a single file, "file" displays one file per figure';
        
         Batch_vars_bulkload	=	input_batchparams(Batch_vars_bulkload, Batch_desc, Batch_type);
         if	isempty(Batch_vars_bulkload)
             errordlg('Processing cancelled!');
             return;
         end
-        Batch_vars_bulkload.separate=~isempty(strfind(Batch_vars_bulkload.append,'separate'));
+        
+        split_windows=1;plot_interval=Inf;
+        if ~isempty(strfind(Batch_vars_bulkload.time_window,'file'))
+            plot_interval=Inf;
+        elseif ~isempty(strfind(Batch_vars_bulkload.time_window,'all'))
+            split_windows=0;
+        elseif isnumeric(str2num(Batch_vars_bulkload.time_window))
+            val=str2num(Batch_vars_bulkload.time_window);
+            plot_interval=datenum(0,0,0,val,0,0); 
+            
+            %Set tick date format
+            if val<=1  %less than an hour
+                date_tick_chc=15; %HH:MM
+            elseif val>1&&val<24
+                date_tick_chc='HH';
+            elseif val>24
+                date_tick_chc=6;
+            end
+        end
        
         %Load bulk run time and file data
         [tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
@@ -447,31 +471,55 @@ switch	Batch_mode
             
             %If we move into next file, start at the beginning
             tabs_loop_begin=0;
+            if isempty(Tabs_all)
+                continue
+            end
             
-            if Batch_vars_bulkload.separate==1&&~isempty(Tabs_all)
-               [hprint(Iplot),save_tag{Iplot}]=image_PSD; 
+            if split_windows
+               [hprint(Iplot),save_tag{Iplot}]=image_PSD(min(Tabs_all), max(Tabs_all)); 
                PSD_all=[];Tabs_all=[];
                Iplot=Iplot+1;
             end
         end  %Icurrent_file
         
-        if Batch_vars_bulkload.separate==0
-           [hprint(1),save_tag{1}]=image_PSD; 
+        if ~split_windows
+           [hprint(1),save_tag{1}]=image_PSD(min(Tabs_all), max(Tabs_all)); 
         end
         
         yess=menu('Save PSD Data and figure?','Yes','No');
         if yess==1
             
             Nfigs=sort(get(0,'Child'));
-            Nfigs=Nfigs(Nfigs<150)
+            Nfigs=Nfigs(Nfigs<150);
+            sec_avg=params.Nsamps*params.dn/params.Fs;
+        
             for II=1:length(Nfigs)
                 
+                
                 save_str=sprintf('PSD_%s', save_tag{II});
-                save(save_str,'F','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','ylimm','climm','sec_avg');
+                save(save_str,'F','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
                 h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
                 
                 orient landscape
                 print(hprint(II),'-djpeg',save_str);
+                
+                %Plot zooms if desired
+                figure(hprint(II));
+                Tabs_limm=get(gca,'xlim');
+                Tabs_frame=unique([Tabs_limm(1):plot_interval:Tabs_limm(2) Tabs_limm(2)]);
+                
+               
+                for JJ=1:(length(Tabs_frame)-1)
+                    xlim([Tabs_frame(JJ) Tabs_frame(JJ+1)]);
+                    datetick('x',date_tick_chc,'keeplimits');
+                    save_str=sprintf('PSDzoom_%s_%s', datestr(Tabs_frame(JJ),30), datestr(Tabs_frame(JJ+1),30));
+                    titlestr=sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f', ...
+                        datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
+                    title(titlestr);
+                    print(hprint(II),'-djpeg',save_str);
+                
+                end
+                
             end
             
         end
@@ -480,7 +528,7 @@ switch	Batch_mode
 end
 
 
-    function [hprint,save_tag]=image_PSD
+    function [hprint,save_tag]=image_PSD(twin1,twin2)
         
         if isempty(Tabs_all)
             hprint=-1;save_tag=-1;
@@ -503,12 +551,12 @@ end
         cmax=cmin+eval(get(handles.edit_dBspread,'string'));
         climm=[cmin cmax];
         caxis(climm);
-        xlim([min(Tabs_all) max(Tabs_all)]);
+        xlim([twin1 twin2]);
         datetick('x',14,'keeplimits')
         sec_avg=params.Nsamps*params.dn/params.Fs;
-        titlestr=(sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f',datestr(min(Tabs_all),30),datestr(max(Tabs_all),30),sec_avg));
+        titlestr=(sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f',datestr(twin1,30),datestr(twin2,30),sec_avg));
         title(titlestr);
-        save_tag=[datestr(min(Tabs_all),30) '_' datestr(max(Tabs_all),30)];
+        save_tag=[datestr(twin1,30) '_' datestr(twin2,30)];
     end
 end
 
