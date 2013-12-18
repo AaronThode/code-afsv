@@ -1839,6 +1839,9 @@ else
     chcc=get(0,'child');
     Igoodd	=	(chcc-round(chcc)==0);
     chcc=chcc(Igoodd);
+    if isempty(chcc)
+        return
+    end
     for III=1:length(chcc) %#ok<*FORPF>
         tmp{III}=chcc(III);
     end
@@ -1855,7 +1858,7 @@ disp(['Printing %s ...' save_name]);
 
 orient landscape
 print(figchc,'-djpeg',save_path);
-print(figchc,'-dtiff',save_path);
+%print(figchc,'-dtiff',save_path);
 
 %print('-depsc',save_path);
 
@@ -4263,7 +4266,11 @@ handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String')
 
 if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New Fig')
     
-    
+    if strcmp(handles.display_view,'Spectrogram')
+        axes(handles.axes1);
+    else
+        figure;
+    end
     if ~(strcmp(handles.filetype,'PSD'))
         [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
         %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
@@ -4278,11 +4285,7 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
         handles.sgram.ovlap	=	ovlap;
         handles.sgram.Fs	=	Fs;
         
-        if strcmp(handles.display_view,'Spectrogram')
-            axes(handles.axes1);
-        else
-            figure;
-        end
+        
         
         %%Add spectral calibration curve, if present
         if isfield(hdr,'calcurv')
@@ -4297,7 +4300,7 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
             imagesc(TT,FF/1000,10*log10(B));%
         end
     else
-        axes(handles.axes1);
+        
         ppsd=10*log10(x);
         imagesc(t,FF/1000,ppsd);
         handles.sgram.T		=	t;
