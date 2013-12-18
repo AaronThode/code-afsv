@@ -174,13 +174,14 @@ function OpenMenuItem_Callback(hObject, eventdata, handles)
 %end
 
 %	List of supported file types + descriptions/names
-File_types	=	{'MT';'WAV';'GSI';'ADI';'DAT';'MDAT';'MAT'};
+File_types	=	{'MT';'WAV';'GSI';'ADI';'DAT';'MDAT';'PSD';'MAT'};
 File_descs	=	{	'MT files';...
     'WAV files';...
     'GSI files';...
     'ADI files';...
     'DAT files';...
     'MDAT files';...
+    'PSD binary files'; ...
     'Simulations'};
 
 %	 Setup menu file extensions
@@ -338,9 +339,9 @@ if isempty(strfind(Batch_mode,'Load'))
         errordlg('Processing cancelled!');
         return;
     end
-
+    
     sec_avg=str2num(Batch_vars.sec_avg);
-
+    
 end
 
 
@@ -424,11 +425,11 @@ switch	Batch_mode
         return
     case 'Load Bulk Processing'
         Batch_vars_bulkload.start_time	=	'file start';	Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
-        Batch_vars_bulkload.end_time	=	'all';    
+        Batch_vars_bulkload.end_time	=	'all';
         Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "all" to import entire folder)';
-        Batch_vars_bulkload.time_window      =   'file';   
+        Batch_vars_bulkload.time_window      =   'file';
         Batch_desc{3} =  'hours to display in a single window; "all" means put in a single file, "file" displays one file per figure';
-       
+        
         Batch_vars_bulkload	=	input_batchparams(Batch_vars_bulkload, Batch_desc, Batch_type);
         if	isempty(Batch_vars_bulkload)
             errordlg('Processing cancelled!');
@@ -442,7 +443,7 @@ switch	Batch_mode
             split_windows=0;
         elseif isnumeric(str2num(Batch_vars_bulkload.time_window))
             val=str2num(Batch_vars_bulkload.time_window);
-            plot_interval=datenum(0,0,0,val,0,0); 
+            plot_interval=datenum(0,0,0,val,0,0);
             
             %Set tick date format
             if val<=1  %less than an hour
@@ -453,11 +454,11 @@ switch	Batch_mode
                 date_tick_chc=6;
             end
         end
-       
+        
         %Load bulk run time and file data
         [tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
-      
-     
+        
+        
         %Start processing
         tabs_loop_begin=tabs_start;
         PSD_all=[];Tabs_all=[];
@@ -476,14 +477,14 @@ switch	Batch_mode
             end
             
             if split_windows
-               [hprint(Iplot),save_tag{Iplot}]=image_PSD(min(Tabs_all), max(Tabs_all)); 
-               PSD_all=[];Tabs_all=[];
-               Iplot=Iplot+1;
+                [hprint(Iplot),save_tag{Iplot}]=image_PSD(min(Tabs_all), max(Tabs_all));
+                PSD_all=[];Tabs_all=[];
+                Iplot=Iplot+1;
             end
         end  %Icurrent_file
         
         if ~split_windows
-           [hprint(1),save_tag{1}]=image_PSD(min(Tabs_all), max(Tabs_all)); 
+            [hprint(1),save_tag{1}]=image_PSD(min(Tabs_all), max(Tabs_all));
         end
         
         yess=menu('Save PSD Data and figure?','Yes','No');
@@ -492,7 +493,7 @@ switch	Batch_mode
             Nfigs=sort(get(0,'Child'));
             Nfigs=Nfigs(Nfigs<150);
             sec_avg=params.Nsamps*params.dn/params.Fs;
-        
+            
             for II=1:length(Nfigs)
                 
                 
@@ -508,7 +509,7 @@ switch	Batch_mode
                 Tabs_limm=get(gca,'xlim');
                 Tabs_frame=unique([Tabs_limm(1):plot_interval:Tabs_limm(2) Tabs_limm(2)]);
                 
-               
+                
                 for JJ=1:(length(Tabs_frame)-1)
                     xlim([Tabs_frame(JJ) Tabs_frame(JJ+1)]);
                     datetick('x',date_tick_chc,'keeplimits');
@@ -517,7 +518,7 @@ switch	Batch_mode
                         datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
                     title(titlestr);
                     print(hprint(II),'-djpeg',save_str);
-                
+                    
                 end
                 
             end
@@ -686,9 +687,9 @@ switch	Batch_mode
     case 'Load Bulk Processing'
         
         
-        Batch_vars_bulkload.start_time	=	'file start';	
+        Batch_vars_bulkload.start_time	=	'file start';
         Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
-        Batch_vars_bulkload.end_time	=	'all';    
+        Batch_vars_bulkload.end_time	=	'all';
         Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "all" to import entire folder)';
         
         
@@ -708,7 +709,7 @@ switch	Batch_mode
         
         % Load bulk run information
         [tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
-       
+        
         
         %%Translate duty cycle...
         if duty_cycle_chc
@@ -829,7 +830,7 @@ end
 end
 
 function [tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles,Batch_vars_bulkload)
- %Note that a file does not have to be loaded for this to work...
+%Note that a file does not have to be loaded for this to work...
 dialog_title	=	'Select Bulk file to load: Note that I am looking in current directory, not data directory';
 if isfield(handles,'myfile')
     [~,token,extt] = fileparts(handles.myfile);
@@ -883,8 +884,8 @@ switch lower(Batch_vars_bulkload.start_time)
                 errordlg('Can''t process start_time','Bulk Processing Menu Error');
                 return;
             end
-           
-       
+            
+            
         end
 end
 
@@ -919,7 +920,7 @@ switch lower(Batch_vars_bulkload.end_time)
             tabs_end=tabs_start+datenum(0,0,0,str2num(Batch_vars_bulkload.end_time),0,0);
         end
 end
-       
+
 
 end
 
@@ -1203,27 +1204,29 @@ function edit_winlen_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of edit_winlen as text
 %        str2double(get(hObject,'String')) returns contents of edit_winlen as a double
 tlen	=	str2double(get(hObject,'String'));
-tlen_max=	5*60;
-
-if tlen > tlen_max
-    %	Make sure user actually intended to set a window this long
-    tlen_opts{1}	=	['Given, ' num2str(tlen) 's'];
-    tlen_opts{2}	=	['Suggested, ' num2str(tlen_max) 's'];
-    tlen_opts{3}	=	['Original, ' num2str(handles.tlen) 's'];
-    choice	=	questdlg('Are you sure you want to use a window size this big? Select...', ...
-        'Window length sanity check', ...
-        tlen_opts{1}, tlen_opts{2}, tlen_opts{3},...
-        tlen_opts{3});
-    % Handle response
-    switch choice
-        case tlen_opts{1}
-            %tlen	=	tlen;
-        case tlen_opts{2}
-            tlen	=	tlen_max;
-        case tlen_opts{3}
-            tlen	=	handles.tlen;
+if ~(strcmpi(handles.filetype,'psd'))
+    tlen_max=	5*60;
+    
+    if tlen > tlen_max
+        %	Make sure user actually intended to set a window this long
+        tlen_opts{1}	=	['Given, ' num2str(tlen) 's'];
+        tlen_opts{2}	=	['Suggested, ' num2str(tlen_max) 's'];
+        tlen_opts{3}	=	['Original, ' num2str(handles.tlen) 's'];
+        choice	=	questdlg('Are you sure you want to use a window size this big? Select...', ...
+            'Window length sanity check', ...
+            tlen_opts{1}, tlen_opts{2}, tlen_opts{3},...
+            tlen_opts{3});
+        % Handle response
+        switch choice
+            case tlen_opts{1}
+                %tlen	=	tlen;
+            case tlen_opts{2}
+                tlen	=	tlen_max;
+            case tlen_opts{3}
+                tlen	=	handles.tlen;
+        end
     end
-end
+end  %not PSD
 
 set(hObject, 'String', num2str(tlen));
 handles.tlen	=	tlen;
@@ -1824,7 +1827,7 @@ if strcmpi(handles.filetype,'MDAT')
         
         return
     end
-end
+end  %MDAT
 
 handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
 
@@ -4203,70 +4206,106 @@ catch
     return
 end
 
-if isempty(x)
-    errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge');
-    return
-end
-if max(t)<tlen
-    tlen	=	max(t);
-    handles.tlen	=	max(t);
-    set(handles.edit_winlen,'String',num2str(tlen));
-end
+%%Imagesc PSD file
 
-if size(x,2)>1
-    x=x';
-end
-
-Fs=round(Fs);
-
-mymaxfreq=str2double(get(handles.edit_maxfreq,'String'));
-
-if mymaxfreq==0||mymaxfreq>Fs/2
-    handles.filter.f_max	=	Fs/2;
-    set(handles.edit_maxfreq,'String',num2str(Fs/2));
-end
-%disp(sprintf('Fs=%i',Fs));
-contents=get(handles.popupmenu_Nfft,'String');
-Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
-
-contents=get(handles.popupmenu_ovlap,'String');
-ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
-ovlap=min([1-1/Nfft ovlap]);
+if strcmpi(handles.filetype,'psd')
+    FF=(0:hdr.Nmax)*hdr.Fs/hdr.Nfft;
+    set(handles.edit_maxfreq,'String',num2str(hdr.Fs/2));
+    set(handles.edit_fmax,'String',num2str(hdr.Fs/2000));
+    
+    contents=get(handles.popupmenu_Nfft,'String');
+    Value=find(strcmp(contents,int2str(hdr.Nfft))>0);
+    set(handles.popupmenu_Nfft,'Value',Value);
+    
+    ovlap=100*(1-hdr.dn/hdr.Nfft);
+    contents=get(handles.popupmenu_ovlap,'String');
+    Value=find(strcmp(contents,int2str(ovlap))>0);
+    set(handles.popupmenu_ovlap,'Value',Value);
+    
+    set(handles.edit_chan,'String','1');
+    
+else
+    
+    if isempty(x)
+        errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge');
+        return
+    end
+    if max(t)<tlen
+        tlen	=	max(t);
+        handles.tlen	=	max(t);
+        set(handles.edit_winlen,'String',num2str(tlen));
+    end
+    
+    if size(x,2)>1
+        x=x';
+    end
+    
+    Fs=round(Fs);
+    
+    mymaxfreq=str2double(get(handles.edit_maxfreq,'String'));
+    
+    if mymaxfreq==0||mymaxfreq>Fs/2
+        handles.filter.f_max	=	Fs/2;
+        set(handles.edit_maxfreq,'String',num2str(Fs/2));
+    end
+    %disp(sprintf('Fs=%i',Fs));
+    contents=get(handles.popupmenu_Nfft,'String');
+    Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
+    
+    contents=get(handles.popupmenu_ovlap,'String');
+    ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
+    ovlap=min([1-1/Nfft ovlap]);
+    
+    
+end  %if PSD
 
 handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
 
 if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New Fig')
-    %[B,FF,TT]=specgram(x(:,1),Nfft,Fs,hanning(Nfft),round(ovlap*Nfft));
-    [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
-    %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
-    %     For real signals, variable 'B'
-    %     returns the one-sided modified periodogram estimate of the PSD of each
-    %     segment; for complex signals and in the case when a vector of
-    %     frequencies is specified, it returns the two-sided PSD.
-    handles.sgram.T		=	TT;
-    handles.sgram.F		=	FF;
-    handles.sgram.B		=	B;
-    handles.sgram.Nfft	=	Nfft;
-    handles.sgram.ovlap	=	ovlap;
-    handles.sgram.Fs	=	Fs;
     
-    if strcmp(handles.display_view,'Spectrogram')
+    
+    if ~(strcmp(handles.filetype,'PSD'))
+        [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
+        %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
+        %     For real signals, variable 'B'
+        %     returns the one-sided modified periodogram estimate of the PSD of each
+        %     segment; for complex signals and in the case when a vector of
+        %     frequencies is specified, it returns the two-sided PSD.
+        handles.sgram.T		=	TT;
+        handles.sgram.F		=	FF;
+        handles.sgram.B		=	B;
+        handles.sgram.Nfft	=	Nfft;
+        handles.sgram.ovlap	=	ovlap;
+        handles.sgram.Fs	=	Fs;
+        
+        if strcmp(handles.display_view,'Spectrogram')
+            axes(handles.axes1);
+        else
+            figure;
+        end
+        
+        %%Add spectral calibration curve, if present
+        if isfield(hdr,'calcurv')
+            Xp_cal_fin=polyval(hdr.calcurv,FF/Fs);
+            
+            imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
+            %elseif isfield(hdr,'cable_factor')
+            %    Xp_cal_fin=20*log10(1+hdr.cable_factor*FF);  %Unit resistance 140 ohm, capacitance 110 nF
+            %    imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
+        else
+            
+            imagesc(TT,FF/1000,10*log10(B));%
+        end
+    else
         axes(handles.axes1);
-    else
-        figure;
-    end
-    
-    %%Add spectral calibration curve, if present
-    if isfield(hdr,'calcurv')
-        Xp_cal_fin=polyval(hdr.calcurv,FF/Fs);
-        
-        imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
-        %elseif isfield(hdr,'cable_factor')
-        %    Xp_cal_fin=20*log10(1+hdr.cable_factor*FF);  %Unit resistance 140 ohm, capacitance 110 nF
-        %    imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
-    else
-        
-        imagesc(TT,FF/1000,10*log10(B));%
+        ppsd=10*log10(x);
+        imagesc(t,FF/1000,ppsd);
+        handles.sgram.T		=	t;
+        handles.sgram.F		=	FF;
+        handles.sgram.B		=	ppsd;
+        handles.sgram.Nfft	=	hdr.Nfft;
+        handles.sgram.ovlap	=	ovlap;
+        handles.sgram.Fs	=	Fs;
     end
     grid on
     axis('xy')
@@ -4412,8 +4451,27 @@ else
     set(handles.pushbutton_CSDM,'vis','off');
     set(handles.pushbutton_Mode,'vis','off');
     set(handles.pushbutton_modalfiltering,'vis','off');
+    set(handles.pushbutton_tilt,'vis','off');
+    
 end
 
+if strcmpi(handles.filetype,'psd')
+    set(handles.pushbutton_binary,'vis','off');
+    set(handles.pushbutton_pausesound,'vis','off');
+    set(handles.pushbutton_playsound,'vis','off');
+    set(handles.pushbutton_save,'vis','off');
+    set(handles.radiobutton_correlogram,'vis','off');
+    set(handles.radiobutton_timeseries,'vis','off');
+    
+else
+    set(handles.pushbutton_binary,'vis','on');
+    set(handles.pushbutton_pausesound,'vis','on');
+    set(handles.pushbutton_playsound,'vis','on');
+    set(handles.pushbutton_save,'vis','on');
+    set(handles.radiobutton_correlogram,'vis','on');
+    set(handles.radiobutton_timeseries,'vis','on');
+    
+end
 end
 
 function [handles,errorflag]	=	set_slider_controls(handles,filetype)
@@ -4575,6 +4633,8 @@ end
 
 function [x,t,Fs,tmin,tmax,head]	=	...
     load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)
+%%% tmin,tmax, t are datenumbers
+
 persistent  keyword
 mydir=handles.mydir;
 myfile=handles.myfile;
@@ -4586,10 +4646,23 @@ tmin=[];
 tmax=[];
 head=[];
 filetype	=	upper(filetype);
+
 switch filetype
+    case 'PSD'
+        [x,F,t,Tabs,params]=read_Java_PSD(fullfile(mydir,myfile),tdate_start,tlen);
+        if ~isempty(t)
+            Fs=1./(t(2)-t(1));
+            t=t-t(1);
+        else
+            Fs=1;
+        end
+        head=params;
+        
+        tmin=head.tstart_file;
+        tmax=head.tend_file;
     case 'MAT'
         
-        simulated=load([mydir '/' myfile]);
+        simulated=load(fullfile(mydir,myfile));
         Fs=simulated.fs;
         
         x=simulated.x_sweep';
