@@ -959,7 +959,7 @@ switch	Batch_mode
         %            permitting a long "start up" time for the equalization.
         
         
-        burn_in_time=0; %minutes
+        burn_in_time=1; %minutes
         
         param=load_energy_parameters;
         if isempty(param)

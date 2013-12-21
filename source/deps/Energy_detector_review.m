@@ -171,7 +171,10 @@ for J=1:length(hfigs)
         fpeak=data_all.features(5,I)/fscale;
         tpeak=data_all.features(6,I)/param.Fs;  %duration of peak frequency bin
         ctime_peak=data_all.features(8,I);
-        ttstart=data_all.nstart(I)/param.Fs;  %Start time of peak detection in seconds
+        %Start time of peak detection in seconds.
+            %For AFSV window, subtract the burn in time (represented by
+            %tview(1).
+        ttstart=(data_all.nstart(I)/param.Fs)-(2-J)*tview(1);  
         tduration=data_all.npt(I)/param.Fs;  %duration across all bands
         
         %Vertical line of frequency extent
