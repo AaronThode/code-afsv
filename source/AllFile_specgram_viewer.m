@@ -926,7 +926,6 @@ end
 
 % --------------------------------------------------------------------
 function MenuItem_eventdet_Callback(hObject, eventdata, handles)
-% hObject    handle to MenuItem_eventdet (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
@@ -938,29 +937,150 @@ if	isempty(Batch_mode)
     return;
 end
 
-Batch_vars.A	=	'Aa';	Batch_desc{1}	=	'1st var desc';
-Batch_vars.B	=	'Bb';	Batch_desc{2}	=	'2nd var desc';
-Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
-Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
-Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
-
-Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
-
-if	isempty(Batch_vars)
-    errordlg('Processing cancelled!');
-    return;
-end
-
 switch	Batch_mode
     case 'Process Visible Window'
-        h	=	msgbox(['Processing all data within window for ' Batch_type]);
-    case 'Start Bulk Processing File'
-        h	=	msgbox(['Processing all data in whole file for ' Batch_type]);
-    case 'Start Bulk Processing Folder'
-        h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
+        %%%%%%%%Energy_detector_review.m%%%%%%%%%%%%%%%
+        %function Energy_detector_review(param,fname,tstart,twant,tlen,tview)
+        %
+        %  Aaron Thode
+        %  December 9. 2008
+        %  Run a short segment of time through Energy detector for insight and
+        %  adjustment.
+        %
+        %  Input:
+        %       param: structure of parameters for energy detector; must contain
+        %           field param.energy.
+        %       fname: complete pathname to raw data file
+        %       tstart: datenumber of start time of file
+        %       twant:  datenumber of desired start time energy detector processing
+        %       tlen:   number of seconds to process
+        %       tview: two element vector giving bounds for viewing output (sec)
+        %            This permits viewing of a short transient window while
+        %            permitting a long "start up" time for the equalization.
+        
+        
+        burn_in_time=0; %minutes
+        
+        param=load_energy_parameters;
+        if isempty(param)
+            return
+        end
+        param.energy=param;
+        
+            
+        %tel=datevec(datenum(param.nstart)-datenum(handles.tdate_min));
+        %sec=tel(:,6)+60*tel(:,5)+3600*tel(:,4)+24*3600*tel(:,3);
+        tlen=(param.nsamples);
+        tstart=datenum(param.energy.nstart);
+        %param.nstart=round(param.Fs*sec);
+        
+        climm=str2num(get(handles.edit_mindB,'String'))+[0 str2num(get(handles.edit_dBspread,'String'))];
+
+        data_all=Energy_detector_review(param,fullfile(handles.mydir,handles.myfile),  ...
+            handles.tdate_min,tstart,tlen,climm,handles.axes1,[60*burn_in_time tlen]);
+        
+            
+
+    case {'Start Bulk Processing File','Start Bulk Processing Folder'}
+        
+        param=load_energy_parameters;
+        
+        if isempty(param)
+            return
+        end
+        
+        script_name=writeEnergyDetectorCshell(param);
+        pause(1);
+        eval(sprintf('!./%s > outt_click.txt &',script_name));
+        pause(1);
+        
+        return
+    case 'Load Bulk Processing'
+        
+        
+       disp('Wait for it...')
+        
     otherwise
         error('Batch mode not recognized');
 end
+
+function param=load_energy_parameters
+        K=1;
+        if strcmp(Batch_mode,'Start Bulk Processing File')
+            h	=	msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
+            param.exten=['*' handles.myfile];
+        else
+            h	=	msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type));
+            
+            param.exten=['*' handles.myext];
+        end
+        param_desc{K}='Filename or file extension to process';K=K+1;
+        
+        param.dir_out='.';              param_desc{K}='Output directory';K=K+1;
+        param.file_dir=handles.mydir;   param_desc{K}='Directory containing files';K=K+1;
+        contents=get(handles.popupmenu_Nfft,'String');
+        param.Nfft=(contents{get(handles.popupmenu_Nfft,'Value')});param_desc{K}='FFT size';K=K+1;
+        
+        contents=get(handles.popupmenu_ovlap,'String');
+        param.ovlap=(contents{get(handles.popupmenu_ovlap,'Value')});
+        param_desc{K}='percent overlap';K=K+1;
+        
+        try
+            param.Fs=num2str(handles.sgram.Fs);param_desc{K}='Sampling rate (will be overidden for most files)';K=K+1;
+        catch
+            h	=	msgbox(sprintf('Need to load spectrogram first'));
+            return
+        end
+        param.channel=(get(handles.edit_chan,'String'));param_desc{K}='Data channel (starting from 1):';K=K+1;
+        param.dumpsize='100000';param_desc{K}='JAVA dump size (points):';K=K+1;
+        
+        if strcmp(Batch_mode,'Start Bulk Processing File')
+            param.nstart='0';param_desc{K}='number of samples to skip before processing:';K=K+1;
+            param.nsamples='0';param_desc{K}='number of samples to process:';K=K+1;
+        else
+            test_time=datenum(get(handles.edit_datestr,'String'))-datenum(0,0,0,0,burn_in_time,0);
+            if test_time<handles.tdate_min
+                h	=	msgbox(sprintf('You need to start at least one minute into file to allow processor to burn in'));
+                return
+            end
+            param.nstart=datestr(test_time);param_desc{K}='Time to begin processing:';K=K+1;
+            param.nsamples=num2str(str2num(get(handles.edit_winlen,'String'))+60*burn_in_time);param_desc{K}='seconds to process:';K=K+1;
+                
+        end
+        param.f_low=(get(handles.edit_fmin,'String'));param_desc{K}='minimum frequency (kHz)';K=K+1;
+        param.f_high=(get(handles.edit_fmax,'String'));param_desc{K}='maximum frequency (kHz)';K=K+1;
+        %param.bandwidth=param.f_high-param.f_low;
+        
+         
+        param.eq_time='10';   param_desc{K}='Equalization time (s): should be roughly twice the duration of signal of interest';K=K+1;
+        param.bandwidth='.05';     param_desc{K}='Bandwidth of detector in kHz';K=K+1;
+        param.threshold='10';  param_desc{K}='threshold in dB to accept a detection';K=K+1;
+        param.snips_chc='1';  param_desc{K}='0 for no snips file, 1 for snips file of one channel, 2 for snips file of all channels';K=K+1;
+        param.bufferTime='0.5'; param_desc{K}='buffer Time in seconds to store before and after each detection snip, -1 suppress snips file';K=K+1;
+        param.TolTime='1e-4';  param_desc{K}='Minimum time in seconds that must elapse for two detections to be listed as separate';K=K+1;
+        param.MinTime='0';     param_desc{K}='Minimum time in seconds a required for a detection to be logged';K=K+1;
+        param.MaxTime='3';     param_desc{K}= 'Maximum time in seconds a detection is permitted to have';K=K+1;
+        param.debug='0';       param_desc{K}= '0: do not write out debug information. 1:  SEL output.  2:  equalized background noise. 3: SNR.';K=K+1;
+        
+        param= 	input_batchparams(param, param_desc, Batch_type);
+        if isempty(param)
+             h	=	msgbox(sprintf('Energy Detector aborted','replace'));
+            return
+        end
+        fields=fieldnames(param);
+        for II=1:length(fields)
+           tmp=str2num(param.(fields{II}));
+           if ~isempty(tmp)
+               param.(fields{II})=tmp;
+           end
+        end
+        param.f_low=param.f_low*1000;
+        param.f_high=param.f_high*1000;
+        param.bandwidth=1000*param.bandwidth;
+        %param.bandwidth=round(2*(param.f_high-param.f_low)/(1+param.Nbands));  %50% overlap between bands
+        param.ovlap=round(param.ovlap*param.Nfft/100);
+        
+        end
 end
 
 % --------------------------------------------------------------------
@@ -1839,6 +1959,9 @@ else
     chcc=get(0,'child');
     Igoodd	=	(chcc-round(chcc)==0);
     chcc=chcc(Igoodd);
+    if isempty(chcc)
+        return
+    end
     for III=1:length(chcc) %#ok<*FORPF>
         tmp{III}=chcc(III);
     end
@@ -1855,7 +1978,7 @@ disp(['Printing %s ...' save_name]);
 
 orient landscape
 print(figchc,'-djpeg',save_path);
-print(figchc,'-dtiff',save_path);
+%print(figchc,'-dtiff',save_path);
 
 %print('-depsc',save_path);
 
@@ -4263,7 +4386,11 @@ handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String')
 
 if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New Fig')
     
-    
+    if strcmp(handles.display_view,'Spectrogram')
+        axes(handles.axes1);
+    else
+        figure;
+    end
     if ~(strcmp(handles.filetype,'PSD'))
         [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
         %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
@@ -4278,11 +4405,7 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
         handles.sgram.ovlap	=	ovlap;
         handles.sgram.Fs	=	Fs;
         
-        if strcmp(handles.display_view,'Spectrogram')
-            axes(handles.axes1);
-        else
-            figure;
-        end
+        
         
         %%Add spectral calibration curve, if present
         if isfield(hdr,'calcurv')
@@ -4297,7 +4420,7 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
             imagesc(TT,FF/1000,10*log10(B));%
         end
     else
-        axes(handles.axes1);
+        
         ppsd=10*log10(x);
         imagesc(t,FF/1000,ppsd);
         handles.sgram.T		=	t;
@@ -7131,7 +7254,7 @@ else
                 if rem(JJ,500) == 0
                     waitbar(JJ/length(auto.ctime),hh);
                 end
-                LSfile.Data.Events(JJ)			=	Template;
+                LSfile.Data.Events(JJ)			=	LSfile.Data.Template;
                 LSfile.Data.Events(JJ).start_time=	datenum(1970,1,1,0,0,auto.ctime(JJ));
                 LSfile.Data.Events(JJ).author	=	'JAVA Energy Processor';
                 LSfile.Data.Events(JJ).duration	=	num2str(auto.features(end,JJ));
