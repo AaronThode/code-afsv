@@ -958,26 +958,28 @@ switch	Batch_mode
         %            This permits viewing of a short transient window while
         %            permitting a long "start up" time for the equalization.
         
-        %%Load parameters
-        %path(path,'../CommonScripts.dir');
-        %path(path,'../EvaluateLongRuns.dir');
+        
+        burn_in_time=0; %minutes
+        
         param=load_energy_parameters;
         if isempty(param)
             return
         end
         param.energy=param;
         
-        tel=datevec(datenum(get(handles.edit_datestr,'String'))-datenum(handles.tdate_min));
-        sec=tel(:,6)+60*tel(:,5)+3600*tel(:,4)+24*3600*tel(:,3);
-        tlen=str2num(get(handles.edit_winlen,'String'));
-        
-        param.nstart=round(param.Fs*sec);
+            
+        %tel=datevec(datenum(param.nstart)-datenum(handles.tdate_min));
+        %sec=tel(:,6)+60*tel(:,5)+3600*tel(:,4)+24*3600*tel(:,3);
+        tlen=(param.nsamples);
+        tstart=datenum(param.energy.nstart);
+        %param.nstart=round(param.Fs*sec);
         
         climm=str2num(get(handles.edit_mindB,'String'))+[0 str2num(get(handles.edit_dBspread,'String'))];
 
         data_all=Energy_detector_review(param,fullfile(handles.mydir,handles.myfile),  ...
-            handles.tdate_min,datenum(get(handles.edit_datestr,'String')),tlen,climm);
+            handles.tdate_min,tstart,tlen,climm,handles.axes1,[60*burn_in_time tlen]);
         
+            
 
     case {'Start Bulk Processing File','Start Bulk Processing Folder'}
         
@@ -1031,23 +1033,33 @@ function param=load_energy_parameters
         end
         param.channel=(get(handles.edit_chan,'String'));param_desc{K}='Data channel (starting from 1):';K=K+1;
         param.dumpsize='100000';param_desc{K}='JAVA dump size (points):';K=K+1;
-        param.nstart='0';param_desc{K}='number of samples to skip before processing:';K=K+1;
-        param.nsamples='0';param_desc{K}='number of samples to process:';K=K+1;
+        
+        if strcmp(Batch_mode,'Start Bulk Processing File')
+            param.nstart='0';param_desc{K}='number of samples to skip before processing:';K=K+1;
+            param.nsamples='0';param_desc{K}='number of samples to process:';K=K+1;
+        else
+            test_time=datenum(get(handles.edit_datestr,'String'))-datenum(0,0,0,0,burn_in_time,0);
+            if test_time<handles.tdate_min
+                h	=	msgbox(sprintf('You need to start at least one minute into file to allow processor to burn in'));
+                return
+            end
+            param.nstart=datestr(test_time);param_desc{K}='Time to begin processing:';K=K+1;
+            param.nsamples=num2str(str2num(get(handles.edit_winlen,'String'))+60*burn_in_time);param_desc{K}='seconds to process:';K=K+1;
+                
+        end
         param.f_low=(get(handles.edit_fmin,'String'));param_desc{K}='minimum frequency (kHz)';K=K+1;
         param.f_high=(get(handles.edit_fmax,'String'));param_desc{K}='maximum frequency (kHz)';K=K+1;
         %param.bandwidth=param.f_high-param.f_low;
         
          
-        param.eq_time='15';   param_desc{K}='Equalization time (s): should be roughly twice the duration of signal of interest';K=K+1;
-        param.bandwidth='0.050';     param_desc{K}='Bandwidth of detector in Hz';K=K+1;
-        param.threshold='5';  param_desc{K}='threshold in dB to accept a detection';K=K+1;
+        param.eq_time='10';   param_desc{K}='Equalization time (s): should be roughly twice the duration of signal of interest';K=K+1;
+        param.bandwidth='.05';     param_desc{K}='Bandwidth of detector in kHz';K=K+1;
+        param.threshold='10';  param_desc{K}='threshold in dB to accept a detection';K=K+1;
         param.snips_chc='1';  param_desc{K}='0 for no snips file, 1 for snips file of one channel, 2 for snips file of all channels';K=K+1;
-        
-        param.bufferTime='-1'; param_desc{K}='buffer Time in seconds to store before and after each detection snip, -1 suppress snips file';K=K+1;
-        
+        param.bufferTime='0.5'; param_desc{K}='buffer Time in seconds to store before and after each detection snip, -1 suppress snips file';K=K+1;
         param.TolTime='1e-4';  param_desc{K}='Minimum time in seconds that must elapse for two detections to be listed as separate';K=K+1;
         param.MinTime='0';     param_desc{K}='Minimum time in seconds a required for a detection to be logged';K=K+1;
-        param.MaxTime='1';     param_desc{K}= 'Maximum time in seconds a detection is permitted to have';K=K+1;
+        param.MaxTime='3';     param_desc{K}= 'Maximum time in seconds a detection is permitted to have';K=K+1;
         param.debug='0';       param_desc{K}= '0: do not write out debug information. 1:  SEL output.  2:  equalized background noise. 3: SNR.';K=K+1;
         
         param= 	input_batchparams(param, param_desc, Batch_type);

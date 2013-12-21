@@ -1,5 +1,5 @@
 %%%%%%%%Energy_detector_review.m%%%%%%%%%%%%%%%
-%function Energy_detector_review(param,fname,tstart,twant,tlen,climm,tview)
+%function Energy_detector_review(param,fname,tstart,twant,tlen,climm,hfigs, tview)
 %
 %  Aaron Thode
 %  December 9. 2008
@@ -13,6 +13,8 @@
 %       tstart: datenumber of start time of file
 %       twant:  datenumber of desired start time energy detector processing
 %       tlen:   number of seconds to process
+%       climm:  intensity bounds for images
+%       hfig:  handles to axes to plot final detections on
 %       tview: two element vector giving bounds for viewing output (sec)
 %            This permits viewing of a short transient window while
 %            permitting a long "start up" time for the equalization.
@@ -21,7 +23,7 @@
 %path(path,'../CommonScripts.dir');
 %path(path,'../EvaluateLongRuns.dir');
 
-function data_all=Energy_detector_review(param,fname,tstart,twant,tlen,climm,tview)
+function data_all=Energy_detector_review(param,fname,tstart,twant,tlen,climm,hfigs,tview)
 %function data_all=Energy_detector_review(param,fname,tfs,twant,tsec,tview)
 !rm *.sel *detsum *snips *.txt
 
@@ -41,6 +43,10 @@ mydir=pwd;
 if ~exist('climm')
     climm=[80 100];
 end
+if ~exist('hfigs')
+    hfigs=[];
+end
+    
 if ~exist('tview')
     xlimm=[0 tlen];
 else
@@ -59,7 +65,7 @@ param.energy.nstart=floor(param.Fs*tmp);
 param.energy.nsamples=floor(tlen*param.Fs);
 
 
-param.energy=alter_parameters(param.energy);
+%param.energy=alter_parameters(param.energy);
 %%Write energy detector scripts
 if ~isempty(findstr(lower(computer),'mac')),
     slashstr='/';
@@ -71,7 +77,9 @@ Islash=max(findstr(fname,slashstr));
 param.energy.exten=fname((Islash+1):end);
 param.energy.file_dir=fname(1:(Islash-1));
 
-figure
+hh=figure;
+hfigs=[hfigs hh];
+
 for J=1:3
     param.energy.debug=J;  %Equalized SNR
     
@@ -112,7 +120,8 @@ for J=1:3
     ylim([0 param.energy.f_high])
     switch(J)
         case 1
-            title(sprintf('%s, Raw SEL (dB re 1 uPa^2-s) measured over %6.2f Hz segments, starting at %s',fname, param.energy.bandwidth,datestr(Tabs{1}(1))));
+            title(sprintf('%s, Raw SEL (dB re 1 uPa^2-s) measured over %6.2f Hz segments, starting at %s', ...
+                fname, param.energy.bandwidth,datestr(Tabs{1}(1))));
             caxis(climm);colorbar('EastOutside');
         case 2
             title(sprintf('Equalized background estimate (dB re 1 uPa^2-s), equalization timescale=%6.2f s',param.energy.eq_time));
@@ -130,7 +139,7 @@ cd(param.energy.dir_out)
 detsum=dir([ '*detsum']);
 [data_all,head]=readEnergySummary(detsum.name, Inf);
 
-cd(mydir);
+%cd(mydir);
 tmin=datestr(datenum(1970,1,1,0,0,data_all.ctime(1)));
 tmax=datestr(datenum(1970,1,1,0,0,data_all.ctime(end)));
 fprintf('Start time: %s End time:%s\n',datestr(tmin),datestr(tmax));
@@ -145,34 +154,47 @@ fprintf('Start time: %s End time:%s\n',datestr(tmin),datestr(tmax));
 %     'peak'
 %     'ctime_peak'
 %     'total_duration'
-for I=1:length(data_all.nstart),
-    fmin=data_all.features(1,I);
-    tmin=data_all.features(2,I)/param.Fs; %duration of minimum frequency bin
-    fmax=data_all.features(3,I);
-    tmax=data_all.features(4,I)/param.Fs;  %duration of maximum frequency bin
-    fpeak=data_all.features(5,I);
-    tpeak=data_all.features(6,I)/param.Fs;  %duration of peak frequency bin
-    ctime_peak=data_all.features(8,I);
-    tstart=data_all.nstart(I)/param.Fs;  %Start time of peak detection
-    tduration=data_all.npt(I)/param.Fs;  %duration across all bands
-    
-    %Vertical line of frequency extent
-    hold on; hh=line([1 1]*data_all.nstart(I)/param.Fs,[fmin fmax]); set(hh,'Color','w','linewidth',3);
-    
-    %hh=line([0 data_all.npt(I)/param.Fs]+data_all.nstart(I)/param.Fs,0.5*(fmin+fmax)*[1 1]); set(hh,'Color',[1 1 1],'linewidth',3);
-    
-    hh=line([0 tmin]+tstart,[fmin-5 fmin-5]); set(hh,'Color','g','linewidth',3);  %Min frequency
-    hh=line([0 tmax]+tstart,[fmax+5 fmax+5]); set(hh,'Color','g','linewidth',3);   %Max frequency band
-    %hh=line([0 tpeak]+tstart,[fpeak fpeak]); set(hh,'Color','r','linewidth',3);  %Peak frequency
-    hh=line([0 tduration]+tstart,[fpeak fpeak],'color','k','linewidth',5,'linestyle','-');
-    plot(tstart+(ctime_peak-data_all.ctime(I)),fpeak,'rs','linewidth',3);
-    
+
+for J=1:length(hfigs)
+    if length(hfigs)==2&&J==1
+        axes(hfigs(1));
+        fscale=1000;
+    else
+        figure(hfigs(J));
+        fscale=1;
+    end
+    for I=1:length(data_all.nstart)
+        fmin=data_all.features(1,I)/fscale;
+        tmin=data_all.features(2,I)/param.Fs; %duration of minimum frequency bin
+        fmax=data_all.features(3,I)/fscale;
+        tmax=data_all.features(4,I)/param.Fs;  %duration of maximum frequency bin
+        fpeak=data_all.features(5,I)/fscale;
+        tpeak=data_all.features(6,I)/param.Fs;  %duration of peak frequency bin
+        ctime_peak=data_all.features(8,I);
+        ttstart=data_all.nstart(I)/param.Fs;  %Start time of peak detection in seconds
+        tduration=data_all.npt(I)/param.Fs;  %duration across all bands
+        
+        %Vertical line of frequency extent
+        
+        
+        hold on; hh=line([1 1]*ttstart,[fmin fmax]); set(hh,'Color','w','linewidth',3);
+        
+        %hh=line([0 data_all.npt(I)/param.Fs]+data_all.nstart(I)/param.Fs,0.5*(fmin+fmax)*[1 1]); set(hh,'Color',[1 1 1],'linewidth',3);
+        
+        hh=line([0 tmin]+ttstart,[fmin-5/fscale fmin-5/fscale]); set(hh,'Color','g','linewidth',3);  %Min frequency
+        hh=line([0 tmax]+ttstart,[fmax+5/fscale fmax+5/fscale]); set(hh,'Color','g','linewidth',3);   %Max frequency band
+        %hh=line([0 tpeak]+tstart,[fpeak fpeak]); set(hh,'Color','r','linewidth',3);  %Peak frequency
+        hh=line([0 tduration]+ttstart,[fpeak fpeak],'color','k','linewidth',5,'linestyle','-');
+        plot(ttstart+(ctime_peak-data_all.ctime(I)),fpeak,'rs','linewidth',3);
+    end
+    hold off;
 end
 
 disp('Hit return to see alternate view of bottom subplot:')
+
 pause;
 caxis([0 20]);
-cd ..
+
 
 end
 
