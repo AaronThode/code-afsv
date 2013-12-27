@@ -961,13 +961,13 @@ switch	Batch_mode
         
         burn_in_time=1; %minutes
         
-        param=load_energy_parameters;
+        [param,param_desc]=load_energy_parameters;
         if isempty(param)
             return
         end
         param.energy=param;
         
-            
+        
         %tel=datevec(datenum(param.nstart)-datenum(handles.tdate_min));
         %sec=tel(:,6)+60*tel(:,5)+3600*tel(:,4)+24*3600*tel(:,3);
         tlen=(param.nsamples);
@@ -975,13 +975,32 @@ switch	Batch_mode
         %param.nstart=round(param.Fs*sec);
         
         climm=str2num(get(handles.edit_mindB,'String'))+[0 str2num(get(handles.edit_dBspread,'String'))];
-
+        
         data_all=Energy_detector_review(param,fullfile(handles.mydir,handles.myfile),  ...
             handles.tdate_min,tstart,tlen,climm,handles.axes1,[60*burn_in_time tlen]);
         
-            
-
+        %%Return 'param' to a form that can be used by the input_batch
+        %%  function
+        fields=fieldnames(param.energy);
+        param.energy.f_low=param.energy.f_low/1000;
+        param.energy.f_high=param.energy.f_high/1000;
+        param.energy.bandwidth=param.energy.bandwidth/1000;
+        param.energy.ovlap=round(100*param.energy.ovlap/param.Nfft);
+        
+        for II=1:length(fields)
+            tmp=num2str(param.energy.(fields{II}));
+            if ~isempty(tmp)
+                param.energy.(fields{II})=tmp;
+            end
+        end
+        
+        handles.energy_parameters_default=param.energy;
+        handles.energy_parameters_default_desc=param_desc;
+        !rm *sel *scr *snips *detsum out*txt
+        guidata(hObject, handles);
+        
     case {'Start Bulk Processing File','Start Bulk Processing Folder'}
+        
         
         param=load_energy_parameters;
         
@@ -994,93 +1013,152 @@ switch	Batch_mode
         eval(sprintf('!./%s > outt_click.txt &',script_name));
         pause(1);
         
+        handles.energy_parameters_default=param;
+        
+        guidata(hObject, handles);
         return
     case 'Load Bulk Processing'
         
         
-       disp('Wait for it...')
+        disp('Wait for it...')
         
     otherwise
         error('Batch mode not recognized');
 end
 
-function param=load_energy_parameters
-        K=1;
-        if strcmp(Batch_mode,'Start Bulk Processing File')
-            h	=	msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
-            param.exten=['*' handles.myfile];
-        else
-            h	=	msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type));
+    function [param,param_desc]=load_energy_parameters
+        
+        if isfield(handles,'energy_parameters_default')&&~isempty(strfind(Batch_mode,'Bulk'))
+              %%Logic assumes that a normal user has used "Process Visible
+              %%Window and is now starting a bulk run
+            param=handles.energy_parameters_default;
+            param_desc=handles.energy_parameters_default_desc;
+            %param_desc=load_energy_parameter_description;
+            param.nstart='0';
+            param.nsamples='0';
+            if strcmp(Batch_mode,'Start Bulk Processing File')
+                h	=	msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
+                param.exten=['*' handles.myfile];
+                
+            else
+                h	=	msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type));
+                param.exten=['*' handles.myext];
+            end
             
-            param.exten=['*' handles.myext];
-        end
-        param_desc{K}='Filename or file extension to process';K=K+1;
-        
-        param.dir_out='.';              param_desc{K}='Output directory';K=K+1;
-        param.file_dir=handles.mydir;   param_desc{K}='Directory containing files';K=K+1;
-        contents=get(handles.popupmenu_Nfft,'String');
-        param.Nfft=(contents{get(handles.popupmenu_Nfft,'Value')});param_desc{K}='FFT size';K=K+1;
-        
-        contents=get(handles.popupmenu_ovlap,'String');
-        param.ovlap=(contents{get(handles.popupmenu_ovlap,'Value')});
-        param_desc{K}='percent overlap';K=K+1;
-        
-        try
-            param.Fs=num2str(handles.sgram.Fs);param_desc{K}='Sampling rate (will be overidden for most files)';K=K+1;
-        catch
-            h	=	msgbox(sprintf('Need to load spectrogram first'));
-            return
-        end
-        param.channel=(get(handles.edit_chan,'String'));param_desc{K}='Data channel (starting from 1):';K=K+1;
-        param.dumpsize='100000';param_desc{K}='JAVA dump size (points):';K=K+1;
-        
-        if strcmp(Batch_mode,'Start Bulk Processing File')
-            param.nstart='0';param_desc{K}='number of samples to skip before processing:';K=K+1;
-            param.nsamples='0';param_desc{K}='number of samples to process:';K=K+1;
         else
-            test_time=datenum(get(handles.edit_datestr,'String'))-datenum(0,0,0,0,burn_in_time,0);
-            if test_time<handles.tdate_min
-                h	=	msgbox(sprintf('You need to start at least one minute into file to allow processor to burn in'));
+            K=1;
+            if strcmp(Batch_mode,'Start Bulk Processing File')
+                h	=	msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
+                param.exten=['*' handles.myfile];
+            else
+                h	=	msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type));
+                
+                param.exten=['*' handles.myext];
+            end
+            param_desc{K}='Filename or file extension to process';K=K+1;
+            
+            param.dir_out='.';              param_desc{K}='Output directory';K=K+1;
+            param.file_dir=handles.mydir;   param_desc{K}='Directory containing files';K=K+1;
+            contents=get(handles.popupmenu_Nfft,'String');
+            param.Nfft=(contents{get(handles.popupmenu_Nfft,'Value')});param_desc{K}='FFT size';K=K+1;
+            
+            contents=get(handles.popupmenu_ovlap,'String');
+            param.ovlap=(contents{get(handles.popupmenu_ovlap,'Value')});
+            param_desc{K}='percent overlap';K=K+1;
+            
+            try
+                param.Fs=num2str(handles.sgram.Fs);param_desc{K}='Sampling rate (will be overidden for most files)';K=K+1;
+            catch
+                h	=	msgbox(sprintf('Need to load spectrogram first'));
                 return
             end
-            param.nstart=datestr(test_time);param_desc{K}='Time to begin processing:';K=K+1;
-            param.nsamples=num2str(str2num(get(handles.edit_winlen,'String'))+60*burn_in_time);param_desc{K}='seconds to process:';K=K+1;
+            param.channel=(get(handles.edit_chan,'String'));param_desc{K}='Data channel (starting from 1):';K=K+1;
+            param.dumpsize='100000';param_desc{K}='JAVA dump size (points):';K=K+1;
+            
+            if strcmp(Batch_mode,'Start Bulk Processing File')
+                param.nstart='0';param_desc{K}='number of samples to skip before processing:';K=K+1;
+                param.nsamples='0';param_desc{K}='number of samples to process:';K=K+1;
+            else
+                test_time=datenum(get(handles.edit_datestr,'String'))-datenum(0,0,0,0,burn_in_time,0);
+                if test_time<handles.tdate_min
+                    h	=	msgbox(sprintf('You need to start at least one minute into file to allow processor to burn in'));
+                    return
+                end
+                param.nstart=datestr(test_time);param_desc{K}='Time to begin processing:';K=K+1;
+                param.nsamples=num2str(str2num(get(handles.edit_winlen,'String'))+60*burn_in_time);param_desc{K}='seconds to process:';K=K+1;
                 
+            end
+            param.f_low=(get(handles.edit_fmin,'String'));param_desc{K}='minimum frequency (kHz)';K=K+1;
+            param.f_high=(get(handles.edit_fmax,'String'));param_desc{K}='maximum frequency (kHz)';K=K+1;
+            %param.bandwidth=param.f_high-param.f_low;
+            
+            
+            param.eq_time='10';   param_desc{K}='Equalization time (s): should be roughly twice the duration of signal of interest';K=K+1;
+            param.bandwidth='.05';     param_desc{K}='Bandwidth of detector in kHz';K=K+1;
+            param.threshold='10';  param_desc{K}='threshold in dB to accept a detection';K=K+1;
+            param.snips_chc='1';  param_desc{K}='0 for no snips file, 1 for snips file of one channel, 2 for snips file of all channels';K=K+1;
+            param.bufferTime='0.5'; param_desc{K}='buffer Time in seconds to store before and after each detection snip, -1 suppress snips file';K=K+1;
+            param.TolTime='1e-4';  param_desc{K}='Minimum time in seconds that must elapse for two detections to be listed as separate';K=K+1;
+            param.MinTime='0';     param_desc{K}='Minimum time in seconds a required for a detection to be logged';K=K+1;
+            param.MaxTime='3';     param_desc{K}= 'Maximum time in seconds a detection is permitted to have';K=K+1;
+            param.debug='0';       param_desc{K}= '0: do not write out debug information. 1:  SEL output.  2:  equalized background noise. 3: SNR.';K=K+1;
+            
+            
+            
         end
-        param.f_low=(get(handles.edit_fmin,'String'));param_desc{K}='minimum frequency (kHz)';K=K+1;
-        param.f_high=(get(handles.edit_fmax,'String'));param_desc{K}='maximum frequency (kHz)';K=K+1;
-        %param.bandwidth=param.f_high-param.f_low;
         
-         
-        param.eq_time='10';   param_desc{K}='Equalization time (s): should be roughly twice the duration of signal of interest';K=K+1;
-        param.bandwidth='.05';     param_desc{K}='Bandwidth of detector in kHz';K=K+1;
-        param.threshold='10';  param_desc{K}='threshold in dB to accept a detection';K=K+1;
-        param.snips_chc='1';  param_desc{K}='0 for no snips file, 1 for snips file of one channel, 2 for snips file of all channels';K=K+1;
-        param.bufferTime='0.5'; param_desc{K}='buffer Time in seconds to store before and after each detection snip, -1 suppress snips file';K=K+1;
-        param.TolTime='1e-4';  param_desc{K}='Minimum time in seconds that must elapse for two detections to be listed as separate';K=K+1;
-        param.MinTime='0';     param_desc{K}='Minimum time in seconds a required for a detection to be logged';K=K+1;
-        param.MaxTime='3';     param_desc{K}= 'Maximum time in seconds a detection is permitted to have';K=K+1;
-        param.debug='0';       param_desc{K}= '0: do not write out debug information. 1:  SEL output.  2:  equalized background noise. 3: SNR.';K=K+1;
         
         param= 	input_batchparams(param, param_desc, Batch_type);
         if isempty(param)
-             h	=	msgbox(sprintf('Energy Detector aborted','replace'));
+            h	=	msgbox(sprintf('Energy Detector aborted','replace'));
             return
         end
         fields=fieldnames(param);
         for II=1:length(fields)
-           tmp=str2num(param.(fields{II}));
-           if ~isempty(tmp)
-               param.(fields{II})=tmp;
-           end
+            tmp=str2num(param.(fields{II}));
+            if ~isempty(tmp)
+                param.(fields{II})=tmp;
+            end
         end
         param.f_low=param.f_low*1000;
         param.f_high=param.f_high*1000;
         param.bandwidth=1000*param.bandwidth;
         %param.bandwidth=round(2*(param.f_high-param.f_low)/(1+param.Nbands));  %50% overlap between bands
         param.ovlap=round(param.ovlap*param.Nfft/100);
+    end
+
+    function param_desc=load_energy_parameter_description
+        K=1;
+        param_desc{K}='Filename or file extension to process';K=K+1;
         
-        end
+        param_desc{K}='Output directory';K=K+1;
+        param_desc{K}='Directory containing files';K=K+1;
+        param_desc{K}='FFT size';K=K+1;
+        
+        param_desc{K}='percent overlap';K=K+1;
+        
+        param_desc{K}='Sampling rate (will be overidden for most files)';K=K+1;
+        
+        param_desc{K}='Data channel (starting from 1):';K=K+1;
+        param_desc{K}='JAVA dump size (points):';K=K+1;
+        
+        param_desc{K}='Time to begin processing:';K=K+1;
+        param_desc{K}='seconds to process:';K=K+1;
+        
+        param_desc{K}='minimum frequency (kHz)';K=K+1;
+        param_desc{K}='maximum frequency (kHz)';K=K+1;
+        
+        param_desc{K}='Equalization time (s): should be roughly twice the duration of signal of interest';K=K+1;
+        param_desc{K}='Bandwidth of detector in kHz';K=K+1;
+        param_desc{K}='threshold in dB to accept a detection';K=K+1;
+        param_desc{K}='0 for no snips file, 1 for snips file of one channel, 2 for snips file of all channels';K=K+1;
+        param_desc{K}='buffer Time in seconds to store before and after each detection snip, -1 suppress snips file';K=K+1;
+        param_desc{K}='Minimum time in seconds that must elapse for two detections to be listed as separate';K=K+1;
+        param_desc{K}='Minimum time in seconds a required for a detection to be logged';K=K+1;
+        param_desc{K}= 'Maximum time in seconds a detection is permitted to have';K=K+1;
+        param_desc{K}= '0: do not write out debug information. 1:  SEL output.  2:  equalized background noise. 3: SNR.';K=K+1;
+          
+    end
 end
 
 % --------------------------------------------------------------------
