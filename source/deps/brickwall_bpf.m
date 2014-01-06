@@ -8,10 +8,10 @@ function [Hd,Bfilt] = brickwall_bpf(bandwidth,Fs,plot_on)
 
 % form a bandpass by cascading a lpf with a hpf
 if length(bandwidth)==2
-	fprintf('brickwall_bpf:  transition zone not specified, using default of 1 Hz');
-	bandwidth=[bandwidth(1)-1 bandwidth bandwidth(2)+1];
+    fprintf('brickwall_bpf:  transition zone not specified, using default of 1 Hz');
+    bandwidth=[bandwidth(1)-1 bandwidth bandwidth(2)+1];
 elseif length(bandwidth)~=4
-	disp('brickwall_bpf:  filter_bandwidth parameter length not set correctly in param.airgun');
+    disp('brickwall_bpf:  filter_bandwidth parameter length not set correctly in param.airgun');
 end
 % I changed this because with the AURALs and a Fs of 32kHz, the orders of
 % firpm were ~46000 and the filters couldn't be made.  This keeps the
@@ -35,10 +35,10 @@ Bfilt = conv(Hd_lpf.Numerator,Hd_hpf.Numerator);
         % Equiripple Highpass filter designed using Parks-McClellan optimal
         % equiripple FIR filter design
         
-	%Fpass = 9;                % Passband Frequency, Hz
+        %Fpass = 9;                % Passband Frequency, Hz
         %Fstop = 10;                % Stopband Frequency, Hz
         
-	Fstop = bandwidth(1);                  % Stopband Frequency, Hz
+        Fstop = bandwidth(1);                  % Stopband Frequency, Hz
         Fpass = bandwidth(2);                 % Passband Frequency, Hz
         
         rs = 40;                    % Stopband attenuation, dB
@@ -72,7 +72,7 @@ Bfilt = conv(Hd_lpf.Numerator,Hd_hpf.Numerator);
         Fpass = bandwidth(3);                % Passband Frequency, Hz
         Fstop = bandwidth(4);                % Stopband Frequency, Hz
         
-	rs = 40;                    % Stopband attenuation, dB
+        rs = 40;                    % Stopband attenuation, dB
         %rs=20;
         Dstop = 10^(-rs/20);
         

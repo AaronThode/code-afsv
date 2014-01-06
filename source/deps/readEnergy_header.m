@@ -37,4 +37,7 @@ else
 end
 head.wordtype=char(fread(fid,12,'uchar')');
 head.wordtype=head.wordtype(2:2:end);
+
+%Added: bufferTime;
+head.bufferTime=fread(fid,1,'float32');
 fclose(fid);

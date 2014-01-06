@@ -30,7 +30,7 @@ function [x,nstarts,npts,feq,eq,Ireturn,head]=readEnergySnips(fn,index,wordlen,s
 
 persistent fid Icurrent
 
-if isempty(index),
+if isempty(index)
     disp('Error: your indicie request is empty');
     nstarts=[];npts=[];Ireturn=[];x=[];
 end

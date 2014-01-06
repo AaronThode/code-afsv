@@ -7153,6 +7153,124 @@ set(handles.pushbutton_notes_screen, 'Enable', opt);
 
 end  %disable
 
+%%load JAVA energy detector results into annotation format
+function Data=import_JAVA_Energy_into_notes(file_path,sel_names,Defaults,Template)
+
+
+
+        
+        [auto,head]		=	readEnergySummary(file_path, Inf);
+        
+        for Ifea=1:length(auto.names)
+            if strcmp(auto.names{Ifea},'max_freq')
+                Imaxx=Ifea;
+            elseif strcmp(auto.names{Ifea},'min_freq')
+                Iminn=Ifea;
+            end
+        end
+    
+        
+        Data			=	Defaults;
+        Data.param	=	head;
+        hh	=	waitbar(0,sprintf('Importing %s...',sel_names));
+        for JJ = 1:length(auto.ctime)
+            if rem(JJ,500) == 0
+                waitbar(JJ/length(auto.ctime),hh);
+            end
+            Data.Events(JJ)			=	Defaults.Template;
+            Data.Events(JJ).start_time=	datenum(1970,1,1,0,0,auto.ctime(JJ));
+            Data.Events(JJ).author	=	'JAVA Energy Processor';
+            Data.Events(JJ).duration	=	num2str(auto.features(end,JJ));
+            Data.Events(JJ).min_freq	=	num2str(auto.features(Iminn,JJ));
+            Data.Events(JJ).max_freq	=	num2str(auto.features(Imaxx,JJ));
+        end
+        close(hh);
+        
+        %%If snips file exists, load level information.
+        [pathstr,fname,extt] = fileparts(file_path);
+        full_snips_name=fullfile(pathstr,[fname '.snips']);
+        snips_name=dir(full_snips_name);
+        if isempty(snips_name)
+            return
+            
+        end
+      
+        min_freq_events=min(auto.features(Iminn,:));  
+        max_freq_events=max(auto.features(Imaxx,:));
+        freq_spacing=min(diff(head.flow));
+        %Making sure that min FIR passband frequency is below event
+        %   detected.
+        min_freq_events=max([10 min_freq_events-freq_spacing]);  
+        max_freq_events=min([head.Fs/2 max_freq_events+freq_spacing+1]);  
+        
+        
+         prompt={'Number of snips to import into RAM:', ...
+            'filter transition band (Hz):',...
+            'minimum passband frequency for FIR filters (Hz):', ...
+            'maximum passband frequency for FIR filters (Hz):', ...
+            'passband frequency spacing (Hz)', ...
+            'Debug plotting (1=yes; 0=no)'};
+        name='Parameters for importing JAVA snips file';
+        numlines=1;
+        defaultanswer={'500','2',num2str(min_freq_events),num2str(max_freq_events),num2str(freq_spacing),'0'};
+        answer=inputdlg(prompt,name,numlines,defaultanswer);
+ 
+        
+        run_options.Ncalls_to_sample=str2double(answer{1});
+        filter_transition_band=str2double(answer{2});
+        min_freq_events=str2double(answer{3});
+        max_freq_events=str2double(answer{4})-filter_transition_band;
+        freq_spacing=str2double(answer{5});
+        run_options.debug=str2double(answer{6});
+        
+        filter_passband_frequencies=min_freq_events:freq_spacing:max_freq_events;
+        filter_passband_frequencies=unique([filter_passband_frequencies max_freq_events]);
+        
+        transient_params=extract_transient_levels(full_snips_name,1:length(auto.ctime),auto, ...
+        round(head.Fs),head.bufferTime, ...
+        filter_transition_band,filter_passband_frequencies,run_options);
+
+        keyboard
+        
+         hh	=	waitbar(0,sprintf('Importing %s...',sel_names));
+        for JJ = 1:length(auto.ctime)
+            if rem(JJ,500) == 0
+                waitbar(JJ/length(auto.ctime),hh);
+            end
+            Data.Events(JJ)			=	Defaults.Template;
+            Data.Events(JJ).start_time=	datenum(1970,1,1,0,0,auto.ctime(JJ));
+            Data.Events(JJ).author	=	'JAVA Energy Processor+snips conversion';
+            Data.Events(JJ).duration	=	num2str(transient_params.level.t_Malme(JJ));
+            Data.Events(JJ).min_freq	=	num2str(auto.features(Iminn,JJ));
+            Data.Events(JJ).max_freq	=	num2str(auto.features(Imaxx,JJ));
+        end
+        close(hh);
+    % Template.start_time			=	0;
+% Template.author				=	'Your name';
+% Template.sig_type			=	'NA';
+% Template.call_type			=	'S1';
+% Template.min_freq			=	0;
+% Template.max_freq			=	5000;
+% Template.duration			=	10;
+% 
+% Template.noise_se_dB		=	0;
+% Template.noise_rms_dB		=	0;
+% Template.noise_peakpsd_dB	=	0;
+% 
+% Template.signal_se_dB		=	0;
+% Template.signal_rms_dB		=	0;
+% Template.signal_peakpsd_dB	=	0;
+% 
+% Template.SNR_rms			=	0;
+% Template.SNR_rms_dB			=	0;
+% 
+% Template.num_pulses			=	2;
+% Template.num_harmonics		=	-1;
+% Template.modulation			=	0;
+% Template.confidence			=	3;
+% Template.comments			=	'';
+end
+    
 %	Checks Notes folder for existing files and loads them
 function	handles		=	load_notes_file(handles, new_folder)
 
@@ -7312,7 +7430,6 @@ if isempty(listing) || isempty(sel_names)
     handles.notes.show	=	false;
     opt					=	'off';
     
-    
     %	Load selected files and merge data
 else
     Data	=	[];
@@ -7323,23 +7440,10 @@ else
         if manual_flag
             LSfile		=	load(file_path);
         else  %import automated file
-            [auto,head]		=	readEnergySummary(file_path, Inf);
+          
+            Data=import_JAVA_Energy_into_notes(file_path,sel_names{ii},Defaults);
+            LSfile.Data=Data;
             
-            LSfile.Data			=	Defaults;
-            LSfile.Data.param	=	head;
-            hh	=	waitbar(0,sprintf('Importing %s...',sel_names{ii}));
-            for JJ = 1:length(auto.ctime)
-                if rem(JJ,500) == 0
-                    waitbar(JJ/length(auto.ctime),hh);
-                end
-                LSfile.Data.Events(JJ)			=	LSfile.Data.Template;
-                LSfile.Data.Events(JJ).start_time=	datenum(1970,1,1,0,0,auto.ctime(JJ));
-                LSfile.Data.Events(JJ).author	=	'JAVA Energy Processor';
-                LSfile.Data.Events(JJ).duration	=	num2str(auto.features(end,JJ));
-                LSfile.Data.Events(JJ).min_freq	=	num2str(auto.features(1,JJ));
-                LSfile.Data.Events(JJ).max_freq	=	num2str(auto.features(3,JJ));
-            end
-            close(hh);
             
         end
         
@@ -7377,6 +7481,8 @@ else
     handles.notes.show	=	true;
     opt				=	'on';
 end
+
+    
 
 %	enable relevant buttons
 disable_notes_nav(handles,opt);
@@ -8015,6 +8121,7 @@ Description	=	{'Start Time',...
     'Signal SEL (dB re 1 uPa^2-s)',...
     'Signal rms (dB re 1 uPa)',...
     'Signal peak PSD (dB re 1uPa^2/Hz)',...
+    'Signal SNR (rms)', ...
     'Signal SNR (dB rms)', ...
     '# of pulses',...
     '# of harmonics',...
@@ -8030,13 +8137,18 @@ Template.call_type			=	'S1';
 Template.min_freq			=	0;
 Template.max_freq			=	5000;
 Template.duration			=	10;
+
 Template.noise_se_dB		=	0;
 Template.noise_rms_dB		=	0;
 Template.noise_peakpsd_dB	=	0;
+
 Template.signal_se_dB		=	0;
 Template.signal_rms_dB		=	0;
 Template.signal_peakpsd_dB	=	0;
+
+Template.SNR_rms			=	0;
 Template.SNR_rms_dB			=	0;
+
 Template.num_pulses			=	2;
 Template.num_harmonics		=	-1;
 Template.modulation			=	0;
@@ -8045,6 +8157,19 @@ Template.comments			=	'';
 
 edit_fields			=	fieldnames(Template);
 edit_fields(5:14)	=	[];
+
+% params_extract.noise_se_dB		=	noise_se_dB;
+% params_extract.noise_rms_dB		=	noise_rms_dB; %not 20 log because actually mean sqaure
+% params_extract.noise_peakpsd_dB	=	noise_peakpsd_dB;
+% 
+% params_extract.signal_se_dB		=	signal_se_dB;
+% params_extract.signal_rms_dB	=	signal_rms_dB;  %not 20 log because actually mean sqaure
+% params_extract.signal_peakpsd_dB=	signal_peakpsd_dB;
+% 
+% %params_extract.SNR_rms=SNR_rms;
+% params_extract.SNR_rms_dB		=	SNR_rms_dB;
+
+
 end
 
 
