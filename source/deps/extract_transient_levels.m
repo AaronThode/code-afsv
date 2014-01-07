@@ -107,6 +107,8 @@ scale_factor=1;
 yes_filter_recompute=isempty(B_dfilt_lopass)&&~isempty(transient_params.f_passband); 
 yes_filter_recompute= yes_filter_recompute|| length(B_dfilt_lopass)~=length(transient_params.f_passband); %If new import
 if yes_filter_recompute
+    fprintf('Recomputing filters: size of B_dfilt_lopass: %i, length of input parameters: %i\n', ...
+        length(B_dfilt_lopass),length(transient_params.f_passband));
     
     %Flag feature for max frequency
     for Ifea=1:length(data_all.names)
@@ -154,9 +156,11 @@ fclose('all');
 Icall=0;
 transient_params.success=1;  %OK, made it to processing loop
 
+hh	=	waitbar(0,sprintf('Importing snips file...'));
 
 for I=1:ceil(length(Igood)/run_options.Ncalls_to_sample)
     disp(sprintf('Batch %i of %i, Icall %i',I,ceil(length(Igood)/run_options.Ncalls_to_sample),Icall));
+     waitbar(I/ceil(length(Igood)/run_options.Ncalls_to_sample),hh);
     Iabs=run_options.Ncalls_to_sample*(I-1)+(1:run_options.Ncalls_to_sample);
     Iabs=Iabs(Iabs<=length(Igood));
     Iref=Igood(Iabs);
@@ -297,29 +301,29 @@ for I=1:ceil(length(Igood)/run_options.Ncalls_to_sample)
         transient_params.level.peak(Icall)=features.peak;
         %transient_params.level.peakF(Icall)=features.peakF;
         transient_params.level.t_Malme(Icall)=features.t_Malme;
-        transient_params.level.SEL_Malme(Icall)=features.SEL_Malme;
+        transient_params.level.SE_Malme(Icall)=features.SE_Malme;
         transient_params.level.rms_Malme(Icall)=features.rms_Malme;
         
         %transient_params.level.t20dB(Icall)=features.t20dB;
-        %transient_params.level.SEL20dB(Icall)=features.SEL20dB;
+        %transient_params.level.SE20dB(Icall)=features.SE20dB;
         
         
-        %transient_params.level.SEL_FFT(Icall)=features.SEL_FFT;
-        %transient_params.level.SEL_FFT_band(1:length(features.SEL_FFT_band),Icall)=features.SEL_FFT_band;
+        %transient_params.level.SE_FFT(Icall)=features.SE_FFT;
+        %transient_params.level.SE_FFT_band(1:length(features.SE_FFT_band),Icall)=features.SE_FFT_band;
         %transient_params.level.rms_FFT_band(1:length(features.rms_FFT_band),Icall)=features.rms_FFT_band;
         %transient_params.freq_bandwidth=features.freq_bandwidth;
         
-        % Nbands=length(features.SEL_FFT_third_octave);
+        % Nbands=length(features.SE_FFT_third_octave);
         %if Nbands>0
-        %   transient_params.level.SEL_FFT_third_octave(1:Nbands,Icall)=features.SEL_FFT_third_octave;
+        %   transient_params.level.SE_FFT_third_octave(1:Nbands,Icall)=features.SE_FFT_third_octave;
         %   transient_params.level.rms_FFT_third_octave(1:Nbands,Icall)=features.rms_FFT_third_octave;
         %end
         
         %%%Estimate noise levels preceeding call...
         transient_params.noise.rms(Icall)=features.noise.rms;
-        transient_params.noise.SEL(Icall)=features.noise.SEL;
+        transient_params.noise.SE(Icall)=features.noise.SE;
         transient_params.noise.duration(Icall)=features.noise.duration;
-        %transient_params.noise.SEL_FFT_band(1:length(features.noise.SEL_FFT_band),Icall)=features.noise.SEL_FFT_band;
+        %transient_params.noise.SE_FFT_band(1:length(features.noise.SE_FFT_band),Icall)=features.noise.SE_FFT_band;
         %transient_params.noise.rms_FFT_band(1:length(features.noise.rms_FFT_band),Icall)=features.noise.rms_FFT_band;
         %transient_params.noise.freq_bandwidth=features.noise.freq_bandwidth;
         
@@ -333,6 +337,6 @@ for I=1:ceil(length(Igood)/run_options.Ncalls_to_sample)
         
     end %II, call mark, call
 end  %I -- calls
-
+close(hh)
 
 end %entire function

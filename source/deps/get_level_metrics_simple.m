@@ -15,20 +15,20 @@
 %   features: structure varible that containts following fields:
 %       peak: peak amplitude of square of signal values (peak power)
 %       t20dB: peak width, computed by taking 20 dB points on either side of the peak
-%       SEL20dB: Sound Exposure Level (SEL) computed using t20dB duration
+%       SE20dB: Sound Exposure  (SE) computed using t20dB duration
 %       t_Malme: peak width, computed by taking 5% and 95% levels of cumulative equalized SEL values.
-%       SEL_Malme:  SEL computed using t_Malme duration.  Estimated
+%       SE_Malme:  SE computed using t_Malme duration.  Estimated
 %           background noise subtracted.
 %
-%       rms_Malme: rms values =sqrt(SEL_Malme/t_Malme):  Thus background
+%       rms_Malme: rms values =sqrt(SE_Malme/t_Malme):  Thus background
 %           noise estimate has been subtracted.
 %       %NOISE properties:
 %       noise.duration: length of time of final noise sample.  Varies as
 %               program tries to locate stationary intervel
 %       noise.rms: rms level of noise
-%       noise.SEL: SEL of noise inegrated over noise.duration
-%       NOTE THAT RMS IS AN AMPLITUDE, THUS 20*log10(RMS) REQUIRED, WHILE SEL
-%           IS AN INTENSITY MEASURE, THUS 10*LOG10(SEL)
+%       noise.SE: SE of noise inegrated over noise.duration
+%       NOTE THAT RMS IS AN AMPLITUDE, THUS 20*log10(RMS) REQUIRED, WHILE SE
+%           IS AN INTENSITY MEASURE, THUS 10*LOG10(SE)
 
 function features=get_level_metrics_simple(x,Fs,bufferTime,debug)
 
@@ -37,13 +37,13 @@ function features=get_level_metrics_simple(x,Fs,bufferTime,debug)
 
 features.peak=-1;
 features.t20dB=-1;
-features.SEL20dB=-1;
+features.SE20dB=-1;
 features.t_Malme=-1;
-features.SEL_Malme=-1;
+features.SE_Malme=-1;
 features.rms_Malme=-1;
 features.msg='success';
 features.noise.rms=-1;
-features.noise.SEL=-1;
+features.noise.SE=-1;
 features.noise.duration=-1;
 
 
@@ -67,7 +67,7 @@ I20p=Imax-1+min(find(x2(Imax:end)<0.01*features.peak));
 I20m=max(find(x2(1:Imax)<0.01*features.peak));
 if ~isempty(I20p)&~isempty(I20m)
     features.t20dB=dt*(I20p-I20m);
-    features.SEL20dB=dt*trapz(x2(I20m:I20p));
+    features.SE20dB=dt*trapz(x2(I20m:I20p));
 end
 
 %Subtract background, assuming noise uncorrelated with signal
@@ -102,27 +102,27 @@ x2mean=mean(x2eq);
 
 %Noise values...
 
-cumSEL=dt*cumsum(x2(Istart:end)-x2mean); %cumulative SEL, subtracting out background noise estimate
-cumSEL=cumSEL/max(cumSEL);
+cumSE=dt*cumsum(x2(Istart:end)-x2mean); %cumulative SE, subtracting out background noise estimate
+cumSE=cumSE/max(cumSE);
 %close all;
 
-%[junk,Ip]=min(abs(cumSEL-0.95));
-%[junk,Im]=min(abs(cumSEL-0.05));
+%[junk,Ip]=min(abs(cumSE-0.95));
+%[junk,Im]=min(abs(cumSE-0.05));
 %toll=0.005;
 Ip=[];Im=[];
 %toll=2*toll;
-%Ip=Istart-1+min(find(abs(cumSEL-0.95)<toll));
-%Im=Istart-1+min(find(abs(cumSEL-0.05)<toll));
-Ip=Istart-1+find(cumSEL>=0.95, 1 );
+%Ip=Istart-1+min(find(abs(cumSE-0.95)<toll));
+%Im=Istart-1+min(find(abs(cumSE-0.05)<toll));
+Ip=Istart-1+find(cumSE>=0.95, 1 );
 
 %%Robust estimation of Im works backwards from Ip
-Im=Istart-1+find(cumSEL(1:(Ip-Istart+1))<=0.05, 1, 'last' );
-%Im=Istart-1+min(find(cumSEL>=0.05));
+Im=Istart-1+find(cumSE(1:(Ip-Istart+1))<=0.05, 1, 'last' );
+%Im=Istart-1+min(find(cumSE>=0.05));
 
 
 
 if Ip<Im
-    features.msg='cumSEL decreasing';
+    features.msg='cumSE decreasing';
     if exist('debug')==1
         
         figure(1)
@@ -131,8 +131,8 @@ if Ip<Im
         
         tt=dt*(1:length(x2(Istart:end)));
         subplot(3,1,2);plot(tt,x2(Istart:end)-x2mean);title('x2-x2mean');
-        subplot(3,1,3);plot(tt,cumSEL);title('CUMULATIVE SEL DECREASING');
-        hold on;plot(tt(Ip-Istart+1),cumSEL(Ip-Istart+1),'go');plot(tt(Im-Istart+1),cumSEL(Im-Istart+1),'ro');
+        subplot(3,1,3);plot(tt,cumSE);title('CUMULATIVE SE DECREASING');
+        hold on;plot(tt(Ip-Istart+1),cumSE(Ip-Istart+1),'go');plot(tt(Im-Istart+1),cumSE(Im-Istart+1),'ro');
         pause;
         hold off
         
@@ -158,22 +158,22 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%Pulse duration and broadband SEL and RMS calculation%%%%%%%%%
+%%%%%%Pulse duration and broadband SE and RMS calculation%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 features.t_Malme=dt*(Ip-Im);
-features.SEL_Malme=dt*trapz(x2(Im:Ip))-features.t_Malme*x2mean;  %April 23, 2009: Substract background noise from pulse.
-%features.SEL_Malme=dt*trapz(x2(Im:Ip));
-features.rms_Malme=sqrt(features.SEL_Malme/features.t_Malme);
+features.SE_Malme=dt*trapz(x2(Im:Ip))-features.t_Malme*x2mean;  %April 23, 2009: Substract background noise from pulse.
+%features.SE_Malme=dt*trapz(x2(Im:Ip));
+features.rms_Malme=sqrt(features.SE_Malme/features.t_Malme);
 
 features.noise.rms=sqrt(x2mean);
 features.noise.duration=length(x2eq_vec)*dt;
-features.noise.SEL=features.t_Malme*(features.noise.rms.^2);
+features.noise.SE=features.t_Malme*(features.noise.rms.^2);
 
 
 % try
 % [peakF]=get_FFT_metrics(x(1:Im),Fs);
-% %features.noise.SEL_FFT=SEL_FFT;  %NO!  need to mutiply rms_FFT^2*features.t_Malme;
+% %features.noise.SE_FFT=SE_FFT;  %NO!  need to mutiply rms_FFT^2*features.t_Malme;
 % features.noise.peakF=peakF;
 % catch
 %    disp('get_level_metrics:  failure to compute noise from get_FFT_metrics'); 
@@ -190,7 +190,7 @@ features.noise.SEL=features.t_Malme*(features.noise.rms.^2);
 
 
     function [peakF]=get_FFT_metrics(x,Fs)
-        %function [SEL_FFT,rms_FFT,SEL_band,rms_band,freq_bandwidth,peakF]=get_FFT_metrics(x,bandwidth,freq_third_octave,Fs)
+        %function [SE_FFT,rms_FFT,SE_band,rms_band,freq_bandwidth,peakF]=get_FFT_metrics(x,bandwidth,freq_third_octave,Fs)
         
         peakF=-1;
         Nx=length(x);
@@ -236,11 +236,11 @@ features.noise.SEL=features.t_Malme*(features.noise.rms.^2);
         grid on
         %title(ctime2str(debug));
         
-        subplot(3,1,3);plot(tt,cumSEL);title('CUMULATIVE SEL');
+        subplot(3,1,3);plot(tt,cumSE);title('CUMULATIVE SE');
         hold on;
         set(gca,'fontweight','bold','fontsize',14);
-        plot(tt(Ip-Istart),cumSEL(Ip-Istart+1),'ro','markerfacecolor','r','markersize',8);
-        plot(tt(Im-Istart),cumSEL(Im-Istart+1),'go','markerfacecolor','g','markersize',8);
+        plot(tt(Ip-Istart),cumSE(Ip-Istart+1),'ro','markerfacecolor','r','markersize',8);
+        plot(tt(Im-Istart),cumSE(Im-Istart+1),'go','markerfacecolor','g','markersize',8);
         xlim(xlimm);ylimm=ylim;ylimm(1)=0;ylim(ylimm);
         xlabel('Time (s)');ylabel('I(t)/I_{max}(t)','interp','tex');
         grid on
