@@ -1001,7 +1001,7 @@ switch	Batch_mode
         
     case {'Start Bulk Processing File','Start Bulk Processing Folder'}
         
-        
+        burn_in_time=0;
         param=load_energy_parameters;
         
         if isempty(param)
@@ -1030,6 +1030,8 @@ switch	Batch_mode
         if isnumeric(folder_name)
             return;
         end
+        mydir=handles.mydir;
+        
         handles.mydir=folder_name;
         cd(handles.mydir);  %Change location to be inside this folder, since we assume it is a data analysis folder.
         
@@ -1073,6 +1075,9 @@ switch	Batch_mode
         save(file_path, 'Data', 'GUI_params');
         handles.notes.saved	=	true;
         set(handles.pushbutton_notes_stats,'Enable','on');
+        handles.mydir=mydir;
+        cd(handles.mydir);
+        
         guidata(hObject, handles);
         
         
@@ -1091,22 +1096,21 @@ end
             param.nstart='0';
             param.nsamples='0';
             if strcmp(Batch_mode,'Start Bulk Processing File')
-                h	=	msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
+                uiwait(msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type)) );
                 param.exten=['*' handles.myfile];
                 
             else
-                h	=	msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type));
+                uiwait(msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type)) );
                 param.exten=['*' handles.myext];
             end
             
         else
             K=1;
             if strcmp(Batch_mode,'Start Bulk Processing File')
-                h	=	msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
+                uiwait(msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type)) );
                 param.exten=['*' handles.myfile];
             else
-                h	=	msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type));
-                
+                uiwait(msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type)) );
                 param.exten=['*' handles.myext];
             end
             param_desc{K}='Filename or file extension to process';K=K+1;
@@ -1123,19 +1127,19 @@ end
             try
                 param.Fs=num2str(handles.sgram.Fs);param_desc{K}='Sampling rate (will be overidden for most files)';K=K+1;
             catch
-                h	=	msgbox(sprintf('Need to load spectrogram first'));
+                uiwait(msgbox(sprintf('Need to load spectrogram first')));
                 return
             end
             param.channel=(get(handles.edit_chan,'String'));param_desc{K}='Data channel (starting from 1):';K=K+1;
             param.dumpsize='100000';param_desc{K}='JAVA dump size (points):';K=K+1;
             
-            if strcmp(Batch_mode,'Start Bulk Processing File')
+            if ~isempty(strfind(Batch_mode,'Start Bulk Processing'))
                 param.nstart='0';param_desc{K}='number of samples to skip before processing:';K=K+1;
                 param.nsamples='0';param_desc{K}='number of samples to process:';K=K+1;
             else
                 test_time=datenum(get(handles.edit_datestr,'String'))-datenum(0,0,0,0,burn_in_time,0);
                 if test_time<handles.tdate_min
-                    h	=	msgbox(sprintf('You need to start at least one minute into file to allow processor to burn in'));
+                    uiwait(msgbox(sprintf('You need to start at least one minute into file to allow processor to burn in')));
                     return
                 end
                 param.nstart=datestr(test_time);param_desc{K}='Time to begin processing:';K=K+1;
@@ -1244,11 +1248,11 @@ end
 
 switch Batch_mode
     case 'Process Visible Window'
-        h	=	msgbox(['Processing all data within window for ' Batch_type]);
+        uiwait(msgbox(['Processing all data within window for ' Batch_type]));
     case 'Start Bulk Processing File'
-        h	=	msgbox(['Processing all data in whole file for ' Batch_type]);
+        uiwait(msgbox(['Processing all data in whole file for ' Batch_type]));
     case 'Start Bulk Processing Folder'
-        h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
+        uiwait(msgbox(['Processing all data in whole folder for ' Batch_type]));
     otherwise
         error('Batch mode not recognized');
 end
@@ -4457,7 +4461,7 @@ try
     [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,...
         handles.tdate_start,tlen,Ichan,handles);
 catch
-    errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge');
+    uiwait(errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge'));
     return
 end
 
