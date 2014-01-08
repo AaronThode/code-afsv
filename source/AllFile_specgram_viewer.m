@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 13-Dec-2013 15:57:06
+% Last Modified by GUIDE v2.5 06-Jan-2014 23:54:27
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -1019,9 +1019,9 @@ switch	Batch_mode
         return
     case 'Load Bulk Processing'
         
-        info_str='Select the appropriate detsum file using "Select Directory" button in the Annotations Section';
-        disp(info_str);
-        h	=	msgbox(info_str);
+        %info_str='Select the appropriate detsum file using "Select Directory" button in the Annotations Section';
+        %disp(info_str);
+        %h	=	msgbox(info_str);
         
         dialog_title	=	'Select location for Event Detector import file(s):';
         start_path		=	handles.mydir;
@@ -1072,8 +1072,9 @@ switch	Batch_mode
         Data=handles.notes.Data;
         save(file_path, 'Data', 'GUI_params');
         handles.notes.saved	=	true;
+        set(handles.pushbutton_notes_stats,'Enable','on');
         guidata(hObject, handles);
-
+        
         
     otherwise
         error('Batch mode not recognized');
@@ -4107,7 +4108,7 @@ end
 handles		=	load_notes_file(handles, folder_name);  %notes_select callback
 guidata(hObject, handles);
 
-end 
+end
 
 % --- Executes during object creation, after setting all properties.
 function checkbox_notes_readonly_CreateFcn(hObject, eventdata, handles)
@@ -7367,11 +7368,11 @@ user_name	=	getusername();
 if strfind(handles.myfile,'*')
     Istart=3;
     file_name	=	['Multiple' fname(Istart:end) '-notes-' user_name '.mat'];
-
+    
 else
     Istart=1;
     file_name	=	[fname(Istart:end) '-notes-' user_name '.mat'];
-
+    
 end
 
 
@@ -7496,8 +7497,8 @@ else
             LSfile		=	load(file_path);
         else  %import automated file
             %import_JAVA_Energy_into_notes(file_path,sel_names,Defaults,Template,get_dialog)
-             LSfile.Data=import_JAVA_Energy_into_notes(file_path,sel_names{ii},Defaults,ii==1);
-              
+            LSfile.Data=import_JAVA_Energy_into_notes(file_path,sel_names{ii},Defaults,ii==1);
+            
         end
         
         %	Check and merge event data
@@ -7529,13 +7530,13 @@ else
         set(handles.checkbox_notes_readonly, 'Value', 0);
         checkbox_notes_readonly_Callback(handles.checkbox_notes_readonly, [], handles);
         set(handles.pushbutton_notes_edit,'Enable','on');  %edit!
-    
+        
     elseif ~manual_flag %If automated data loaded, freeze ability to edit but allow saves
         handles.notes.saved	=	false;
         set(handles.checkbox_notes_readonly, 'Value', 0);
         checkbox_notes_readonly_Callback(handles.checkbox_notes_readonly, [], handles);
         set(handles.pushbutton_notes_edit,'Enable','off');  %No editing!
-    
+        
     end
     
     handles.notes.Data	=	Data;
@@ -8172,6 +8173,7 @@ end
 
 %	helper function for default template
 function	[Description, Template, edit_fields]	=	load_default_template()
+%edit fields are fields you can edit...
 Description	=	{'Start Time',...
     'Author',...
     'Pulse or FM?',...
@@ -8386,6 +8388,226 @@ if 1==0,
 end
 end
 
+
+% --- Executes on button press in pushbutton_notes_stats.
+function pushbutton_notes_stats_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_notes_stats (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+ButtonName = questdlg('What kind of plot?', ...
+    'Statistical Analysis of Annotations', ...
+    '1-D histogram', '2-D histogram', '2-D boxplot','1-D histogram');
+
+
+X=get_histogram_vars(ButtonName, handles.notes.Data.Events,handles.notes.Data.Description);
+
+if isempty(X.start)
+    return
+end
+
+switch ButtonName
+    case '1-D histogram'
+        for Ix=1:(length(X.start)-1)
+            figure
+            edges=X.start(Ix):X.dx:X.start(Ix+1);
+            Igood=find(X.var>=X.start(Ix)&X.var<=X.start(Ix+1));
+            
+            [Nclick,tbin]=histc(X.var(Igood),edges);
+            
+            
+            %%Plot and format the axes
+            bar(edges,Nclick,'histc');grid on;
+            set(gca,'fontweight','bold','fontsize',14)
+            set(gca,'xtick',edges(1):X.label_inc:edges(end));
+            if strcmp(X.name,'start_time')
+                datetick('x',X.style,'keeplimits','keepticks');
+                xlabel('Time');
+                ylabel('Counts');
+                title(sprintf('%s of %s, %s to %s',ButtonName,X.name,datestr(edges(1)),datestr(edges(end))),'interp','none');
+            else
+                xlabel(X.label);
+                ylabel('Counts')
+                title(sprintf('%s of %s, %6.2f to %6.2f',ButtonName,X.name,(edges(1)),(edges(end))),'interp','none');
+            end
+            xlim([edges(1) edges(end)])
+            set(gca,'fontweight','bold','fontsize',14);
+            
+        end
+    case '2-D histogram'
+        Y=get_histogram_vars(ButtonName, handles.notes.Data.Events,handles.notes.Data.Description);
+        
+        if isempty(Y.start)
+            return
+        end
+        %[2 Npoint]
+        
+        for Ix=1:(length(X.start)-1)
+            
+            edges=X.start(Ix):X.dx:X.start(Ix+1);
+            edges2=Y.start:Y.dx:Y.start(2);
+            Igood=find(X.var>=X.start(Ix)&X.var<=X.start(Ix+1));
+            
+            XX=[X.var(Igood);Y.var(Igood)];
+            
+            %[Nclick,tbin]=histc(X.var(Igood),edges);
+            [N,printname,Ibin,hh]=hist2D(XX,edges,edges2,{X.label,Y.label},1);
+            if strcmp(X.name,'start_time')
+                axes(hh(1));
+                set(gca,'fontweight','bold','fontsize',14)
+                set(gca,'ytick',edges(1):X.label_inc:edges(end));
+                datetick('y',X.style,'keeplimits','keepticks');
+                
+                axes(hh(2));
+                set(gca,'fontweight','bold','fontsize',14)
+                set(gca,'ytick',edges(1):X.label_inc:edges(end));
+                datetick('y',X.style,'keeplimits','keepticks');
+            elseif strcmp(Y.name,'start_time')
+                axes(hh(1));
+                set(gca,'fontweight','bold','fontsize',14)
+                set(gca,'xtick',edges2(1):Y.label_inc:edges2(end));
+                
+                datetick('x',Y.style,'keeplimits','keepticks');
+                
+                axes(hh(2));
+                set(gca,'fontweight','bold','fontsize',14)
+                set(gca,'xtick',edges2(1):Y.label_inc:edges2(end));
+                
+                datetick('x',Y.style,'keeplimits','keepticks');
+                
+            end
+        end
+        
+        
+    otherwise
+end
+end
+
+%[X.var,X.start,X.dx,X.label_inc,X.label,X.name,X.style]=get_histogram_vars(ButtonName,handles.notes.Data.Events);
+
+function X=get_histogram_vars(ButtonName,Events,Description)
+%Input:  X.var: horizontal array of data
+%         X.name: string describing which data field, e.g. 'start_time'
+%Output:  [X.var,X.start,X.dx,X.label_inc,X.label,X.name,X.style]
+
+X.start=[];
+X.dx=[];
+X.label_inc=10;
+X.style=[];
+Nx=length(Events);
+
+var_names=fieldnames(Events(1));
+titstr=sprintf('Select an X variable for %s',ButtonName);
+I_name=menu(titstr,var_names);
+X.name=var_names{I_name};
+X.label=Description{I_name};
+
+
+switch X.name
+    case {'author','comments','sig_type','call_type'}
+        uiwait(msgbox('Inappropriate variable selected','Bad variable!','modal'));
+        return
+    case 'start_time'
+        X.var=([(Events.(X.name))]);
+        
+        tspan=datevec(X.var(end)-X.var(1));
+        %Make initial guess based on span
+        if tspan(3)+tspan(4)/24>0.9 %If greater than a day
+            interval=60; % one hour increments
+        elseif tspan(4)+tspan(5)/60>0.75  %If greater than 45 minutes
+            interval=10; %10 minute increments
+        elseif tspan(4)+tspan(5)/60>0.5  %If greater than 45 minutes
+            interval=2; %2 minute interval
+        else
+            interval=1; %1 minute interval
+        end
+        
+        dinterval=datenum(0,0,0,0,interval,0);
+        xmin=floor(min(X.var)/dinterval)*dinterval;
+        xmax=ceil(max(X.var)/dinterval)*dinterval;
+        
+        prompt1={'Start Time','End Time', ...
+            'Time per plot, minutes("all" puts all data in single window)','bin width (minutes)','tick label increment (minutes)'};
+        def1={datestr(xmin), datestr(xmax),'all',num2str(interval,2),num2str(2*interval,4)};
+        
+        dlgTitle1=sprintf('Parameters for %s',X.name);
+        answer=inputdlg(prompt1,dlgTitle1,1,def1);
+        try
+            tabs(1)=datenum(answer{1});
+            tabs(2)=datenum(answer{2});
+            X.dx=datenum(0,0,0,0,str2num(answer{4}),0);
+            
+        catch
+            uiwait(msgbox('Entry variables not in datenumber format','Bad entry!','modal'));
+            return
+        end
+        
+        
+        if strcmp(answer{3},'all')
+            X.start=[tabs(1) tabs(2)];
+        else
+            x_window=datenum(0,0,0,0,eval(answer{3}),0);
+            X.start=unique([tabs(1):x_window:tabs(2) tabs(2)]);
+        end
+        
+        %%Create tick labels
+        try
+            if str2num(answer{5})>60
+                X.style='HH';
+            else
+                X.style=15;
+            end
+            X.label_inc=datenum(0,0,0,0,str2num(answer{5}),0);
+        catch
+            X.label_inc=datenum(0,0,0,0,str2num(answer{4}),0);
+        end
+        
+        %Find approximate spacing of tick labels
+        
+        
+        
+    otherwise
+        X.var=zeros(1,Nx);
+        
+        for Ix=1:Nx
+            X.var(Ix)=str2num(Events(Ix).(X.name));
+        end
+        Nbins=20;
+        %X.var=sort((X.var));
+        X.dx=round(100*((max(X.var)-min(X.var))/Nbins))/100;
+        
+        xmin=floor(min(X.var)/X.dx)*X.dx;
+        xmax=ceil(max(X.var)/X.dx)*X.dx;
+        prompt1={'Start Value','End Value', ...
+            'bin width ','tick label increment '};
+        
+        def1={num2str(xmin), num2str(xmax),num2str(X.dx),num2str(2*X.dx)};
+        dlgTitle1=sprintf('Parameters for %s ',X.name);
+        answer=inputdlg(prompt1,dlgTitle1,1,def1);
+        try
+            xx(1)=str2num(answer{1});
+            xx(2)=str2num(answer{2});
+            X.dx=str2num(answer{3});
+            
+        catch
+            uiwait(msgbox('Entry variables not numeric!','Bad entry!','modal'));
+            return
+        end
+        X.start=[xx(1) xx(2)];
+        %%Create tick labels
+        try
+            X.label_inc=str2num(answer{4});
+        catch
+            X.label_inc=str2num(answer{3});
+        end
+        
+        
+end
+
+
+
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%TIMEWARP functions below %%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
