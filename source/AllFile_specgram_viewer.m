@@ -1406,7 +1406,9 @@ function edit_datestr_Callback(hObject, eventdata, handles) %#ok<*INUSL>
 %tmax=datenum(get(handles.text_maxtime,'string'));
 tmin	=	handles.tdate_min;
 tmax	=	handles.tdate_max;
-
+if isempty(get(hObject,'String'))
+   return 
+end
 try
     new_date	=	datenum(get(hObject,'String'));
 catch %#ok<*CTCH>
@@ -7369,10 +7371,12 @@ end
 
 %	Default output file name
 user_name	=	getusername();
-if strfind(handles.myfile,'*')
+multiple_times_present=0;
+if strfind(handles.myfile,'*')  %If inputs indicates that multiple files from different times are to be merged
     Istart=3;
     file_name	=	['Multiple' fname(Istart:end) '-notes-' user_name '.mat'];
-    
+    multiple_times_present=1;
+
 else
     Istart=1;
     file_name	=	[fname(Istart:end) '-notes-' user_name '.mat'];
@@ -7502,7 +7506,13 @@ else
         else  %import automated file
             %import_JAVA_Energy_into_notes(file_path,sel_names,Defaults,Template,get_dialog)
             LSfile.Data=import_JAVA_Energy_into_notes(file_path,sel_names{ii},Defaults,ii==1);
-            
+            %modify saved file name to include time range
+            if multiple_times_present
+                t1=datestr(LSfile.Data.Events(1).start_time,30);
+                t2=datestr(LSfile.Data.Events(end).start_time,30);
+                file_name	=	['Multiple_'  t1 '_' t2  fname(2:end) '-notes-' user_name '.mat'];
+                
+            end
         end
         
         %	Check and merge event data
@@ -8398,6 +8408,39 @@ function pushbutton_notes_stats_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_notes_stats (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+%Provide option to reload a notes file that does not match current load
+ReloadButton = questdlg('Would you like to load annotations associated with multiple files?', ...
+    'Reload Annotations?');
+
+switch ReloadButton
+    case 'Yes'
+        
+        dialog_title	=	'Select location for "Multiple" annotation files:';
+        start_path		=	handles.mydir;
+        folder_name		=	uigetdir(start_path, dialog_title);
+        
+        if isnumeric(folder_name)
+            return;
+        end
+        mydir=handles.mydir;
+        
+        handles.mydir=folder_name;
+        cd(handles.mydir);  %Change location to be inside this folder, since we assume it is a data analysis folder.
+        
+        if isfield(handles,'myfile')
+            myfile_org=handles.myfile;
+        else
+            myfile_org=[];
+        end
+        handles.myfile=['Multiple*'];
+        handles		=	load_notes_file(handles, folder_name);  %Bulk Load Event detector
+        handles.myfile=myfile_org;
+        if ~isfield(handles,'tdate_start')
+            handles.tdate_start=[];
+        end
+end
+
 
 ButtonName = questdlg('What kind of plot?', ...
     'Statistical Analysis of Annotations', ...
