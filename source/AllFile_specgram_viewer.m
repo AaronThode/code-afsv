@@ -8524,7 +8524,35 @@ switch ButtonName
                 
             end
         end
+    case '2-D boxplot'
+        Y=get_histogram_vars(ButtonName, handles.notes.Data.Events,handles.notes.Data.Description);
         
+        if isempty(Y.start)
+            return
+        end
+        for Ix=1:(length(X.start)-1)
+            
+            edges=X.start(Ix):X.dx:X.start(Ix+1);
+            edges2=Y.start:Y.dx:Y.start(2);
+            Igood=find(X.var>=X.start(Ix)&X.var<=X.start(Ix+1));
+            
+            XX=[X.var(Igood);Y.var(Igood)];
+            
+            %[Nclick,tbin]=histc(X.var(Igood),edges);
+            %[N,printname,Ibin,hh]=hist2D(XX,edges,edges2,{X.label,Y.label},1);
+            plot_data_boxplot(X.var(Igood),X.dx,Y.var(Igood),[Y.start(1) Y.start(end)],X.label_inc,X.style)
+            if strcmp(X.name,'start_time')
+                %datetick('x',X.style,'keeplimits','keepticks');
+                xlabel('Time');
+                ylabel(Y.label);
+                title(sprintf('%s of %s, %s to %s',ButtonName,X.name,datestr(edges(1)),datestr(edges(end))),'interp','none');
+            else
+                xlabel(X.label);
+                ylabel(Y.label)
+                title(sprintf('%s of %s, %6.2f to %6.2f',ButtonName,X.name,(edges(1)),(edges(end))),'interp','none');
+            end
+            
+        end
         
     otherwise
 end
