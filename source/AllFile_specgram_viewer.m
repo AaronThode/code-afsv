@@ -1001,7 +1001,7 @@ switch	Batch_mode
         
     case {'Start Bulk Processing File','Start Bulk Processing Folder'}
         
-        
+        burn_in_time=0;
         param=load_energy_parameters;
         
         if isempty(param)
@@ -1030,6 +1030,8 @@ switch	Batch_mode
         if isnumeric(folder_name)
             return;
         end
+        mydir=handles.mydir;
+        
         handles.mydir=folder_name;
         cd(handles.mydir);  %Change location to be inside this folder, since we assume it is a data analysis folder.
         
@@ -1073,6 +1075,9 @@ switch	Batch_mode
         save(file_path, 'Data', 'GUI_params');
         handles.notes.saved	=	true;
         set(handles.pushbutton_notes_stats,'Enable','on');
+        handles.mydir=mydir;
+        cd(handles.mydir);
+        
         guidata(hObject, handles);
         
         
@@ -1091,22 +1096,21 @@ end
             param.nstart='0';
             param.nsamples='0';
             if strcmp(Batch_mode,'Start Bulk Processing File')
-                h	=	msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
+                uiwait(msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type)) );
                 param.exten=['*' handles.myfile];
                 
             else
-                h	=	msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type));
+                uiwait(msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type)) );
                 param.exten=['*' handles.myext];
             end
             
         else
             K=1;
             if strcmp(Batch_mode,'Start Bulk Processing File')
-                h	=	msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
+                uiwait(msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type)) );
                 param.exten=['*' handles.myfile];
             else
-                h	=	msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type));
-                
+                uiwait(msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type)) );
                 param.exten=['*' handles.myext];
             end
             param_desc{K}='Filename or file extension to process';K=K+1;
@@ -1123,19 +1127,19 @@ end
             try
                 param.Fs=num2str(handles.sgram.Fs);param_desc{K}='Sampling rate (will be overidden for most files)';K=K+1;
             catch
-                h	=	msgbox(sprintf('Need to load spectrogram first'));
+                uiwait(msgbox(sprintf('Need to load spectrogram first')));
                 return
             end
             param.channel=(get(handles.edit_chan,'String'));param_desc{K}='Data channel (starting from 1):';K=K+1;
             param.dumpsize='100000';param_desc{K}='JAVA dump size (points):';K=K+1;
             
-            if strcmp(Batch_mode,'Start Bulk Processing File')
+            if ~isempty(strfind(Batch_mode,'Start Bulk Processing'))
                 param.nstart='0';param_desc{K}='number of samples to skip before processing:';K=K+1;
                 param.nsamples='0';param_desc{K}='number of samples to process:';K=K+1;
             else
                 test_time=datenum(get(handles.edit_datestr,'String'))-datenum(0,0,0,0,burn_in_time,0);
                 if test_time<handles.tdate_min
-                    h	=	msgbox(sprintf('You need to start at least one minute into file to allow processor to burn in'));
+                    uiwait(msgbox(sprintf('You need to start at least one minute into file to allow processor to burn in')));
                     return
                 end
                 param.nstart=datestr(test_time);param_desc{K}='Time to begin processing:';K=K+1;
@@ -1244,11 +1248,11 @@ end
 
 switch Batch_mode
     case 'Process Visible Window'
-        h	=	msgbox(['Processing all data within window for ' Batch_type]);
+        uiwait(msgbox(['Processing all data within window for ' Batch_type]));
     case 'Start Bulk Processing File'
-        h	=	msgbox(['Processing all data in whole file for ' Batch_type]);
+        uiwait(msgbox(['Processing all data in whole file for ' Batch_type]));
     case 'Start Bulk Processing Folder'
-        h	=	msgbox(['Processing all data in whole folder for ' Batch_type]);
+        uiwait(msgbox(['Processing all data in whole folder for ' Batch_type]));
     otherwise
         error('Batch mode not recognized');
 end
@@ -1402,7 +1406,9 @@ function edit_datestr_Callback(hObject, eventdata, handles) %#ok<*INUSL>
 %tmax=datenum(get(handles.text_maxtime,'string'));
 tmin	=	handles.tdate_min;
 tmax	=	handles.tdate_max;
-
+if isempty(get(hObject,'String'))
+   return 
+end
 try
     new_date	=	datenum(get(hObject,'String'));
 catch %#ok<*CTCH>
@@ -4457,7 +4463,7 @@ try
     [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,...
         handles.tdate_start,tlen,Ichan,handles);
 catch
-    errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge');
+    uiwait(errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge'));
     return
 end
 
@@ -7365,10 +7371,12 @@ end
 
 %	Default output file name
 user_name	=	getusername();
-if strfind(handles.myfile,'*')
+multiple_times_present=0;
+if strfind(handles.myfile,'*')  %If inputs indicates that multiple files from different times are to be merged
     Istart=3;
     file_name	=	['Multiple' fname(Istart:end) '-notes-' user_name '.mat'];
-    
+    multiple_times_present=1;
+
 else
     Istart=1;
     file_name	=	[fname(Istart:end) '-notes-' user_name '.mat'];
@@ -7498,7 +7506,13 @@ else
         else  %import automated file
             %import_JAVA_Energy_into_notes(file_path,sel_names,Defaults,Template,get_dialog)
             LSfile.Data=import_JAVA_Energy_into_notes(file_path,sel_names{ii},Defaults,ii==1);
-            
+            %modify saved file name to include time range
+            if multiple_times_present
+                t1=datestr(LSfile.Data.Events(1).start_time,30);
+                t2=datestr(LSfile.Data.Events(end).start_time,30);
+                file_name	=	['Multiple_'  t1 '_' t2  fname(2:end) '-notes-' user_name '.mat'];
+                
+            end
         end
         
         %	Check and merge event data
@@ -8395,6 +8409,39 @@ function pushbutton_notes_stats_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+%Provide option to reload a notes file that does not match current load
+ReloadButton = questdlg('Would you like to load annotations associated with multiple files?', ...
+    'Reload Annotations?');
+
+switch ReloadButton
+    case 'Yes'
+        
+        dialog_title	=	'Select location for "Multiple" annotation files:';
+        start_path		=	handles.mydir;
+        folder_name		=	uigetdir(start_path, dialog_title);
+        
+        if isnumeric(folder_name)
+            return;
+        end
+        mydir=handles.mydir;
+        
+        handles.mydir=folder_name;
+        cd(handles.mydir);  %Change location to be inside this folder, since we assume it is a data analysis folder.
+        
+        if isfield(handles,'myfile')
+            myfile_org=handles.myfile;
+        else
+            myfile_org=[];
+        end
+        handles.myfile=['Multiple*'];
+        handles		=	load_notes_file(handles, folder_name);  %Bulk Load Event detector
+        handles.myfile=myfile_org;
+        if ~isfield(handles,'tdate_start')
+            handles.tdate_start=[];
+        end
+end
+
+
 ButtonName = questdlg('What kind of plot?', ...
     'Statistical Analysis of Annotations', ...
     '1-D histogram', '2-D histogram', '2-D boxplot','1-D histogram');
@@ -8477,7 +8524,35 @@ switch ButtonName
                 
             end
         end
+    case '2-D boxplot'
+        Y=get_histogram_vars(ButtonName, handles.notes.Data.Events,handles.notes.Data.Description);
         
+        if isempty(Y.start)
+            return
+        end
+        for Ix=1:(length(X.start)-1)
+            
+            edges=X.start(Ix):X.dx:X.start(Ix+1);
+            edges2=Y.start:Y.dx:Y.start(2);
+            Igood=find(X.var>=X.start(Ix)&X.var<=X.start(Ix+1));
+            
+            XX=[X.var(Igood);Y.var(Igood)];
+            
+            %[Nclick,tbin]=histc(X.var(Igood),edges);
+            %[N,printname,Ibin,hh]=hist2D(XX,edges,edges2,{X.label,Y.label},1);
+            plot_data_boxplot(X.var(Igood),X.dx,Y.var(Igood),[Y.start(1) Y.start(end)],X.label_inc,X.style)
+            if strcmp(X.name,'start_time')
+                %datetick('x',X.style,'keeplimits','keepticks');
+                xlabel('Time');
+                ylabel(Y.label);
+                title(sprintf('%s of %s, %s to %s',ButtonName,X.name,datestr(edges(1)),datestr(edges(end))),'interp','none');
+            else
+                xlabel(X.label);
+                ylabel(Y.label)
+                title(sprintf('%s of %s, %6.2f to %6.2f',ButtonName,X.name,(edges(1)),(edges(end))),'interp','none');
+            end
+            
+        end
         
     otherwise
 end
