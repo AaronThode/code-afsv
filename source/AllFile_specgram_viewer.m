@@ -1323,7 +1323,7 @@ dlgTitle	=	['Please enter the required parameters for processing ' Batch_type];
 
 
 %	Create input dialogbox
-answer		=	inputdlg(Batch_desc, dlgTitle, num_lines, defaults);
+answer		=	inputdlg(Batch_desc, dlgTitle, num_lines, defaults,'on');
 
 
 %	Put variables into output structure
@@ -4491,7 +4491,7 @@ else
         errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge');
         return
     end
-    if max(t)<tlen
+    if max(t)<=tlen
         tlen	=	max(t);
         handles.tlen	=	max(t);
         set(handles.edit_winlen,'String',num2str(tlen));
@@ -5007,6 +5007,7 @@ switch filetype
         Fs=fs;
         [x,tmin,tmax]=read_dat_file([mydir '/' myfile],Fs,tdate_start,tlen,0); %output in uPa
         %[x,tmin,tmax]=read_dat_file([mydir '/' myfile],Fs,tdate_start,tlen,1);  %Voltage output
+        t=(1:length(x))/fs;
         
         head.Nchan=1;
         switch fs
@@ -5061,7 +5062,7 @@ switch filetype
         Fs=fs;
         [x,tmin,tmax]=read_adi_file(mydir,myfile,Fs,tdate_start,tlen,0); %Output in uPa
         %[x,tmin,tmax]=read_adi_file(mydir,myfile,Fs,tdate_start,tlen,1);  %Output in voltage
-        
+        t=(1:length(x))/fs;
         head.Nchan=1;
         
     case 'MDAT'
@@ -5069,6 +5070,8 @@ switch filetype
         
         [x,head]=read_synchronized_mdat_files(fullfile(mydir,myfile),tdate_start,tlen);
         Fs=head.fs;
+        t=(1:length(x))/Fs;
+        
         tmin=head.tfs;
         tmax=head.tfe;
         head.Nchan=size(x,2);

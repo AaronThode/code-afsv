@@ -197,6 +197,7 @@ disp('Hit return to see alternate view of bottom subplot:')
 
 pause;
 caxis([0 20]);
+hold off
 
 
 end
