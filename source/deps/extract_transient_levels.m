@@ -158,9 +158,28 @@ transient_params.success=1;  %OK, made it to processing loop
 
 hh	=	waitbar(0,sprintf('Importing snips file...'));
 
-for I=1:ceil(length(Igood)/run_options.Ncalls_to_sample)
+
+%Preallocatie
+Nsnips=length(Igood);
+AA=zeros(1,Nsnips);
+transient_params.level.max_freq=AA;
+transient_params.level.min_freq=AA;
+transient_params.ctime =AA;
+transient_params.index =AA;
+transient_params.clipped =AA;
+transient_params.level.peak =AA;
+%transient_params.level.peakF =features.peakF;
+transient_params.level.t_Malme =AA;
+transient_params.level.SE_Malme =AA;
+transient_params.level.rms_Malme =AA;
+transient_params.noise.rms =AA;
+transient_params.noise.SE =AA;
+transient_params.noise.duration =AA;
+transient_params.level.SNR =AA;
+         
+        
+for I=1:ceil(Nsnips/run_options.Ncalls_to_sample)
     disp(sprintf('Batch %i of %i, Icall %i',I,ceil(length(Igood)/run_options.Ncalls_to_sample),Icall));
-     waitbar(I/ceil(length(Igood)/run_options.Ncalls_to_sample),hh);
     Iabs=run_options.Ncalls_to_sample*(I-1)+(1:run_options.Ncalls_to_sample);
     Iabs=Iabs(Iabs<=length(Igood));
     Iref=Igood(Iabs);
@@ -179,6 +198,10 @@ for I=1:ceil(length(Igood)/run_options.Ncalls_to_sample)
     for II=1:length(Iref)
         Icall=Icall+1;
         
+         if rem(II,100)==0
+              waitbar(Icall/length(Igood),hh);
+    
+         end
          
         max_freq=data_all.features(Imaxx,Iref(II));
         min_freq=data_all.features(Iminn,Iref(II));
@@ -225,13 +248,7 @@ for I=1:ceil(length(Igood)/run_options.Ncalls_to_sample)
         clip_count=length(find(abs(yraw-65536)<2));
         transient_params.clipped(Icall)=clip_count;
         
-        %         if clip_count>0
-        %             subplot(2,1,1)
-        %             plot(yraw);title(num2str(clip_count));
-        %             subplot(2,1,2)
-        %             spectrogram(yraw,hanning(Nfft),ovlap,Nfft,Fs,'yaxis')
-        %             pause
-        %         end
+         
         format long e
         
         
@@ -249,11 +266,13 @@ for I=1:ceil(length(Igood)/run_options.Ncalls_to_sample)
             yy=x{II}(1,:);
         end
         
-       
-        yy=filter(B_dfilt_lopass{Ifilt},yy);
-        yy=filter(B_dfilt_hipass{Ifilt2},yy);
+        yy=yy-mean(yy); %Smooths filtering
+        Hd = dfilt.cascade(B_dfilt_lopass{Ifilt},B_dfilt_hipass{Ifilt2});
+        yy=filter(Hd,yy);
+        %yy=filter(B_dfilt_lopass{Ifilt},yy);
+        %yy=filter(B_dfilt_hipass{Ifilt2},yy);
         
-        
+         
         %%WARNING!  UP TO JUNE 21 this was active--cut most of signal...
         %% and messed up dt measurement in get_level_metrics, because buffertime
         %%      not compensated...
@@ -262,7 +281,7 @@ for I=1:ceil(length(Igood)/run_options.Ncalls_to_sample)
         Nf=round(0.5*(Ncoef.lopass(Ifilt)+Ncoef.hipass(Ifilt2)));
         %yy=yy(Nf:(end-Nf));
         %The 'filter' command only destroys the first part of the signal...
-        yy=yy(Nf:end);
+        yy=yy(Nf:(end-Nf));
         bufferTime=bufferTime_org-Nf/Fs_filt;
         
         
@@ -274,13 +293,13 @@ for I=1:ceil(length(Igood)/run_options.Ncalls_to_sample)
         
         try
             if debug_snips_check&run_options.debug<Icall  %check snip files
-                features=get_level_metrics_simple(yy,Fs_filt, bufferTime,1);
                 ctime2str(cstart(II))
+                features=get_level_metrics_simple(yy,Fs_filt, bufferTime,1);
+                
                 pause;
                 
             else
                 features=get_level_metrics_simple(yy,Fs_filt, bufferTime);
-                
             end
             
             %%%Use below to compare bandpass filtered result with original result...
@@ -303,35 +322,13 @@ for I=1:ceil(length(Igood)/run_options.Ncalls_to_sample)
         transient_params.level.t_Malme(Icall)=features.t_Malme;
         transient_params.level.SE_Malme(Icall)=features.SE_Malme;
         transient_params.level.rms_Malme(Icall)=features.rms_Malme;
-        
-        %transient_params.level.t20dB(Icall)=features.t20dB;
-        %transient_params.level.SE20dB(Icall)=features.SE20dB;
-        
-        
-        %transient_params.level.SE_FFT(Icall)=features.SE_FFT;
-        %transient_params.level.SE_FFT_band(1:length(features.SE_FFT_band),Icall)=features.SE_FFT_band;
-        %transient_params.level.rms_FFT_band(1:length(features.rms_FFT_band),Icall)=features.rms_FFT_band;
-        %transient_params.freq_bandwidth=features.freq_bandwidth;
-        
-        % Nbands=length(features.SE_FFT_third_octave);
-        %if Nbands>0
-        %   transient_params.level.SE_FFT_third_octave(1:Nbands,Icall)=features.SE_FFT_third_octave;
-        %   transient_params.level.rms_FFT_third_octave(1:Nbands,Icall)=features.rms_FFT_third_octave;
-        %end
+       
         
         %%%Estimate noise levels preceeding call...
         transient_params.noise.rms(Icall)=features.noise.rms;
         transient_params.noise.SE(Icall)=features.noise.SE;
         transient_params.noise.duration(Icall)=features.noise.duration;
-        %transient_params.noise.SE_FFT_band(1:length(features.noise.SE_FFT_band),Icall)=features.noise.SE_FFT_band;
-        %transient_params.noise.rms_FFT_band(1:length(features.noise.rms_FFT_band),Icall)=features.noise.rms_FFT_band;
-        %transient_params.noise.freq_bandwidth=features.noise.freq_bandwidth;
-        
-        %%%Compute SNR
-        % %Must square rms to get intensity units.
-        % Subtract one in order to remove noise from signal if rms_Malme does not already subtract noise
-        % estimate.
-        %transient_params.level.SNR(Icall)=(features.rms_Malme./features.noise.rms).^2 -1;
+       
         transient_params.level.SNR(Icall)=(features.rms_Malme./features.noise.rms).^2 ;
         
         

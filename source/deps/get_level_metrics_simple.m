@@ -248,7 +248,8 @@ features.noise.SE=features.t_Malme*(features.noise.rms.^2);
         
         set(gcf,'pos',[ 119   664   560   420]);
         hold off
-      %pause
+        disp('pause in get_level_metrics_simple');
+        keyboard
     end
 
 
