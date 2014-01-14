@@ -1,4 +1,4 @@
-  function plot_data_boxplot(tabs,time_inc_boxplot,ydata,ylimits,tlabel_inc,label_style)
+  function hprint=plot_data_boxplot(tabs,time_inc_boxplot,ydata,ylimits,tlabel_inc,label_style)
         
         %tabs vector of datenumbers associated with data
         %ydata, data associated with time series tabs
@@ -14,7 +14,7 @@
 %         t2(3)=t2(3)+1;
 %         t2=datenum(t2);  %Ceilings date to midnight next day
 %         
-        figure;
+        hprint=figure;
         t1=tabs(1);
         t2=tabs(end);
         tbin=t1:time_inc_boxplot:t2;  %Shorter time scale
