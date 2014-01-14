@@ -1,4 +1,4 @@
-function [N,printname,Ibin,hout]=hist2D(X,axis1,axis2,feature_names,contour_chc)
+function [N,printname,Ibin,hout,hprint]=hist2D(X,axis1,axis2,feature_names,contour_chc)
 %function [N,printname,Ibin]=hist2D(X,axis1,axis2,feature_names,contour_chc)
 %
 %  Input:
@@ -12,6 +12,7 @@ function [N,printname,Ibin,hout]=hist2D(X,axis1,axis2,feature_names,contour_chc)
 %% Ibin:  [2 Npoint] matrix that gives [I; J] indicie where sample was placed in N
 %%          First row associated with rows of N (axis 1); second row associated with columns of N
 %% hout: handles to three axes...
+%% hprint: handle to figure
 if size(X,1)>2
     error('X needs to have only two rows');
 end
@@ -50,7 +51,7 @@ for I=1:length(axis1)
 end
 
 
-figure
+hprint=figure;
 
 %%%%%%%%%%%%%%%%
 subplot(2,2,1);

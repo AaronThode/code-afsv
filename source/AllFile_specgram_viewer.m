@@ -1087,7 +1087,7 @@ end
 
     function [param,param_desc]=load_energy_parameters
         
-        if isfield(handles,'energy_parameters_default')&&~isempty(strfind(Batch_mode,'Bulk'))
+        if isfield(handles,'energy_parameters_default')&&isfield(handles,'energy_parameters_default_desc')&&~isempty(strfind(Batch_mode,'Bulk'))
             %%Logic assumes that a normal user has used "Process Visible
             %%Window and is now starting a bulk run
             param=handles.energy_parameters_default;
@@ -8412,6 +8412,8 @@ function pushbutton_notes_stats_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+
+X=[];Y.name=[];
 %Provide option to reload a notes file that does not match current load
 ReloadButton = questdlg('Would you like to load annotations associated with multiple files?', ...
     'Reload Annotations?');
@@ -8455,11 +8457,11 @@ X=get_histogram_vars(ButtonName, handles.notes.Data.Events,handles.notes.Data.De
 if isempty(X.start)
     return
 end
-
+hprint=[];
 switch ButtonName
     case '1-D histogram'
         for Ix=1:(length(X.start)-1)
-            figure
+            hprint(Ix)=figure;
             edges=X.start(Ix):X.dx:X.start(Ix+1);
             Igood=find(X.var>=X.start(Ix)&X.var<=X.start(Ix+1));
             
@@ -8491,7 +8493,7 @@ switch ButtonName
             return
         end
         %[2 Npoint]
-        
+        hprint=zeros(1,length(X.start)-1);
         for Ix=1:(length(X.start)-1)
             
             edges=X.start(Ix):X.dx:X.start(Ix+1);
@@ -8501,7 +8503,7 @@ switch ButtonName
             XX=[X.var(Igood);Y.var(Igood)];
             
             %[Nclick,tbin]=histc(X.var(Igood),edges);
-            [N,printname,Ibin,hh]=hist2D(XX,edges,edges2,{X.label,Y.label},1);
+            [N,printname,Ibin,hh,hprint(Ix)]=hist2D(XX,edges,edges2,{X.label,Y.label},1);
             if strcmp(X.name,'start_time')
                 axes(hh(1));
                 set(gca,'fontweight','bold','fontsize',14)
@@ -8533,6 +8535,8 @@ switch ButtonName
         if isempty(Y.start)
             return
         end
+         hprint=zeros(1,length(X.start)-1);
+       
         for Ix=1:(length(X.start)-1)
             
             edges=X.start(Ix):X.dx:X.start(Ix+1);
@@ -8543,7 +8547,7 @@ switch ButtonName
             
             %[Nclick,tbin]=histc(X.var(Igood),edges);
             %[N,printname,Ibin,hh]=hist2D(XX,edges,edges2,{X.label,Y.label},1);
-            plot_data_boxplot(X.var(Igood),X.dx,Y.var(Igood),[Y.start(1) Y.start(end)],X.label_inc,X.style)
+            hprint(Ix)=plot_data_boxplot(X.var(Igood),X.dx,Y.var(Igood),[Y.start(1) Y.start(end)],X.label_inc,X.style)
             if strcmp(X.name,'start_time')
                 %datetick('x',X.style,'keeplimits','keepticks');
                 xlabel('Time');
@@ -8558,6 +8562,60 @@ switch ButtonName
         end
         
     otherwise
+end
+
+%%Plot results
+
+ButtonName2 = questdlg('Print and save Data?', ...
+    'Save stats...');
+switch ButtonName2
+    case 'No'
+        return
+end
+%Nfigs=sort(get(0,'Child'));
+%Nfigs=Nfigs(Nfigs<150);
+
+%for II=1:length(Nfigs)
+try
+    for Ix=1:length(hprint)
+        edges=X.start(Ix):X.dx:X.start(Ix+1);
+        
+        if strcmp(X.name,'start_time')&&isempty(Y.name)
+            save_str=sprintf('Stats_%s_%s_%s_%s', ButtonName,X.name,datestr(edges(1),30),datestr(edges(end),30));
+        elseif isempty(Y.name)
+            save_str=sprintf('Stats_%s_%s_%s_%s', ButtonName,X.name,(edges(1)),(edges(end)));
+        elseif strcmp(X.name,'start_time')&&~isempty(Y.name)
+            save_str=sprintf('Stats_%s_%s_%s_%s_%s', ButtonName,X.name,Y.name,datestr(edges(1),30),datestr(edges(end),30));
+        elseif ~isempty(Y.name)
+            save_str=sprintf('Stats_%s_%s_%s_%s_%s', ButtonName,X.name,Y.name,(edges(1)),(edges(end)));
+            
+        end
+        
+        orient landscape
+        print(hprint(Ix),'-djpeg',save_str);
+        saveas(hprint(Ix), save_str, 'fig');
+        %end
+        close(hprint(Ix));
+    end
+    
+    
+    if strcmp(X.name,'start_time')&&isempty(Y.name)
+            save_str=sprintf('Stats_%s_%s_%s_%s', ButtonName,X.name,datestr(X.start(1),30),datestr(X.start(end),30));
+        elseif isempty(Y.name)
+            save_str=sprintf('Stats_%s_%s_%s_%s', ButtonName,X.name,X.start(1),X.start(end));
+        elseif strcmp(X.name,'start_time')&&~isempty(Y.name)
+            save_str=sprintf('Stats_%s_%s_%s_%s_%s', ButtonName,X.name,Y.name,datestr(X.start(1),30),datestr(X.start(end),30));
+        elseif ~isempty(Y.name)
+            save_str=sprintf('Stats_%s_%s_%s_%s_%s', ButtonName,X.name,Y.name,X.start(1),X.start(end));
+            
+    end
+        
+    save(save_str,'X','Y');
+    
+    uiwait(msgbox([save_str ' mat, fig and jpg file written to ' pwd],'replace'));
+catch
+    uiwait(errdlg('Figures have been deleted','Can''t save figures'));
+    
 end
 end
 
