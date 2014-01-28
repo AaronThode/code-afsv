@@ -4606,7 +4606,7 @@ elseif strcmp(handles.display_view,'Time Series') %%Time series
     
     %%Check that we are looking at acoustic data
     if isempty(strfind(handles.myfile,'Press'))
-        disp('Enter min and max frequency:');
+        disp('Enter min and max frequency, or return to see raw time series:');
         tmp=ginput(2);
         if ~isempty(tmp)&&size(tmp,1)==2
             freq=sort(tmp(:,2))*1000;
@@ -4621,7 +4621,7 @@ elseif strcmp(handles.display_view,'Time Series') %%Time series
             y=x(:,1)-mean(x(:,1));
         end
     else
-        y=x(:,1)/1000;
+        y=x(:,1)/1000; %Pressure conversion
     end
     
     t=(1:length(x(:,1)))/Fs;
@@ -4892,6 +4892,8 @@ end
 
 end
 
+
+%%% load_data.m%%%%
 function [x,t,Fs,tmin,tmax,head]	=	...
     load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)
 %%% tmin,tmax, t are datenumbers
