@@ -318,6 +318,23 @@ function Menu_processors_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 end
 
+function Subdirectory_List=get_subdirectory_list
+%% Select a list of folders inside current folder, returns cell matrix
+d= dir;
+Ikeep=[d.isdir];
+
+str = {d.name};
+str=str(Ikeep);
+[s,v] = listdlg('PromptString','Select folder(s), "." selects current:',...
+    'SelectionMode','multiple',...
+    'ListString',str);
+if v==0
+    Subdirectory_List={'.'};
+else 
+    Subdirectory_List=str(s);
+end
+end
+            
 % --------------------------------------------------------------------
 function MenuItem_psd_Callback(hObject, eventdata, handles)
 % hObject    handle to MenuItem_psd (see GCBO)
@@ -391,18 +408,22 @@ switch	Batch_mode
         end
         
         return
-    case {'Start Bulk Processing File','Start Bulk Processing Folder'}
+    case {'Start Bulk Processing File','Start Bulk Processing Folder','Start Bulk Processing Folders'}
         
         if strcmp(Batch_mode,'Start Bulk Processing File')
             h	=	msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
             param.exten=['*' handles.myfile];
-        else
+        elseif strcmp(Batch_mode,'Start Bulk Processing Folder')
             h	=	msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type));
-            
+            param.exten=['*' handles.myext];
+            Subdirectory_List={'.'};
+        elseif strcmp(Batch_mode,'Start Bulk Processing Folders')
+            h	=	msgbox(sprintf('Processing all data in folders that lie under %s\n for %s',fullfile(handles.mydir), Batch_type));
+            Subdirectory_List=get_subdirectory_list;
             param.exten=['*' handles.myext];
         end
+        
         param.dir_out='.';
-        param.file_dir=handles.mydir;
         contents=get(handles.popupmenu_Nfft,'String');
         param.Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
         contents=get(handles.popupmenu_ovlap,'String');
@@ -420,8 +441,20 @@ switch	Batch_mode
             param.sec_avg=param.Nfft/param.Fs;  %Make a spectrogram--no averaging
         end
         
-        write_Java_script('PSD',param);
-        ! ./masterPSD.scr > outt.txt &
+        %%Modified loop for multiple folders..
+        mydir=pwd;
+        for Idir=1:length(Subdirectory_List)
+            cd(Subdirectory_List{Idir});
+            if ~strcmp(Subdirectory_List{Idir},'.')
+                param.file_dir=[handles.mydir filesep Subdirectory_List{Idir}];
+            else
+                param.file_dir=handles.mydir;
+            end
+            
+            write_Java_script('PSD',param);
+            ! ./masterPSD.scr > outt.txt &
+            cd ..
+        end
         return
     case 'Load Bulk Processing'
         Batch_vars_bulkload.start_time	=	'file start';	Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
@@ -456,10 +489,12 @@ switch	Batch_mode
         end
         
         %Load bulk run time and file data
+        Subdirectory_List=get_subdirectory_list;
+            
         [tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
         
         
-        %Start processing
+        %Loop through each PSD file
         tabs_loop_begin=tabs_start;
         PSD_all=[];Tabs_all=[];
         Iplot=1;
@@ -1225,6 +1260,16 @@ function MenuItem_boatdet_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+%[metrics,hf]	=	shipdet_metrics(PSD_struct, param, ha_ref, hf,want_hough)
+%PSD_struct	:	{struct}	   Power spectral density structure,
+%								must contain the following	fields:
+%		PSD		:	{dbl}(t,f)	The 2d power spectral density matrix, linear (not dB) units
+%		T		:	{dbl}(t)	Time vector
+%		F		:	{dbl}(f)	Frequency vector
+%       Idebug:                 scalar that determines if debug output given...
+%
+
+
 Batch_type	=	get(hObject, 'Label');
 Batch_mode	=	input_batchmode(Batch_type);
 
@@ -1233,11 +1278,15 @@ if	isempty(Batch_mode)
     return;
 end
 
-Batch_vars.A	=	'Aa';	Batch_desc{1}	=	'1st var desc';
-Batch_vars.B	=	'Bb';	Batch_desc{2}	=	'2nd var desc';
-Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
-Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
-Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
+  %threshold=5; %dB threshold between peak and surrounding values at +/-df_search
+%                               df_search=10; %+-/Hz to examine around each local maximum
+%                               f_min	=	25; %Hz
+%                               f_max	=	450; %Hz
+Batch_vars.threshold	=	'5';	Batch_desc{1}	=	'dB threshold between peak and surrounding values at +/-df_search';
+Batch_vars.df_search	=	'10';	Batch_desc{2}	=	'+-/Hz to examine around each local maximum';
+Batch_vars.f_min	=	'25';	Batch_desc{3}	=	'minimum frequency to examine (Hz)';
+Batch_vars.f_max	=	'450';	Batch_desc{4}	=	'maximum frequency to examine (Hz)';
+%Batch_vars.want_hough	=	'1';	Batch_desc{5}	=	'want_hough transform of images';
 
 Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
 
@@ -1245,6 +1294,7 @@ if	isempty(Batch_vars)
     errordlg('Processing cancelled!');
     return;
 end
+        
 
 switch Batch_mode
     case 'Process Visible Window'
@@ -1253,6 +1303,8 @@ switch Batch_mode
         uiwait(msgbox(['Processing all data in whole file for ' Batch_type]));
     case 'Start Bulk Processing Folder'
         uiwait(msgbox(['Processing all data in whole folder for ' Batch_type]));
+    case 'Load Bulk Processing'
+        uiwait(msgbox(['Loading Bulk Processing ' Batch_type]));
     otherwise
         error('Batch mode not recognized');
 end
@@ -1261,6 +1313,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Ask user for mode of processing operations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Return string description processing choice...
 function	[Batch_mode]	=	input_batchmode(Batch_type)
 %Mode_options	=	{'Process Visible Window', 'Start Bulk Processing File', 'Start Bulk Processing Folder','Load Bulk Processing'};
 Mode_options	=	{'Process Visible Window', 'Start Bulk Processing', 'Load Bulk Processing'};
@@ -1274,8 +1327,8 @@ button	=	questdlg(qstring, title ,...
 Batch_mode	=	button;
 
 switch Batch_mode
-    case 'Start Bulk Processing'
-        Mode_options	=	{'File','Folder'};
+    case {'Start Bulk Processing','Load Bulk Processing'}
+        Mode_options	=	{'File','Folder','Folders'};
         title	=	Batch_type;
         
         button	=	questdlg(qstring, title ,...
