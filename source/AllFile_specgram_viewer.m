@@ -318,23 +318,6 @@ function Menu_processors_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 end
 
-function Subdirectory_List=get_subdirectory_list
-%% Select a list of folders inside current folder, returns cell matrix
-d= dir;
-Ikeep=[d.isdir];
-
-str = {d.name};
-str=str(Ikeep);
-[s,v] = listdlg('PromptString','Select folder(s), "." selects current:',...
-    'SelectionMode','multiple',...
-    'ListString',str);
-if v==0
-    Subdirectory_List={'.'};
-else 
-    Subdirectory_List=str(s);
-end
-end
-            
 % --------------------------------------------------------------------
 function MenuItem_psd_Callback(hObject, eventdata, handles)
 % hObject    handle to MenuItem_psd (see GCBO)
@@ -408,22 +391,18 @@ switch	Batch_mode
         end
         
         return
-    case {'Start Bulk Processing File','Start Bulk Processing Folder','Start Bulk Processing Folders'}
+    case {'Start Bulk Processing File','Start Bulk Processing Folder'}
         
         if strcmp(Batch_mode,'Start Bulk Processing File')
             h	=	msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
             param.exten=['*' handles.myfile];
-        elseif strcmp(Batch_mode,'Start Bulk Processing Folder')
+        else
             h	=	msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type));
-            param.exten=['*' handles.myext];
-            Subdirectory_List={'.'};
-        elseif strcmp(Batch_mode,'Start Bulk Processing Folders')
-            h	=	msgbox(sprintf('Processing all data in folders that lie under %s\n for %s',fullfile(handles.mydir), Batch_type));
-            Subdirectory_List=get_subdirectory_list;
+            
             param.exten=['*' handles.myext];
         end
-        
         param.dir_out='.';
+        param.file_dir=handles.mydir;
         contents=get(handles.popupmenu_Nfft,'String');
         param.Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
         contents=get(handles.popupmenu_ovlap,'String');
@@ -441,20 +420,8 @@ switch	Batch_mode
             param.sec_avg=param.Nfft/param.Fs;  %Make a spectrogram--no averaging
         end
         
-        %%Modified loop for multiple folders..
-        mydir=pwd;
-        for Idir=1:length(Subdirectory_List)
-            cd(Subdirectory_List{Idir});
-            if ~strcmp(Subdirectory_List{Idir},'.')
-                param.file_dir=[handles.mydir filesep Subdirectory_List{Idir}];
-            else
-                param.file_dir=handles.mydir;
-            end
-            
             write_Java_script('PSD',param);
             ! ./masterPSD.scr > outt.txt &
-            cd ..
-        end
         return
     case 'Load Bulk Processing'
         Batch_vars_bulkload.start_time	=	'file start';	Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
@@ -489,12 +456,10 @@ switch	Batch_mode
         end
         
         %Load bulk run time and file data
-        Subdirectory_List=get_subdirectory_list;
-            
         [tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
         
         
-        %Loop through each PSD file
+        %Start processing
         tabs_loop_begin=tabs_start;
         PSD_all=[];Tabs_all=[];
         Iplot=1;
@@ -1327,8 +1292,8 @@ button	=	questdlg(qstring, title ,...
 Batch_mode	=	button;
 
 switch Batch_mode
-    case {'Start Bulk Processing','Load Bulk Processing'}
-        Mode_options	=	{'File','Folder','Folders'};
+    case 'Start Bulk Processing'
+        Mode_options	=	{'File','Folder'};
         title	=	Batch_type;
         
         button	=	questdlg(qstring, title ,...
