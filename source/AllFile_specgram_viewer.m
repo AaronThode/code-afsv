@@ -415,14 +415,16 @@ switch	Batch_mode
                     y_label='dB re 1uPa^2/Hz';
                 end
                 
-                %hprint(Ix)=plot_data_boxplot(X.var(Igood),X.dx,Y.var(Igood),[Y.start(1) Y.start(end)],X.label_inc,X.style)
-                %hprint=plot_data_boxplot(tabs,time_inc_boxplot,ydata,ylimits,tlabel_inc,label_style)
-                %xdata,x_inc_boxplot,ydata,ylimits,xlabel_inc,label_style)
-        
-                hprint=plot_data_boxplot(Tnew,time_inc,sumPSD,ylimits,xlabel_inc);
+                
+%                 keyboard
+%                 hprint=plot_data_boxplot(Tnew,time_inc,sumPSD,ylimits,xlabel_inc);
+%                 xlabel(x_label,'fontsize',14,'fontweight','bold');
+%                 ylabel(y_label,'fontsize',14,'fontweight','bold');
+%                 
+                hprint=plot_data_boxplot_percentile(Tnew,time_inc,sumPSD,ylimits,xlabel_inc);
                 xlabel(x_label,'fontsize',14,'fontweight','bold');
                 ylabel(y_label,'fontsize',14,'fontweight','bold');
-                %keyboard
+                %
                 
         %tabs vector of datenumbers associated with data
         %ydata, data associated with time series tabs
