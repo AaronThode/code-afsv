@@ -328,7 +328,7 @@ Batch_type	=	get(hObject, 'Label');
 Batch_mode	=	input_batchmode(Batch_type);
 
 if	isempty(Batch_mode)
-    errordlg('Processing cancelled!');
+    uiwait(errordlg('Processing cancelled!'));
     return;
 end
 
@@ -336,19 +336,18 @@ if isempty(strfind(Batch_mode,'Load'))
     Batch_vars.sec_avg	=	'2';	Batch_desc{1}	=	'Seconds to average PSD for long-term display, if "0" no averaging' ;
     Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
     if	isempty(Batch_vars)
-        errordlg('Processing cancelled!');
+        uiwait(errordlg('Processing cancelled!'));
         return;
     end
     
-    sec_avg=str2num(Batch_vars.sec_avg);
+    sec_avg=str2double(Batch_vars.sec_avg);
     
 end
 
 
 switch	Batch_mode
     case 'Process Visible Window'
-        h	=	msgbox(['Processing all data within window for ' Batch_type]);
-        
+        uiwait(msgbox(['Processing all data within window for ' Batch_type]));
         
         dT=handles.sgram.T(2)-handles.sgram.T(1);
         Ncol=max([1 floor(sec_avg/dT)]);
@@ -359,10 +358,10 @@ switch	Batch_mode
         for I=1:(length(Itime)-1)
             PSD(:,I)=mean(handles.sgram.B(:,Itime(I):Itime(I+1)),2);
         end
-        PSD=10*log10(PSD);
+        PSDdB=10*log10(PSD);
         hprint=figure;
         
-        imagesc(Tnew,F/1000,PSD);axis('xy')
+        imagesc(Tnew,F/1000,PSDdB);axis('xy')
         set(gca,'fontweight','bold','fontsize',14);
         xlabel('Time (sec)');ylabel(' Frequency (kHz)');
         
@@ -370,8 +369,8 @@ switch	Batch_mode
         title(titlestr);
         
         
-        fmin=str2num(get(handles.edit_fmin,'String'));
-        fmax=str2num(get(handles.edit_fmax,'String'));
+        fmin=str2num(get(handles.edit_fmin,'String')); %kHz
+        fmax=str2num(get(handles.edit_fmax,'String'));  %kHz
         ylimm=[fmin fmax];
         ylim(ylimm);
         colorbar
@@ -379,15 +378,39 @@ switch	Batch_mode
         cmax=cmin+eval(get(handles.edit_dBspread,'string'));
         caxis([cmin cmax]);
         
-        yess=menu('Save PSD Data and figure?','Yes','No');
-        if yess==1
-            
-            save_str=sprintf('PSD_plot_%s_%s', datestr(handles.tdate_start,30),datestr(handles.tdate_start+datenum(0,0,0,0,0,handles.tlen),30));
-            save(save_str,'F','titlestr','Tnew','PSD','cmin','cmax','ylimm');
-            h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
-            
-            orient landscape
-            print(hprint,'-djpeg',save_str);
+        %yess=menu('Save PSD Data and figure?','Yes','No');
+        ButtonName = questdlg('What do you want to do now?', ...
+                         'PSD options', ...
+                         'Leave Me Alone', 'Save Figure', 'Plot percentiles', 'Leave Me Alone');
+        switch ButtonName
+            case 'Save Figure'
+                
+                save_str=sprintf('PSD_plot_%4.2f_%s_%s', sec_avg,datestr(handles.tdate_start,30),datestr(handles.tdate_start+datenum(0,0,0,0,0,handles.tlen),30));
+                save(save_str,'F','titlestr','Tnew','PSD','cmin','cmax','ylimm','sec_avg');
+                h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
+                
+                orient landscape
+                print(hprint,'-djpeg',save_str);
+            case 'Plot percentiles'
+                
+                pms=get_PSD_percentile_params(fmin,fmax);
+                
+                %%Process PSD matrix..
+                Igood=find(F>=pms.fmin&F<=pms.fmax);
+                if length(F)>1
+                    sumPSD=10*log10((F(2)-F(1))*sum(PSD(Igood,:)));  %Now power spectral density converted to power
+                    pms.y_label='dB re 1uPa';
+                else
+                    sumPSD=10*log10(PSD(Igood,:));
+                    pms.y_label='dB re 1uPa^2/Hz';
+                end
+          
+                
+                hprint=plot_data_boxplot_percentile(Tnew, pms.time_inc,sumPSD,pms.ylimits,pms.xlabel_inc,pms.percentile);
+                xlabel(pms.x_label,'fontsize',14,'fontweight','bold');
+                ylabel(pms.y_label,'fontsize',14,'fontweight','bold');
+                 
+                
         end
         
         return
@@ -420,11 +443,12 @@ switch	Batch_mode
             param.sec_avg=param.Nfft/param.Fs;  %Make a spectrogram--no averaging
         end
         
-        write_Java_script('PSD',param);
-        ! ./masterPSD.scr > outt.txt &
+            write_Java_script('PSD',param);
+            ! ./masterPSD.scr > outt.txt &
         return
     case 'Load Bulk Processing'
-        Batch_vars_bulkload.start_time	=	'file start';	Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
+        Batch_vars_bulkload.start_time	=	'file start';	
+        Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
         Batch_vars_bulkload.end_time	=	'all';
         Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "all" to import entire folder)';
         Batch_vars_bulkload.time_window      =   'file';
@@ -456,9 +480,17 @@ switch	Batch_mode
         end
         
         %Load bulk run time and file data
-        [tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
+        bulk_params=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
         
-        
+        tabs_folder_start=bulk_params.tabs_folder_start;
+        tabs_folder_end=bulk_params.tabs_folder_end;
+        tabs_start=bulk_params.tabs_start;
+        tabs_end=bulk_params.tabs_end;
+        Other_FileNames=bulk_params.Other_FileNames;
+        Icurrent_file=bulk_params.Icurrent_file;
+        Nfiles=bulk_params.Nfiles;
+        FF=bulk_params.FF;
+
         %Start processing
         tabs_loop_begin=tabs_start;
         PSD_all=[];Tabs_all=[];
@@ -483,6 +515,10 @@ switch	Batch_mode
             end
         end  %Icurrent_file
         
+        %Thus we have FF, Tabs_all, PSD_all
+        
+        %pms=get_PSD_percentile_params(fmin,fmax);
+                
         if ~split_windows
             [hprint(1),save_tag{1}]=image_PSD(min(Tabs_all), max(Tabs_all));
         end
@@ -528,7 +564,22 @@ switch	Batch_mode
         error('Batch mode not recognized');
 end
 
-
+    function pms=get_PSD_percentile_params(fmin,fmax)
+        prompt = {'Time unit','Time increment:','Min Frequency (Hz):', ...
+            'Max Frequency(Hz)','dB limits [min max]','tick increment','percentile'};
+        dlg_title = 'Input for PSD statistics';
+        num_lines = 1;
+        def = {'seconds','60',num2str(1000*fmin),num2str(1000*fmax),'[70 120]','120','[0.01 0.1 .25 .5 .75 0.9 .99]'};
+        answer = inputdlg(prompt,dlg_title,num_lines,def);
+        pms.x_label=answer{1};
+        pms.time_inc=str2num(answer{2});
+        pms.fmin=str2num(answer{3});
+        pms.fmax=str2num(answer{4});
+        pms.ylimits=str2num(answer{5});
+        pms.xlabel_inc=str2num(answer{6});
+        pms.percentile=eval(answer{7});
+    end
+            
     function [hprint,save_tag]=image_PSD(twin1,twin2)
         
         if isempty(Tabs_all)
@@ -553,7 +604,7 @@ end
         climm=[cmin cmax];
         caxis(climm);
         xlim([twin1 twin2]);
-        datetick('x',14,'keeplimits')
+        datetick('x',13,'keeplimits')
         sec_avg=params.Nsamps*params.dn/params.Fs;
         titlestr=(sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f',datestr(twin1,30),datestr(twin2,30),sec_avg));
         title(titlestr);
@@ -578,28 +629,18 @@ end
 if isempty(strfind(Batch_mode,'Start Bulk'))
     Batch_vars.mean	=	'yes';	Batch_desc{1}	=	'Enter yes for averaged linear spectrum (instead of just percentiles)';
     Batch_vars.percentile	=	'[10 50 90]';	Batch_desc{2}	=	'Percentile display';
-    %Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
-    %Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
-    %Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
     
     Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
     percentile=str2num(Batch_vars.percentile)/100;
     
     if	isempty(Batch_vars)
-        errordlg('Processing cancelled!');
+        uiwait(errordlg('Processing cancelled!'));
         return;
     end
 end
 % %
 
-% handles.sgram.T		=	TT;
-%     handles.sgram.F		=	FF;
-%     handles.sgram.B		=	B;
-%     handles.sgram.Nfft	=	Nfft;
-%     handles.sgram.ovlap	=	ovlap;
-%     handles.sgram.Fs	=	Fs;
 
-%%Make a new figure and plot spectrum.
 
 %Graphic parameters
 line_width=2;
@@ -607,7 +648,7 @@ line_width=2;
 
 switch	Batch_mode
     case 'Process Visible Window'
-        h	=	msgbox(['Processing all data within window for ' Batch_type]);
+        uiwait(msgbox(['Processing all data within window for ' Batch_type]));
         
         %%Make a new figure and plot spectrum.
         Ileg=1;
@@ -708,8 +749,17 @@ switch	Batch_mode
         
         
         % Load bulk run information
-        [tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
+        %[tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
+        bulk_params=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
         
+        tabs_folder_start=bulk_params.tabs_folder_start;
+        tabs_folder_end=bulk_params.tabs_folder_end;
+        tabs_start=bulk_params.tabs_start;
+        tabs_end=bulk_params.tabs_end;
+        Other_FileNames=bulk_params.Other_FileNames;
+        Icurrent_file=bulk_params.Icurrent_file;
+        Nfiles=bulk_params.Nfiles;
+        FF=bulk_params.FF;
         
         %%Translate duty cycle...
         if duty_cycle_chc
@@ -829,8 +879,18 @@ end
 
 end
 
-function [tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles,Batch_vars_bulkload)
+function bulk_params=load_PSD_Bulk_Run(handles,Batch_vars_bulkload)
 %Note that a file does not have to be loaded for this to work...
+
+bulk_params.tabs_folder_start=[];
+bulk_params.tabs_folder_end=[];
+bulk_params.tabs_start=[];
+bulk_params.tabs_end=[];
+bulk_params.Other_FileNames=[];
+bulk_params.Icurrent_file=[];
+bulk_params.Nfiles=[];
+bulk_params.FF=[];
+
 dialog_title	=	'Select Bulk file to load: Note that I am looking in current directory, not data directory';
 if isfield(handles,'myfile')
     [~,token,extt] = fileparts(handles.myfile);
@@ -921,6 +981,14 @@ switch lower(Batch_vars_bulkload.end_time)
         end
 end
 
+bulk_params.tabs_folder_start=tabs_folder_start;
+bulk_params.tabs_folder_end=tabs_folder_end;
+bulk_params.tabs_start=tabs_start;
+bulk_params.tabs_end=tabs_end;
+bulk_params.Other_FileNames=Other_FileNames;
+bulk_params.Icurrent_file=Icurrent_file;
+bulk_params.Nfiles=Nfiles;
+bulk_params.FF=FF;
 
 end
 
@@ -1225,6 +1293,16 @@ function MenuItem_boatdet_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+%[metrics,hf]	=	shipdet_metrics(PSD_struct, param, ha_ref, hf,want_hough)
+%PSD_struct	:	{struct}	   Power spectral density structure,
+%								must contain the following	fields:
+%		PSD		:	{dbl}(t,f)	The 2d power spectral density matrix, linear (not dB) units
+%		T		:	{dbl}(t)	Time vector
+%		F		:	{dbl}(f)	Frequency vector
+%       Idebug:                 scalar that determines if debug output given...
+%
+
+
 Batch_type	=	get(hObject, 'Label');
 Batch_mode	=	input_batchmode(Batch_type);
 
@@ -1233,11 +1311,15 @@ if	isempty(Batch_mode)
     return;
 end
 
-Batch_vars.A	=	'Aa';	Batch_desc{1}	=	'1st var desc';
-Batch_vars.B	=	'Bb';	Batch_desc{2}	=	'2nd var desc';
-Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
-Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
-Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
+  %threshold=5; %dB threshold between peak and surrounding values at +/-df_search
+%                               df_search=10; %+-/Hz to examine around each local maximum
+%                               f_min	=	25; %Hz
+%                               f_max	=	450; %Hz
+Batch_vars.threshold	=	'5';	Batch_desc{1}	=	'dB threshold between peak and surrounding values at +/-df_search';
+Batch_vars.df_search	=	'10';	Batch_desc{2}	=	'+-/Hz to examine around each local maximum';
+Batch_vars.f_min	=	'25';	Batch_desc{3}	=	'minimum frequency to examine (Hz)';
+Batch_vars.f_max	=	'450';	Batch_desc{4}	=	'maximum frequency to examine (Hz)';
+%Batch_vars.want_hough	=	'1';	Batch_desc{5}	=	'want_hough transform of images';
 
 Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
 
@@ -1245,6 +1327,7 @@ if	isempty(Batch_vars)
     errordlg('Processing cancelled!');
     return;
 end
+        
 
 switch Batch_mode
     case 'Process Visible Window'
@@ -1253,6 +1336,8 @@ switch Batch_mode
         uiwait(msgbox(['Processing all data in whole file for ' Batch_type]));
     case 'Start Bulk Processing Folder'
         uiwait(msgbox(['Processing all data in whole folder for ' Batch_type]));
+    case 'Load Bulk Processing'
+        uiwait(msgbox(['Loading Bulk Processing ' Batch_type]));
     otherwise
         error('Batch mode not recognized');
 end
@@ -1261,6 +1346,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Ask user for mode of processing operations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Return string description processing choice...
 function	[Batch_mode]	=	input_batchmode(Batch_type)
 %Mode_options	=	{'Process Visible Window', 'Start Bulk Processing File', 'Start Bulk Processing Folder','Load Bulk Processing'};
 Mode_options	=	{'Process Visible Window', 'Start Bulk Processing', 'Load Bulk Processing'};
@@ -4606,7 +4692,7 @@ elseif strcmp(handles.display_view,'Time Series') %%Time series
     
     %%Check that we are looking at acoustic data
     if isempty(strfind(handles.myfile,'Press'))
-        disp('Enter min and max frequency:');
+        disp('Enter min and max frequency, or return to see raw time series:');
         tmp=ginput(2);
         if ~isempty(tmp)&&size(tmp,1)==2
             freq=sort(tmp(:,2))*1000;
@@ -4621,7 +4707,7 @@ elseif strcmp(handles.display_view,'Time Series') %%Time series
             y=x(:,1)-mean(x(:,1));
         end
     else
-        y=x(:,1)/1000;
+        y=x(:,1)/1000; %Pressure conversion
     end
     
     t=(1:length(x(:,1)))/Fs;
@@ -4892,6 +4978,8 @@ end
 
 end
 
+
+%%% load_data.m%%%%
 function [x,t,Fs,tmin,tmax,head]	=	...
     load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)
 %%% tmin,tmax, t are datenumbers
@@ -4969,11 +5057,18 @@ switch filetype
         end
         [x,t,head]=readGSIfile([mydir '/' myfile],tdate_start,tlen,Ichan,'datenum','nocalibrate');
         if isempty(keyword)
-            keyword=input('Enter a keyword for GSI calibration [DASARC]:','s');
-            if isempty(keyword)
-                keyword='DASARC';
-            end
+            prompt = {'Enter a keyword for GSI calibration [DASARC]:'};
+            dlg_title = 'DASAR calibration';
+            num_lines = 1;
+            def = {'DASARC'};
+            answer = inputdlg(prompt,dlg_title,num_lines,def);
+            keyword=answer{1};
         end
+% keyword=input('Enter a keyword for GSI calibration [DASARC]:','s');
+%             if isempty(keyword)
+%                 keyword='DASARC';
+%             end
+%         end
         x=calibrate_GSI_signal(x, keyword);
         
         Fs=head.Fs;
@@ -8547,7 +8642,9 @@ switch ButtonName
             
             %[Nclick,tbin]=histc(X.var(Igood),edges);
             %[N,printname,Ibin,hh]=hist2D(XX,edges,edges2,{X.label,Y.label},1);
-            hprint(Ix)=plot_data_boxplot(X.var(Igood),X.dx,Y.var(Igood),[Y.start(1) Y.start(end)],X.label_inc,X.style)
+            hprint(Ix)=plot_data_boxplot_percentile(X.var(Igood),X.dx,Y.var(Igood),[Y.start(1) Y.start(end)],X.label_inc,[],X.style);
+            %hprint=plot_data_boxplot_percentile(Tnew, time_inc,sumPSD,ylimits,xlabel_inc,percentile);
+                
             if strcmp(X.name,'start_time')
                 %datetick('x',X.style,'keeplimits','keepticks');
                 xlabel('Time');
@@ -8622,8 +8719,8 @@ end
 %[X.var,X.start,X.dx,X.label_inc,X.label,X.name,X.style]=get_histogram_vars(ButtonName,handles.notes.Data.Events);
 
 function X=get_histogram_vars(ButtonName,Events,Description)
-%Input:  X.var: horizontal array of data
-%         X.name: string describing which data field, e.g. 'start_time'
+%Input:  ButtonName: horizontal array of data
+%         Events: annotation date..
 %Output:  [X.var,X.start,X.dx,X.label_inc,X.label,X.name,X.style]
 
 X.start=[];

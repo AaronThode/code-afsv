@@ -11,14 +11,16 @@ function tstart=convert_date(data,delimiter)
 mt_style_flag=~isempty(findstr('Sound',data));
 fname_bounds=findstr(data,delimiter);
 
-if length(fname_bounds)==1,
-    fname_bounds(2)=length(data)+1;
-end
 Idot=findstr(data,'.');
 fname_bounds=[fname_bounds Idot(1)];
 
+%%If only one delimiter exists, and '.' does not exist, use end of file
+if length(fname_bounds)==1
+    fname_bounds(2)=length(data)+1;
+end
+
 nm=[];
-if mt_style_flag==1,
+if mt_style_flag==1
     Isound=findstr(data,'Sound')+6;
     yr=str2num(data(Isound:(Isound+3)));
     mo=str2num(data((Isound+5):(Isound+6)));
@@ -29,7 +31,7 @@ if mt_style_flag==1,
     tstart=datenum(yr,mo,dy,hr,mn,0);
     
 else
-    try,
+    try
         
         for I=1:(length(fname_bounds)-1),
             test=data((fname_bounds(I)+1):(fname_bounds(I+1)-1));
@@ -49,7 +51,7 @@ else
             
             tstart=datenum(yr,mo,dy,hr,mn,sec);
         end
-    catch, 
+    catch 
         error('String does not contain valid datestr');
     end
 end
