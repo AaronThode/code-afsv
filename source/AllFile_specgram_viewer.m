@@ -392,47 +392,24 @@ switch	Batch_mode
                 orient landscape
                 print(hprint,'-djpeg',save_str);
             case 'Plot percentiles'
-                prompt = {'Time unit','Time increment:','Min Frequency (Hz):', ...
-                    'Max Frequency(Hz)','dB limits [min max]','tick increment','percentile'};
-                dlg_title = 'Input for PSD statistics';
-                num_lines = 1;
-                def = {'seconds','60',num2str(1000*fmin),num2str(1000*fmax),'[70 120]','120','[0.01 0.1 .25 .5 .75 0.9 .99]'};
-                answer = inputdlg(prompt,dlg_title,num_lines,def);
-                x_label=answer{1};
-                time_inc=str2num(answer{2});
-                fmin=str2num(answer{3});
-                fmax=str2num(answer{4});
-                ylimits=str2num(answer{5});
-                xlabel_inc=str2num(answer{6});
-                percentile=eval(answer{7});
+                
+                pms=get_PSD_percentile_params(fmin,fmax);
                 
                 %%Process PSD matrix..
-                Igood=find(F>=fmin&F<=fmax);
+                Igood=find(F>=pms.fmin&F<=pms.fmax);
                 if length(F)>1
                     sumPSD=10*log10((F(2)-F(1))*sum(PSD(Igood,:)));  %Now power spectral density converted to power
-                    y_label='dB re 1uPa';
+                    pms.y_label='dB re 1uPa';
                 else
                     sumPSD=10*log10(PSD(Igood,:));
-                    y_label='dB re 1uPa^2/Hz';
+                    pms.y_label='dB re 1uPa^2/Hz';
                 end
+          
                 
-                
-%                 keyboard
-%                 hprint=plot_data_boxplot(Tnew,time_inc,sumPSD,ylimits,xlabel_inc);
-%                 xlabel(x_label,'fontsize',14,'fontweight','bold');
-%                 ylabel(y_label,'fontsize',14,'fontweight','bold');
-%                 
-                hprint=plot_data_boxplot_percentile(Tnew, time_inc,sumPSD,ylimits,xlabel_inc,percentile);
-                xlabel(x_label,'fontsize',14,'fontweight','bold');
-                ylabel(y_label,'fontsize',14,'fontweight','bold');
-                %
-                
-        %tabs vector of datenumbers associated with data
-        %ydata, data associated with time series tabs
-        %  time_inc_boxplot: datenumber of time interval to compute boxplot over
-        % ylimits: two-element vector associated with acceptable values of ydata
-        % tlabel_inc:  Number of ticks to skip when labeling time (x) axis
-
+                hprint=plot_data_boxplot_percentile(Tnew, pms.time_inc,sumPSD,pms.ylimits,pms.xlabel_inc,pms.percentile);
+                xlabel(pms.x_label,'fontsize',14,'fontweight','bold');
+                ylabel(pms.y_label,'fontsize',14,'fontweight','bold');
+                 
                 
         end
         
@@ -470,7 +447,8 @@ switch	Batch_mode
             ! ./masterPSD.scr > outt.txt &
         return
     case 'Load Bulk Processing'
-        Batch_vars_bulkload.start_time	=	'file start';	Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
+        Batch_vars_bulkload.start_time	=	'file start';	
+        Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
         Batch_vars_bulkload.end_time	=	'all';
         Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "all" to import entire folder)';
         Batch_vars_bulkload.time_window      =   'file';
@@ -537,6 +515,10 @@ switch	Batch_mode
             end
         end  %Icurrent_file
         
+        %Thus we have FF, Tabs_all, PSD_all
+        
+        %pms=get_PSD_percentile_params(fmin,fmax);
+                
         if ~split_windows
             [hprint(1),save_tag{1}]=image_PSD(min(Tabs_all), max(Tabs_all));
         end
@@ -582,7 +564,22 @@ switch	Batch_mode
         error('Batch mode not recognized');
 end
 
-
+    function pms=get_PSD_percentile_params(fmin,fmax)
+        prompt = {'Time unit','Time increment:','Min Frequency (Hz):', ...
+            'Max Frequency(Hz)','dB limits [min max]','tick increment','percentile'};
+        dlg_title = 'Input for PSD statistics';
+        num_lines = 1;
+        def = {'seconds','60',num2str(1000*fmin),num2str(1000*fmax),'[70 120]','120','[0.01 0.1 .25 .5 .75 0.9 .99]'};
+        answer = inputdlg(prompt,dlg_title,num_lines,def);
+        pms.x_label=answer{1};
+        pms.time_inc=str2num(answer{2});
+        pms.fmin=str2num(answer{3});
+        pms.fmax=str2num(answer{4});
+        pms.ylimits=str2num(answer{5});
+        pms.xlabel_inc=str2num(answer{6});
+        pms.percentile=eval(answer{7});
+    end
+            
     function [hprint,save_tag]=image_PSD(twin1,twin2)
         
         if isempty(Tabs_all)
@@ -607,7 +604,7 @@ end
         climm=[cmin cmax];
         caxis(climm);
         xlim([twin1 twin2]);
-        datetick('x',14,'keeplimits')
+        datetick('x',13,'keeplimits')
         sec_avg=params.Nsamps*params.dn/params.Fs;
         titlestr=(sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f',datestr(twin1,30),datestr(twin2,30),sec_avg));
         title(titlestr);
