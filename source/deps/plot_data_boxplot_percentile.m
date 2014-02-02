@@ -1,4 +1,4 @@
-  function hprint=plot_data_boxplot_percentile(xdata,x_inc_boxplot,ydata,ylimits,xlabel_inc,label_style)
+  function hprint=plot_data_boxplot_percentile(xdata,x_inc_boxplot,ydata,ylimits,xlabel_inc,percentiles,label_style)
         
         %xdata: vector of data associated with x-axis.  Can be datenumbers
         %ydata: data associated with x-axis data xdata
@@ -11,6 +11,11 @@
         if ~exist('label_style')
             label_style=[];
         end
+        
+        if ~exist('percentiles')||isempty(percentiles)
+           percentiles=[0.01 0.1 0.25 0.5 0.75 0.9 0.99]; 
+        end
+        
         hprint=figure;
         t1=xdata(1);
         t2=xdata(end);
@@ -25,11 +30,11 @@
             data_fin(1:length(data),Ibin)=data';
             
         end
-        make_boxplot(data_fin,tbin,x_inc_boxplot,xlabel_inc,label_style);
+        make_boxplot(data_fin,tbin,x_inc_boxplot,xlabel_inc,percentiles,label_style);
         ylim(ylimits);
         
-      function make_boxplot(data_fin,tbin,x_inc_boxplot,xlabel_inc,label_style)
-            boxPlot_percentile(data_fin)
+      function make_boxplot(data_fin,tbin,x_inc_boxplot,xlabel_inc,percentiles,label_style)
+            boxPlot_percentile(data_fin,percentiles)
             set(gca,'fontweight','bold','fontsize',14);
             
             Ibin=get(gca,'xtick');

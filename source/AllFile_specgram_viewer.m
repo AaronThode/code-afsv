@@ -393,10 +393,10 @@ switch	Batch_mode
                 print(hprint,'-djpeg',save_str);
             case 'Plot percentiles'
                 prompt = {'Time unit','Time increment:','Min Frequency (Hz):', ...
-                    'Max Frequency(Hz)','dB limits [min max]','tick increment'};
+                    'Max Frequency(Hz)','dB limits [min max]','tick increment','percentile'};
                 dlg_title = 'Input for PSD statistics';
                 num_lines = 1;
-                def = {'seconds','60',num2str(1000*fmin),num2str(1000*fmax),'[40 120]','120'};
+                def = {'seconds','60',num2str(1000*fmin),num2str(1000*fmax),'[70 120]','120','[0.01 0.1 .25 .5 .75 0.9 .99]'};
                 answer = inputdlg(prompt,dlg_title,num_lines,def);
                 x_label=answer{1};
                 time_inc=str2num(answer{2});
@@ -404,6 +404,7 @@ switch	Batch_mode
                 fmax=str2num(answer{4});
                 ylimits=str2num(answer{5});
                 xlabel_inc=str2num(answer{6});
+                percentile=eval(answer{7});
                 
                 %%Process PSD matrix..
                 Igood=find(F>=fmin&F<=fmax);
@@ -421,7 +422,7 @@ switch	Batch_mode
 %                 xlabel(x_label,'fontsize',14,'fontweight','bold');
 %                 ylabel(y_label,'fontsize',14,'fontweight','bold');
 %                 
-                hprint=plot_data_boxplot_percentile(Tnew,time_inc,sumPSD,ylimits,xlabel_inc);
+                hprint=plot_data_boxplot_percentile(Tnew, time_inc,sumPSD,ylimits,xlabel_inc,percentile);
                 xlabel(x_label,'fontsize',14,'fontweight','bold');
                 ylabel(y_label,'fontsize',14,'fontweight','bold');
                 %
@@ -8644,7 +8645,9 @@ switch ButtonName
             
             %[Nclick,tbin]=histc(X.var(Igood),edges);
             %[N,printname,Ibin,hh]=hist2D(XX,edges,edges2,{X.label,Y.label},1);
-            hprint(Ix)=plot_data_boxplot(X.var(Igood),X.dx,Y.var(Igood),[Y.start(1) Y.start(end)],X.label_inc,X.style)
+            hprint(Ix)=plot_data_boxplot_percentile(X.var(Igood),X.dx,Y.var(Igood),[Y.start(1) Y.start(end)],X.label_inc,[],X.style);
+            %hprint=plot_data_boxplot_percentile(Tnew, time_inc,sumPSD,ylimits,xlabel_inc,percentile);
+                
             if strcmp(X.name,'start_time')
                 %datetick('x',X.style,'keeplimits','keepticks');
                 xlabel('Time');
