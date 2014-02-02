@@ -1,25 +1,22 @@
-  function hprint=plot_data_boxplot(tabs,time_inc_boxplot,ydata,ylimits,tlabel_inc,label_style)
+  function hprint=plot_data_boxplot(xdata,x_inc_boxplot,ydata,ylimits,xlabel_inc,label_style)
         
-        %tabs vector of datenumbers associated with data
-        %ydata, data associated with time series tabs
-        %  time_inc_boxplot: datenumber of time interval to compute boxplot over
+        %xdata: vector of data associated with x-axis.  Can be datenumbers
+        %ydata: data associated with x-axis data xdata
+        %  x_inc_boxplot: interval to compute boxplot over, same units as
+        %       xdata
         % ylimits: two-element vector associated with acceptable values of ydata
-        % tlabel_inc:  Number of ticks to skip when labeling time (x) axis
-%         t1=datevec(tabs(1));
-%         t1(4:6)=0;
-%         t1=datenum(t1);  %Floors date to midnight previous day
-%         
-%         t2=datevec(tabs(end));
-%         t2(4:6)=0;
-%         t2(3)=t2(3)+1;
-%         t2=datenum(t2);  %Ceilings date to midnight next day
-%         
+        % xlabel_inc:  x value to skip between ticks.
+        % label_style:  if exist
+
+        if ~exist('label_style')
+            label_style=[];
+        end
         hprint=figure;
-        t1=tabs(1);
-        t2=tabs(end);
-        tbin=t1:time_inc_boxplot:t2;  %Shorter time scale
+        t1=xdata(1);
+        t2=xdata(end);
+        tbin=t1:x_inc_boxplot:t2;  %Shorter time scale
         
-        [Ncount,Binn]=histc(tabs,tbin);  %%OK, sort times of observations by category
+        [Ncount,Binn]=histc(xdata,tbin);  %%OK, sort times of observations by category
         data_fin=NaN*ones(max(Ncount),length(Ncount));
         
         for Ibin=1:length(Ncount)
@@ -28,17 +25,22 @@
             data_fin(1:length(data),Ibin)=data';
             
         end
-        make_boxplot(data_fin,tbin,time_inc_boxplot,tlabel_inc,label_style);
-      
-      function make_boxplot(data_fin,tbin,time_inc_boxplot,tlabel_inc,label_style)
+        make_boxplot(data_fin,tbin,x_inc_boxplot,xlabel_inc,label_style);
+        ylim(ylimits);
+        
+      function make_boxplot(data_fin,tbin,x_inc_boxplot,xlabel_inc,label_style)
             boxPlot(data_fin)
             set(gca,'fontweight','bold','fontsize',14);
             
             Ibin=get(gca,'xtick');
-            Istep=floor(tlabel_inc/time_inc_boxplot);
+            Istep=floor(xlabel_inc/x_inc_boxplot);
             Ibin=1:Istep:size(data_fin,2);
             set(gca,'xtick',Ibin);
-            set(gca,'xticklabel',datestr(tbin(Ibin),label_style));
+            if ~isempty(label_style)
+                set(gca,'xticklabel',datestr(tbin(Ibin),label_style));
+            else
+                set(gca,'xticklabel',round(tbin(Ibin)));
+            end
             %ylim([80 130]);
             %ylabel('dB re 1uPa^2/Hz');
             %title(sprintf('%s, %s',names{7},dirs{Idir}));

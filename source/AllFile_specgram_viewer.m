@@ -328,7 +328,7 @@ Batch_type	=	get(hObject, 'Label');
 Batch_mode	=	input_batchmode(Batch_type);
 
 if	isempty(Batch_mode)
-    errordlg('Processing cancelled!');
+    uiwait(errordlg('Processing cancelled!'));
     return;
 end
 
@@ -336,19 +336,18 @@ if isempty(strfind(Batch_mode,'Load'))
     Batch_vars.sec_avg	=	'2';	Batch_desc{1}	=	'Seconds to average PSD for long-term display, if "0" no averaging' ;
     Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
     if	isempty(Batch_vars)
-        errordlg('Processing cancelled!');
+        uiwait(errordlg('Processing cancelled!'));
         return;
     end
     
-    sec_avg=str2num(Batch_vars.sec_avg);
+    sec_avg=str2double(Batch_vars.sec_avg);
     
 end
 
 
 switch	Batch_mode
     case 'Process Visible Window'
-        h	=	msgbox(['Processing all data within window for ' Batch_type]);
-        
+        uiwait(msgbox(['Processing all data within window for ' Batch_type]));
         
         dT=handles.sgram.T(2)-handles.sgram.T(1);
         Ncol=max([1 floor(sec_avg/dT)]);
@@ -359,10 +358,10 @@ switch	Batch_mode
         for I=1:(length(Itime)-1)
             PSD(:,I)=mean(handles.sgram.B(:,Itime(I):Itime(I+1)),2);
         end
-        PSD=10*log10(PSD);
+        PSDdB=10*log10(PSD);
         hprint=figure;
         
-        imagesc(Tnew,F/1000,PSD);axis('xy')
+        imagesc(Tnew,F/1000,PSDdB);axis('xy')
         set(gca,'fontweight','bold','fontsize',14);
         xlabel('Time (sec)');ylabel(' Frequency (kHz)');
         
@@ -370,8 +369,8 @@ switch	Batch_mode
         title(titlestr);
         
         
-        fmin=str2num(get(handles.edit_fmin,'String'));
-        fmax=str2num(get(handles.edit_fmax,'String'));
+        fmin=str2num(get(handles.edit_fmin,'String')); %kHz
+        fmax=str2num(get(handles.edit_fmax,'String'));  %kHz
         ylimm=[fmin fmax];
         ylim(ylimm);
         colorbar
@@ -379,15 +378,59 @@ switch	Batch_mode
         cmax=cmin+eval(get(handles.edit_dBspread,'string'));
         caxis([cmin cmax]);
         
-        yess=menu('Save PSD Data and figure?','Yes','No');
-        if yess==1
-            
-            save_str=sprintf('PSD_plot_%s_%s', datestr(handles.tdate_start,30),datestr(handles.tdate_start+datenum(0,0,0,0,0,handles.tlen),30));
-            save(save_str,'F','titlestr','Tnew','PSD','cmin','cmax','ylimm');
-            h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
-            
-            orient landscape
-            print(hprint,'-djpeg',save_str);
+        %yess=menu('Save PSD Data and figure?','Yes','No');
+        ButtonName = questdlg('What do you want to do now?', ...
+                         'PSD options', ...
+                         'Leave Me Alone', 'Save Figure', 'Plot percentiles', 'Leave Me Alone');
+        switch ButtonName
+            case 'Save Figure'
+                
+                save_str=sprintf('PSD_plot_%4.2f_%s_%s', sec_avg,datestr(handles.tdate_start,30),datestr(handles.tdate_start+datenum(0,0,0,0,0,handles.tlen),30));
+                save(save_str,'F','titlestr','Tnew','PSD','cmin','cmax','ylimm','sec_avg');
+                h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
+                
+                orient landscape
+                print(hprint,'-djpeg',save_str);
+            case 'Plot percentiles'
+                prompt = {'Time unit','Time increment:','Min Frequency (Hz):', ...
+                    'Max Frequency(Hz)','dB limits [min max]','tick increment'};
+                dlg_title = 'Input for PSD statistics';
+                num_lines = 1;
+                def = {'seconds','60',num2str(1000*fmin),num2str(1000*fmax),'[40 120]','120'};
+                answer = inputdlg(prompt,dlg_title,num_lines,def);
+                x_label=answer{1};
+                time_inc=str2num(answer{2});
+                fmin=str2num(answer{3});
+                fmax=str2num(answer{4});
+                ylimits=str2num(answer{5});
+                xlabel_inc=str2num(answer{6});
+                
+                %%Process PSD matrix..
+                Igood=find(F>=fmin&F<=fmax);
+                if length(F)>1
+                    sumPSD=10*log10((F(2)-F(1))*sum(PSD(Igood,:)));  %Now power spectral density converted to power
+                    y_label='dB re 1uPa';
+                else
+                    sumPSD=10*log10(PSD(Igood,:));
+                    y_label='dB re 1uPa^2/Hz';
+                end
+                
+                %hprint(Ix)=plot_data_boxplot(X.var(Igood),X.dx,Y.var(Igood),[Y.start(1) Y.start(end)],X.label_inc,X.style)
+                %hprint=plot_data_boxplot(tabs,time_inc_boxplot,ydata,ylimits,tlabel_inc,label_style)
+                %xdata,x_inc_boxplot,ydata,ylimits,xlabel_inc,label_style)
+        
+                hprint=plot_data_boxplot(Tnew,time_inc,sumPSD,ylimits,xlabel_inc);
+                xlabel(x_label,'fontsize',14,'fontweight','bold');
+                ylabel(y_label,'fontsize',14,'fontweight','bold');
+                %keyboard
+                
+        %tabs vector of datenumbers associated with data
+        %ydata, data associated with time series tabs
+        %  time_inc_boxplot: datenumber of time interval to compute boxplot over
+        % ylimits: two-element vector associated with acceptable values of ydata
+        % tlabel_inc:  Number of ticks to skip when labeling time (x) axis
+
+                
         end
         
         return
@@ -586,28 +629,18 @@ end
 if isempty(strfind(Batch_mode,'Start Bulk'))
     Batch_vars.mean	=	'yes';	Batch_desc{1}	=	'Enter yes for averaged linear spectrum (instead of just percentiles)';
     Batch_vars.percentile	=	'[10 50 90]';	Batch_desc{2}	=	'Percentile display';
-    %Batch_vars.C	=	'Cc';	Batch_desc{3}	=	'3rd var desc';
-    %Batch_vars.D	=	'Dd';	Batch_desc{4}	=	'4th var desc';
-    %Batch_vars.E	=	'Ee';	Batch_desc{5}	=	'5th var desc';
     
     Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
     percentile=str2num(Batch_vars.percentile)/100;
     
     if	isempty(Batch_vars)
-        errordlg('Processing cancelled!');
+        uiwait(errordlg('Processing cancelled!'));
         return;
     end
 end
 % %
 
-% handles.sgram.T		=	TT;
-%     handles.sgram.F		=	FF;
-%     handles.sgram.B		=	B;
-%     handles.sgram.Nfft	=	Nfft;
-%     handles.sgram.ovlap	=	ovlap;
-%     handles.sgram.Fs	=	Fs;
 
-%%Make a new figure and plot spectrum.
 
 %Graphic parameters
 line_width=2;
@@ -615,7 +648,7 @@ line_width=2;
 
 switch	Batch_mode
     case 'Process Visible Window'
-        h	=	msgbox(['Processing all data within window for ' Batch_type]);
+        uiwait(msgbox(['Processing all data within window for ' Batch_type]));
         
         %%Make a new figure and plot spectrum.
         Ileg=1;
@@ -5024,11 +5057,18 @@ switch filetype
         end
         [x,t,head]=readGSIfile([mydir '/' myfile],tdate_start,tlen,Ichan,'datenum','nocalibrate');
         if isempty(keyword)
-            keyword=input('Enter a keyword for GSI calibration [DASARC]:','s');
-            if isempty(keyword)
-                keyword='DASARC';
-            end
+            prompt = {'Enter a keyword for GSI calibration [DASARC]:'};
+            dlg_title = 'DASAR calibration';
+            num_lines = 1;
+            def = {'DASARC'};
+            answer = inputdlg(prompt,dlg_title,num_lines,def);
+            keyword=answer{1};
         end
+% keyword=input('Enter a keyword for GSI calibration [DASARC]:','s');
+%             if isempty(keyword)
+%                 keyword='DASARC';
+%             end
+%         end
         x=calibrate_GSI_signal(x, keyword);
         
         Fs=head.Fs;
@@ -8677,8 +8717,8 @@ end
 %[X.var,X.start,X.dx,X.label_inc,X.label,X.name,X.style]=get_histogram_vars(ButtonName,handles.notes.Data.Events);
 
 function X=get_histogram_vars(ButtonName,Events,Description)
-%Input:  X.var: horizontal array of data
-%         X.name: string describing which data field, e.g. 'start_time'
+%Input:  ButtonName: horizontal array of data
+%         Events: annotation date..
 %Output:  [X.var,X.start,X.dx,X.label_inc,X.label,X.name,X.style]
 
 X.start=[];
