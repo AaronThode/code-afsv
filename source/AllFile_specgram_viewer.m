@@ -456,9 +456,17 @@ switch	Batch_mode
         end
         
         %Load bulk run time and file data
-        [tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
+        bulk_params=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
         
-        
+        tabs_folder_start=bulk_params.tabs_folder_start;
+        tabs_folder_end=bulk_params.tabs_folder_end;
+        tabs_start=bulk_params.tabs_start;
+        tabs_end=bulk_params.tabs_end;
+        Other_FileNames=bulk_params.Other_FileNames;
+        Icurrent_file=bulk_params.Icurrent_file;
+        Nfiles=bulk_params.Nfiles;
+        FF=bulk_params.FF;
+
         %Start processing
         tabs_loop_begin=tabs_start;
         PSD_all=[];Tabs_all=[];
@@ -708,8 +716,17 @@ switch	Batch_mode
         
         
         % Load bulk run information
-        [tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
+        %[tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
+        bulk_params=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
         
+        tabs_folder_start=bulk_params.tabs_folder_start;
+        tabs_folder_end=bulk_params.tabs_folder_end;
+        tabs_start=bulk_params.tabs_start;
+        tabs_end=bulk_params.tabs_end;
+        Other_FileNames=bulk_params.Other_FileNames;
+        Icurrent_file=bulk_params.Icurrent_file;
+        Nfiles=bulk_params.Nfiles;
+        FF=bulk_params.FF;
         
         %%Translate duty cycle...
         if duty_cycle_chc
@@ -829,8 +846,18 @@ end
 
 end
 
-function [tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles,Batch_vars_bulkload)
+function bulk_params=load_PSD_Bulk_Run(handles,Batch_vars_bulkload)
 %Note that a file does not have to be loaded for this to work...
+
+bulk_params.tabs_folder_start=[];
+bulk_params.tabs_folder_end=[];
+bulk_params.tabs_start=[];
+bulk_params.tabs_end=[];
+bulk_params.Other_FileNames=[];
+bulk_params.Icurrent_file=[];
+bulk_params.Nfiles=[];
+bulk_params.FF=[];
+
 dialog_title	=	'Select Bulk file to load: Note that I am looking in current directory, not data directory';
 if isfield(handles,'myfile')
     [~,token,extt] = fileparts(handles.myfile);
@@ -921,6 +948,14 @@ switch lower(Batch_vars_bulkload.end_time)
         end
 end
 
+bulk_params.tabs_folder_start=tabs_folder_start;
+bulk_params.tabs_folder_end=tabs_folder_end;
+bulk_params.tabs_start=tabs_start;
+bulk_params.tabs_end=tabs_end;
+bulk_params.Other_FileNames=Other_FileNames;
+bulk_params.Icurrent_file=Icurrent_file;
+bulk_params.Nfiles=Nfiles;
+bulk_params.FF=FF;
 
 end
 
