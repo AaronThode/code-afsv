@@ -807,7 +807,8 @@ switch	Batch_mode
             Istrip=find(Tabs<=tabs_end);
             switch PSDButtonName
                 case 'Display and Print Figure'
-                    PSD_all=[PSD_all PSD(:,Istrip)];Tabs_all=[Tabs_all Tabs(Istrip)];
+                    PSD_all=[PSD_all PSD(:,Istrip)];
+                    Tabs_all=[Tabs_all Tabs(Istrip)];
                     if split_windows
                         [hprint(Iplot),save_tag{Iplot}]=image_PSD(min(Tabs_all), max(Tabs_all));
                         PSD_all=[];Tabs_all=[];
@@ -816,7 +817,8 @@ switch	Batch_mode
                 case 'Plot percentiles'
                     sumPSD=10*log10((F(2)-F(1))*sum(PSD(Ifreq,Istrip),1));  %Now power spectral density converted to power
                     
-                    PSD_all=[PSD_all sumPSD];Tabs_all=[Tabs_all Tabs(Istrip)];
+                    PSD_all=[PSD_all sumPSD];
+                    Tabs_all=[Tabs_all Tabs(Istrip)];
             end
             
             %If we move into additional files, start at the beginning
@@ -834,9 +836,11 @@ switch	Batch_mode
                     xlabel(pms.x_label,'fontsize',14,'fontweight','bold');
                     ylabel(pms.y_label,'fontsize',14,'fontweight','bold');
                     yes=menu('Redo formatting? (Can''t redo frequency range, though)','Yes','No');
-                    if yes
+                    if yes==1
                         pms=get_PSD_percentile_params(min(FF)/1000,max(FF)/1000);
                         pms.y_label='dB re 1uPa';
+                    else
+                        yes=0;
                
                     end
                 end
@@ -932,6 +936,10 @@ dlg_title = 'Input for PSD statistics';
 num_lines = 1;
 def = {'Date/Time','60',num2str(1000*fmin),num2str(1000*fmax),'[70 120]','120','[0.01 0.1 .25 .5 .75 0.9 .99]'};
 answer = inputdlg(prompt,dlg_title,num_lines,def);
+if isempty(answer)
+    pms=[];
+    return
+end
 pms.x_label=answer{1};
 pms.time_inc=datenum(0,0,0,0,0,str2num(answer{2}));
 pms.fmin=str2num(answer{3});
