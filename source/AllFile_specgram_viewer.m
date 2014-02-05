@@ -817,8 +817,18 @@ switch	Batch_mode
                 case 'Plot percentiles'
                     sumPSD=10*log10((F(2)-F(1))*sum(PSD(Ifreq,Istrip),1));  %Now power spectral density converted to power
                     
-                    PSD_all=[PSD_all sumPSD];
-                    Tabs_all=[Tabs_all Tabs(Istrip)];
+                    
+                    %Reserve memory to speed process up.
+                    if I==Icurrent_file  %first time through
+                       PSD_all=zeros(1,(Nfiles-Icurrent_file+1)*length(sumPSD));
+                       Tabs_all=PSD_all;
+                       Icount=1;
+                        
+                    end
+                    
+                    PSD_all(Icount:(Icount+length(sumPSD)-1))=sumPSD;
+                    Tabs_all(Icount:(Icount+length(Istrip)-1))=Tabs(Istrip);
+                    Icount=Icount+length(Istrip);
             end
             
             %If we move into additional files, start at the beginning
