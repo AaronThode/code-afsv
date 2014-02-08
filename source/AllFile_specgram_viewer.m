@@ -75,9 +75,10 @@ startupinfo		=	gui_startup_information;
 
 
 %%%%Set up times based on available times in input directory...%%%%
-%handles.mydir='/Users/thode/Projects/Insta-array/Sperm_Sitka/May9_Kendall_Cobra/Lucy';
 handles.mydir			=	startupinfo.default_directory;
 handles.inputdir		=	startupinfo.default_inputfiledir;
+handles.outputdir=uigetdir(handles.mydir,'Select a default output directory for analyses and printouts:');
+cd(handles.outputdir);
 handles.annotation_file	=	startupinfo.annotation_file;
 try
     handles.calibration_DASAR2007_dir	=	startup_info.calibration_DASAR2007_dir;
@@ -482,7 +483,7 @@ switch	Batch_mode
         
         Batch_vars_bulkload	=	input_batchparams(Batch_vars_bulkload, Batch_desc, Batch_type);
         if	isempty(Batch_vars_bulkload)
-            errordlg('Processing cancelled!');
+            uiwait(errordlg('Processing cancelled!'));
             return;
         end
         
@@ -714,17 +715,16 @@ switch	Batch_mode
     case {'Start Bulk Processing File','Start Bulk Processing Folder'}
         
         if strcmp(Batch_mode,'Start Bulk Processing File')
-            h	=	msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
+            uiwait(msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type)));
             param.exten=['*' handles.myfile];
         else
-            h	=	msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type));
+            uiwait(msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type)));
             
             param.exten=['*' handles.myext];
         end
+        
         data_folder_name		=	uigetdir('.', 'Select a folder to store analysis results:');
-        
         param.dir_out=data_folder_name;
-        
         param.file_dir=handles.mydir;
         contents=get(handles.popupmenu_Nfft,'String');
         param.Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
@@ -756,7 +756,7 @@ switch	Batch_mode
         
         Batch_vars_bulkload	=	input_batchparams(Batch_vars_bulkload, Batch_desc, Batch_type);
         if	isempty(Batch_vars_bulkload)
-            errordlg('Processing cancelled!');
+            uiwait(errordlg('Processing cancelled!'));
             return;
         end
         
@@ -880,7 +880,7 @@ switch	Batch_mode
                         
                         save_str=sprintf('PSD_%s', save_tag{II});
                         save(save_str,'F','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
-                        h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
+                        uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
                         
                         orient landscape
                         print(hprint(II),'-djpeg',save_str);
@@ -983,7 +983,7 @@ Batch_type	=	get(hObject, 'Label');
 Batch_mode	=	input_batchmode(Batch_type);
 
 if	isempty(Batch_mode)
-    errordlg('Processing cancelled!');
+    uiwait(errordlg('Processing cancelled!'));
     return;
 end
 
@@ -1048,10 +1048,11 @@ switch	Batch_mode
         
         yess=menu('Save Spectrum Data and figure?','Yes','No');
         if yess==1
+            cd(handles.outputdir);
             F=handles.sgram.F;
             save_str=sprintf('Spectrum_%s_%s', datestr(handles.tdate_start,30),datestr(handles.tdate_start+datenum(0,0,0,0,0,handles.tlen),30));
             save(save_str,'F','percentile','leg_str','SS_percentile','SS_mean','titlestr');
-            h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
+            uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
             
             orient landscape
             print(hprint,'-djpeg',save_str);
@@ -1061,10 +1062,10 @@ switch	Batch_mode
     case {'Start Bulk Processing File','Start Bulk Processing Folder'}
         
         if strcmp(Batch_mode,'Start Bulk Processing File')
-            h	=	msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type));
+            uiwait(msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type)));
             param.exten=['*' handles.myfile];
         else
-            h	=	msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type));
+            uiwait(msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type)));
             
             param.exten=['*' handles.myext];
         end
@@ -1106,7 +1107,7 @@ switch	Batch_mode
         duty_cycle_chc=logical(eval(Batch_vars_bulkload.duty_cycle));
         
         if	isempty(Batch_vars_bulkload)
-            errordlg('Processing cancelled!');
+            uiwait(errordlg('Processing cancelled!'));
             return;
         end
         
@@ -1225,11 +1226,12 @@ switch	Batch_mode
         
         yess=menu('Save Spectrum Data and figure?','Yes','No');
         if yess==1
+            cd(handles.outputdir);
             F=FF;
             leg_str=p_check;
             save_str=sprintf('Spectrum_%s_%s', datestr(tabs_start,30),datestr(tabs_end,30));
             save(save_str,'F','percentile','leg_str','SS_percentile','titlestr','Batch_vars','Batch_vars_bulkload');
-            h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
+            uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
             
             orient landscape
             print(hprint,'-djpeg',save_str);
@@ -1271,22 +1273,30 @@ bulk_params.Icurrent_file=[];
 bulk_params.Nfiles=[];
 bulk_params.FF=[];
 
-dialog_title	=	'Select first Bulk file to load: Note that I am looking in current directory, not data directory';
+dialog_title	=	'Select first Bulk file to load: Note that I am looking in default directory, not data directory';
 if isfield(handles,'myfile')
     [~,token,extt] = fileparts(handles.myfile);
 else
     token=[];
 end
-FileName = uigetfile([token '*.psd'],dialog_title);
+[DirectoryName,FileName] = uigetfile([token '*.psd'],dialog_title);
 if isnumeric(FileName)
     disp('No file selected');
     return;
 end
+
+fprintf('Changing working directory to %s\n',DirectoryName);
+cd(DirectoryName);
 Iscore=min(strfind(FileName,'_chan'));
 
 token2=FileName((Iscore+1):end);  %PSD files having the same input parameters..
 
 Other_FileNames=dir(['*_' token2]);
+if isempty(Other_FileNames)
+    uiwait(errordlg('load_PSD_Bulk_Run cannot find matches to file you selected:','Files not found!'));
+    return;
+end
+
 Icurrent_file=find(strcmp(FileName,{Other_FileNames.name})>0);  %Location of current file in list of PSD files
 Nfiles=length(Other_FileNames(Icurrent_file:end));  %Number of files that include current time and all times afterward.
 
@@ -1322,13 +1332,13 @@ switch lower(Batch_vars_bulkload.start_time)
             try
                 tabs_start_want=eval(Batch_vars_bulkload.start_time);
                 if tabs_start_want<tabs_folder_start || tabs_start_want<tabs_folder_end
-                    errordlg('Can''t request a time outside selected file''s start time','Bulk Processing Menu Error');
+                    uiwait(errordlg('Can''t request a time outside selected file''s start time','Bulk Processing Menu Error'));
                     return;
                 end
                 
                 tabs_start=tabs_start_want;
             catch
-                errordlg('Can''t process start_time','Bulk Processing Menu Error');
+                uiwait(errordlg('Can''t process start_time','Bulk Processing Menu Error'));
                 return;
             end
             
@@ -1352,14 +1362,14 @@ switch lower(Batch_vars_bulkload.end_time)
             try
                 tabs_end_want=eval(Batch_vars_bulkload.end_time);
                 if tabs_end_want<tabs_folder_start || tabs_end_want<tabs_folder_end
-                    errordlg('Can''t request a time outside selected file''s start time','Bulk Processing Menu Error');
+                    uiwait(errordlg('Can''t request a time outside selected file''s start time','Bulk Processing Menu Error'));
                     return
                 end
                 
                 tabs_end=tabs_end_want;
                 
             catch
-                errordlg('Can''t process end_time','Bulk Processing Menu Error');
+                uiwait(errordlg('Can''t process end_time','Bulk Processing Menu Error'));
                 return;
                 
             end
@@ -1388,7 +1398,7 @@ Batch_type	=	get(hObject, 'Label');
 Batch_mode	=	input_batchmode(Batch_type);
 
 if	isempty(Batch_mode)
-    errordlg('Processing cancelled!');
+    uiwait(errordlg('Processing cancelled!'));
     return;
 end
 
@@ -1624,7 +1634,7 @@ end
         
         param= 	input_batchparams(param, param_desc, Batch_type);
         if isempty(param)
-            h	=	msgbox(sprintf('Energy Detector aborted','replace'));
+            uiwait(msgbox(sprintf('Energy Detector aborted','replace')));
             return
         end
         fields=fieldnames(param);
@@ -1830,7 +1840,7 @@ end
 try
     new_date	=	datenum(get(hObject,'String'));
 catch %#ok<*CTCH>
-    errordlg('Incorrect datestr');
+    uiwait(errordlg('Incorrect datestr'));
     new_date =	[];
 end
 
@@ -2633,7 +2643,7 @@ if	tline ~= -1
     try
         new_date	=	datenum(newtime);
     catch
-        errordlg('Incorrect datestr');
+        uiwait(errordlg('Incorrect datestr'));
         new_date =	[];
     end
     
@@ -4638,9 +4648,9 @@ sig_type	=	sig_types{choice};
 %	Get automated parameters from basic information
 params_extract	=	extract_automated_fields(Times, Freq, handles);
 if isempty(params_extract)
-    errordlg({'SNR and level could not be extracted:';...
+    uiwait(errordlg({'SNR and level could not be extracted:';...
         'Time window is too small';...
-        'Show larger time window and retry'});
+        'Show larger time window and retry'}));
     delete(hrec);
     return
 end
@@ -4760,7 +4770,7 @@ else
     
     params_extract	=	extract_automated_fields(Times, Freq, handles);
     if isempty(params_extract)
-        errordlg('SNR and level could not be extracted: Time window is too small');
+        uiwait(errordlg('SNR and level could not be extracted: Time window is too small'));
         NewEvent=[];
         return
     else
