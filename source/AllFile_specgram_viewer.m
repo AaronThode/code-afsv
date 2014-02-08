@@ -447,7 +447,10 @@ switch	Batch_mode
             
             param.exten=['*' handles.myext];
         end
-        param.dir_out='.';
+        
+        data_folder_name		=	uigetdir('.', 'Select a folder to store analysis results:');
+        
+        param.dir_out=data_folder_name;
         param.file_dir=handles.mydir;
         contents=get(handles.popupmenu_Nfft,'String');
         param.Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
@@ -718,7 +721,10 @@ switch	Batch_mode
             
             param.exten=['*' handles.myext];
         end
-        param.dir_out='.';
+        data_folder_name		=	uigetdir('.', 'Select a folder to store analysis results:');
+        
+        param.dir_out=data_folder_name;
+        
         param.file_dir=handles.mydir;
         contents=get(handles.popupmenu_Nfft,'String');
         param.Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
@@ -1062,7 +1068,9 @@ switch	Batch_mode
             
             param.exten=['*' handles.myext];
         end
-        param.dir_out='.';
+        data_folder_name		=	uigetdir('.', 'Select a folder to store analysis results:');
+        param.dir_out=data_folder_name;
+        
         param.file_dir=handles.mydir;
         contents=get(handles.popupmenu_Nfft,'String');
         param.Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
@@ -1561,8 +1569,9 @@ end
                 param.exten=['*' handles.myext];
             end
             param_desc{K}='Filename or file extension to process';K=K+1;
+            data_folder_name		=	uigetdir('.', 'Select a folder to store analysis results:');
             
-            param.dir_out='.';              param_desc{K}='Output directory';K=K+1;
+            param.dir_out=data_folder_name;         param_desc{K}='Output directory';K=K+1;
             param.file_dir=handles.mydir;   param_desc{K}='Directory containing files';K=K+1;
             contents=get(handles.popupmenu_Nfft,'String');
             param.Nfft=(contents{get(handles.popupmenu_Nfft,'Value')});param_desc{K}='FFT size';K=K+1;
