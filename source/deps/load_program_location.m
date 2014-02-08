@@ -10,9 +10,12 @@ local_machine=deblank(local_machine);
 
 if strcmp(local_machine,'macmussel.ucsd.edu')
     program_dir ='/Users/Shared/DataPreProcessor/LatestVersion/PreProcessV1.jar';
-elseif ~isempty(findstr(local_machine,'KatsMacPro'))
+elseif strcmp(getenv('USER'),'fielduser')
     %program_dir ='/Users/thode/DataPreProcessor/PreProcessV1.jar';
-    program_dir ='/Users/khkim/Thode/DataPreProcessor/PreProcessV1.jar';
+    program_dir ='~/Desktop/DataPreProcessor/PreProcessV1.jar';
+elseif ~isempty(findstr(local_machine,'thode'))
+    program_dir ='/Users/thode/Documents/workspace/DataPreProcessor/PreProcessV1.jar';
+    
 elseif ~isempty(findstr(local_machine,'thode'))
     program_dir ='/Users/thode/Documents/workspace/DataPreProcessor/PreProcessV1.jar';
 elseif ~isempty(findstr(local_machine,'dgrebner'))
@@ -32,6 +35,7 @@ elseif ~isempty(findstr(local_machine,'uas.ad'))|~isempty(findstr(local_machine,
 elseif ~isempty(findstr(local_machine,'ucsd.edu'))
     program_dir ='/Users/dponcemorado/Desktop/ThodeLabSoftware.dir/JAVA_programs/DataPreProcessor/PreProcessV1.jar';
 else
+    uiwait(warndlg('Please copy a file named "PreProcessV1.jar" into a folder named "DataPreProcessor" on your Desktop','JAVA program not found!','modal')); 
 	program_dir='~/Desktop/DataPreProcessor/PreProcessV1.jar';
     
     
