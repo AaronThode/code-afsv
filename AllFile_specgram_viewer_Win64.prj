@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.deploytool" plugin-version="1.0">
-  <configuration target="target.standalone.win" target-name="Windows Standalone Application" name="AllFile_specgram_viewer_Win64" location="E:\Work\matlab\AllFile_specgram_viewer" file="E:\Work\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win64.prj" preferred-package-type="package.type.exe" build-checksum="2692178163" preferred-package-location="E:\Work\matlab\AllFile_specgram_viewer">
+  <configuration target="target.standalone.win" target-name="Windows Standalone Application" name="AllFile_specgram_viewer_Win64" location="E:\Work\matlab\AllFile_specgram_viewer" file="E:\Work\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win64.prj" preferred-package-type="package.type.exe" build-checksum="2692178163" preferred-package-location="E:\Work\matlab\AllFile_specgram_viewer\compiled">
     <param.project.name>E:\Work\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win64.prj</param.project.name>
     <param.target.type>Windows Standalone Application</param.target.type>
     <param.appname>AllFile_specgram_viewer_Win64</param.appname>

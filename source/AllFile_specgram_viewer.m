@@ -454,7 +454,7 @@ switch	Batch_mode
         contents=get(handles.popupmenu_ovlap,'String');
         param.ovlap=round(param.Nfft*str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100);
         param.Fs=handles.sgram.Fs;
-        param.channel=str2num(get(handles.edit_chan,'String'));
+        param.channel=str2num(get(handles.edit_chan,'String')); %#ok<*ST2NM>
         param.dumpsize=100000;
         param.nstart=0;
         param.nsamples=0;
@@ -4847,6 +4847,221 @@ guidata(hObject, handles);
 
 end
 
+% --- Executes on button press in pushbutton_notes_stats.
+function pushbutton_notes_stats_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_notes_stats (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+X=[];Y.name=[];
+%Provide option to reload a notes file that does not match current load
+ReloadButton = questdlg('Would you like to load annotations associated with multiple files?', ...
+    'Reload Annotations?');
+
+switch ReloadButton
+    case 'Yes'
+        
+        dialog_title	=	'Select location for "Multiple" annotation files:';
+        start_path		=	handles.mydir;
+        folder_name		=	uigetdir(start_path, dialog_title);
+        
+        if isnumeric(folder_name)
+            return;
+        end
+        mydir=handles.mydir;
+        
+        handles.mydir=folder_name;
+        cd(handles.mydir);  %Change location to be inside this folder, since we assume it is a data analysis folder.
+        
+        if isfield(handles,'myfile')
+            myfile_org=handles.myfile;
+        else
+            myfile_org=[];
+        end
+        handles.myfile=['Multiple*'];
+        handles		=	load_notes_file(handles, folder_name);  %Bulk Load Event detector
+        handles.myfile=myfile_org;
+        if ~isfield(handles,'tdate_start')
+            handles.tdate_start=[];
+        end
+end
+
+
+ButtonName = questdlg('What kind of plot?', ...
+    'Statistical Analysis of Annotations', ...
+    '1-D histogram', '2-D histogram', '2-D boxplot','1-D histogram');
+
+
+X=get_histogram_vars(ButtonName, handles.notes.Data.Events,handles.notes.Data.Description);
+
+if isempty(X.start)
+    return
+end
+hprint=[];
+switch ButtonName
+    case '1-D histogram'
+        for Ix=1:(length(X.start)-1)
+            hprint(Ix)=figure;
+            edges=X.start(Ix):X.dx:X.start(Ix+1);
+            Igood=find(X.var>=X.start(Ix)&X.var<=X.start(Ix+1));
+            
+            [Nclick,tbin]=histc(X.var(Igood),edges);
+            
+            
+            %%Plot and format the axes
+            bar(edges,Nclick,'histc');grid on;
+            set(gca,'fontweight','bold','fontsize',14)
+            set(gca,'xtick',edges(1):X.label_inc:edges(end));
+            if strcmp(X.name,'start_time')
+                datetick('x',X.style,'keeplimits','keepticks');
+                xlabel('Time');
+                ylabel('Counts');
+                title(sprintf('%s of %s, %s to %s',ButtonName,X.name,datestr(edges(1)),datestr(edges(end))),'interp','none');
+            else
+                xlabel(X.label);
+                ylabel('Counts')
+                title(sprintf('%s of %s, %6.2f to %6.2f',ButtonName,X.name,(edges(1)),(edges(end))),'interp','none');
+            end
+            xlim([edges(1) edges(end)])
+            set(gca,'fontweight','bold','fontsize',14);
+            
+        end
+    case '2-D histogram'
+        Y=get_histogram_vars(ButtonName, handles.notes.Data.Events,handles.notes.Data.Description);
+        
+        if isempty(Y.start)
+            return
+        end
+        %[2 Npoint]
+        hprint=zeros(1,length(X.start)-1);
+        for Ix=1:(length(X.start)-1)
+            
+            edges=X.start(Ix):X.dx:X.start(Ix+1);
+            edges2=Y.start:Y.dx:Y.start(2);
+            Igood=find(X.var>=X.start(Ix)&X.var<=X.start(Ix+1));
+            
+            XX=[X.var(Igood);Y.var(Igood)];
+            
+            %[Nclick,tbin]=histc(X.var(Igood),edges);
+            [N,printname,Ibin,hh,hprint(Ix)]=hist2D(XX,edges,edges2,{X.label,Y.label},1);
+            if strcmp(X.name,'start_time')
+                axes(hh(1));
+                set(gca,'fontweight','bold','fontsize',14)
+                set(gca,'ytick',edges(1):X.label_inc:edges(end));
+                datetick('y',X.style,'keeplimits','keepticks');
+                
+                axes(hh(2));
+                set(gca,'fontweight','bold','fontsize',14)
+                set(gca,'ytick',edges(1):X.label_inc:edges(end));
+                datetick('y',X.style,'keeplimits','keepticks');
+            elseif strcmp(Y.name,'start_time')
+                axes(hh(1));
+                set(gca,'fontweight','bold','fontsize',14)
+                set(gca,'xtick',edges2(1):Y.label_inc:edges2(end));
+                
+                datetick('x',Y.style,'keeplimits','keepticks');
+                
+                axes(hh(2));
+                set(gca,'fontweight','bold','fontsize',14)
+                set(gca,'xtick',edges2(1):Y.label_inc:edges2(end));
+                
+                datetick('x',Y.style,'keeplimits','keepticks');
+                
+            end
+        end
+    case '2-D boxplot'
+        Y=get_histogram_vars(ButtonName, handles.notes.Data.Events,handles.notes.Data.Description);
+        
+        if isempty(Y.start)
+            return
+        end
+        hprint=zeros(1,length(X.start)-1);
+        
+        for Ix=1:(length(X.start)-1)
+            
+            edges=X.start(Ix):X.dx:X.start(Ix+1);
+            edges2=Y.start:Y.dx:Y.start(2);
+            Igood=find(X.var>=X.start(Ix)&X.var<=X.start(Ix+1));
+            
+            XX=[X.var(Igood);Y.var(Igood)];
+            
+            %[Nclick,tbin]=histc(X.var(Igood),edges);
+            %[N,printname,Ibin,hh]=hist2D(XX,edges,edges2,{X.label,Y.label},1);
+            hprint(Ix)=plot_data_boxplot_percentile(X.var(Igood),X.dx,Y.var(Igood),[Y.start(1) Y.start(end)],X.label_inc,[],X.style);
+            %hprint=plot_data_boxplot_percentile(Tnew, time_inc,sumPSD,ylimits,xlabel_inc,percentile);
+            
+            if strcmp(X.name,'start_time')
+                %datetick('x',X.style,'keeplimits','keepticks');
+                xlabel('Time');
+                ylabel(Y.label);
+                title(sprintf('%s of %s, %s to %s',ButtonName,X.name,datestr(edges(1)),datestr(edges(end))),'interp','none');
+            else
+                xlabel(X.label);
+                ylabel(Y.label)
+                title(sprintf('%s of %s, %6.2f to %6.2f',ButtonName,X.name,(edges(1)),(edges(end))),'interp','none');
+            end
+            
+        end
+        
+    otherwise
+end
+
+%%Plot results
+
+ButtonName2 = questdlg('Print and save Data?', ...
+    'Save stats...');
+switch ButtonName2
+    case 'No'
+        return
+end
+%Nfigs=sort(get(0,'Child'));
+%Nfigs=Nfigs(Nfigs<150);
+
+%for II=1:length(Nfigs)
+try
+    for Ix=1:length(hprint)
+        edges=X.start(Ix):X.dx:X.start(Ix+1);
+        
+        if strcmp(X.name,'start_time')&&isempty(Y.name)
+            save_str=sprintf('Stats_%s_%s_%s_%s', ButtonName,X.name,datestr(edges(1),30),datestr(edges(end),30));
+        elseif isempty(Y.name)
+            save_str=sprintf('Stats_%s_%s_%s_%s', ButtonName,X.name,(edges(1)),(edges(end)));
+        elseif strcmp(X.name,'start_time')&&~isempty(Y.name)
+            save_str=sprintf('Stats_%s_%s_%s_%s_%s', ButtonName,X.name,Y.name,datestr(edges(1),30),datestr(edges(end),30));
+        elseif ~isempty(Y.name)
+            save_str=sprintf('Stats_%s_%s_%s_%s_%s', ButtonName,X.name,Y.name,(edges(1)),(edges(end)));
+            
+        end
+        
+        orient landscape
+        print(hprint(Ix),'-djpeg',save_str);
+        saveas(hprint(Ix), save_str, 'fig');
+        %end
+        close(hprint(Ix));
+    end
+    
+    
+    if strcmp(X.name,'start_time')&&isempty(Y.name)
+        save_str=sprintf('Stats_%s_%s_%s_%s', ButtonName,X.name,datestr(X.start(1),30),datestr(X.start(end),30));
+    elseif isempty(Y.name)
+        save_str=sprintf('Stats_%s_%s_%s_%s', ButtonName,X.name,X.start(1),X.start(end));
+    elseif strcmp(X.name,'start_time')&&~isempty(Y.name)
+        save_str=sprintf('Stats_%s_%s_%s_%s_%s', ButtonName,X.name,Y.name,datestr(X.start(1),30),datestr(X.start(end),30));
+    elseif ~isempty(Y.name)
+        save_str=sprintf('Stats_%s_%s_%s_%s_%s', ButtonName,X.name,Y.name,X.start(1),X.start(end));
+        
+    end
+    
+    save(save_str,'X','Y');
+    
+    uiwait(msgbox([save_str ' mat, fig and jpg file written to ' pwd],'replace'));
+catch
+    uiwait(errdlg('Figures have been deleted','Can''t save figures'));
+    
+end
+end
+
 
 %%	Supporting functions, i.e. not auto-generated callbacks
 function	status	=	dependency_check()
@@ -8823,221 +9038,6 @@ if 1==0,
 end
 end
 
-
-% --- Executes on button press in pushbutton_notes_stats.
-function pushbutton_notes_stats_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton_notes_stats (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-X=[];Y.name=[];
-%Provide option to reload a notes file that does not match current load
-ReloadButton = questdlg('Would you like to load annotations associated with multiple files?', ...
-    'Reload Annotations?');
-
-switch ReloadButton
-    case 'Yes'
-        
-        dialog_title	=	'Select location for "Multiple" annotation files:';
-        start_path		=	handles.mydir;
-        folder_name		=	uigetdir(start_path, dialog_title);
-        
-        if isnumeric(folder_name)
-            return;
-        end
-        mydir=handles.mydir;
-        
-        handles.mydir=folder_name;
-        cd(handles.mydir);  %Change location to be inside this folder, since we assume it is a data analysis folder.
-        
-        if isfield(handles,'myfile')
-            myfile_org=handles.myfile;
-        else
-            myfile_org=[];
-        end
-        handles.myfile=['Multiple*'];
-        handles		=	load_notes_file(handles, folder_name);  %Bulk Load Event detector
-        handles.myfile=myfile_org;
-        if ~isfield(handles,'tdate_start')
-            handles.tdate_start=[];
-        end
-end
-
-
-ButtonName = questdlg('What kind of plot?', ...
-    'Statistical Analysis of Annotations', ...
-    '1-D histogram', '2-D histogram', '2-D boxplot','1-D histogram');
-
-
-X=get_histogram_vars(ButtonName, handles.notes.Data.Events,handles.notes.Data.Description);
-
-if isempty(X.start)
-    return
-end
-hprint=[];
-switch ButtonName
-    case '1-D histogram'
-        for Ix=1:(length(X.start)-1)
-            hprint(Ix)=figure;
-            edges=X.start(Ix):X.dx:X.start(Ix+1);
-            Igood=find(X.var>=X.start(Ix)&X.var<=X.start(Ix+1));
-            
-            [Nclick,tbin]=histc(X.var(Igood),edges);
-            
-            
-            %%Plot and format the axes
-            bar(edges,Nclick,'histc');grid on;
-            set(gca,'fontweight','bold','fontsize',14)
-            set(gca,'xtick',edges(1):X.label_inc:edges(end));
-            if strcmp(X.name,'start_time')
-                datetick('x',X.style,'keeplimits','keepticks');
-                xlabel('Time');
-                ylabel('Counts');
-                title(sprintf('%s of %s, %s to %s',ButtonName,X.name,datestr(edges(1)),datestr(edges(end))),'interp','none');
-            else
-                xlabel(X.label);
-                ylabel('Counts')
-                title(sprintf('%s of %s, %6.2f to %6.2f',ButtonName,X.name,(edges(1)),(edges(end))),'interp','none');
-            end
-            xlim([edges(1) edges(end)])
-            set(gca,'fontweight','bold','fontsize',14);
-            
-        end
-    case '2-D histogram'
-        Y=get_histogram_vars(ButtonName, handles.notes.Data.Events,handles.notes.Data.Description);
-        
-        if isempty(Y.start)
-            return
-        end
-        %[2 Npoint]
-        hprint=zeros(1,length(X.start)-1);
-        for Ix=1:(length(X.start)-1)
-            
-            edges=X.start(Ix):X.dx:X.start(Ix+1);
-            edges2=Y.start:Y.dx:Y.start(2);
-            Igood=find(X.var>=X.start(Ix)&X.var<=X.start(Ix+1));
-            
-            XX=[X.var(Igood);Y.var(Igood)];
-            
-            %[Nclick,tbin]=histc(X.var(Igood),edges);
-            [N,printname,Ibin,hh,hprint(Ix)]=hist2D(XX,edges,edges2,{X.label,Y.label},1);
-            if strcmp(X.name,'start_time')
-                axes(hh(1));
-                set(gca,'fontweight','bold','fontsize',14)
-                set(gca,'ytick',edges(1):X.label_inc:edges(end));
-                datetick('y',X.style,'keeplimits','keepticks');
-                
-                axes(hh(2));
-                set(gca,'fontweight','bold','fontsize',14)
-                set(gca,'ytick',edges(1):X.label_inc:edges(end));
-                datetick('y',X.style,'keeplimits','keepticks');
-            elseif strcmp(Y.name,'start_time')
-                axes(hh(1));
-                set(gca,'fontweight','bold','fontsize',14)
-                set(gca,'xtick',edges2(1):Y.label_inc:edges2(end));
-                
-                datetick('x',Y.style,'keeplimits','keepticks');
-                
-                axes(hh(2));
-                set(gca,'fontweight','bold','fontsize',14)
-                set(gca,'xtick',edges2(1):Y.label_inc:edges2(end));
-                
-                datetick('x',Y.style,'keeplimits','keepticks');
-                
-            end
-        end
-    case '2-D boxplot'
-        Y=get_histogram_vars(ButtonName, handles.notes.Data.Events,handles.notes.Data.Description);
-        
-        if isempty(Y.start)
-            return
-        end
-        hprint=zeros(1,length(X.start)-1);
-        
-        for Ix=1:(length(X.start)-1)
-            
-            edges=X.start(Ix):X.dx:X.start(Ix+1);
-            edges2=Y.start:Y.dx:Y.start(2);
-            Igood=find(X.var>=X.start(Ix)&X.var<=X.start(Ix+1));
-            
-            XX=[X.var(Igood);Y.var(Igood)];
-            
-            %[Nclick,tbin]=histc(X.var(Igood),edges);
-            %[N,printname,Ibin,hh]=hist2D(XX,edges,edges2,{X.label,Y.label},1);
-            hprint(Ix)=plot_data_boxplot_percentile(X.var(Igood),X.dx,Y.var(Igood),[Y.start(1) Y.start(end)],X.label_inc,[],X.style);
-            %hprint=plot_data_boxplot_percentile(Tnew, time_inc,sumPSD,ylimits,xlabel_inc,percentile);
-            
-            if strcmp(X.name,'start_time')
-                %datetick('x',X.style,'keeplimits','keepticks');
-                xlabel('Time');
-                ylabel(Y.label);
-                title(sprintf('%s of %s, %s to %s',ButtonName,X.name,datestr(edges(1)),datestr(edges(end))),'interp','none');
-            else
-                xlabel(X.label);
-                ylabel(Y.label)
-                title(sprintf('%s of %s, %6.2f to %6.2f',ButtonName,X.name,(edges(1)),(edges(end))),'interp','none');
-            end
-            
-        end
-        
-    otherwise
-end
-
-%%Plot results
-
-ButtonName2 = questdlg('Print and save Data?', ...
-    'Save stats...');
-switch ButtonName2
-    case 'No'
-        return
-end
-%Nfigs=sort(get(0,'Child'));
-%Nfigs=Nfigs(Nfigs<150);
-
-%for II=1:length(Nfigs)
-try
-    for Ix=1:length(hprint)
-        edges=X.start(Ix):X.dx:X.start(Ix+1);
-        
-        if strcmp(X.name,'start_time')&&isempty(Y.name)
-            save_str=sprintf('Stats_%s_%s_%s_%s', ButtonName,X.name,datestr(edges(1),30),datestr(edges(end),30));
-        elseif isempty(Y.name)
-            save_str=sprintf('Stats_%s_%s_%s_%s', ButtonName,X.name,(edges(1)),(edges(end)));
-        elseif strcmp(X.name,'start_time')&&~isempty(Y.name)
-            save_str=sprintf('Stats_%s_%s_%s_%s_%s', ButtonName,X.name,Y.name,datestr(edges(1),30),datestr(edges(end),30));
-        elseif ~isempty(Y.name)
-            save_str=sprintf('Stats_%s_%s_%s_%s_%s', ButtonName,X.name,Y.name,(edges(1)),(edges(end)));
-            
-        end
-        
-        orient landscape
-        print(hprint(Ix),'-djpeg',save_str);
-        saveas(hprint(Ix), save_str, 'fig');
-        %end
-        close(hprint(Ix));
-    end
-    
-    
-    if strcmp(X.name,'start_time')&&isempty(Y.name)
-        save_str=sprintf('Stats_%s_%s_%s_%s', ButtonName,X.name,datestr(X.start(1),30),datestr(X.start(end),30));
-    elseif isempty(Y.name)
-        save_str=sprintf('Stats_%s_%s_%s_%s', ButtonName,X.name,X.start(1),X.start(end));
-    elseif strcmp(X.name,'start_time')&&~isempty(Y.name)
-        save_str=sprintf('Stats_%s_%s_%s_%s_%s', ButtonName,X.name,Y.name,datestr(X.start(1),30),datestr(X.start(end),30));
-    elseif ~isempty(Y.name)
-        save_str=sprintf('Stats_%s_%s_%s_%s_%s', ButtonName,X.name,Y.name,X.start(1),X.start(end));
-        
-    end
-    
-    save(save_str,'X','Y');
-    
-    uiwait(msgbox([save_str ' mat, fig and jpg file written to ' pwd],'replace'));
-catch
-    uiwait(errdlg('Figures have been deleted','Can''t save figures'));
-    
-end
-end
 
 %[X.var,X.start,X.dx,X.label_inc,X.label,X.name,X.style]=get_histogram_vars(ButtonName,handles.notes.Data.Events);
 
