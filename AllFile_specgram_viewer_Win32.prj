@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.deploytool" plugin-version="1.0">
-  <configuration target="target.standalone.win" target-name="Windows Standalone Application" name="AllFile_specgram_viewer_Win64" location="H:\Work\matlab\AllFile_specgram_viewer\compiled" file="H:\Work\matlab\AllFile_specgram_viewer\compiled\AllFile_specgram_viewer_Win64.prj" preferred-package-type="package.type.exe" build-checksum="3604200835" preferred-package-location="H:\Work\matlab\AllFile_specgram_viewer\compiled">
-    <param.project.name>H:\Work\matlab\AllFile_specgram_viewer\compiled\AllFile_specgram_viewer_Win64.prj</param.project.name>
+  <configuration target="target.standalone.win" target-name="Windows Standalone Application" name="AllFile_specgram_viewer_Win32" location="E:\Work\matlab\AllFile_specgram_viewer" file="E:\Work\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win32.prj" preferred-package-type="package.type.exe" build-checksum="649070137" preferred-package-location="E:\Work\matlab\AllFile_specgram_viewer\compiled">
+    <param.project.name>E:\Work\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win32.prj</param.project.name>
     <param.target.type>Windows Standalone Application</param.target.type>
-    <param.appname>AllFile_specgram_viewer_Win64</param.appname>
-    <param.intermediate>H:\Work\matlab\AllFile_specgram_viewer\build\AllFile_specgram_viewer_Win64\src</param.intermediate>
-    <param.output>H:\Work\matlab\AllFile_specgram_viewer\build\AllFile_specgram_viewer_Win64\distrib</param.output>
+    <param.appname>AllFile_specgram_viewer_Win32</param.appname>
+    <param.intermediate>${PROJECT_ROOT}\build\AllFile_specgram_viewer_Win32\src</param.intermediate>
+    <param.output>${PROJECT_ROOT}\build\AllFile_specgram_viewer_Win32\distrib</param.output>
     <param.embed.ctf>true</param.embed.ctf>
     <param.tbx_on_path>
       <item>all</item>
@@ -56,44 +56,24 @@
       <param.user.defined.mcr.options />
     </unset>
     <fileset.main>
-      <file>H:\Work\matlab\AllFile_specgram_viewer\source\AllFile_specgram_viewer.m</file>
+      <file>${PROJECT_ROOT}\source\AllFile_specgram_viewer.m</file>
     </fileset.main>
     <fileset.resources>
-      <file>H:\Work\matlab\AllFile_specgram_viewer\source\AllFile_specgram_viewer.fig</file>
-      <file>H:\Work\matlab\AllFile_specgram_viewer\source\deps</file>
+      <file>${PROJECT_ROOT}\source\AllFile_specgram_viewer.fig</file>
+      <file>${PROJECT_ROOT}\source\deps</file>
     </fileset.resources>
     <fileset.package>
-      <file>H:\Work\matlab\AllFile_specgram_viewer\change.log</file>
+      <file>${PROJECT_ROOT}\change.log</file>
     </fileset.package>
     <build-deliverables>
-      <file name="readme.txt" location="H:\Work\matlab\AllFile_specgram_viewer\build\AllFile_specgram_viewer_Win64\distrib" optional="true">H:\Work\matlab\AllFile_specgram_viewer\build\AllFile_specgram_viewer_Win64\distrib\readme.txt</file>
-      <file name="AllFile_specgram_viewer_Win64.exe" location="H:\Work\matlab\AllFile_specgram_viewer\build\AllFile_specgram_viewer_Win64\distrib" optional="false">H:\Work\matlab\AllFile_specgram_viewer\build\AllFile_specgram_viewer_Win64\distrib\AllFile_specgram_viewer_Win64.exe</file>
+      <file name="AllFile_specgram_viewer_Win32.exe" location="${PROJECT_ROOT}\build\AllFile_specgram_viewer_Win32\distrib" optional="false">E:\Work\matlab\AllFile_specgram_viewer\build\AllFile_specgram_viewer_Win32\distrib\AllFile_specgram_viewer_Win32.exe</file>
+      <file name="readme.txt" location="${PROJECT_ROOT}\build\AllFile_specgram_viewer_Win32\distrib" optional="true">E:\Work\matlab\AllFile_specgram_viewer\build\AllFile_specgram_viewer_Win32\distrib\readme.txt</file>
     </build-deliverables>
     <workflow />
     <matlab>
-      <root>C:\MATLAB\Win64\R2012b</root>
+      <root>C:\MATLAB\x86\R2012b</root>
       <path>
-        <directory>H:\Work\matlab\tools</directory>
-        <directory>H:\Work\matlab\tools\array_processing</directory>
-        <directory>H:\Work\matlab\tools\HDF5</directory>
-        <directory>H:\Work\matlab\tools\models</directory>
-        <directory>H:\Work\matlab\tools\models\IW</directory>
-        <directory>H:\Work\matlab\tools\models\NM</directory>
-        <directory>H:\Work\matlab\tools\models\PE</directory>
-        <directory>H:\Work\matlab\tools\models\ray</directory>
-        <directory>H:\Work\matlab\tools\models\sensitivity</directory>
-        <directory>H:\Work\matlab\tools\peaks</directory>
-        <directory>H:\Work\matlab\tools\misc</directory>
-        <directory>H:\Work\matlab\tools\other</directory>
-        <directory>H:\Work\matlab\tools\other\aogwater</directory>
-        <directory>H:\Work\matlab\tools\other\cm_and_cb_utilities</directory>
-        <directory>H:\Work\matlab\tools\other\export_fig</directory>
-        <directory>H:\Work\matlab\tools\other\FastICA</directory>
-        <directory>H:\Work\matlab\tools\other\lapack</directory>
-        <directory>H:\Work\matlab\tools\other\ParforProgMon</directory>
-        <directory>H:\Work\matlab\tools\other\panel</directory>
-        <directory>H:\Work\matlab\tools\other\RPSstuff</directory>
-        <directory>H:\Work\matlab</directory>
+        <directory>C:\Users\Default.VPC_WIN7x64\Documents\MATLAB</directory>
         <directory>${MATLAB_ROOT}\toolbox\matlab\demos</directory>
         <directory>${MATLAB_ROOT}\toolbox\matlab\graph2d</directory>
         <directory>${MATLAB_ROOT}\toolbox\matlab\graph3d</directory>
@@ -201,6 +181,9 @@
         <directory>${MATLAB_ROOT}\toolbox\curvefit\curvefitdemos</directory>
         <directory>${MATLAB_ROOT}\toolbox\daq\daq</directory>
         <directory>${MATLAB_ROOT}\toolbox\daq\daqguis</directory>
+        <directory>${MATLAB_ROOT}\toolbox\daq\daqblks\daqblks</directory>
+        <directory>${MATLAB_ROOT}\toolbox\daq\daqblks\daqmasks</directory>
+        <directory>${MATLAB_ROOT}\toolbox\daq\daqblks\daqmex</directory>
         <directory>${MATLAB_ROOT}\toolbox\daq\daqdemos</directory>
         <directory>${MATLAB_ROOT}\toolbox\database\database</directory>
         <directory>${MATLAB_ROOT}\toolbox\database\vqb</directory>
@@ -560,9 +543,9 @@
       <linux>false</linux>
       <solaris>false</solaris>
       <osver>6.1</osver>
-      <os32>false</os32>
-      <os64>true</os64>
-      <arch>win64</arch>
+      <os32>true</os32>
+      <os64>false</os64>
+      <arch>win32</arch>
       <matlab>true</matlab>
     </platform>
   </configuration>
