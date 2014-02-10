@@ -4,6 +4,18 @@
 % 
 % Updated Jan 7, 2010 to incorporate channel size and a potential brefa
 %   (reference bearing provided by detections derived from GSI files)
+%  
+% Updated Feb. 10, 2014 to incorporate amplitude scaling factor to allow
+%    raw data values of snips value to be computed (convenient for
+%    detecting clipping).
+%
+%  Output:
+%      head: a structure containing following fields:
+%           scale_factor:  number that scales imported amplitudes into raw
+%               digital values (useful for detecting clipping).
+%           Fs, Ndetectors, Nfft, dn,
+%           threshold,MinimumDetectionTime,eq_time,flow,fhigh,brefa,nchan,wordtype,
+%           bufferTime
 
 function head=readEnergy_header(fn)
 
@@ -41,3 +53,6 @@ head.wordtype=head.wordtype(2:2:end);
 %Added: bufferTime;
 head.bufferTime=fread(fid,1,'float32');
 fclose(fid);
+
+%Read scale factor
+head.scale_factor=fread(fid,1','double');
