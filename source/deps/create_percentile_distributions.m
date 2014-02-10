@@ -44,8 +44,6 @@ if ~exist('suppress_output')
 end
 
 
-
-
 t1=xdata(1);
 t2=xdata(end);
 tbin=t1:x_inc_boxplot:t2;  %Shorter time scale
@@ -71,6 +69,9 @@ if suppress_output==0
         ylabel(param.y_label,'fontsize',14,'fontweight','bold');
     end
 
+    if isfield(param,'title')
+       title(param.title,'fontsize',14,'fontweight','bold'); 
+    end
     
 end
 

@@ -433,7 +433,7 @@ switch	Batch_mode
                 save_str=sprintf('PSD_plot_%4.2f_%s_%s', sec_avg,datestr(handles.tdate_start,30), ...
                     datestr(handles.tdate_start+datenum(0,0,0,0,0,handles.tlen),30));
                 save(save_str,'F','titlestr','Tnew','PSD','cmin','cmax','ylimm','sec_avg');
-                h	=	msgbox([save_str ' mat and jpg file written to ' pwd],'replace');
+                uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
                 
                 orient landscape
                 print(hprint,'-djpeg',save_str);
@@ -452,6 +452,7 @@ switch	Batch_mode
                 for Iff=1:length(pms.fmin)
                     Igood= (F>=pms.fmin(Iff)&F<=pms.fmax(Iff));
                     sumPSD=10*log10((F(2)-F(1))*sum(PSD(Igood,:),1));  %Now power spectral density converted to power
+                    pms.title=sprintf('Spectral power between %i and %i Hz, beginning %s',pms.fmin(Iff),pms.fmax(Iff),datestr(Tabs(1)));
                     [temp,hprint]=create_percentile_distributions(Tabs, sumPSD,pms, suppress_output);
                     if Iff==1
                         p_matrix=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
@@ -469,7 +470,7 @@ switch	Batch_mode
                       datetick('x',pms.label_style);
                       colorbar
                       caxis(pms.y_limits);
-                      title(sprintf('%ith percentile',100*pms.percentiles(Ipp)));
+                      title(sprintf('%ith percentile, %6.2f s average, starting %s',100*pms.percentiles(Ipp),sec_avg,datestr(Tabs(1))));
                       xlabel('Time','fontweight','bold','fontsize',14);
                       ylabel('Frequency (Hz)','fontweight','bold','fontsize',14);
                    end
@@ -615,7 +616,7 @@ switch	Batch_mode
                 pms.y_label='dB re 1uPa';
                 yes=1;
                 while yes
-                    [~,hprint]=create_percentile_distributions(Tabs_all, PSD_all, pms,suppress_output);
+                    [~,hprint]=create_percentile_distributions(Tabs_all, PSD_all, pms,0);
                     %[output(Iff,:,:),hprint]=create_percentile_distributions(Tabs, sumPSD,pms, suppress_output);
                 
                     xlabel(pms.x_label,'fontsize',14,'fontweight','bold');
@@ -1050,7 +1051,7 @@ if isfield(handles,'myfile')
 else
     token=[];
 end
-[DirectoryName,FileName] = uigetfile([token '*.psd'],dialog_title);
+[FileName,DirectoryName] = uigetfile([token '*.psd'],dialog_title);
 if isnumeric(FileName)
     disp('No file selected');
     return;
