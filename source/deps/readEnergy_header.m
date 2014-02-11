@@ -47,12 +47,19 @@ if test==1
 else
     %keyboard
 end
-head.wordtype=char(fread(fid,12,'uchar')');
-head.wordtype=head.wordtype(2:2:end);
 
 %Added: bufferTime;
 head.bufferTime=fread(fid,1,'float32');
-fclose(fid);
-
 %Read scale factor
 head.scale_factor=fread(fid,1','double');
+
+%The wordtype varies with file type, so need to know number of characters
+%first.
+nchar=fread(fid,1,'int32');
+head.wordtype=char(fread(fid,2*nchar,'uchar')');
+head.wordtype=head.wordtype(2:2:end);
+
+fclose(fid);
+
+
+end

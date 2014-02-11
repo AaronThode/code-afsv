@@ -6,7 +6,7 @@
 %		nc
 %		ctbc,ctec,tdrift
 %		Fs, UTMX,UTMY,depth,UTMZone
-%		brefa, ts,tabs_start
+%		brefa, ts,tabs_start,tabs_end
 function head=readgsif_header(fn)
 
 %fid = fopen(char(fn),'r','ieee-le');
@@ -30,5 +30,6 @@ head.UTMZone=a(8);
 head.brefa=a(9);
 head.ts = fread(fid,1,'uchar');
 head.tabs_start=datenum(1970,1,1,0,0,head.ctbc);
+head.tabs_end=datenum(1970,1,1,0,0,head.ctec);
 
 fclose(fid);
