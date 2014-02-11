@@ -1,4 +1,4 @@
-function boxPlot_percentile(data0, percentiles, lineWidth, width)
+function draw_data=boxplot_percentile(data0,percentiles,suppress_output, lineWidth, width)
 % boxPlot(data0) - plot box-whiskers diagram, accept multiple columns
 %  shows max, 25,50,75, max percentiles
 % Arguments: data0 -  unsorted data, mxn, m samples, n columns.  If each
@@ -11,20 +11,22 @@ function boxPlot_percentile(data0, percentiles, lineWidth, width)
 % Notes: each column is considered as a single set
 
 
-if(nargin < 4)
+if(nargin < 5)
     width = 1;
 end;
-if(nargin < 3)
+if(nargin < 4)
     lineWidth = 1;
-end;
-
+end
+if nargin<3
+   suppress_output=0; 
+end
 if nargin<2
     percentiles=[0.01 0.1 0.25 0.5 0.75 0.9 0.99];
 end
 
 if rem(length(percentiles),2)==0
-   uiwait(msgbox('Need an odd number of percentiles to plot!'));
-   return
+    uiwait(msgbox('Need an odd number of percentiles to plot!'));
+    return
     
 end
 [m n] = size(data0);
@@ -57,28 +59,16 @@ for i=1:n  %For each column... (need to do because of different numbers of nan's
     draw_data(Ibad,i)=data(1,i);  %Use minimum value if percentile too small
     
     
-   % q2(i)=median(data(1:mi,i));
-%     if(rem(mi,2) == 0)
-%         upperA = data(1:mi/2,i);
-%         lowA = data(mi/2+1:mi,i);
-%     else
-%         upperA = data(1:round(mi/2), i);
-%         lowA = data(round(mi/2):mi, i);
-%     end;
-%     
-%     q1(i) = median(upperA, 1);
-%     q3(i) = median(lowA, 1);
-%     
-%     q_least(i) = data(1,i);
-%     q_most(i) = data(mi,i);
     
 end
 %draw_data = [q_most; q3; q2; q1; q_least];
 
 % adjust the width
 
-drawBox_percentile(draw_data, lineWidth, width);
-title(sprintf('Percentiles: %s',num2str(percentiles)));grid on
+if suppress_output==0
+    drawBox_percentile(draw_data, lineWidth, width);
+    title(sprintf('Percentiles: %s',num2str(percentiles)));grid on
+end
 return;
 
 
@@ -87,8 +77,8 @@ function drawBox_percentile(draw_data, lineWidth, width)
 n = size(draw_data, 2);
 np=size(draw_data,1);
 if rem(np,2)==0
-   msgbox('Need an odd number of percentiles to plot!');
-   return
+    msgbox('Need an odd number of percentiles to plot!');
+    return
     
 end
 
@@ -113,7 +103,7 @@ for i = 1:n  %For each column
     end
     plot([i-unit, i+unit], [v(J+1), v(J+1)],'k', 'LineWidth', lineWidth);
     plot([i-unit, i+unit], [v(1), v(1)],'k', 'LineWidth', lineWidth);
-        
+    
 end;
 hold off
 return;
