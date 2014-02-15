@@ -521,6 +521,8 @@ switch	Batch_mode
         Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "all" to import entire folder)';
         Batch_vars_bulkload.time_window      =   'file';
         Batch_desc{3} =  'hours to display in a single window; "all" means put in a single file, "file" displays one file per figure';
+        Batch_vars_bulkload.xlabel_style = 'auto'; 
+        Batch_desc{4} =  'Datenumber format to use when plotting x-axis; "auto" will try to decide for you; examples include "mm/dd", "dd", "HH" or "HH:MM":';
         
         Batch_vars_bulkload	=	input_batchparams(Batch_vars_bulkload, Batch_desc, Batch_type);
         if	isempty(Batch_vars_bulkload)
@@ -528,7 +530,8 @@ switch	Batch_mode
             return;
         end
         
-        split_windows=1;plot_interval=Inf;
+        split_windows=1;plot_interval=Inf;val=-1;
+        
         if ~isempty(strfind(Batch_vars_bulkload.time_window,'file'))
             plot_interval=Inf;
         elseif ~isempty(strfind(Batch_vars_bulkload.time_window,'all'))
@@ -536,8 +539,10 @@ switch	Batch_mode
         elseif isnumeric(str2num(Batch_vars_bulkload.time_window))
             val=str2num(Batch_vars_bulkload.time_window);
             plot_interval=datenum(0,0,0,val,0,0);
-            
-            %Set tick date format
+         end
+        
+        %Set tick date format
+        if val>0&&~isempty(strfind(Batch_vars_bulkload.xlabel_style,'auto'))
             if val<=1  %less than an hour
                 date_tick_chc=15; %HH:MM
             elseif val>1&&val<24
@@ -545,6 +550,8 @@ switch	Batch_mode
             elseif val>24
                 date_tick_chc=6;
             end
+        else
+            date_tick_chc=Batch_vars_bulkload.xlabel_style;
         end
         
         %Load bulk run time and file data
@@ -561,12 +568,13 @@ switch	Batch_mode
         
         PSDButtonName = questdlg('What do you want to do now?', ...
             'PSD options', ...
-            'Display and Print Figure', 'Plot percentiles', 'Display and Print Figure');
-        
+            'Display and Print Figure', 'Plot percentiles', 'Display and Print Figure');      
+                
+                
         if strcmp(PSDButtonName,'Plot percentiles')
             pms=get_PSD_percentile_params(min(FF)/1000,max(FF)/1000);
-            Ifreq=find(FF>=pms.fmin&FF<=pms.fmax);
-            
+            pms.y_label='dB re 1uPa';
+            Nf=length(pms.fmin);
         end
         
         
@@ -578,6 +586,7 @@ switch	Batch_mode
             fname=Other_FileNames(I).name;
             fprintf('Processing %s...\n',fname);
             [PSD,F,Tsec,Tabs,params]=read_Java_PSD(fname,tabs_loop_begin,Inf);  %Read an entire file into memory
+            
             Istrip=find(Tabs<=tabs_end);
             switch PSDButtonName
                 case 'Display and Print Figure'
@@ -589,21 +598,25 @@ switch	Batch_mode
                         Iplot=Iplot+1;
                     end
                 case 'Plot percentiles'
-                    sumPSD=10*log10((F(2)-F(1))*sum(PSD(Ifreq,Istrip),1));  %Now power spectral density converted to power
                     
-                    
-                    %Reserve memory to speed process up.
-                    if I==Icurrent_file  %first time through
-                       PSD_all=zeros(1,(Nfiles-Icurrent_file+1)*length(sumPSD));
-                       Tabs_all=PSD_all;
-                       Icount=1;
+                    %%Process PSD matrix..
+                    for Iff=1:length(pms.fmin)
+                        Igood= (F>=pms.fmin(Iff)&F<=pms.fmax(Iff));
+                        sumPSD=10*log10((F(2)-F(1))*sum(PSD(Igood,Istrip),1));  %Now power spectral density converted to power
                         
-                    end
+                        %%Reserve memory for rest of run..
+                        if Iff==1&&I==Icurrent_file
+                            PSD_all=zeros(Nf,(Nfiles-Icurrent_file+1)*length(sumPSD));
+                            Tabs_all=zeros(1,(Nfiles-Icurrent_file+1)*length(sumPSD));
+                            Icount=1;
+                        end
+                        PSD_all(Iff,Icount:(Icount+length(sumPSD)-1))=sumPSD;
+                        
+                    end %pms.fmin
                     
-                    PSD_all(Icount:(Icount+length(sumPSD)-1))=sumPSD;
-                    Tabs_all(Icount:(Icount+length(Istrip)-1))=Tabs(Istrip);
+                    Tabs_all(Icount:(Icount+length(Istrip)-1))=Tabs;
                     Icount=Icount+length(Istrip);
-            end
+            end  %switch
             
             %If we move into additional files, start at the beginning
             tabs_loop_begin=0;
@@ -616,20 +629,58 @@ switch	Batch_mode
                 pms.y_label='dB re 1uPa';
                 yes=1;
                 while yes
-                    [~,hprint]=create_percentile_distributions(Tabs_all, PSD_all, pms,0);
-                    %[output(Iff,:,:),hprint]=create_percentile_distributions(Tabs, sumPSD,pms, suppress_output);
-                
-                    xlabel(pms.x_label,'fontsize',14,'fontweight','bold');
-                    ylabel(pms.y_label,'fontsize',14,'fontweight','bold');
-                    yes=menu('Redo formatting? (Can''t redo frequency range, though)','Yes','No');
+                    
+                    if Nf>3
+                        %%Process PSD matrix..
+                        for Iff=1:length(pms.fmin)
+                            %Igood= (F>=pms.fmin(Iff)&F<=pms.fmax(Iff));
+                            sumPSD=PSD_all(Iff,:);  %Now power spectral density converted to power
+                            pms.title=sprintf('Spectral power between %i and %i Hz, beginning %s',pms.fmin(Iff),pms.fmax(Iff),datestr(Tabs_all(1)));
+                            [temp,hprint]=create_percentile_distributions(Tabs_all, sumPSD,pms, 1);
+                            if Iff==1
+                                p_matrix=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
+                                XX=temp.x;
+                            end
+                            p_matrix(Iff,:,:)=temp.data;
+                        end
+                        
+                        %%Plot contour plots if enough frequency bands
+                        
+                        for Ipp=1:length(pms.percentiles)
+                            figure
+                            imagesc(XX,pms.fmin,squeeze(p_matrix(:,Ipp,:)));
+                            axis('xy');
+                            datetick('x',pms.label_style);
+                            colorbar
+                            caxis(pms.y_limits);
+                            title(sprintf('%ith percentile, %6.2f s average, starting %s',100*pms.percentiles(Ipp),sec_avg,datestr(Tabs(1))));
+                            xlabel('Time','fontweight','bold','fontsize',14);
+                            ylabel('Frequency (Hz)','fontweight','bold','fontsize',14);
+                        end
+                    else
+                        [~,hprint]=create_percentile_distributions(Tabs_all, squeeze(PSD_all), pms,0);
+                        %[output(Iff,:,:),hprint]=create_percentile_distributions(Tabs, sumPSD,pms, suppress_output);
+                        xlabel(pms.x_label,'fontsize',14,'fontweight','bold');
+                        ylabel(pms.y_label,'fontsize',14,'fontweight','bold');
+                        
+                    end  %if Nf?3
+                    yes=menu('Redo formatting? (Time formatting only)','Yes','No');
                     if yes==1
                         pms=get_PSD_percentile_params(min(FF)/1000,max(FF)/1000);
                         pms.y_label='dB re 1uPa';
+                        Nf=length(pms.fmin);
                     else
                         yes=0;
-               
                     end
-                end
+                end  %while yes
+                
+                %Print figure
+                tmp=datevec(pms.x_inc);
+                tmp=3600*tmp(4)+60*tmp(5)+tmp(6);
+                save_tag=sprintf('PSD_%s_fmin%iHz_fmax%iHz_interval%isec',datestr(Tabs_all(1),30),min(pms.fmin),max(pms.fmax),tmp);
+                print('-djpeg',save_tag)
+                saveas(hprint(1), save_tag, 'fig');
+        
                 
             case 'Display and Print Figure'
                 
@@ -720,7 +771,7 @@ prompt = {'Time unit','Time increment (sec):','Min Frequencies (Hz) [Examples: '
     'Max Frequencies(Hz) [Examples: ''[100 200 300]" or "100:10:300"]','dB limits [min max]','tick increment (sec)','percentile'};
 dlg_title = 'Input for PSD statistics';
 num_lines = 1;
-def = {'Date/Time','60',num2str(1000*fmin),num2str(1000*fmax),'[70 120]','120','[0.01 0.1 .25 .5 .75 0.9 .99]'};
+def = {'Date/Time','2*3600',num2str(1000*fmin),num2str(1000*fmax),'[70 120]','4*3600','[0.01 0.1 .25 .5 .75 0.9 .99]'};
 answer = inputdlg(prompt,dlg_title,num_lines,def);
 if isempty(answer)
     pms=[];

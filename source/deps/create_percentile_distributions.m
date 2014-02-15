@@ -75,14 +75,14 @@ if suppress_output==0
     
 end
 
-data=boxplot_percentile(data_fin,percentiles,1);
+data=boxPlot_percentile(data_fin,percentiles,1);
 output.data=data;
 output.x=tbin;
 output.percentiles=percentiles;
 %ylim(ylimits);
 
     function make_boxplot(data_fin,tbin,x_inc_boxplot,xlabel_inc,percentiles,label_style,ylimits)
-        boxplot_percentile(data_fin,percentiles,0);
+        boxPlot_percentile(data_fin,percentiles,0);
         set(gca,'fontweight','bold','fontsize',14);
         
         Ibin=get(gca,'xtick');
