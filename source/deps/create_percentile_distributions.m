@@ -46,7 +46,30 @@ end
 
 t1=xdata(1);
 t2=xdata(end);
-tbin=t1:x_inc_boxplot:t2;  %Shorter time scale
+
+%%Adjust so that time intervals start and end at midnight...
+tspan=datevec(t2-t1);
+t1_mid=datevec(t1);t1_mid(4:6)=0;t1_mid=datenum(t1_mid);
+t2_mid=datevec(t2);t2_mid(4:6)=0;t2_mid(3)=t2_mid(3)+1;t2_mid=datenum(t2_mid);
+
+%If the new span is much greater than old span, shrink the plot bounds.
+frac=(t2-t1)./(t2_mid-t1_mid);
+    
+if frac<0.75 %This only occurs for less than a day...
+   t1_mid=datevec(t1);t1_mid(5:6)=0;t1_mid=datenum(t1_mid);
+   t2_mid=datevec(t2);t2_mid(5:6)=0;t2_mid(4)=t2_mid(4)+1;t2_mid=datenum(t2_mid);
+   frac=(t2-t1)./(t2_mid-t1_mid);    
+end
+
+%Placeholder for percentile measures that cover much less than an hour
+% if frac<0.75 %Data covers less than an hour
+%    t1_mid=datevec(t1);t1_mid(5:6)=0;t1_mid=datenum(t1_mid);
+%    t2_mid=datevec(t2);t2_mid(5:6)=0;t2_mid(4)=t2_mid(4)+1;t2_mid=datenum(t2_mid);
+%    frac=(t2-t1)./(t2_mid-t1_mid);    
+% end
+
+
+tbin=t1_mid:x_inc_boxplot:t2_mid;  %Shorter time scale
 
 [Ncount,Binn]=histc(xdata,tbin);  %%OK, sort times of observations by category
 data_fin=NaN*ones(max(Ncount),length(Ncount));
@@ -76,13 +99,23 @@ if suppress_output==0
 end
 
 data=boxPlot_percentile(data_fin,percentiles,1);
+if isempty(data)
+    output.data=[];
+    output.x=[];
+    output.percentiles=[];
+    return
+end
 output.data=data;
 output.x=tbin;
 output.percentiles=percentiles;
 %ylim(ylimits);
 
     function make_boxplot(data_fin,tbin,x_inc_boxplot,xlabel_inc,percentiles,label_style,ylimits)
-        boxPlot_percentile(data_fin,percentiles,0);
+        test=boxPlot_percentile(data_fin,percentiles,0);
+        
+        if isempty(test)
+            return
+        end
         set(gca,'fontweight','bold','fontsize',14);
         
         Ibin=get(gca,'xtick');

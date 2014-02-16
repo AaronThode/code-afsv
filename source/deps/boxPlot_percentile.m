@@ -26,6 +26,7 @@ end
 
 if rem(length(percentiles),2)==0
     uiwait(msgbox('Need an odd number of percentiles to plot!'));
+    draw_data=[];
     return
     
 end

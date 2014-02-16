@@ -390,6 +390,7 @@ if isempty(strfind(Batch_mode,'Load'))
 end
 
 %%%%%
+close_all_figures
 switch	Batch_mode
     case 'Process Visible Window'
         uiwait(msgbox(['Processing all data within window for ' Batch_type]));
@@ -515,14 +516,14 @@ switch	Batch_mode
         ! ./masterPSD.scr > outt.txt &
         return
     case 'Load Bulk Processing'
-        Batch_vars_bulkload.start_time	=	'file start';
-        Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)",  "file start" for current file , "all" for entire folder)';
+        Batch_vars_bulkload.start_time	=	'all';
+        Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", "file start" for current file , "select" to choose file from list, "all" for entire folder)';
         Batch_vars_bulkload.end_time	=	'all';
-        Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "all" to import entire folder)';
+        Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "select" to choose file from list, "all" to import entire folder)';
         Batch_vars_bulkload.time_window      =   'file';
         Batch_desc{3} =  'hours to display in a single window; "all" means put in a single file, "file" displays one file per figure';
         Batch_vars_bulkload.xlabel_style = 'auto'; 
-        Batch_desc{4} =  'Datenumber format to use when plotting x-axis; "auto" will try to decide for you; examples include "mm/dd", "dd", "HH" or "HH:MM":';
+        Batch_desc{4} =  'Datenumber format to use when plotting x-axis; "auto" will try to decide for you; examples include "mm/dd", "dd", "dd/HH", "HH" or "HH:MM":';
         
         Batch_vars_bulkload	=	input_batchparams(Batch_vars_bulkload, Batch_desc, Batch_type);
         if	isempty(Batch_vars_bulkload)
@@ -530,6 +531,11 @@ switch	Batch_mode
             return;
         end
         
+        
+        
+        %%%%%%%%Set parameters for plotting images of bulk data
+        %   split_windows =1 will display a separate figure for each PSD
+        %   file
         split_windows=1;plot_interval=Inf;val=-1;
         
         if ~isempty(strfind(Batch_vars_bulkload.time_window,'file'))
@@ -539,21 +545,10 @@ switch	Batch_mode
         elseif isnumeric(str2num(Batch_vars_bulkload.time_window))
             val=str2num(Batch_vars_bulkload.time_window);
             plot_interval=datenum(0,0,0,val,0,0);
-         end
-        
-        %Set tick date format
-        if val>0&&~isempty(strfind(Batch_vars_bulkload.xlabel_style,'auto'))
-            if val<=1  %less than an hour
-                date_tick_chc=15; %HH:MM
-            elseif val>1&&val<24
-                date_tick_chc='HH';
-            elseif val>24
-                date_tick_chc=6;
-            end
-        else
-            date_tick_chc=Batch_vars_bulkload.xlabel_style;
         end
         
+        date_tick_chc=get_datetick_style(Batch_vars_bulkload.xlabel_style,val,'hours');
+          
         %Load bulk run time and file data
         bulk_params=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
         
@@ -575,6 +570,8 @@ switch	Batch_mode
             pms=get_PSD_percentile_params(min(FF)/1000,max(FF)/1000);
             pms.y_label='dB re 1uPa';
             Nf=length(pms.fmin);
+            %date_tick_chc=get_datetick_style(date_tick_chc,pms.xlabel_inc,'datenumber');
+        
         end
         
         
@@ -586,7 +583,8 @@ switch	Batch_mode
             fname=Other_FileNames(I).name;
             fprintf('Processing %s...\n',fname);
             [PSD,F,Tsec,Tabs,params]=read_Java_PSD(fname,tabs_loop_begin,Inf);  %Read an entire file into memory
-            
+            sec_avg=(params.Nfft+params.dn*params.Nsamps)/params.Fs;
+        
             Istrip=find(Tabs<=tabs_end);
             switch PSDButtonName
                 case 'Display and Print Figure'
@@ -623,13 +621,14 @@ switch	Batch_mode
             
         end  %Icurrent_file
         
+                        
         switch PSDButtonName
             
             case 'Plot percentiles'
                 pms.y_label='dB re 1uPa';
                 yes=1;
                 while yes
-                    
+                    close_all_figures;  %Close all open figures..
                     if Nf>3
                         %%Process PSD matrix..
                         for Iff=1:length(pms.fmin)
@@ -645,42 +644,71 @@ switch	Batch_mode
                         end
                         
                         %%Plot contour plots if enough frequency bands
-                        
+                        clear hprint
                         for Ipp=1:length(pms.percentiles)
-                            figure
+                            hprint(Ipp)=figure;
                             imagesc(XX,pms.fmin,squeeze(p_matrix(:,Ipp,:)));
                             axis('xy');
-                            datetick('x',pms.label_style);
+                            %datetick('x',date_tick_chc);
+                            Ibin=get(gca,'xtick');
+                            Istep=floor(pms.xlabel_inc/pms.x_inc);
+                            Ibin=1:Istep:length(XX);
+                            
+                            %Ibin=XX(Ibin);
+                            set(gca,'xtick',XX(Ibin));
+                            datetick('x',date_tick_chc,'keepticks','keeplimits')
+                            %set(gca,'xticklabel',);
+                            
+                            
+                            
                             colorbar
                             caxis(pms.y_limits);
                             title(sprintf('%ith percentile, %6.2f s average, starting %s',100*pms.percentiles(Ipp),sec_avg,datestr(Tabs(1))));
-                            xlabel('Time','fontweight','bold','fontsize',14);
+                            xlabel('Date/Time','fontweight','bold','fontsize',14);
                             ylabel('Frequency (Hz)','fontweight','bold','fontsize',14);
+                            grid on;
+                            
                         end
                     else
+                        pms.label_style=date_tick_chc;
+                        pms.title=sprintf('Spectral power between %i and %i Hz, averaged %6.2f sec, beginning %s', ...
+                        pms.fmin(Iff),pms.fmax(Iff),sec_avg,datestr(Tabs_all(1)));
+                            
                         [~,hprint]=create_percentile_distributions(Tabs_all, squeeze(PSD_all), pms,0);
                         %[output(Iff,:,:),hprint]=create_percentile_distributions(Tabs, sumPSD,pms, suppress_output);
+                        %datetick('x',date_tick_chc,'keeplimits','keepticks');
                         xlabel(pms.x_label,'fontsize',14,'fontweight','bold');
                         ylabel(pms.y_label,'fontsize',14,'fontweight','bold');
+                        uiwait(msgbox('Please click on screen to print out percentiles used'));
+                        gtext(sprintf('Percentiles: %s',num2str(pms.percentiles)),'fontweight','bold','fontsize',18)
+
                         
                     end  %if Nf?3
                     yes=menu('Redo formatting? (Time formatting only)','Yes','No');
                     if yes==1
-                        pms=get_PSD_percentile_params(min(FF)/1000,max(FF)/1000);
-                        pms.y_label='dB re 1uPa';
-                        Nf=length(pms.fmin);
+                        pms=get_PSD_percentile_params(pms.fmin/1000,pms.fmax/1000);
+                        if isempty(pms)
+                            yes=0;
+                        else
+                            pms.y_label='dB re 1uPa';
+                            %Nf=length(pms.fmin);
+                            date_tick_chc=get_datetick_style([],pms.xlabel_inc,'datenumber');
+                        end
+        
                     else
                         yes=0;
                     end
                 end  %while yes
                 
                 %Print figure
-                tmp=datevec(pms.x_inc);
-                tmp=3600*tmp(4)+60*tmp(5)+tmp(6);
-                save_tag=sprintf('PSD_%s_fmin%iHz_fmax%iHz_interval%isec',datestr(Tabs_all(1),30),min(pms.fmin),max(pms.fmax),tmp);
-                print('-djpeg',save_tag)
-                saveas(hprint(1), save_tag, 'fig');
-        
+                for Iprint=1:length(hprint)
+                    tmp=datevec(pms.x_inc);
+                    tmp=3600*tmp(4)+60*tmp(5)+tmp(6);
+                    save_tag=sprintf('PSD_%s_fmin%iHz_fmax%iHz_interval%isec', ...
+                        datestr(Tabs_all(1),30),(pms.fmin(Iprint)),(pms.fmax(Iprint)),tmp);
+                    print(hprint(Iprint),'-djpeg',save_tag)
+                    saveas(hprint(Iprint), save_tag, 'fig');
+                end
                 
             case 'Display and Print Figure'
                 
@@ -694,7 +722,6 @@ switch	Batch_mode
                     
                     Nfigs=sort(get(0,'Child'));
                     Nfigs=Nfigs(Nfigs<150);
-                    sec_avg=params.Nsamps*params.dn/params.Fs;
                     
                     for II=1:length(Nfigs)
                         
@@ -743,7 +770,7 @@ end %switch Batch Mode
         
         
         hprint=figure;
-        imagesc(Tabs_all,F/1000,PSD_all);axis('xy')
+        imagesc(Tabs_all,F/1000,real(PSD_all));axis('xy')
         fmin=str2num(get(handles.edit_fmin,'String'));
         fmax=str2num(get(handles.edit_fmax,'String'));
         if fmax>0
@@ -757,42 +784,103 @@ end %switch Batch Mode
         climm=[cmin cmax];
         caxis(climm);
         xlim([twin1 twin2]);
-        datetick('x',13,'keeplimits')
-        sec_avg=params.Nsamps*params.dn/params.Fs;
+        datetick('x',date_tick_chc,'keeplimits');
+        %sec_avg=params.Nsamps*params.dn/params.Fs;
         titlestr=(sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f',datestr(twin1,30),datestr(twin2,30),sec_avg));
         title(titlestr);
         save_tag=[datestr(twin1,30) '_' datestr(twin2,30)];
     end
 end
 
-%
-function pms=get_PSD_percentile_params(fmin,fmax)
-prompt = {'Time unit','Time increment (sec):','Min Frequencies (Hz) [Examples: ''[100 200 300]" or "100:10:300"]:', ...
-    'Max Frequencies(Hz) [Examples: ''[100 200 300]" or "100:10:300"]','dB limits [min max]','tick increment (sec)','percentile'};
-dlg_title = 'Input for PSD statistics';
-num_lines = 1;
-def = {'Date/Time','2*3600',num2str(1000*fmin),num2str(1000*fmax),'[70 120]','4*3600','[0.01 0.1 .25 .5 .75 0.9 .99]'};
-answer = inputdlg(prompt,dlg_title,num_lines,def);
-if isempty(answer)
-    pms=[];
+function date_tick_chc=get_datetick_style(input_style,val,val_units)
+%Set tick date format
+% input_style: string with initial style; most often "auto"
+% val: number represenintg typical time interval to be plotted.  If empty
+%   or less than one, return empty matrix
+% val_units:  units of val number
+
+if isempty(input_style)
+    prompt = {'Datenumber format to use when plotting x-axis; examples include "mm/dd", "dd", "dd/HH", "HH" or "HH:MM":'};
+    dlg_title = 'Datetick style';
+    num_lines = 1;
+    def = {'HH'};
+    answer = inputdlg(prompt,dlg_title,num_lines,def);
+    input_style=answer{1};
+end
+
+if isempty(strfind(input_style,'auto'))
+    date_tick_chc=input_style;
     return
 end
 
+if isempty(val)||val<0
+    %uiwait(warndlg('Need to define an input number for get_datetick_style'));
+    date_tick_chc=[];
+    return
+end
 
-pms.x_label=answer{1};
-pms.x_inc=datenum(0,0,0,0,0,str2num(answer{2}));
-pms.fmin=str2num(answer{3});
-pms.fmax=str2num(answer{4});
-pms.y_limits=str2num(answer{5});
-pms.xlabel_inc=datenum(0,0,0,0,0,str2num(answer{6}));
-pms.percentiles=eval(answer{7});
+%%Convert time units to hours
+switch val_units
+    case 'datenumber'
+        tmp=datevec(val);
+        val=tmp(6)/3600+tmp(5)/60+tmp(4)+24*tmp(3);
+    case 'hours'
+    otherwise
+        uiwait(errordlg('datetick style val units not recognized'));
+        return
+end
 
-if pms.xlabel_inc>=datenum(0,0,0,12,0,0) %label spacing on order of days
-    pms.label_style='dd';
-elseif pms.xlabel_inc>=datenum(0,0,0,1,0,0);  % If label spacing is over one hour
-    pms.label_style='HH';
-else
-    pms.label_style=15;
+if val<1/6
+    date_tick_chc='HH:MM:SS';
+elseif val<=1  %less than an hour
+    date_tick_chc='HH:MM'; %HH:MM
+elseif val>1&&val<3
+    date_tick_chc='HH';
+elseif val>12
+    date_tick_chc='dd';
+end
+
+
+end
+
+%
+function pms=get_PSD_percentile_params(fmin,fmax)
+
+yes=1;
+while yes
+    prompt = {'Time unit','Time increment (sec):','Min Frequencies (Hz) [Examples: ''[100 200 300]" or "100:10:300"]:', ...
+        'Max Frequencies(Hz) [Examples: ''[100 200 300]" or "100:10:300"]','dB limits [min max]','tick increment (sec)','percentile'};
+    dlg_title = 'Input for PSD statistics';
+    num_lines = 1;
+    def = {'Date/Time','2*3600',num2str(1000*fmin),num2str(1000*fmax),'[70 120]','4*3600','[0.01 0.1 .25 .5 .75 0.9 .99]'};
+    answer = inputdlg(prompt,dlg_title,num_lines,def);
+    if isempty(answer)
+        pms=[];
+        return
+    end
+    
+    pms.x_label=answer{1};
+    pms.x_inc=datenum(0,0,0,0,0,str2num(answer{2}));
+    pms.fmin=str2num(answer{3});
+    pms.fmax=str2num(answer{4});
+    pms.y_limits=str2num(answer{5});
+    pms.xlabel_inc=datenum(0,0,0,0,0,str2num(answer{6}));
+    pms.percentiles=eval(answer{7});
+    
+    if rem(length(pms.percentiles),2)==0
+        uiwait(msgbox('Must be an odd number of percentiles'));
+    else
+        yes=0;
+    end
+    
+    
+    % if pms.xlabel_inc>=datenum(0,0,0,12,0,0) %label spacing on order of days
+    %     pms.label_style='dd';
+    % elseif pms.xlabel_inc>=datenum(0,0,0,1,0,0);  % If label spacing is over one hour
+    %     pms.label_style='HH';
+    % else
+    %     pms.label_style='HH:MM';
+    % end
 end
 end
 
@@ -915,8 +1003,8 @@ switch	Batch_mode
     case 'Load Bulk Processing'
         
         
-        Batch_vars_bulkload.start_time	=	'file start';
-        Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", or "file start" for current file beginning)';
+        Batch_vars_bulkload.start_time	=	'all';
+        Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", "all" or "file start" for current file beginning)';
         Batch_vars_bulkload.end_time	=	'all';
         Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "all" to import entire folder)';
         
@@ -1096,7 +1184,7 @@ bulk_params.Icurrent_file=[];
 bulk_params.Nfiles=[];
 bulk_params.FF=[];
 
-dialog_title	=	'Select first Bulk file to load: Note that I am looking in default directory, not data directory';
+dialog_title	=	'Select the first Bulk file to load: Note that I am looking in analysis directory, not data directory';
 if isfield(handles,'myfile')
     [~,token,extt] = fileparts(handles.myfile);
 else
@@ -1143,7 +1231,7 @@ switch lower(Batch_vars_bulkload.start_time)
     case {'here'}  %Use edit window
         tabs_start=datenum(get(handles.edit_datestr,'String'));
     case 'file start'  %start of file
-        % Keep tabs_start the same--this trick allows us from loading the original data!
+        % Keep tabs_start the same--this trick allows us to avoid loading the original data!
     case 'all'  %start of folder
         tabs_start=tabs_folder_start;
         %Reset other variables
@@ -1154,12 +1242,23 @@ switch lower(Batch_vars_bulkload.start_time)
         if strfind(Batch_vars_bulkload.start_time,'datenum')
             try
                 tabs_start_want=eval(Batch_vars_bulkload.start_time);
-                if tabs_start_want<tabs_folder_start || tabs_start_want<tabs_folder_end
-                    uiwait(errordlg('Can''t request a time outside selected file''s start time','Bulk Processing Menu Error'));
-                    return;
-                end
+                if tabs_start_want<tabs_folder_start || tabs_start_want>tabs_folder_end
+                    uiwait(errordlg('Can''t request a time outside selected folders''s start time; start time set to folder start','Bulk Processing Menu Error'));
+                    tabs_start_want=tabs_folder_start;
+                    tabs_start=tabs_start_want;
                 
-                tabs_start=tabs_start_want;
+                else  %location appropriate start time...
+                    %Identify current file...
+                    for Ifile=1:length(Other_FileNames)
+                        [~,FF,~,~,params]=read_Java_PSD(Other_FileNames(Ifile).name,0,10);
+                        if tabs_start_want>=params.tstart_file 
+                           tabs_start=params.tstart_file;
+                           Icurrent_file=Ifile;
+                           break
+                        end
+                    end
+                    
+                end
             catch
                 uiwait(errordlg('Can''t process start_time','Bulk Processing Menu Error'));
                 return;
@@ -1184,12 +1283,22 @@ switch lower(Batch_vars_bulkload.end_time)
         if strfind(Batch_vars_bulkload.end_time,'datenum')
             try
                 tabs_end_want=eval(Batch_vars_bulkload.end_time);
-                if tabs_end_want<tabs_folder_start || tabs_end_want<tabs_folder_end
-                    uiwait(errordlg('Can''t request a time outside selected file''s start time','Bulk Processing Menu Error'));
-                    return
+                if tabs_end_want<tabs_folder_start || tabs_end_want>tabs_folder_end
+                    uiwait(errordlg('Can''t request a time outside selected folder''s end time; end time set to folder end','Bulk Processing Menu Error'));
+                    tabs_end_want=tabs_folder_end;
+                    tabs_end=tabs_end_want;
+                 else  %location appropriate start time...
+                    %Identify current file...
+                    for Ifile=1:length(Other_FileNames)
+                        [~,FF,~,~,params]=read_Java_PSD(Other_FileNames(Ifile).name,0,10);
+                        if tabs_end_want<=params.tend_file 
+                           tabs_end=params.tend_file;
+                           Nfiles=Ifile;
+                           break
+                        end
+                    end
+                    
                 end
-                
-                tabs_end=tabs_end_want;
                 
             catch
                 uiwait(errordlg('Can''t process end_time','Bulk Processing Menu Error'));
