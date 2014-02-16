@@ -55,18 +55,20 @@ t2_mid=datevec(t2);t2_mid(4:6)=0;t2_mid(3)=t2_mid(3)+1;t2_mid=datenum(t2_mid);
 %If the new span is much greater than old span, shrink the plot bounds.
 frac=(t2-t1)./(t2_mid-t1_mid);
     
-if frac<0.75 %This only occurs for less than a day...
+if frac<0.75 %This only occurs for less than a day...round to nearest hour
    t1_mid=datevec(t1);t1_mid(5:6)=0;t1_mid=datenum(t1_mid);
    t2_mid=datevec(t2);t2_mid(5:6)=0;t2_mid(4)=t2_mid(4)+1;t2_mid=datenum(t2_mid);
    frac=(t2-t1)./(t2_mid-t1_mid);    
 end
 
+
 %Placeholder for percentile measures that cover much less than an hour
-% if frac<0.75 %Data covers less than an hour
-%    t1_mid=datevec(t1);t1_mid(5:6)=0;t1_mid=datenum(t1_mid);
-%    t2_mid=datevec(t2);t2_mid(5:6)=0;t2_mid(4)=t2_mid(4)+1;t2_mid=datenum(t2_mid);
-%    frac=(t2-t1)./(t2_mid-t1_mid);    
-% end
+if frac<0.75 %Data covers less than an hour, round to nearest minute.
+   t1_mid=datevec(t1);t1_mid(6)=0;t1_mid=datenum(t1_mid);
+   t2_mid=datevec(t2);t2_mid(6)=0;t2_mid(5)=t2_mid(5)+1;t2_mid=datenum(t2_mid);
+   frac=(t2-t1)./(t2_mid-t1_mid);    
+end
+
 
 
 tbin=t1_mid:x_inc_boxplot:t2_mid;  %Shorter time scale

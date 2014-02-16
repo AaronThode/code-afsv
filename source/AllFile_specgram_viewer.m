@@ -399,6 +399,7 @@ switch	Batch_mode
         Ncol=max([1 floor(sec_avg/dT)]);
         Itime=1:Ncol:length(handles.sgram.T);
         Tnew=handles.sgram.T(Itime);
+        Tnew=Tnew(1:(end-1));
         F=handles.sgram.F;
         PSD=zeros(length(F),length(Itime)-1);
         for I=1:(length(Itime)-1)
@@ -441,6 +442,8 @@ switch	Batch_mode
             case 'Plot percentiles'
                 
                 pms=get_PSD_percentile_params(fmin,fmax);
+                pms.label_style=get_datetick_style([]);
+                
                 pms.y_label='dB re 1uPa';
                 Tabs=datenum(get(handles.edit_datestr,'String'))+datenum(0,0,0,0,0,Tnew);
                 if length(pms.fmin)>3
