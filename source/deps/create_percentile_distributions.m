@@ -76,6 +76,7 @@ tbin=t1_mid:x_inc_boxplot:t2_mid;  %Shorter time scale
 [Ncount,Binn]=histc(xdata,tbin);  %%OK, sort times of observations by category
 data_fin=NaN*ones(max(Ncount),length(Ncount));
 
+
 for Ibin=1:length(Ncount)
     data=ydata(find(Binn==Ibin));
     data(find(data<ylimits(1)|data>ylimits(2)))=NaN;
@@ -83,6 +84,9 @@ for Ibin=1:length(Ncount)
     
 end
 
+if isempty(data_fin)
+   uiwait(msgbox('data_fin is empty: you have requested odd times for percentiles')); 
+end
 if suppress_output==0
     hprint=figure;
 

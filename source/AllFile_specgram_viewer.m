@@ -519,10 +519,11 @@ switch	Batch_mode
         ! ./masterPSD.scr > outt.txt &
         return
     case 'Load Bulk Processing'
-        Batch_vars_bulkload.start_time	=	'all';
-        Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", "file start" for current file , "select" to choose file from list, "all" for entire folder)';
-        Batch_vars_bulkload.end_time	=	'all';
-        Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "select" to choose file from list, "all" to import entire folder)';
+        Batch_vars_bulkload.start_time	=	'folder start';
+     
+        Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", "file start" for current file , "select" to choose file from list, "folder start" for first file in folder)';
+        Batch_vars_bulkload.end_time	=	'folder end';
+        Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "select" to choose file from list, "folder end" to import through last file)';
         Batch_vars_bulkload.time_window      =   'file';
         Batch_desc{3} =  'hours to display in a single window; "all" means put in a single file, "file" displays one file per figure';
         Batch_vars_bulkload.xlabel_style = 'auto'; 
@@ -561,7 +562,7 @@ switch	Batch_mode
         tabs_end=bulk_params.tabs_end;
         Other_FileNames=bulk_params.Other_FileNames;
         Icurrent_file=bulk_params.Icurrent_file;
-        Nfiles=bulk_params.Nfiles;
+        Ifinal_file=bulk_params.Ifinal_file;
         FF=bulk_params.FF;
         
         PSDButtonName = questdlg('What do you want to do now?', ...
@@ -582,7 +583,7 @@ switch	Batch_mode
         tabs_loop_begin=tabs_start;
         PSD_all=[];Tabs_all=[];
         Iplot=1;
-        for I=Icurrent_file:Nfiles
+        for I=Icurrent_file:Ifinal_file
             fname=Other_FileNames(I).name;
             fprintf('Processing %s...\n',fname);
             [PSD,F,Tsec,Tabs,params]=read_Java_PSD(fname,tabs_loop_begin,Inf);  %Read an entire file into memory
@@ -607,15 +608,15 @@ switch	Batch_mode
                         
                         %%Reserve memory for rest of run..
                         if Iff==1&&I==Icurrent_file
-                            PSD_all=zeros(Nf,(Nfiles-Icurrent_file+1)*length(sumPSD));
-                            Tabs_all=zeros(1,(Nfiles-Icurrent_file+1)*length(sumPSD));
+                            PSD_all=zeros(Nf,(Ifinal_file-Icurrent_file+1)*length(sumPSD));
+                            Tabs_all=zeros(1,(Ifinal_file-Icurrent_file+1)*length(sumPSD));
                             Icount=1;
                         end
                         PSD_all(Iff,Icount:(Icount+length(sumPSD)-1))=sumPSD;
                         
                     end %pms.fmin
                     
-                    Tabs_all(Icount:(Icount+length(Istrip)-1))=Tabs;
+                    Tabs_all(Icount:(Icount+length(Istrip)-1))=Tabs(Istrip);
                     Icount=Icount+length(Istrip);
             end  %switch
             
@@ -624,10 +625,18 @@ switch	Batch_mode
             
         end  %Icurrent_file
         
-                        
+                 
         switch PSDButtonName
             
             case 'Plot percentiles'
+                %Remove excess storage
+                
+                Icount=Icount-length(Istrip);
+                if Icount<length(Tabs_all)
+                    Tabs_all=Tabs_all(1:Icount);
+                    PSD_all=PSD_all(:,1:Icount);
+                    
+                end
                 pms.y_label='dB re 1uPa';
                 yes=1;
                 while yes
@@ -659,6 +668,9 @@ switch	Batch_mode
                             
                             %Ibin=XX(Ibin);
                             set(gca,'xtick',XX(Ibin));
+                            if isempty(date_tick_chc) %auto adjustment has failed..
+                                date_tick_chc=get_datetick_style('auto',pms.xlabel_inc,'datenumber');
+                            end
                             datetick('x',date_tick_chc,'keepticks','keeplimits')
                             %set(gca,'xticklabel',);
                             
@@ -673,6 +685,9 @@ switch	Batch_mode
                             
                         end
                     else
+                        if isempty(date_tick_chc) %auto adjustment has failed..
+                            date_tick_chc=get_datetick_style('auto',pms.xlabel_inc,'datenumber');
+                        end
                         pms.label_style=date_tick_chc;
                         pms.title=sprintf('Spectral power between %i and %i Hz, averaged %6.2f sec, beginning %s', ...
                         pms.fmin(Iff),pms.fmax(Iff),sec_avg,datestr(Tabs_all(1)));
@@ -787,6 +802,9 @@ end %switch Batch Mode
         climm=[cmin cmax];
         caxis(climm);
         xlim([twin1 twin2]);
+        if isempty(date_tick_chc) %auto adjustment has failed..
+            date_tick_chc=get_datetick_style('auto',twin2-twin1,'datenumber');
+        end
         datetick('x',date_tick_chc,'keeplimits');
         %sec_avg=params.Nsamps*params.dn/params.Fs;
         titlestr=(sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f',datestr(twin1,30),datestr(twin2,30),sec_avg));
@@ -839,7 +857,7 @@ elseif val<=1  %less than an hour
     date_tick_chc='HH:MM'; %HH:MM
 elseif val>1&&val<3
     date_tick_chc='HH';
-elseif val>12
+elseif val>3
     date_tick_chc='dd';
 end
 
@@ -1006,10 +1024,10 @@ switch	Batch_mode
     case 'Load Bulk Processing'
         
         
-        Batch_vars_bulkload.start_time	=	'all';
-        Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", "all" or "file start" for current file beginning)';
-        Batch_vars_bulkload.end_time	=	'all';
-        Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "all" to import entire folder)';
+        Batch_vars_bulkload.start_time	=	'folder start';
+        Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", "file start" for current file , "select" to choose file from list, "folder start" for first file in folder)';
+        Batch_vars_bulkload.end_time	=	'folder end';
+        Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "folder end" to import through end of folder)';
         
         
         Batch_vars_bulkload.dB_bins = '30:2:140';        Batch_desc{3} = 'vector of dB levels to build long-term histograms';
@@ -1027,7 +1045,7 @@ switch	Batch_mode
         
         
         % Load bulk run information
-        %[tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Nfiles,FF]=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
+        %[tabs_folder_start,tabs_folder_end,tabs_start,tabs_end,Other_FileNames,Icurrent_file,Ifinal_file,FF]=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
         bulk_params=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
         
         tabs_folder_start=bulk_params.tabs_folder_start;
@@ -1036,7 +1054,7 @@ switch	Batch_mode
         tabs_end=bulk_params.tabs_end;
         Other_FileNames=bulk_params.Other_FileNames;
         Icurrent_file=bulk_params.Icurrent_file;
-        Nfiles=bulk_params.Nfiles;
+        Ifinal_file=bulk_params.Ifinal_file;
         FF=bulk_params.FF;
         
         %%Translate duty cycle...
@@ -1055,7 +1073,7 @@ switch	Batch_mode
         dB_bins=str2num(Batch_vars_bulkload.dB_bins);
         hist_total=zeros(length(FF),length(dB_bins));
         tabs_loop_begin=tabs_start;
-        for I=Icurrent_file:Nfiles
+        for I=Icurrent_file:Ifinal_file
             fname=Other_FileNames(I).name;
             fprintf('Processing %s...\n',fname);
             [PSD,F,Tsec,Tabs,params]=read_Java_PSD(fname,tabs_loop_begin,Inf);  %Read an entire file into memory
@@ -1172,7 +1190,7 @@ function bulk_params=load_PSD_Bulk_Run(handles,Batch_vars_bulkload)
 %       Icurrent_file:  Index of Other_FileNames that lists the PSD file
 %           associated with the loaded file.  Is set to '1' if all files
 %           desired.
-%       Nfiles:  number of PSD files that occur after the current loaded
+%       Ifinal_file:  number of PSD files that occur after the current loaded
 %           file.
 %       FF: vector of frequencies associated with power spectral density.
 
@@ -1184,15 +1202,17 @@ bulk_params.tabs_start=[];
 bulk_params.tabs_end=[];
 bulk_params.Other_FileNames=[];
 bulk_params.Icurrent_file=[];
-bulk_params.Nfiles=[];
+bulk_params.Ifinal_file=[];
 bulk_params.FF=[];
 
-dialog_title	=	'Select the first Bulk file to load: Note that I am looking in analysis directory, not data directory';
+dialog_title	=	'Select an example Bulk file to load: Note that I am looking in analysis directory, not data directory';
 if isfield(handles,'myfile')
     [~,token,extt] = fileparts(handles.myfile);
 else
     token=[];
 end
+
+
 [FileName,DirectoryName] = uigetfile([token '*.psd'],dialog_title);
 if isnumeric(FileName)
     disp('No file selected');
@@ -1211,36 +1231,41 @@ if isempty(Other_FileNames)
     return;
 end
 
-Icurrent_file=find(strcmp(FileName,{Other_FileNames.name})>0);  %Location of current file in list of PSD files
-Nfiles=length(Other_FileNames(Icurrent_file:end));  %Number of files that include current time and all times afterward.
 
-[~,~,~,~,params]=read_Java_PSD(Other_FileNames(Icurrent_file).name,0,Inf,1);
-tabs_end=params.tend_file;  %datenumber of end of data in focal file (assuming all filenames have chronological order)
-tabs_start=params.tstart_file;  %datenumber of start of data in focal file (assuming all filenames have chronological order)
+for II=1:length(Other_FileNames)
+    [~,~,~,~,params]=read_Java_PSD(Other_FileNames(II).name,0,Inf,1); %Read header only
+    tabs_file_start(II)=params.tstart_file;
+    tabs_file_end(II)=params.tend_file;
 
-[~,~,~,~,params]=read_Java_PSD(Other_FileNames(end).name,0,Inf,1);
-tabs_folder_end=params.tend_file;  %datenumber of end of data in folder (assuming all filenames have chronological order)
+end
 
-[~,FF,~,~,params]=read_Java_PSD(Other_FileNames(1).name,0,10);
-tabs_folder_start=params.tstart_file;  %datenumber of start of data in folder (assuming all filenames have chronological order)
-
-fprintf('Folder start time: %s, File start time: %s, File end time: %s, Folder end time: %s\n', ...
-    datestr(tabs_folder_start,30),datestr(tabs_start,30),datestr(tabs_end,30),datestr(tabs_folder_end,30));
+tabs_folder_start=tabs_file_start(1);  %datenumber of start of data in folder (assuming all filenames have chronological order)
+tabs_folder_end=tabs_file_end(end);  %datenumber of end of data in folder (assuming all filenames have chronological order)
 
 
+[~,FF,~,~,~]=read_Java_PSD(Other_FileNames(1).name,0,10);  %Get FF vector...
 
-%%Translate start time
+% [~,FF,~,~,params]=read_Java_PSD(Other_FileNames(Icurrent_file).name,0,Inf,1);
+% tabs_end=params.tend_file;  %datenumber of end of data in focal file (assuming all filenames have chronological order)
+% tabs_start=params.tstart_file;  %datenumber of start of data in focal file (assuming all filenames have chronological order)
+
+
+
+%%Translate start time.  Need to define tabs_start and Icurrent_file
 switch lower(Batch_vars_bulkload.start_time)
-    case {'here'}  %Use edit window
+    case 'here'  %Use edit window
         tabs_start=datenum(get(handles.edit_datestr,'String'));
+        Icurrent_file=find(tabs_start>=tabs_file_start, 1, 'last' );
     case 'file start'  %start of file
-        % Keep tabs_start the same--this trick allows us to avoid loading the original data!
-    case 'all'  %start of folder
+        tabs_start=datenum(get(handles.edit_datestr,'String'));
+        Icurrent_file=find(tabs_start>=tabs_file_start, 1, 'last' );
+        tabs_start=tabs_file_start(Icurrent_file);
+          
+    case 'folder start'  %start of folder
         tabs_start=tabs_folder_start;
         %Reset other variables
         Icurrent_file=1;  
-        Nfiles=length(Other_FileNames);  %Number of files that include current time and all times afterward.
-
+        %Ifinal_file=length(Other_FileNames);  
     otherwise %check for datenum
         if strfind(Batch_vars_bulkload.start_time,'datenum')
             try
@@ -1249,18 +1274,12 @@ switch lower(Batch_vars_bulkload.start_time)
                     uiwait(errordlg('Can''t request a time outside selected folders''s start time; start time set to folder start','Bulk Processing Menu Error'));
                     tabs_start_want=tabs_folder_start;
                     tabs_start=tabs_start_want;
+                    Icurrent_file=1;
                 
                 else  %location appropriate start time...
                     %Identify current file...
-                    for Ifile=1:length(Other_FileNames)
-                        [~,FF,~,~,params]=read_Java_PSD(Other_FileNames(Ifile).name,0,10);
-                        if tabs_start_want>=params.tstart_file 
-                           tabs_start=params.tstart_file;
-                           Icurrent_file=Ifile;
-                           break
-                        end
-                    end
-                    
+                    Icurrent_file=find(tabs_start_want>=tabs_file_end, 1, 'last' )+1; %Do this because of duty-cycled files
+                    tabs_start=max([tabs_start_want tabs_file_start(Icurrent_file)]);
                 end
             catch
                 uiwait(errordlg('Can''t process start_time','Bulk Processing Menu Error'));
@@ -1272,16 +1291,18 @@ switch lower(Batch_vars_bulkload.start_time)
 end
 
 
-%%Translate end time
+%%Translate end time;  Need to define tabs_end and Ifinal_file
 switch lower(Batch_vars_bulkload.end_time)
     case 'here' %Use edit window
         tabs_end=datenum(get(handles.edit_datestr,'String'))+datenum(0,0,0,0,0,str2num(get(handles.edit_winlen,'string')));
-        Nfiles=Icurrent_file;  %Load one file only
-    case 'all'
+        Ifinal_file=Icurrent_file;  %Load one file only
+    case 'folder end'
         tabs_end=tabs_folder_end;
+        Ifinal_file=length(Other_FileNames);  
     case 'file end'  %end of file
         %tabs_end=Inf;
-        Nfiles=Icurrent_file;  %Load one file only.
+        Ifinal_file=Icurrent_file;  %Load one file only.
+        tabs_end=tabs_file_end(Ifinal_file);
     otherwise %check for datenum
         if strfind(Batch_vars_bulkload.end_time,'datenum')
             try
@@ -1290,17 +1311,12 @@ switch lower(Batch_vars_bulkload.end_time)
                     uiwait(errordlg('Can''t request a time outside selected folder''s end time; end time set to folder end','Bulk Processing Menu Error'));
                     tabs_end_want=tabs_folder_end;
                     tabs_end=tabs_end_want;
+                    Ifinal_file=length(Other_FileNames);
                  else  %location appropriate start time...
                     %Identify current file...
-                    for Ifile=1:length(Other_FileNames)
-                        [~,FF,~,~,params]=read_Java_PSD(Other_FileNames(Ifile).name,0,10);
-                        if tabs_end_want<=params.tend_file 
-                           tabs_end=params.tend_file;
-                           Nfiles=Ifile;
-                           break
-                        end
-                    end
                     
+                    Ifinal_file=find(tabs_end_want<=tabs_file_start, 1, 'first' )-1;  %Do this because of duty-cycled files
+                    tabs_end=min([tabs_end_want tabs_file_end(Ifinal_file)]);
                 end
                 
             catch
@@ -1310,8 +1326,18 @@ switch lower(Batch_vars_bulkload.end_time)
             end
         elseif isnumeric(str2num(Batch_vars_bulkload.end_time))  %%Assume end time is duration in hours after start time
             tabs_end=tabs_start+datenum(0,0,0,str2num(Batch_vars_bulkload.end_time),0,0);
+            Ifinal_file=find(tabs_end<=tabs_file_end, 1, 'first' );
+            if isempty(Ifinal_file)
+                uiwait(errordlg('Can''t process end_time','Bulk Processing Menu Error'));
+                return;
+            end
+                   
         end
 end
+
+fprintf('Folder start time: %s, File start time: %s, File end time: %s, Folder end time: %s\n', ...
+    datestr(tabs_folder_start,30),datestr(tabs_start,30),datestr(tabs_end,30),datestr(tabs_folder_end,30));
+
 
 bulk_params.tabs_folder_start=tabs_folder_start;
 bulk_params.tabs_folder_end=tabs_folder_end;
@@ -1319,7 +1345,7 @@ bulk_params.tabs_start=tabs_start;
 bulk_params.tabs_end=tabs_end;
 bulk_params.Other_FileNames=Other_FileNames;
 bulk_params.Icurrent_file=Icurrent_file;
-bulk_params.Nfiles=Nfiles;
+bulk_params.Ifinal_file=Ifinal_file;
 bulk_params.FF=FF;
 
 end
