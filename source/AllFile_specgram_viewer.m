@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 06-Jan-2014 23:54:27
+% Last Modified by GUIDE v2.5 28-Feb-2014 10:04:21
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -93,13 +93,15 @@ try
 end
 handles.filetype	=	'mt';
 [handles,errorflag] =	set_slider_controls(handles,handles.filetype); %#ok<*NASGU>
-%Make GSIbearing button and CSDM invisible
+%Make GSIbearing button, CSDM, and accelerometer buttons invisible
 set(handles.pushbutton_GSIbearing,'Vis','off');
 set(handles.pushbutton_GSI_localization,'Vis','off');
 set(handles.pushbutton_CSDM,'Vis','off');
 set(handles.pushbutton_Mode,'Vis','off');
 set(handles.pushbutton_tilt,'Vis','off');
 set(handles.pushbutton_modalfiltering,'Vis','off');
+set(handles.edit_normal_rotation,'Vis','off');
+set(handles.text_normal_rotation,'Vis','off');
 
 %	Set prev/next buttons inactive initially
 set(handles.pushbutton_next,'Enable','off');
@@ -4797,10 +4799,16 @@ Ichan	=	str2double(get(handles.edit_chan,'String'));  %Hardwire first channel
 try
     [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,...
         handles.tdate_start,tlen,Ichan,handles);
-    if isfield(hdr,'myfile')
-       handles.myfile=hdr.myfile; 
+    
+    %%Change file display if a transformation of a basic file has
+    %%  occurred...
+    if isfield(hdr,'myfile')  %file has been processed (e.g. an accelerometer file)
+        handles.myfile=hdr.myfile;
+        additional_text=sprintf(hdr.transformation.description{1},hdr.transformation.value{1});
+    else
+        additional_text=[];
     end
-    set(handles.text_filename,'String',fullfile(handles.mydir, handles.myfile));
+    set(handles.text_filename,'String',[fullfile(handles.mydir, handles.myfile) ' ' additional_text]);
 
 catch
     uiwait(errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge'));
@@ -5243,6 +5251,9 @@ persistent  keyword
 mydir=handles.mydir;
 myfile=handles.myfile;
 teager=get(handles.checkbox_teager,'Value');
+set(handles.edit_normal_rotation,'Vis','Off');  %Set off for the moment
+set(handles.text_normal_rotation,'Vis','Off');  %Set off for the moment
+            
 
 x=[];
 t=[];
@@ -5364,10 +5375,32 @@ switch filetype
             end
             head.Nchan=3;
             
-            %%Select channel requested...
-            x=x(:,Ichan);
-            myfile(Ispace)=mystr(Ichan);
-            head.myfile=myfile;
+            %%Select channel requested...or rotate channels...
+            % Axis conventions assume 2011 definitons: X is long axis, Y
+            % and Z are normal.
+            
+            set(handles.edit_normal_rotation,'Vis','On');
+            set(handles.text_normal_rotation,'Vis','On');
+            normal_angle=(pi/180)*str2num(get(handles.edit_normal_rotation,'String'));
+            
+            if normal_angle~=0
+                xrot=x;
+                xrot(:,2)=x(:,2)*cos(normal_angle)+x(:,3)*sin(normal_angle);
+                xrot(:,3)=-x(:,2)*sin(normal_angle)+x(:,3)*cos(normal_angle);
+                x=xrot;
+                head.normal_rotation=(180/pi)*normal_angle;
+                head.transformation.description{1}=' Normal Rotation: %6.2f deg';
+                head.transformation.value{1}=head.normal_rotation;
+            else
+                head.transformation.description{1}=' No rotation';
+                head.transformation.value{1}=[];
+            end
+            
+             x=x(:,Ichan);
+             myfile(Ispace)=mystr(Ichan);
+             
+             head.myfile=myfile;
+               
            % guidata(handles.myfile);  %Saves new file name...
             %guidata(hObject, handles);  %Saves new file name...
             %guidata(hObject, handles);
@@ -9130,7 +9163,35 @@ end
 
 
 end
+
+
+function edit_normal_rotation_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_normal_rotation (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_normal_rotation as text
+%        str2double(get(hObject,'String')) returns contents of edit_normal_rotation as a double
+end
+
+% --- Executes during object creation, after setting all properties.
+function edit_normal_rotation_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_normal_rotation (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%TIMEWARP functions below %%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
 
