@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 06-Jan-2014 23:54:27
+% Last Modified by GUIDE v2.5 28-Feb-2014 10:04:21
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -93,13 +93,15 @@ try
 end
 handles.filetype	=	'mt';
 [handles,errorflag] =	set_slider_controls(handles,handles.filetype); %#ok<*NASGU>
-%Make GSIbearing button and CSDM invisible
+%Make GSIbearing button, CSDM, and accelerometer buttons invisible
 set(handles.pushbutton_GSIbearing,'Vis','off');
 set(handles.pushbutton_GSI_localization,'Vis','off');
 set(handles.pushbutton_CSDM,'Vis','off');
 set(handles.pushbutton_Mode,'Vis','off');
 set(handles.pushbutton_tilt,'Vis','off');
 set(handles.pushbutton_modalfiltering,'Vis','off');
+set(handles.edit_normal_rotation,'Vis','off');
+set(handles.text_normal_rotation,'Vis','off');
 
 %	Set prev/next buttons inactive initially
 set(handles.pushbutton_next,'Enable','off');
@@ -175,9 +177,11 @@ function OpenMenuItem_Callback(hObject, eventdata, handles)
 %end
 
 %	List of supported file types + descriptions/names
-File_types	=	{'MT';'WAV';'GSI';'ADI';'DAT';'MDAT';'PSD';'MAT'};
-File_descs	=	{	'MT files';...
+File_types	=	{'MT';'SIO';'WAV';'GSI';'ADI';'DAT';'MDAT';'PSD';'MAT'};
+File_descs	=	...
+ {	'MT files';...
     'WAV files';...
+    'SIO files';...
     'GSI files';...
     'ADI files';...
     'DAT files';...
@@ -2510,56 +2514,6 @@ print(figchc,'-djpeg',save_path);
 %print('-depsc',save_path);
 
 end
-% --- Executes on button press in pushbutton_annotate.
-function pushbutton_annotate_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton_annotate (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-disp('Click on two points defining a rectangle: ');
-tmp=ginput(2);
-
-start_time	=	handles.tdate_start+datenum(0,0,0,0,0,min(tmp(:,1)));
-min_freq	=	num2str(1000*min(tmp(:,2)));
-max_freq	=	num2str(1000*max(tmp(:,2)));
-duration	=	num2str(abs(tmp(2,1)-tmp(1,1)));
-
-call_types	=	{'Pulsive','FM modulated'};
-Icall		=	menu('Signal type?',call_types);
-call_type	=	call_types{Icall};
-
-prompt={'File name','pulse or FM?','Call Type','Min Freq(Hz)','Max Freq(Hz)',...
-    'Duration(sec)','Number_pulses','Number_harmonics','modulation (Hz)', 'Notes'};
-if Icall==1  %Pulsive
-    def={handles.annotation_file,'pulse','S1',min_freq,max_freq,duration,'10','-1','0',''};
-else
-    def={handles.annotation_file,'FM','moan',min_freq,max_freq,duration,'-1','1','0',''};
-end
-dlgTitle	=	sprintf('Annotation for event at %s',datestr(start_time,0));
-lineNo		=	ones(size(prompt));
-lineNo(end) =	5;
-answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
-
-if	isempty(answer)
-    return;
-end
-fid=fopen(answer{1},'a');
-if ftell(fid)==0
-    fprintf(fid,'%s','Start Date and Time,');
-    for I=2:length(prompt)
-        fprintf(fid,'%s,',prompt{I});
-    end
-    fprintf(fid,'\n');
-end
-
-fprintf(fid,'%s,',datestr(start_time,0));
-for I=2:length(prompt)
-    fprintf(fid,'%s, ',answer{I});
-end
-fprintf(fid,'\n');
-fclose(fid);
-
-end
 
 % --- Executes on button press in pushbutton_selectpoints.
 function pushbutton_selectpoints_Callback(hObject, eventdata, handles)
@@ -2768,13 +2722,7 @@ function pushbutton_update_CreateFcn(hObject, eventdata, handles)
 handles.fig_updated		=	false;
 guidata(hObject, handles);
 end
-% --- Executes during object creation, after setting all properties.
-function pushbutton_annotate_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to pushbutton_annotate (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
 
-end
 % --- Executes during object creation, after setting all properties.
 function pushbutton_selectpoints_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to pushbutton_selectpoints (see GCBO)
@@ -4851,6 +4799,17 @@ Ichan	=	str2double(get(handles.edit_chan,'String'));  %Hardwire first channel
 try
     [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,...
         handles.tdate_start,tlen,Ichan,handles);
+    
+    %%Change file display if a transformation of a basic file has
+    %%  occurred...
+    if isfield(hdr,'myfile')  %file has been processed (e.g. an accelerometer file)
+        handles.myfile=hdr.myfile;
+        additional_text=sprintf(hdr.transformation.description{1},hdr.transformation.value{1});
+    else
+        additional_text=[];
+    end
+    set(handles.text_filename,'String',[fullfile(handles.mydir, handles.myfile) ' ' additional_text]);
+
 catch
     uiwait(errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge'));
     return
@@ -5286,11 +5245,15 @@ end
 function [x,t,Fs,tmin,tmax,head]	=	...
     load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)
 %%% tmin,tmax, t are datenumbers
+%   x rows are samples, columns are channels
 
 persistent  keyword
 mydir=handles.mydir;
 myfile=handles.myfile;
 teager=get(handles.checkbox_teager,'Value');
+set(handles.edit_normal_rotation,'Vis','Off');  %Set off for the moment
+set(handles.text_normal_rotation,'Vis','Off');  %Set off for the moment
+            
 
 x=[];
 t=[];
@@ -5381,21 +5344,78 @@ switch filetype
         head.Nchan=length(Ichan);
     case 'MT'
         %[x,t,Fs]=load_mt_mult(handles.mydir,tdate_start,tlen);
-        head=read_mt_header([mydir '/' myfile]);
+        head=read_mt_header([mydir filesep myfile]);
         
         tmin=head.tstart;
         tmax=head.tend;
         Fs=head.Fs;
-        if Ichan>1
-            disp('WARNING: load_data: MT can only have one channel');
-            Ichan=1;
-        end
+        
         if tdate_start>0
             tdate_vec=datevec(tdate_start-tmin);
             nsec=tdate_vec(6)+60*tdate_vec(5)+3600*tdate_vec(4);
-            [x,t]=load_mt([mydir '/' myfile],nsec,tlen);
+        else
+            %uiwait(msgbox('No start time requested'));
+            return
         end
-        head.Nchan=1;
+        %Load accelerometer data as desired
+        %% Template: CB_Accel_X_2014_02100958.mt
+        if strfind(head.abbrev,'Accel')
+            mystr='XYZ';
+            Ispace=strfind(myfile,'_');
+            Ispace=Ispace(2)+1;
+            for Iacc=1:3
+               myfile_temp=myfile;
+               myfile_temp(Ispace)=mystr(Iacc);
+               
+               [x0,t]=load_mt([mydir filesep myfile_temp],nsec,tlen);
+               if Iacc==1
+                   x=zeros(length(x0),3);
+               end
+               x(:,Iacc)=x0;
+            end
+            head.Nchan=3;
+            
+            %%Select channel requested...or rotate channels...
+            % Axis conventions assume 2011 definitons: X is long axis, Y
+            % and Z are normal.
+            
+            set(handles.edit_normal_rotation,'Vis','On');
+            set(handles.text_normal_rotation,'Vis','On');
+            normal_angle=(pi/180)*str2num(get(handles.edit_normal_rotation,'String'));
+            
+            if normal_angle~=0
+                xrot=x;
+                xrot(:,2)=x(:,2)*cos(normal_angle)+x(:,3)*sin(normal_angle);
+                xrot(:,3)=-x(:,2)*sin(normal_angle)+x(:,3)*cos(normal_angle);
+                x=xrot;
+                head.normal_rotation=(180/pi)*normal_angle;
+                head.transformation.description{1}=' Normal Rotation: %6.2f deg';
+                head.transformation.value{1}=head.normal_rotation;
+            else
+                head.transformation.description{1}=' No rotation';
+                head.transformation.value{1}=[];
+            end
+            
+             x=x(:,Ichan);
+             myfile(Ispace)=mystr(Ichan);
+             
+             head.myfile=myfile;
+               
+           % guidata(handles.myfile);  %Saves new file name...
+            %guidata(hObject, handles);  %Saves new file name...
+            %guidata(hObject, handles);
+%
+        else
+            if Ichan>1
+                disp('WARNING: load_data: MT can only have one channel');
+                Ichan=1;
+            end
+            if tdate_start>0
+                [x,t]=load_mt([mydir filesep myfile],nsec,tlen);
+            end
+            head.Nchan=1;
+        end
+    case 'SIO'
     case 'DAT'
         [x,tmin,tmax,fs]=read_dat_file([mydir '/' myfile],[],-1,tlen,0);
         
@@ -9143,6 +9163,30 @@ end
 
 
 end
+
+
+function edit_normal_rotation_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_normal_rotation (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_normal_rotation as text
+%        str2double(get(hObject,'String')) returns contents of edit_normal_rotation as a double
+end
+
+% --- Executes during object creation, after setting all properties.
+function edit_normal_rotation_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_normal_rotation (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%TIMEWARP functions below %%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -9864,5 +9908,4 @@ end
 
 
 end
-
 
