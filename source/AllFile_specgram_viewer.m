@@ -175,9 +175,11 @@ function OpenMenuItem_Callback(hObject, eventdata, handles)
 %end
 
 %	List of supported file types + descriptions/names
-File_types	=	{'MT';'WAV';'GSI';'ADI';'DAT';'MDAT';'PSD';'MAT'};
-File_descs	=	{	'MT files';...
+File_types	=	{'MT';'SIO';'WAV';'GSI';'ADI';'DAT';'MDAT';'PSD';'MAT'};
+File_descs	=	...
+ {	'MT files';...
     'WAV files';...
+    'SIO files';...
     'GSI files';...
     'ADI files';...
     'DAT files';...
@@ -4851,6 +4853,11 @@ Ichan	=	str2double(get(handles.edit_chan,'String'));  %Hardwire first channel
 try
     [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,...
         handles.tdate_start,tlen,Ichan,handles);
+    if isfield(hdr,'myfile')
+       handles.myfile=hdr.myfile; 
+    end
+    set(handles.text_filename,'String',fullfile(handles.mydir, handles.myfile));
+
 catch
     uiwait(errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge'));
     return
@@ -5286,6 +5293,7 @@ end
 function [x,t,Fs,tmin,tmax,head]	=	...
     load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)
 %%% tmin,tmax, t are datenumbers
+%   x rows are samples, columns are channels
 
 persistent  keyword
 mydir=handles.mydir;
@@ -5381,21 +5389,56 @@ switch filetype
         head.Nchan=length(Ichan);
     case 'MT'
         %[x,t,Fs]=load_mt_mult(handles.mydir,tdate_start,tlen);
-        head=read_mt_header([mydir '/' myfile]);
+        head=read_mt_header([mydir filesep myfile]);
         
         tmin=head.tstart;
         tmax=head.tend;
         Fs=head.Fs;
-        if Ichan>1
-            disp('WARNING: load_data: MT can only have one channel');
-            Ichan=1;
-        end
+        
         if tdate_start>0
             tdate_vec=datevec(tdate_start-tmin);
             nsec=tdate_vec(6)+60*tdate_vec(5)+3600*tdate_vec(4);
-            [x,t]=load_mt([mydir '/' myfile],nsec,tlen);
+        else
+            %uiwait(msgbox('No start time requested'));
+            return
         end
-        head.Nchan=1;
+        %Load accelerometer data as desired
+        %% Template: CB_Accel_X_2014_02100958.mt
+        if strfind(head.abbrev,'Accel')
+            mystr='XYZ';
+            Ispace=strfind(myfile,'_');
+            Ispace=Ispace(2)+1;
+            for Iacc=1:3
+               myfile_temp=myfile;
+               myfile_temp(Ispace)=mystr(Iacc);
+               
+               [x0,t]=load_mt([mydir filesep myfile_temp],nsec,tlen);
+               if Iacc==1
+                   x=zeros(length(x0),3);
+               end
+               x(:,Iacc)=x0;
+            end
+            head.Nchan=3;
+            
+            %%Select channel requested...
+            x=x(:,Ichan);
+            myfile(Ispace)=mystr(Ichan);
+            head.myfile=myfile;
+           % guidata(handles.myfile);  %Saves new file name...
+            %guidata(hObject, handles);  %Saves new file name...
+            %guidata(hObject, handles);
+%
+        else
+            if Ichan>1
+                disp('WARNING: load_data: MT can only have one channel');
+                Ichan=1;
+            end
+            if tdate_start>0
+                [x,t]=load_mt([mydir filesep myfile],nsec,tlen);
+            end
+            head.Nchan=1;
+        end
+    case 'SIO'
     case 'DAT'
         [x,tmin,tmax,fs]=read_dat_file([mydir '/' myfile],[],-1,tlen,0);
         
