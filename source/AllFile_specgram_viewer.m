@@ -2512,56 +2512,6 @@ print(figchc,'-djpeg',save_path);
 %print('-depsc',save_path);
 
 end
-% --- Executes on button press in pushbutton_annotate.
-function pushbutton_annotate_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton_annotate (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-disp('Click on two points defining a rectangle: ');
-tmp=ginput(2);
-
-start_time	=	handles.tdate_start+datenum(0,0,0,0,0,min(tmp(:,1)));
-min_freq	=	num2str(1000*min(tmp(:,2)));
-max_freq	=	num2str(1000*max(tmp(:,2)));
-duration	=	num2str(abs(tmp(2,1)-tmp(1,1)));
-
-call_types	=	{'Pulsive','FM modulated'};
-Icall		=	menu('Signal type?',call_types);
-call_type	=	call_types{Icall};
-
-prompt={'File name','pulse or FM?','Call Type','Min Freq(Hz)','Max Freq(Hz)',...
-    'Duration(sec)','Number_pulses','Number_harmonics','modulation (Hz)', 'Notes'};
-if Icall==1  %Pulsive
-    def={handles.annotation_file,'pulse','S1',min_freq,max_freq,duration,'10','-1','0',''};
-else
-    def={handles.annotation_file,'FM','moan',min_freq,max_freq,duration,'-1','1','0',''};
-end
-dlgTitle	=	sprintf('Annotation for event at %s',datestr(start_time,0));
-lineNo		=	ones(size(prompt));
-lineNo(end) =	5;
-answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
-
-if	isempty(answer)
-    return;
-end
-fid=fopen(answer{1},'a');
-if ftell(fid)==0
-    fprintf(fid,'%s','Start Date and Time,');
-    for I=2:length(prompt)
-        fprintf(fid,'%s,',prompt{I});
-    end
-    fprintf(fid,'\n');
-end
-
-fprintf(fid,'%s,',datestr(start_time,0));
-for I=2:length(prompt)
-    fprintf(fid,'%s, ',answer{I});
-end
-fprintf(fid,'\n');
-fclose(fid);
-
-end
 
 % --- Executes on button press in pushbutton_selectpoints.
 function pushbutton_selectpoints_Callback(hObject, eventdata, handles)
@@ -2770,13 +2720,7 @@ function pushbutton_update_CreateFcn(hObject, eventdata, handles)
 handles.fig_updated		=	false;
 guidata(hObject, handles);
 end
-% --- Executes during object creation, after setting all properties.
-function pushbutton_annotate_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to pushbutton_annotate (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
 
-end
 % --- Executes during object creation, after setting all properties.
 function pushbutton_selectpoints_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to pushbutton_selectpoints (see GCBO)
