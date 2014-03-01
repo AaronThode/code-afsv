@@ -5,7 +5,7 @@
 
 function program_dir=load_program_location
 
-[s,local_machine]=unix('hostname');
+[~,local_machine]=unix('hostname');
 local_machine=deblank(local_machine);
 
 if strcmp(local_machine,'macmussel.ucsd.edu')
@@ -13,7 +13,7 @@ if strcmp(local_machine,'macmussel.ucsd.edu')
 elseif strcmp(getenv('USER'),'fielduser')
     %program_dir ='/Users/thode/DataPreProcessor/PreProcessV1.jar';
     program_dir ='~/Desktop/DataPreProcessor/PreProcessV1.jar';
-elseif ~isempty(findstr(local_machine,'thode'))
+elseif ~isempty(strfind(local_machine,'thode-lt'))
     program_dir ='/Users/thode/Documents/workspace/DataPreProcessor/PreProcessV1.jar';
     
 else
