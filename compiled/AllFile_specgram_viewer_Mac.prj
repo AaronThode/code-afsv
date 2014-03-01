@@ -65,6 +65,7 @@
       <file>/Users/thode/repos/code-afsv/source/deps</file>
     </fileset.resources>
     <fileset.package>
+      <file>${PROJECT_ROOT}/PreProcessV1.jar</file>
       <file>/Users/thode/repos/code-afsv/source/start_AFSV_Mac</file>
     </fileset.package>
     <build-deliverables>
