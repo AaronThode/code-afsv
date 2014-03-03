@@ -17,9 +17,9 @@ elseif ~isempty(strfind(local_machine,'thode-lt'))
     program_dir ='/Users/thode/Documents/workspace/DataPreProcessor/PreProcessV1.jar';
     
 else
-    program_dir='~/Desktop/DataPreProcessor/PreProcessV1.jar';
+    program_dir='~/Desktop/AFSV/PreProcessV1.jar';
     if exist(program_dir,'file')~=2
-        uiwait(warndlg('Please copy a file named "PreProcessV1.jar" into a folder named "DataPreProcessor" on your Desktop','JAVA program not found!','modal')); 
+        uiwait(warndlg('Please copy a file named "PreProcessV1.jar" into a folder named "AFSV" onto your Desktop','JAVA program not found!','modal')); 
     end
     
 end

@@ -5416,8 +5416,33 @@ switch filetype
             head.Nchan=1;
         end
     case 'SIO'
+        %x,t,Fs,tmin,tmax,head
+        Fs=input('Enter a sampling frequency in Hz:','s');
+        [~, head] = sioread(fullfile(mydir,myfile),1,[],[]);
+        
+        %%Assume start time is of form 14047225500
+        
+        %%	Data parameters needed
+        Np		=	Header.PperChan;
+        Nchan	=	Header.N_Chan;
+        
+        
+        
+        %-----------------------------------------------------------------------
+        % sioread.m
+        %
+        % This program runs under windows, unix, and macs.
+        %
+        % function x=sioread(filename,p1,npi,channels);
+        %
+        % Inputs:
+        % 	filename: Name of sio file to read
+        % 	p1:	Point to start reading ( 0 < p1 < np)
+        % 	npi: 	Number of points to read in
+        % 	channels: Single number or vector containing the channels to read
+        % 		(example-to read channels 4 thru 10 enter 4:10)
     case 'DAT'
-        [x,tmin,tmax,fs]=read_dat_file([mydir '/' myfile],[],-1,tlen,0);
+        [x,tmin,tmax,fs]=read_dat_file(fullfile(mydir,myfile),[],-1,tlen,0);
         
         if isempty(fs)
             fs=input('Enter sampling rate in Hz:');
@@ -6655,7 +6680,20 @@ end
 Kstot=Kstot(:,:,Igood);
 disp(sprintf('Loading model: %s',model_name));
 model=load(model_name);
-
+prompt={'Number of modes to model:'};
+name='Parameters for Matched Field Processing';
+numlines=1;
+defaultanswer={'all'};
+answer=inputdlg(prompt,name,numlines,defaultanswer);
+if strfind(answer{1},'all')
+    max_mode= size(model.kr{1},2);
+    
+else
+    max_mode=min([eval(answer{1}) size(model.kr{1},2)]);
+end
+model.U=model.U(:,:,1:max_mode);
+model.kr{1}=model.kr{1}(:,1:max_mode);
+%keyboard
 
 %%Extract model frequencies...
 
@@ -6833,6 +6871,12 @@ MFP_replica_file{3}{2}=fullfile(model_dir,'Depth_55m_fixed_Pekeris.dir','Shallow
 default_tilt{3}{2}='1.585';
 range_str{3}{2}=range_str{3}{1};
 default_SNR{3}{2}=default_SNR{3}{1};
+
+MFP_replica_file{3}{3}=fullfile(model_dir,'Depth_55m_fixed_Pekeris.dir','ShallowBeaufortPekeris_MidRange_arctic_pekeris1638_KRAKEN_flat55m_10to500Hz.mat');
+%MFP_replica_file{3}{2}=[model_dir '/Depth_55m_fixed_Pekeris.dir/ShallowBeaufortPekeris_MidRange_arctic_pekeris1638_KRAKEN_flat55m_10to500Hz.mat'];
+default_tilt{3}{3}='1.585';
+range_str{3}{3}=range_str{3}{1};
+default_SNR{3}{3}=default_SNR{3}{1};
 
 %%%%%%%%%%%%%%%%%Long range estimate (17 km)%%%%%%%%%%%%%%%%%%%%%%%%
 MFP_replica_file{4}{1}=fullfile(model_dir,'Depth55m_Fixed.dir','ShallowBeaufortWhaleInversionSSP_FarRange_CSDM_Nfft8192_20100831T105013_10to500Hz.mat');
