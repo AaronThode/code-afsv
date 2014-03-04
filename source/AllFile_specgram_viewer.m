@@ -46,6 +46,8 @@ if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
 
+
+
 if nargout
     [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
 else
@@ -73,12 +75,29 @@ function AllFile_specgram_viewer_OpeningFcn(hObject, eventdata, handles, varargi
 
 startupinfo		=	gui_startup_information;
 
+%Make a splash screen
+s = SplashScreen( 'Splashscreen', '~/Desktop/Ulysses/104703.JPG', ...
+    'ProgressBar', 'on', ...
+    'ProgressPosition', 5, ...
+    'ProgressRatio', 0.4 );
+s.addText( 30, 50, 'Ulysses/Ribbit', 'FontSize', 30, 'Color', [0 0 0.6] )
+s.addText( 30, 80, 'v1.0, March 3, 2014', 'FontSize', 20, 'Color', [0.2 0.2 0.5] )
+s.addText( 30, 110, 'Aaron Thode and Bikramjit Sarkar', 'FontSize', 20, 'Color', [0.2 0.2 0.5] )
+s.addText( 30, 150, 'Adventure through Analysis', 'FontSize', 20, 'Color', [0.2 0.2 0.5] ,'Fontangle','Italic')
+
+s.addText( 300, 270, 'Loading...', 'FontSize', 20, 'Color', 'white' )
+
+pause(2)
+delete( s )
+
 
 %%%%Set up times based on available times in input directory...%%%%
 handles.mydir			=	startupinfo.default_directory;
 handles.inputdir		=	startupinfo.default_inputfiledir;
 handles.outputdir=uigetdir(handles.mydir,'Select a default output directory for analyses and printouts:');
-cd(handles.outputdir);
+if ~isempty(handles.outputdir)
+    cd(handles.outputdir);
+end
 handles.annotation_file	=	startupinfo.annotation_file;
 try
     handles.calibration_DASAR2007_dir	=	startup_info.calibration_DASAR2007_dir;
@@ -347,10 +366,6 @@ if	isempty(Batch_mode)
     return;
 end
 
-%threshold=5; %dB threshold between peak and surrounding values at +/-df_search
-%                               df_search=10; %+-/Hz to examine around each local maximum
-%                               f_min	=	25; %Hz
-%                               f_max	=	450; %Hz
 Batch_vars.threshold	=	'5';	Batch_desc{1}	=	'dB threshold between peak and surrounding values at +/-df_search';
 Batch_vars.df_search	=	'10';	Batch_desc{2}	=	'+-/Hz to examine around each local maximum';
 Batch_vars.f_min	=	'25';	Batch_desc{3}	=	'minimum frequency to examine (Hz)';
@@ -358,12 +373,71 @@ Batch_vars.f_max	=	'450';	Batch_desc{4}	=	'maximum frequency to examine (Hz)';
 Batch_vars.sec_avg	=	'2';	Batch_desc{4}	=	'Averaging time of spectrogram (sec)';
 %Batch_vars.want_hough	=	'1';	Batch_desc{5}	=	'want_hough transform of images';
 
-Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
+Batch_type	=	get(hObject, 'Label');
+Batch_mode	=	input_batchmode(Batch_type);
 
-if	isempty(Batch_vars)
-    errordlg('Processing cancelled!');
+if	isempty(Batch_mode)
+    uiwait(errordlg('Processing cancelled!'));
     return;
 end
+
+if isempty(strfind(Batch_mode,'Load'))
+    Batch_vars.threshold	=	'5';	Batch_desc{1}	=	'dB threshold between peak and surrounding values at +/-df_search';
+    Batch_vars.df_search	=	'10';	Batch_desc{2}	=	'+-/Hz to examine around each local maximum';
+    Batch_vars.f_min	=	'25';	Batch_desc{3}	=	'minimum frequency to examine (Hz)';
+    Batch_vars.f_max	=	'450';	Batch_desc{4}	=	'maximum frequency to examine (Hz)';
+    Batch_vars.sec_avg	=	'2';	Batch_desc{4}	=	'Averaging time of spectrogram (sec)';
+    Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
+    if	isempty(Batch_vars)
+        uiwait(errordlg('Processing cancelled!'));
+        return;
+    end
+    
+    sec_avg=str2double(Batch_vars.sec_avg);
+    threshold=str2double(Batch_vars.threshold);
+    df_search=str2double(Batch_vars.df_search);
+    f_min=str2double(Batch_vars.f_min);
+    f_max=str2double(Batch_vars.f_max);
+    
+    
+end
+
+close_all_figures
+switch	Batch_mode
+ case 'Process Visible Window'
+        uiwait(msgbox(['Processing all data within window for ' Batch_type]));
+        
+        dT=handles.sgram.T(2)-handles.sgram.T(1);
+        Ncol=max([1 floor(sec_avg/dT)]);
+        Itime=1:Ncol:length(handles.sgram.T);
+        Tnew=handles.sgram.T(Itime);
+        Tnew=Tnew(1:(end-1));
+        F=handles.sgram.F;
+        PSD=zeros(length(F),length(Itime)-1);
+        for I=1:(length(Itime)-1)
+            PSD(:,I)=mean(handles.sgram.B(:,Itime(I):Itime(I+1)),2);
+        end
+        PSD_dB=10*log10(abs(PSD));
+        hprint=figure;
+        
+        
+        Nt	=	length(Tnew);
+        Nf	=	length(F);
+        dF	=	mean(diff(F));
+       
+        
+        PSD_avg		=	sum(PSD,2)/Nt;
+        PSD_med     =   median(PSD')';
+        P_tot		=	sum(PSD_avg)*dF;
+        
+        %PSD_dB		=	abs(10*log10(abs(PSD)));
+        PfdB_avg	=	sum(PSD_dB,2)/Nt;
+        
+        [metrics.avg.peaks]=peak_picker_Thode(PfdB_avg,F,df_search,[f_min f_max],threshold,Idebug);
+        keyboard
+    
+end
+
 end
 
 
@@ -4789,8 +4863,13 @@ cla;
 
 %tdate_start		=	handles.tdate_start;
 tlen	=	handles.tlen;
+if tlen<1e-2 %somehow window length is way too short
+    tlen=1;
+    set(handles.edit_winlen,'String',num2str(tlen));
+end
 if isempty(tlen)
     tlen    =   str2double(get(handles.edit_winlen,'String'));
+    
     handles.tlen=tlen;
 end
 mydir	=	pwd;
@@ -4876,6 +4955,10 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
         axes(handles.axes1);
     else
         figure;
+    end
+    
+    if length(x(:,1))<Nfft
+        return
     end
     if ~(strcmp(handles.filetype,'PSD'))
         [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);

@@ -66,6 +66,7 @@
     </fileset.resources>
     <fileset.package>
       <file>${PROJECT_ROOT}/PreProcessV1.jar</file>
+      <file>/Users/thode/repos/code-afsv/source/deps/104703.JPG</file>
       <file>/Users/thode/repos/code-afsv/source/start_AFSV_Mac</file>
     </fileset.package>
     <build-deliverables>
@@ -78,6 +79,9 @@
       <root>/Applications/MATLAB_R2012b.app</root>
       <path>
         <directory>/Users/thode/Documents/MATLAB</directory>
+        <directory>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/Automated_Arctic_Software/CommonScripts.dir</directory>
+        <directory>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/Automated_Arctic_Software/ComputerSpecificScripts.dir</directory>
+        <directory>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/Automated_Arctic_Software/BulkProcessingScripts2009</directory>
         <directory>/Users/thode/repos/code-afsv/source</directory>
         <directory>/Users/thode/repos/code-afsv/source/deps</directory>
         <directory>/Users/thode/Projects/Schultz.dir/MATLAB/UsefulScripts.dir</directory>
