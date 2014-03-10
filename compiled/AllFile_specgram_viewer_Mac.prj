@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.deploytool" plugin-version="1.0">
-  <configuration target="target.standalone" target-name="Standalone Application" name="AllFile_specgram_viewer_Mac" location="/Users/thode/repos/code-afsv/compiled" file="/Users/thode/repos/code-afsv/compiled/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.zip" build-checksum="277814247" preferred-package-location="/Users/thode/repos/code-afsv/compiled">
+  <configuration target="target.standalone" target-name="Standalone Application" name="AllFile_specgram_viewer_Mac" location="/Users/thode/repos/code-afsv/compiled" file="/Users/thode/repos/code-afsv/compiled/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.zip" build-checksum="1614793017" preferred-package-location="/Users/thode/repos/code-afsv/compiled">
     <param.project.name>/Users/thode/repos/code-afsv/compiled/AllFile_specgram_viewer_Mac.prj</param.project.name>
     <param.target.type>Standalone Application</param.target.type>
     <param.appname>AllFile_specgram_viewer_Mac</param.appname>
