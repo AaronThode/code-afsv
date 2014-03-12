@@ -66,6 +66,9 @@
     </fileset.resources>
     <fileset.package>
       <file>${PROJECT_ROOT}/PreProcessV1.jar</file>
+      <file>/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.fig</file>
+      <file>/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m</file>
+      <file>/Users/thode/repos/code-afsv/source/deps</file>
       <file>/Users/thode/repos/code-afsv/source/deps/104703.JPG</file>
       <file>/Users/thode/repos/code-afsv/source/start_AFSV_Mac</file>
     </fileset.package>
