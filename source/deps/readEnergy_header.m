@@ -14,8 +14,8 @@
 %           scale_factor:  number that scales imported amplitudes into raw
 %               digital values (useful for detecting clipping).
 %           Fs, Ndetectors, Nfft, dn,
-%           threshold,MinimumDetectionTime,eq_time,flow,fhigh,brefa,nchan,wordtype,
-%           bufferTime
+%           threshold,MinimumDetectionTime,eq_time,flow,fhigh,brefa,nchan,
+%           bufferTime, scalefactor, wordtype
 
 function head=readEnergy_header(fn)
 

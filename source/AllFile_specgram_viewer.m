@@ -73,23 +73,29 @@ function AllFile_specgram_viewer_OpeningFcn(hObject, eventdata, handles, varargi
 %   (2) Function handles file name and location
 %   (3) Multipath results file name and location
 
+path('~/Desktop/Ulysses',path);
+path('~/Desktop/Ulysses/deps',path);
+
 startupinfo		=	gui_startup_information;
 
 %Make a splash screen
-s = SplashScreen( 'Splashscreen', '~/Desktop/Ulysses/104703.JPG', ...
-    'ProgressBar', 'on', ...
-    'ProgressPosition', 5, ...
-    'ProgressRatio', 0.4 );
-s.addText( 30, 50, 'Ulysses/Ribbit', 'FontSize', 30, 'Color', [0 0 0.6] )
-s.addText( 30, 80, 'v1.0, March 3, 2014', 'FontSize', 20, 'Color', [0.2 0.2 0.5] )
-s.addText( 30, 110, 'Aaron Thode and Jit Sarkar', 'FontSize', 20, 'Color', [0.2 0.2 0.5] )
-s.addText( 30, 150, 'Adventure through Analysis', 'FontSize', 20, 'Color', [0.2 0.2 0.5] ,'Fontangle','Italic')
-
-s.addText( 300, 270, 'Loading...', 'FontSize', 20, 'Color', 'white' )
-
-pause(2)
-delete( s )
-
+try
+    s = SplashScreen( 'Splashscreen', '~/Desktop/Ulysses/104703.JPG', ...
+        'ProgressBar', 'on', ...
+        'ProgressPosition', 5, ...
+        'ProgressRatio', 0.4 );
+    s.addText( 30, 50, 'Ulysses/Ribbit', 'FontSize', 30, 'Color', [0 0 0.6] )
+    s.addText( 30, 80, 'v1.0, March 3, 2014', 'FontSize', 20, 'Color', [0.2 0.2 0.5] )
+    s.addText( 30, 110, 'Aaron Thode and Jit Sarkar', 'FontSize', 20, 'Color', [0.2 0.2 0.5] )
+    s.addText( 30, 150, 'Adventure through Analysis', 'FontSize', 20, 'Color', [0.2 0.2 0.5] ,'Fontangle','Italic')
+    
+    s.addText( 300, 270, 'Loading...', 'FontSize', 20, 'Color', 'white' )
+    
+    pause(2)
+    delete( s )
+catch
+    disp('Splash Screen failure...');
+end
 
 %%%%Set up times based on available times in input directory...%%%%
 handles.mydir			=	startupinfo.default_directory;
@@ -754,7 +760,7 @@ switch	Batch_mode
                             grid on;
                             
                         end
-                    else
+                    else  %only one or two frequeny bands
                         if isempty(date_tick_chc) %auto adjustment has failed..
                             date_tick_chc=get_datetick_style('auto',pms.xlabel_inc,'datenumber');
                         end
@@ -774,7 +780,7 @@ switch	Batch_mode
                     end  %if Nf?3
                     yes=menu('Redo formatting? (Time formatting only)','Yes','No');
                     if yes==1
-                        pms=get_PSD_percentile_params(pms.fmin/1000,pms.fmax/1000);
+                        pms=get_PSD_percentile_params(pms.fmin/1000,pms.fmax/1000,pms.def);
                         if isempty(pms)
                             yes=0;
                         else
@@ -796,6 +802,8 @@ switch	Batch_mode
                         datestr(Tabs_all(1),30),(pms.fmin(Iprint)),(pms.fmax(Iprint)),tmp);
                     print(hprint(Iprint),'-djpeg',save_tag)
                     saveas(hprint(Iprint), save_tag, 'fig');
+                    save(save_tag,'Tabs_all','PSD_all','pms','params','titlestr','Batch_vars_bulkload','sec_avg');
+            
                 end
                 
             case 'Display and Print Figure'
@@ -815,7 +823,7 @@ switch	Batch_mode
                         
                         
                         save_str=sprintf('PSD_%s', save_tag{II});
-                        save(save_str,'F','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
+                        save(save_str,'pms','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
                         uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
                         
                         orient landscape
@@ -935,15 +943,23 @@ end
 end
 
 %
-function pms=get_PSD_percentile_params(fmin,fmax)
+function pms=get_PSD_percentile_params(fmin,fmax,def_old)
 
+if exist('def_old','var')
+    def=def_old;
+    def{3}=num2str(1000*fmin);
+    def{4}=num2str(1000*fmax);
+    
+else
+    def = {'Date/Time','2*3600',num2str(1000*fmin),num2str(1000*fmax),'[70 120]','4*3600','[0.01 0.1 .25 .5 .75 0.9 .99]'};
+    
+end
 yes=1;
 while yes
     prompt = {'Time unit','Time increment (sec):','Min Frequencies (Hz) [Examples: ''[100 200 300]" or "100:10:300"]:', ...
         'Max Frequencies(Hz) [Examples: ''[100 200 300]" or "100:10:300"]','dB limits [min max]','tick increment (sec)','percentile'};
     dlg_title = 'Input for PSD statistics';
     num_lines = 1;
-    def = {'Date/Time','2*3600',num2str(1000*fmin),num2str(1000*fmax),'[70 120]','4*3600','[0.01 0.1 .25 .5 .75 0.9 .99]'};
     answer = inputdlg(prompt,dlg_title,num_lines,def);
     if isempty(answer)
         pms=[];
@@ -964,7 +980,7 @@ while yes
         yes=0;
     end
     
-    
+    pms.def=answer;
     % if pms.xlabel_inc>=datenum(0,0,0,12,0,0) %label spacing on order of days
     %     pms.label_style='dd';
     % elseif pms.xlabel_inc>=datenum(0,0,0,1,0,0);  % If label spacing is over one hour

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.deploytool" plugin-version="1.0">
-  <configuration target="target.standalone" target-name="Standalone Application" name="AllFile_specgram_viewer_Mac" location="/Users/thode/repos/code-afsv/compiled" file="/Users/thode/repos/code-afsv/compiled/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.zip" build-checksum="1614793017" preferred-package-location="/Users/thode/repos/code-afsv/compiled">
+  <configuration target="target.standalone" target-name="Standalone Application" name="AllFile_specgram_viewer_Mac" location="/Users/thode/repos/code-afsv/compiled" file="/Users/thode/repos/code-afsv/compiled/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.zip" build-checksum="2209816336" preferred-package-location="/Users/thode/repos/code-afsv/compiled">
     <param.project.name>/Users/thode/repos/code-afsv/compiled/AllFile_specgram_viewer_Mac.prj</param.project.name>
     <param.target.type>Standalone Application</param.target.type>
     <param.appname>AllFile_specgram_viewer_Mac</param.appname>
@@ -82,11 +82,13 @@
       <root>/Applications/MATLAB_R2012b.app</root>
       <path>
         <directory>/Users/thode/Documents/MATLAB</directory>
+        <directory>/Users/thode/Desktop/Ulysses</directory>
+        <directory>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/Automated_Arctic_Software/AirgunProcessing.dir</directory>
         <directory>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/Automated_Arctic_Software/CommonScripts.dir</directory>
         <directory>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/Automated_Arctic_Software/ComputerSpecificScripts.dir</directory>
         <directory>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/Automated_Arctic_Software/BulkProcessingScripts2009</directory>
-        <directory>/Users/thode/repos/code-afsv/source</directory>
-        <directory>/Users/thode/repos/code-afsv/source/deps</directory>
+        <directory>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/Automated_Arctic_Software/EvaluateLongRuns.dir</directory>
+        <directory>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/Automated_Arctic_Software/CommonScripts.dir/m_map</directory>
         <directory>/Users/thode/Projects/Schultz.dir/MATLAB/UsefulScripts.dir</directory>
         <directory>/Users/thode/Projects/Schultz.dir/MATLAB/PropagationModeling.dir</directory>
         <directory>/Users/thode/Projects/Schultz.dir/MATLAB/JAVA_IO</directory>
@@ -203,6 +205,11 @@
         <directory>${MATLAB_ROOT}/toolbox/wavelet/wmultisig1d</directory>
         <directory>${MATLAB_ROOT}/toolbox/wavelet/wavedemo</directory>
         <directory>${MATLAB_ROOT}/toolbox/wavelet/compression</directory>
+        <directory>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/2013_Arctic_Analysis/Airgun_Analysis.dir</directory>
+        <directory>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/2013_Arctic_Analysis/Airgun_Analysis.dir/BP.dir</directory>
+        <directory>/Users/thode/repos/code-afsv/source</directory>
+        <directory>/Users/thode/repos/code-afsv/source/deps</directory>
+        <directory>/Users/thode/Projects/Schultz.dir/MATLAB/ICI_detectors.dir</directory>
       </path>
     </matlab>
     <platform>
