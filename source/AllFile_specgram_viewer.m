@@ -362,7 +362,7 @@ function MenuItem_boatdet_Callback(hObject, eventdata, handles)
 %		F		:	{dbl}(f)	Frequency vector
 %       Idebug:                 scalar that determines if debug output given...
 %
-
+persistent Batch_vars Batch_desc
 
 Batch_type	=	get(hObject, 'Label');
 Batch_mode	=	input_batchmode(Batch_type);
@@ -372,68 +372,101 @@ if	isempty(Batch_mode)
     return;
 end
 
-Batch_vars.threshold	=	'5';	Batch_desc{1}	=	'dB threshold between peak and surrounding values at +/-df_search';
-Batch_vars.df_search	=	'10';	Batch_desc{2}	=	'+-/Hz to examine around each local maximum';
-Batch_vars.f_min	=	'25';	Batch_desc{3}	=	'minimum frequency to examine (Hz)';
-Batch_vars.f_max	=	'450';	Batch_desc{4}	=	'maximum frequency to examine (Hz)';
-Batch_vars.sec_avg	=	'2';	Batch_desc{4}	=	'Averaging time of spectrogram (sec)';
-%Batch_vars.want_hough	=	'1';	Batch_desc{5}	=	'want_hough transform of images';
-
-
-if ~isempty(strfind(Batch_mode,'Load'))||~isempty(strfind(Batch_mode,'Process'))
+if isempty(Batch_vars)
     Batch_vars.threshold	=	'5';	Batch_desc{1}	=	'dB threshold between peak and surrounding values at +/-df_search';
     Batch_vars.df_search	=	'10';	Batch_desc{2}	=	'+-/Hz to examine around each local maximum';
-    Batch_vars.f_min	=	'25';	Batch_desc{3}	=	'minimum frequency to examine (Hz)';
-    Batch_vars.f_max	=	'450';	Batch_desc{4}	=	'maximum frequency to examine (Hz)';
+    Batch_vars.f_min	=	get(handles.edit_fmin,'string');	Batch_desc{3}	=	'minimum frequency to examine (kHz)';
+    Batch_vars.f_max	=	get(handles.edit_fmax,'string');	Batch_desc{4}	=	'maximum frequency to examine (kHz)';
     Batch_vars.sec_avg	=	'2';	Batch_desc{5}	=	'Averaging time of spectrogram (sec)';
-    Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
-    if	isempty(Batch_vars)
-        uiwait(errordlg('Processing cancelled!'));
-        return;
-    end
-    
+end
+Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
+
+
+if	isempty(Batch_vars)
+    uiwait(errordlg('Vessel Processing cancelled!'));
+    return;
+end
+
+try
     sec_avg=str2double(Batch_vars.sec_avg);
     threshold=str2double(Batch_vars.threshold);
     df_search=str2double(Batch_vars.df_search);
-    f_min=str2double(Batch_vars.f_min);
-    f_max=str2double(Batch_vars.f_max);
-    
-    
+    f_min=1000*str2double(Batch_vars.f_min);
+    f_max=1000*str2double(Batch_vars.f_max);
+catch
+    uiwait(errordlg('Vessel Processing cancelled! Bad batch parameters'));
+    return
 end
+
 
 close_all_figures
 switch	Batch_mode
  case 'Process Visible Window'
         uiwait(msgbox(['Processing all data within window for ' Batch_type]));
-        
-        dT=handles.sgram.T(2)-handles.sgram.T(1);
-        Ncol=max([1 floor(sec_avg/dT)]);
-        Itime=1:Ncol:length(handles.sgram.T);
-        Tnew=handles.sgram.T(Itime);
-        Tnew=Tnew(1:(end-1));
-        F=handles.sgram.F;
-        PSD=zeros(length(F),length(Itime)-1);
-        for I=1:(length(Itime)-1)
-            PSD(:,I)=mean(handles.sgram.B(:,Itime(I):Itime(I+1)),2);
-        end
-        PSD_dB=10*log10(abs(PSD));
-        
-        
-        Nt	=	length(Tnew);
-        Nf	=	length(F);
-        dF	=	mean(diff(F));
-       
-        
-        PSD_avg		=	sum(PSD,2)/Nt;
-        PSD_med     =   median(PSD')';
-        P_tot		=	sum(PSD_avg)*dF;
-        
-        %PSD_dB		=	abs(10*log10(abs(PSD)));
-        PfdB_avg	=	sum(PSD_dB,2)/Nt;
-        
-        [metrics.avg.peaks]=peak_picker_Thode(PfdB_avg,F,df_search,[f_min f_max],threshold,[]);
-        keyboard
-    
+        yes=1;
+        while yes
+            dT=handles.sgram.T(2)-handles.sgram.T(1);
+            Ncol=max([1 floor(sec_avg/dT)]);
+            Itime=1:Ncol:length(handles.sgram.T);
+            Tnew=handles.sgram.T(Itime);
+            Tnew=Tnew(1:(end-1));
+            F=handles.sgram.F;
+            PSD=zeros(length(F),length(Itime)-1);
+            for I=1:(length(Itime)-1)
+                PSD(:,I)=mean(handles.sgram.B(:,Itime(I):Itime(I+1)),2);
+            end
+            PSD_dB=10*log10(abs(PSD));
+            
+            
+            Nt	=	length(Tnew);
+            Nf	=	length(F);
+            dF	=	mean(diff(F));
+            
+            
+            PSD_avg		=	sum(PSD,2)/Nt;
+            PSD_med     =   median(PSD')';
+            P_tot		=	sum(PSD_avg)*dF;
+            
+            %PSD_dB		=	abs(10*log10(abs(PSD)));
+            PfdB_avg	=	sum(PSD_dB,2)/Nt;
+            
+            %Plot metrics
+            figure(1);
+            plot(PfdB_avg,F,'k',10*log10(PSD_avg)-10,F,'r');grid on;hold on
+            xlabel('mean dB PSD re 1 uPa^2/Hz','fontsize',14,'fontweight','bold');
+            ylabel('Frequency (Hz)','fontsize',14,'fontweight','bold');
+            [peakss]=peak_picker_Thode(PfdB_avg,F,df_search,[f_min f_max],threshold,[]);
+            if ~isempty(peakss{1}.adp)
+                plot( peakss{1}.adp.PdB,peakss{1}.adp.F,'bx','markersize',10);
+            end
+            if ~isempty(peakss{1}.isi)
+                plot( peakss{1}.isi.PdB,peakss{1}.isi.F,'go','markersize',10);
+            end
+            legend('averaged dB power','dB of average power-10','adaptive peaks','isi peaks')
+            ylim([f_min f_max]);
+            yes=menu('Redo?','Yes','No');
+            if yes==1
+                Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
+                if	isempty(Batch_vars)
+                    uiwait(errordlg('Vessel Processing cancelled!'));
+                    return;
+                end
+                
+                try
+                    sec_avg=str2double(Batch_vars.sec_avg);
+                    threshold=str2double(Batch_vars.threshold);
+                    df_search=str2double(Batch_vars.df_search);
+                    f_min=1000*str2double(Batch_vars.f_min);
+                    f_max=1000*str2double(Batch_vars.f_max);
+                catch
+                    uiwait(errordlg('Vessel Processing cancelled! Bad batch parameters'));
+                    return
+                end
+            else 
+                yes=0;
+            end
+            hold off
+        end %while yes==1
 end
 
 end

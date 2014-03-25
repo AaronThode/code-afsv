@@ -68,7 +68,9 @@ for Ipar=1:length(Isearch)
     peaks{Ipar}.isi.F=[];
     peaks{Ipar}.isi.P=[];
     for I=1:length(Ipeak)
-        index=Ipeak(I)+([-Isearch(Ipar):-1 1:Isearch(Ipar)]);
+        index=Ipeak(I)+([-Isearch(Ipar):-1 1:Isearch(Ipar)]);  %indicies of ranges to search
+        index=index(index>0);
+        index=index(index<=length(P));
         if (P(Ipeak(I))./median(P(index))>=threshold)
             peaks{Ipar}.isi.F=[peaks{Ipar}.isi.F F(Ipeak(I))];
             peaks{Ipar}.isi.P=[peaks{Ipar}.isi.P P(Ipeak(I))];
@@ -90,11 +92,15 @@ for Ipar=1:length(Isearch)
     peaks{Ipar}.adp.bandwidth=[];
     for I=1:length(Ipeak)
         index=Ipeak(I)+( 1:Isearch(Ipar));
+        index=index(index<=length(P));
+        
         
         %%Search for upper threshold
         Iu=Ipeak(I)+find((PdB(Ipeak(I))-thresholddB)>PdB(index), 1 );
         
         index=Ipeak(I)+(-Isearch(Ipar):-1 );
+        index=index(index>0);
+       
         Il=Ipeak(I)-find((PdB(Ipeak(I))-thresholddB)>PdB(index), 1, 'last' );
         
         if isempty(Il)||isempty(Iu)
