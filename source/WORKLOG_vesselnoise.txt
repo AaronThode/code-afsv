@@ -1,0 +1,17 @@
+Is this what you are referring to?
+PtG is on Jonah.
+As are all the files to date from Cabo last month.
+
+---------- Forwarded message ----------
+From: Kerri Seger <kerri.seger.d@gmail.com>
+Date: Sat, Jun 1, 2013 at 8:17 AM
+Subject: DAT file for boat detector
+To: Jit Sarkar <bsarkar@ucsd.edu>, Aaron Thode <athode@ucsd.edu>
+
+
+For Monday, the following file has 2.5 boat passages in it and can be used to test the boat detector:
+
+From PtG
+13020911.DAT
+
+The passages are at the very beginning of the file, at 11:34 PM and 11:45 PM (two different boat types, too, it seems).

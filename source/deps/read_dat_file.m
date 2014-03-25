@@ -181,6 +181,8 @@ if ~raw
         disp('Acoustic calibration executed');
         x   =   x.*(10^(-sens/20));
     end
+else
+    double(x);
 end
 
 

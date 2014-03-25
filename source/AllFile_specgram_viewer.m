@@ -46,6 +46,8 @@ if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
 
+
+
 if nargout
     [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
 else
@@ -71,14 +73,37 @@ function AllFile_specgram_viewer_OpeningFcn(hObject, eventdata, handles, varargi
 %   (2) Function handles file name and location
 %   (3) Multipath results file name and location
 
+path('~/Desktop/Ulysses',path);
+path('~/Desktop/Ulysses/deps',path);
+
 startupinfo		=	gui_startup_information;
 
+%Make a splash screen
+try
+    s = SplashScreen( 'Splashscreen', '~/Desktop/Ulysses/104703.JPG', ...
+        'ProgressBar', 'on', ...
+        'ProgressPosition', 5, ...
+        'ProgressRatio', 0.4 );
+    s.addText( 30, 50, 'Ulysses/Ribbit', 'FontSize', 30, 'Color', [0 0 0.6] )
+    s.addText( 30, 80, 'v1.0, March 3, 2014', 'FontSize', 20, 'Color', [0.2 0.2 0.5] )
+    s.addText( 30, 110, 'Aaron Thode and Jit Sarkar', 'FontSize', 20, 'Color', [0.2 0.2 0.5] )
+    s.addText( 30, 150, 'Adventure through Analysis', 'FontSize', 20, 'Color', [0.2 0.2 0.5] ,'Fontangle','Italic')
+    
+    s.addText( 300, 270, 'Loading...', 'FontSize', 20, 'Color', 'white' )
+    
+    pause(2)
+    delete( s )
+catch
+    disp('Splash Screen failure...');
+end
 
 %%%%Set up times based on available times in input directory...%%%%
 handles.mydir			=	startupinfo.default_directory;
 handles.inputdir		=	startupinfo.default_inputfiledir;
 handles.outputdir=uigetdir(handles.mydir,'Select a default output directory for analyses and printouts:');
-cd(handles.outputdir);
+if ~isempty(handles.outputdir)
+    cd(handles.outputdir);
+end
 handles.annotation_file	=	startupinfo.annotation_file;
 try
     handles.calibration_DASAR2007_dir	=	startup_info.calibration_DASAR2007_dir;
@@ -337,7 +362,7 @@ function MenuItem_boatdet_Callback(hObject, eventdata, handles)
 %		F		:	{dbl}(f)	Frequency vector
 %       Idebug:                 scalar that determines if debug output given...
 %
-
+persistent Batch_vars Batch_desc
 
 Batch_type	=	get(hObject, 'Label');
 Batch_mode	=	input_batchmode(Batch_type);
@@ -347,23 +372,103 @@ if	isempty(Batch_mode)
     return;
 end
 
-%threshold=5; %dB threshold between peak and surrounding values at +/-df_search
-%                               df_search=10; %+-/Hz to examine around each local maximum
-%                               f_min	=	25; %Hz
-%                               f_max	=	450; %Hz
-Batch_vars.threshold	=	'5';	Batch_desc{1}	=	'dB threshold between peak and surrounding values at +/-df_search';
-Batch_vars.df_search	=	'10';	Batch_desc{2}	=	'+-/Hz to examine around each local maximum';
-Batch_vars.f_min	=	'25';	Batch_desc{3}	=	'minimum frequency to examine (Hz)';
-Batch_vars.f_max	=	'450';	Batch_desc{4}	=	'maximum frequency to examine (Hz)';
-Batch_vars.sec_avg	=	'2';	Batch_desc{4}	=	'Averaging time of spectrogram (sec)';
-%Batch_vars.want_hough	=	'1';	Batch_desc{5}	=	'want_hough transform of images';
-
+if isempty(Batch_vars)
+    Batch_vars.threshold	=	'5';	Batch_desc{1}	=	'dB threshold between peak and surrounding values at +/-df_search';
+    Batch_vars.df_search	=	'10';	Batch_desc{2}	=	'+-/Hz to examine around each local maximum';
+    Batch_vars.f_min	=	get(handles.edit_fmin,'string');	Batch_desc{3}	=	'minimum frequency to examine (kHz)';
+    Batch_vars.f_max	=	get(handles.edit_fmax,'string');	Batch_desc{4}	=	'maximum frequency to examine (kHz)';
+    Batch_vars.sec_avg	=	'2';	Batch_desc{5}	=	'Averaging time of spectrogram (sec)';
+end
 Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
 
+
 if	isempty(Batch_vars)
-    errordlg('Processing cancelled!');
+    uiwait(errordlg('Vessel Processing cancelled!'));
     return;
 end
+
+try
+    sec_avg=str2double(Batch_vars.sec_avg);
+    threshold=str2double(Batch_vars.threshold);
+    df_search=str2double(Batch_vars.df_search);
+    f_min=1000*str2double(Batch_vars.f_min);
+    f_max=1000*str2double(Batch_vars.f_max);
+catch
+    uiwait(errordlg('Vessel Processing cancelled! Bad batch parameters'));
+    return
+end
+
+
+close_all_figures
+switch	Batch_mode
+ case 'Process Visible Window'
+        uiwait(msgbox(['Processing all data within window for ' Batch_type]));
+        yes=1;
+        while yes
+            dT=handles.sgram.T(2)-handles.sgram.T(1);
+            Ncol=max([1 floor(sec_avg/dT)]);
+            Itime=1:Ncol:length(handles.sgram.T);
+            Tnew=handles.sgram.T(Itime);
+            Tnew=Tnew(1:(end-1));
+            F=handles.sgram.F;
+            PSD=zeros(length(F),length(Itime)-1);
+            for I=1:(length(Itime)-1)
+                PSD(:,I)=mean(handles.sgram.B(:,Itime(I):Itime(I+1)),2);
+            end
+            PSD_dB=10*log10(abs(PSD));
+            
+            
+            Nt	=	length(Tnew);
+            Nf	=	length(F);
+            dF	=	mean(diff(F));
+            
+            
+            PSD_avg		=	sum(PSD,2)/Nt;
+            PSD_med     =   median(PSD')';
+            P_tot		=	sum(PSD_avg)*dF;
+            
+            %PSD_dB		=	abs(10*log10(abs(PSD)));
+            PfdB_avg	=	sum(PSD_dB,2)/Nt;
+            
+            %Plot metrics
+            figure(1);
+            plot(PfdB_avg,F,'k',10*log10(PSD_avg)-10,F,'r');grid on;hold on
+            xlabel('mean dB PSD re 1 uPa^2/Hz','fontsize',14,'fontweight','bold');
+            ylabel('Frequency (Hz)','fontsize',14,'fontweight','bold');
+            [peakss]=peak_picker_Thode(PfdB_avg,F,df_search,[f_min f_max],threshold,[]);
+            if ~isempty(peakss{1}.adp)
+                plot( peakss{1}.adp.PdB,peakss{1}.adp.F,'bx','markersize',10);
+            end
+            if ~isempty(peakss{1}.isi)
+                plot( peakss{1}.isi.PdB,peakss{1}.isi.F,'go','markersize',10);
+            end
+            legend('averaged dB power','dB of average power-10','adaptive peaks','isi peaks')
+            ylim([f_min f_max]);
+            yes=menu('Redo?','Yes','No');
+            if yes==1
+                Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
+                if	isempty(Batch_vars)
+                    uiwait(errordlg('Vessel Processing cancelled!'));
+                    return;
+                end
+                
+                try
+                    sec_avg=str2double(Batch_vars.sec_avg);
+                    threshold=str2double(Batch_vars.threshold);
+                    df_search=str2double(Batch_vars.df_search);
+                    f_min=1000*str2double(Batch_vars.f_min);
+                    f_max=1000*str2double(Batch_vars.f_max);
+                catch
+                    uiwait(errordlg('Vessel Processing cancelled! Bad batch parameters'));
+                    return
+                end
+            else 
+                yes=0;
+            end
+            hold off
+        end %while yes==1
+end
+
 end
 
 
@@ -688,7 +793,7 @@ switch	Batch_mode
                             grid on;
                             
                         end
-                    else
+                    else  %only one or two frequeny bands
                         if isempty(date_tick_chc) %auto adjustment has failed..
                             date_tick_chc=get_datetick_style('auto',pms.xlabel_inc,'datenumber');
                         end
@@ -708,7 +813,7 @@ switch	Batch_mode
                     end  %if Nf?3
                     yes=menu('Redo formatting? (Time formatting only)','Yes','No');
                     if yes==1
-                        pms=get_PSD_percentile_params(pms.fmin/1000,pms.fmax/1000);
+                        pms=get_PSD_percentile_params(pms.fmin/1000,pms.fmax/1000,pms.def);
                         if isempty(pms)
                             yes=0;
                         else
@@ -730,6 +835,8 @@ switch	Batch_mode
                         datestr(Tabs_all(1),30),(pms.fmin(Iprint)),(pms.fmax(Iprint)),tmp);
                     print(hprint(Iprint),'-djpeg',save_tag)
                     saveas(hprint(Iprint), save_tag, 'fig');
+                    save(save_tag,'Tabs_all','PSD_all','pms','params','titlestr','Batch_vars_bulkload','sec_avg');
+            
                 end
                 
             case 'Display and Print Figure'
@@ -749,7 +856,7 @@ switch	Batch_mode
                         
                         
                         save_str=sprintf('PSD_%s', save_tag{II});
-                        save(save_str,'F','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
+                        save(save_str,'pms','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
                         uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
                         
                         orient landscape
@@ -869,15 +976,23 @@ end
 end
 
 %
-function pms=get_PSD_percentile_params(fmin,fmax)
+function pms=get_PSD_percentile_params(fmin,fmax,def_old)
 
+if exist('def_old','var')
+    def=def_old;
+    def{3}=num2str(1000*fmin);
+    def{4}=num2str(1000*fmax);
+    
+else
+    def = {'Date/Time','2*3600',num2str(1000*fmin),num2str(1000*fmax),'[70 120]','4*3600','[0.01 0.1 .25 .5 .75 0.9 .99]'};
+    
+end
 yes=1;
 while yes
     prompt = {'Time unit','Time increment (sec):','Min Frequencies (Hz) [Examples: ''[100 200 300]" or "100:10:300"]:', ...
         'Max Frequencies(Hz) [Examples: ''[100 200 300]" or "100:10:300"]','dB limits [min max]','tick increment (sec)','percentile'};
     dlg_title = 'Input for PSD statistics';
     num_lines = 1;
-    def = {'Date/Time','2*3600',num2str(1000*fmin),num2str(1000*fmax),'[70 120]','4*3600','[0.01 0.1 .25 .5 .75 0.9 .99]'};
     answer = inputdlg(prompt,dlg_title,num_lines,def);
     if isempty(answer)
         pms=[];
@@ -898,7 +1013,7 @@ while yes
         yes=0;
     end
     
-    
+    pms.def=answer;
     % if pms.xlabel_inc>=datenum(0,0,0,12,0,0) %label spacing on order of days
     %     pms.label_style='dd';
     % elseif pms.xlabel_inc>=datenum(0,0,0,1,0,0);  % If label spacing is over one hour
@@ -1654,7 +1769,7 @@ end
 % Ask user for mode of processing operations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Return string description processing choice...
-function	[Batch_mode]	=	input_batchmode(Batch_type)
+function	[Batch_mode,Mode_options]	=	input_batchmode(Batch_type)
 %Mode_options	=	{'Process Visible Window', 'Start Bulk Processing File', 'Start Bulk Processing Folder','Load Bulk Processing'};
 Mode_options	=	{'Process Visible Window', 'Start Bulk Processing', 'Load Bulk Processing'};
 qstring	=	'Which operation do you want?';
@@ -2465,7 +2580,7 @@ if strcmpi(handles.filetype,'MDAT')
         for I=1:2
             if any(get(0,'child')==I)
                 save_name1=sprintf('%s_%i',save_name,I);
-                save_path	=	fullfile(handles.notes.folder_name, save_name1);
+                save_path	=	fullfile(handles.outputdir, save_name1);
                 disp(['Printing %s ...' save_name1]);
                 figure(I)
                 orient landscape
@@ -4789,8 +4904,13 @@ cla;
 
 %tdate_start		=	handles.tdate_start;
 tlen	=	handles.tlen;
+if tlen<1e-2 %somehow window length is way too short
+    tlen=1;
+    set(handles.edit_winlen,'String',num2str(tlen));
+end
 if isempty(tlen)
     tlen    =   str2double(get(handles.edit_winlen,'String'));
+    
     handles.tlen=tlen;
 end
 mydir	=	pwd;
@@ -4876,6 +4996,10 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
         axes(handles.axes1);
     else
         figure;
+    end
+    
+    if length(x(:,1))<Nfft
+        return
     end
     if ~(strcmp(handles.filetype,'PSD'))
         [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
@@ -5416,8 +5540,33 @@ switch filetype
             head.Nchan=1;
         end
     case 'SIO'
+        %x,t,Fs,tmin,tmax,head
+        Fs=input('Enter a sampling frequency in Hz:','s');
+        [~, head] = sioread(fullfile(mydir,myfile),1,[],[]);
+        
+        %%Assume start time is of form 14047225500
+        
+        %%	Data parameters needed
+        Np		=	Header.PperChan;
+        Nchan	=	Header.N_Chan;
+        
+        
+        
+        %-----------------------------------------------------------------------
+        % sioread.m
+        %
+        % This program runs under windows, unix, and macs.
+        %
+        % function x=sioread(filename,p1,npi,channels);
+        %
+        % Inputs:
+        % 	filename: Name of sio file to read
+        % 	p1:	Point to start reading ( 0 < p1 < np)
+        % 	npi: 	Number of points to read in
+        % 	channels: Single number or vector containing the channels to read
+        % 		(example-to read channels 4 thru 10 enter 4:10)
     case 'DAT'
-        [x,tmin,tmax,fs]=read_dat_file([mydir '/' myfile],[],-1,tlen,0);
+        [x,tmin,tmax,fs]=read_dat_file(fullfile(mydir,myfile),[],-1,tlen,0);
         
         if isempty(fs)
             fs=input('Enter sampling rate in Hz:');
@@ -6655,7 +6804,20 @@ end
 Kstot=Kstot(:,:,Igood);
 disp(sprintf('Loading model: %s',model_name));
 model=load(model_name);
-
+prompt={'Number of modes to model:'};
+name='Parameters for Matched Field Processing';
+numlines=1;
+defaultanswer={'all'};
+answer=inputdlg(prompt,name,numlines,defaultanswer);
+if strfind(answer{1},'all')
+    max_mode= size(model.kr{1},2);
+    
+else
+    max_mode=min([eval(answer{1}) size(model.kr{1},2)]);
+end
+model.U=model.U(:,:,1:max_mode);
+model.kr{1}=model.kr{1}(:,1:max_mode);
+%keyboard
 
 %%Extract model frequencies...
 
@@ -6833,6 +6995,12 @@ MFP_replica_file{3}{2}=fullfile(model_dir,'Depth_55m_fixed_Pekeris.dir','Shallow
 default_tilt{3}{2}='1.585';
 range_str{3}{2}=range_str{3}{1};
 default_SNR{3}{2}=default_SNR{3}{1};
+
+MFP_replica_file{3}{3}=fullfile(model_dir,'Depth_55m_fixed_Pekeris.dir','ShallowBeaufortPekeris_MidRange_arctic_pekeris1638_KRAKEN_flat55m_10to500Hz.mat');
+%MFP_replica_file{3}{2}=[model_dir '/Depth_55m_fixed_Pekeris.dir/ShallowBeaufortPekeris_MidRange_arctic_pekeris1638_KRAKEN_flat55m_10to500Hz.mat'];
+default_tilt{3}{3}='1.585';
+range_str{3}{3}=range_str{3}{1};
+default_SNR{3}{3}=default_SNR{3}{1};
 
 %%%%%%%%%%%%%%%%%Long range estimate (17 km)%%%%%%%%%%%%%%%%%%%%%%%%
 MFP_replica_file{4}{1}=fullfile(model_dir,'Depth55m_Fixed.dir','ShallowBeaufortWhaleInversionSSP_FarRange_CSDM_Nfft8192_20100831T105013_10to500Hz.mat');
