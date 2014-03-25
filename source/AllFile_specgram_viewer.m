@@ -2547,7 +2547,7 @@ if strcmpi(handles.filetype,'MDAT')
         for I=1:2
             if any(get(0,'child')==I)
                 save_name1=sprintf('%s_%i',save_name,I);
-                save_path	=	fullfile(handles.notes.folder_name, save_name1);
+                save_path	=	fullfile(handles.outputdir, save_name1);
                 disp(['Printing %s ...' save_name1]);
                 figure(I)
                 orient landscape
