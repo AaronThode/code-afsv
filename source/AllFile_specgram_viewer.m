@@ -651,10 +651,10 @@ switch	Batch_mode
                 
                 
                 save_str=sprintf('Boat_%s', save_tag{II});
-                save(save_str,'boat_detections','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
+                save(save_str,'boat_detections','Tabs_all','params','titlestr','Batch_vars','Batch_vars_bulkload','sec_avg');
                 uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
                 
-                orient landscape
+                orient tall
                 print(hprint(II),'-djpeg',save_str);
                 
                 
@@ -674,6 +674,64 @@ end
                 plot( PP(Ipeaks),Fpeaks(JJ),plotstr,'markersize',10);
             end
         end
+    end
+
+%%Inner function for plotting bulk results
+
+    function [hprint,save_tag]=plot_boat_detections(boat_detections,Tabs_all)
+               
+        if isempty(Tabs_all)
+            hprint=-1;save_tag=-1;
+            return
+        end
+        
+        twin1=min(Tabs_all);
+        twin2=max(Tabs_all);
+        save_tag=[datestr(twin1,30) '_' datestr(twin2,30)];
+        
+        hprint=figure;
+        
+        subplot(4,1,1)
+        plot(Tabs_all,boat_detections.Npeaks,'ko');grid on
+        xlim([twin1 twin2]);
+        ylabel('Bands detected');
+        if isempty(date_tick_chc) %auto adjustment has failed..
+            date_tick_chc=get_datetick_style('auto',twin2-twin1,'datenumber');
+        end
+        datetick('x',date_tick_chc,'keeplimits');
+        set(gca,'fontweight','bold','fontsize',14);
+        
+        %sec_avg=params.Nsamps*params.dn/params.Fs;
+        titlestr=(sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f',datestr(twin1,30),datestr(twin2,30),sec_avg));
+        title(titlestr);
+        
+        subplot(4,1,2)
+        plot(Tabs_all,boat_detections.pdBinttotal(1,:),'ko');grid on
+        title('Total integrated power under bands');
+        xlim([twin1 twin2]);
+        datetick('x',date_tick_chc,'keeplimits');
+        set(gca,'fontweight','bold','fontsize',14);
+        ylabel('dB re 1uPa');ylimm=ylim;ylimm(1)=0;ylim(ylimm);
+        
+        subplot(4,1,3)
+        plot(Tabs_all,boat_detections.F(1:boat_detections.maxbands,:)','o');
+        ylim([0  1000*str2num(get(handles.edit_fmax,'String'))]);
+        xlim([twin1 twin2]);
+        datetick('x',date_tick_chc,'keeplimits');
+        set(gca,'fontweight','bold','fontsize',14);
+        grid on
+        ylabel('Hz');
+        title('Frequency bands detected')
+        
+        subplot(4,1,4)
+        plot(Tabs_all,boat_detections.bandwidth(1:boat_detections.maxbands,:),'o');
+        ylim([0  2*max(df_search)]);
+        xlim([twin1 twin2]);
+        datetick('x',date_tick_chc,'keeplimits');
+        set(gca,'fontweight','bold','fontsize',14);
+        grid on
+        title('bandwidths detected');
+        
     end
 end
 

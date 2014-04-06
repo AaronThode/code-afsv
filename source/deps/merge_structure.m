@@ -1,6 +1,6 @@
 function boat_detections=merge_structure(boat_detections,new_struct,Maxbands,Npeaks)
-
-
+% maxbands:  Maximum number of bands detected in boat_detections
+% Npeaks:   number of peaks detected per time interval
 if isempty(boat_detections)
     varnames=fieldnames(new_struct);
     
@@ -10,11 +10,13 @@ if isempty(boat_detections)
     end
     boat_detections.index=1;
     boat_detections.maxbands=1;
+    boat_detections.Npeaks=zeros(1,Npeaks,'single');
 end
 
 %Transfer new struct to boat_detections
 varnames=fieldnames(new_struct);
 II=boat_detections.index;
+Npeaks=[];
 for I=1:length(varnames)
     tmp=new_struct.(varnames{I});
     if isempty(tmp)
@@ -25,8 +27,9 @@ for I=1:length(varnames)
     end
     boat_detections.(varnames{I})(1:length(tmp),II)=tmp;
     boat_detections.maxbands=max([length(tmp) boat_detections.maxbands]);
-
+    Npeaks=max([length(tmp) Npeaks]);
 end
+boat_detections.Npeaks(II)=Npeaks;
     
 
 %%If extra input, then trim the results
