@@ -23,7 +23,7 @@
 %       .adp:
 %            .F= Frequencies at which a peak occurs
 %            .PdBint= integrated power across each peak bandwidth (dB)
-%            pdBinttotal=total industrial power at a given time
+%            .pdBinttotal=total industrial power at a given time
 %            .PdB= peak PSD for each peak in F
 %            .bandwidth  threshold bandwidth of each peak in Hz
 %

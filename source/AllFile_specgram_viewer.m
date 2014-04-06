@@ -377,7 +377,7 @@ if isempty(Batch_vars)
     Batch_vars.df_search	=	'10';	Batch_desc{2}	=	'+-/Hz to examine around each local maximum';
     Batch_vars.f_min	=	get(handles.edit_fmin,'string');	Batch_desc{3}	=	'minimum frequency to examine (kHz)';
     Batch_vars.f_max	=	get(handles.edit_fmax,'string');	Batch_desc{4}	=	'maximum frequency to examine (kHz)';
-    Batch_vars.sec_avg	=	'2';	Batch_desc{5}	=	'Averaging time of spectrogram (sec)';
+    Batch_vars.sec_avg	=	'2';	Batch_desc{5}	=	'Averaging time of spectrogram (sec)--ignored for bulk loading';
     
 end
 Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
@@ -437,7 +437,7 @@ switch	Batch_mode
             PfdB_kurt   =   kurtosis(PSD_dB');
             
             %Look for mean second derivative.
-            PfdB_delta2=   diff(PSD_dB',2)./((F(2)-F(1)).^2);
+            %PfdB_delta2=   diff(PSD_dB',2)./((F(2)-F(1)).^2);
             
             %Plot metrics
             figure(1);subplot(1,4,1)
@@ -529,21 +529,24 @@ switch	Batch_mode
     case 'Load Bulk Processing'
         Batch_vars_bulkload.start_time	=	'folder start';
         
-        Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", "file start" for current file , "select" to choose file from list, "folder start" for first file in folder)';
+        Batch_desc_bulkload{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", "file start" for current file , "select" to choose file from list, "folder start" for first file in folder)';
         Batch_vars_bulkload.end_time	=	'folder end';
-        Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "select" to choose file from list, "folder end" to import through last file)';
+        Batch_desc_bulkload{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "select" to choose file from list, "folder end" to import through last file)';
         Batch_vars_bulkload.time_window      =   'file';
-        Batch_desc{3} =  'hours to display in a single window; "all" means put in a single file, "file" displays one file per figure';
+        Batch_desc_bulkload{3} =  'hours to display in a single window; "all" means put in a single file, "file" displays one file per figure';
         Batch_vars_bulkload.xlabel_style = 'auto';
-        Batch_desc{4} =  'Datenumber format to use when plotting x-axis; "auto" will try to decide for you; examples include "mm/dd", "dd", "dd/HH", "HH" or "HH:MM":';
+        Batch_desc_bulkload{4} =  'Datenumber format to use when plotting x-axis; "auto" will try to decide for you; examples include "mm/dd", "dd", "dd/HH", "HH" or "HH:MM":';
+        Batch_vars_bulkload.stationary_time = get(handles.edit_winlen,'string')
+        Batch_desc_bulkload{5} =  'Time over which signal is assumed stationary (sec); for fast boat passages this should be lowered:';
         
-        Batch_vars_bulkload	=	input_batchparams(Batch_vars_bulkload, Batch_desc, Batch_type);
+        Batch_vars_bulkload	=	input_batchparams(Batch_vars_bulkload, Batch_desc_bulkload, Batch_type);
         if	isempty(Batch_vars_bulkload)
             uiwait(errordlg('Processing cancelled!'));
             return;
         end
         
-        
+        %%Set stationary averaging (or median) time
+        tabs_inc_stationary=datenum(0,0,0,0,0,str2num(Batch_vars_bulkload.stationary_time));
         
         %%%%%%%%Set parameters for plotting images of bulk data
         %   split_windows =1 will display a separate figure for each PSD
@@ -572,6 +575,92 @@ switch	Batch_mode
         Icurrent_file=bulk_params.Icurrent_file;
         Ifinal_file=bulk_params.Ifinal_file;
         FF=bulk_params.FF;
+        
+          %Start processing
+        tabs_loop_begin=tabs_start;
+        boat_detections=[];Tabs_all=[];
+        Iplot=1;
+        for I=Icurrent_file:Ifinal_file
+            fname=Other_FileNames(I).name;
+            fprintf('Processing %s...\n',fname);
+            [PSD,F,Tsec,Tabs,params]=read_Java_PSD(fname,tabs_loop_begin,Inf);  %Read an entire file into memory
+            
+            sec_avg=(params.Nfft+params.dn*params.Nsamps)/params.Fs;  %Reconstruct averaging time used in these files.
+            
+            Istrip=find(Tabs<=tabs_end);
+            PSD=PSD(:,Istrip);
+            Tabs=Tabs(Istrip);
+            PSD_dB=10*log10(abs(PSD));
+            
+            %Round start down to nearest minute
+            tmp=datevec(Tabs(1));
+            tmp(end)=0;
+            Tabs(1)=datenum(tmp);
+            
+            %Create time intervals over which to create peaks
+            Tabs_stationary=Tabs(1):tabs_inc_stationary:Tabs(end);
+            Npeaks=length(Tabs_stationary)-1;
+            Maxbands=10;
+            
+            %Create peaks for entire run
+            for Is=1:(length(Tabs_stationary)-1)
+                
+                Ipass=find(Tabs>=Tabs_stationary(Is)&Tabs<=Tabs_stationary(Is+1));
+                PfdB_avg	=	sum(PSD_dB(:,Ipass),2)/length(Ipass);
+                peakss=peak_picker_Thode(PfdB_avg,F,df_search,[f_min f_max],threshold,[]);
+                
+                if isempty(boat_detections)
+                   boat_detections=merge_structure(boat_detections,peakss{1}.adp,Maxbands,Npeaks);
+                   Tabs_all=median(Tabs(Ipass));
+                   
+                else
+                    %Needs to handle case where boat_detections is empty.
+                   boat_detections=merge_structure(boat_detections,peakss{1}.adp,Maxbands,Npeaks);
+                   Tabs_all=[Tabs_all median(Tabs(Ipass))];
+                end
+                
+               
+            end  %Is
+            
+            
+            if split_windows
+                
+                [hprint(Iplot),save_tag{Iplot}]=plot_boat_detections(boat_detections,Tabs_all);
+                Tabs_all=[]; boat_detections=[];
+                Iplot=Iplot+1;
+            end
+            
+             %If we move into additional files, start at the beginning of
+             %the file...
+            tabs_loop_begin=0;
+            
+        end  %Icurrent_file
+        
+        if ~split_windows
+            [hprint(Iplot),save_tag{Iplot}]=plot_boat_detections(boat_detections,Tabs_all);
+            Iplot=Iplot+1;
+        end
+        
+        yess=menu('Save boat detection Data and figure?','Yes','No');
+        if yess==1
+            
+            Nfigs=sort(get(0,'Child'));
+            Nfigs=Nfigs(Nfigs<150);
+            
+            for II=1:length(Nfigs)
+                
+                
+                save_str=sprintf('Boat_%s', save_tag{II});
+                save(save_str,'boat_detections','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
+                uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
+                
+                orient landscape
+                print(hprint(II),'-djpeg',save_str);
+                
+                
+            end %II
+            
+        end %%yes
 end
 
 %%%%Inner function for plotting statistical values associated with PSD
