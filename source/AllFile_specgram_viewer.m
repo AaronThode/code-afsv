@@ -432,10 +432,15 @@ switch	Batch_mode
             
             %PSD_dB		=	abs(10*log10(abs(PSD)));
             PfdB_avg	=	sum(PSD_dB,2)/Nt;
-            PdB_CV      =   std(PSD_dB')'./PfdB_avg;
+            PfdB_CV      =   std(PSD_dB')'./PfdB_avg;
+            PfdB_skew    =   skewness(PSD_dB');
+            PfdB_kurt   =   kurtosis(PSD_dB');
+            
+            %Look for mean second derivative.
+            PfdB_delta2=   diff(PSD_dB',2)./((F(2)-F(1)).^2);
             
             %Plot metrics
-            figure(1);subplot(1,2,1)
+            figure(1);subplot(1,4,1)
             plot(PfdB_avg,F,'k',10*log10(PSD_avg)-10,F,'r');grid on;hold on
             xlabel('mean dB PSD re 1 uPa^2/Hz','fontsize',14,'fontweight','bold');
             ylabel('Frequency (Hz)','fontsize',14,'fontweight','bold');
@@ -447,24 +452,35 @@ switch	Batch_mode
                 plot( peakss{1}.isi.PdB,peakss{1}.isi.F,'go','markersize',10);
             end
             legend('averaged dB power','dB of average power-10','adaptive peaks','isi peaks')
-            ylim([f_min f_max]);
+            ylim([f_min f_max]);grid on
+            xlim(str2num(get(handles.edit_mindB,'String'))+[0 str2num(get(handles.edit_dBspread,'string'))]);
             
-            %Plot standard deviation of band over time period in question
-            subplot(1,2,2);
-            plot(PdB_CV,F,'k');xlabel('C.V. of dB power','fontsize',14,'fontweight','bold');
+            %Plot coefficient of variation of band over time period in question
+            subplot(1,4,2);
+            plot(PfdB_CV,F,'k');xlabel('C.V. of dB power','fontsize',14,'fontweight','bold');
             ylabel('Frequency (Hz)','fontsize',14,'fontweight','bold');
             ylim([f_min f_max]);
             hold on
-            if ~isempty(peakss{1}.adp.F)
-                dF=F(2)-F(1);
-                JF=1+ceil(peakss{1}.adp.F/dF);
-                plot( PdB_CV(JF),peakss{1}.adp.F,'bx','markersize',10);
-            end
-            if ~isempty(peakss{1}.isi.F)
-                dF=F(2)-F(1);
-                JF=1+ceil(peakss{1}.isi.F/dF);
-                plot( PdB_CV(JF),peakss{1}.isi.F,'go','markersize',10);
-            end
+            plot_peak_values(peakss{1}.adp.F,F,PfdB_CV,'ro');
+            plot_peak_values(peakss{1}.isi.F,F,PfdB_CV,'bo');
+            grid on
+            
+            subplot(1,4,3);
+            plot(PfdB_skew,F,'k');xlabel('skewness ','fontsize',14,'fontweight','bold');
+            ylabel('Frequency (Hz)','fontsize',14,'fontweight','bold');
+            ylim([f_min f_max]);
+            hold on
+            plot_peak_values(peakss{1}.adp.F,F,PfdB_skew,'ro');
+            plot_peak_values(peakss{1}.isi.F,F,PfdB_skew,'bo');
+            grid on;
+            
+            subplot(1,4,4);
+            plot(PfdB_kurt,F,'k');xlabel('kurtosis ','fontsize',14,'fontweight','bold');
+            ylabel('Frequency (Hz)','fontsize',14,'fontweight','bold');
+            ylim([f_min f_max]);
+            hold on
+            plot_peak_values(peakss{1}.adp.F,F,PfdB_kurt,'ro');
+            plot_peak_values(peakss{1}.isi.F,F,PfdB_kurt,'bo');
             grid on;
             
             yes=menu('Redo?','Yes','No');
@@ -491,6 +507,7 @@ switch	Batch_mode
             hold off
         end %while yes==1
         
+        %Plot bands on spectrogram...
         if ~isempty(peakss{1}.adp.F)
             FF=peakss{1}.adp.F/1000;
             axes(handles.axes1);
@@ -509,46 +526,103 @@ switch	Batch_mode
     case {'Start Bulk Processing File','Start Bulk Processing Folder'}
         
         start_bulk_processing_psd(handles,Batch_mode,Batch_type,sec_avg);
+    case 'Load Bulk Processing'
+        Batch_vars_bulkload.start_time	=	'folder start';
         
+        Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", "file start" for current file , "select" to choose file from list, "folder start" for first file in folder)';
+        Batch_vars_bulkload.end_time	=	'folder end';
+        Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "select" to choose file from list, "folder end" to import through last file)';
+        Batch_vars_bulkload.time_window      =   'file';
+        Batch_desc{3} =  'hours to display in a single window; "all" means put in a single file, "file" displays one file per figure';
+        Batch_vars_bulkload.xlabel_style = 'auto';
+        Batch_desc{4} =  'Datenumber format to use when plotting x-axis; "auto" will try to decide for you; examples include "mm/dd", "dd", "dd/HH", "HH" or "HH:MM":';
+        
+        Batch_vars_bulkload	=	input_batchparams(Batch_vars_bulkload, Batch_desc, Batch_type);
+        if	isempty(Batch_vars_bulkload)
+            uiwait(errordlg('Processing cancelled!'));
+            return;
+        end
+        
+        
+        
+        %%%%%%%%Set parameters for plotting images of bulk data
+        %   split_windows =1 will display a separate figure for each PSD
+        %   file
+        split_windows=1;plot_interval=Inf;val=-1;
+        
+        if ~isempty(strfind(Batch_vars_bulkload.time_window,'file'))
+            plot_interval=Inf;
+        elseif ~isempty(strfind(Batch_vars_bulkload.time_window,'all'))
+            split_windows=0;
+        elseif isnumeric(str2num(Batch_vars_bulkload.time_window))
+            val=str2num(Batch_vars_bulkload.time_window);
+            plot_interval=datenum(0,0,0,val,0,0);
+        end
+        
+        date_tick_chc=get_datetick_style(Batch_vars_bulkload.xlabel_style,val,'hours');
+        
+        %Load bulk run time and file data
+        bulk_params=load_PSD_Bulk_Run(handles, Batch_vars_bulkload);
+        
+        tabs_folder_start=bulk_params.tabs_folder_start;
+        tabs_folder_end=bulk_params.tabs_folder_end;
+        tabs_start=bulk_params.tabs_start;
+        tabs_end=bulk_params.tabs_end;
+        Other_FileNames=bulk_params.Other_FileNames;
+        Icurrent_file=bulk_params.Icurrent_file;
+        Ifinal_file=bulk_params.Ifinal_file;
+        FF=bulk_params.FF;
 end
 
+%%%%Inner function for plotting statistical values associated with PSD
+%%%%peaks
+    function plot_peak_values(Fpeaks,F,PP,plotstr)
+        %Plot peak detections from isi and adaptive band detectors
+        if ~isempty(Fpeaks)
+            
+            for JJ=1:length(Fpeaks)
+                [~,Ipeaks]=min(abs(Fpeaks(JJ)-F));
+                plot( PP(Ipeaks),Fpeaks(JJ),plotstr,'markersize',10);
+            end
+        end
+    end
 end
 
 function start_bulk_processing_psd(handles,Batch_mode,Batch_type,sec_avg)
-        if strcmp(Batch_mode,'Start Bulk Processing File')
-            uiwait(msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type)));
-            param.exten=['*' handles.myfile];
-        else
-            uiwait(msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type)));
-            
-            param.exten=['*' handles.myext];
-        end
-        
-        data_folder_name		=	uigetdir('.', 'Select a folder to store analysis results:');
-        param.dir_out=data_folder_name;
-        param.file_dir=handles.mydir;
-        contents=get(handles.popupmenu_Nfft,'String');
-        param.Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
-        contents=get(handles.popupmenu_ovlap,'String');
-        param.ovlap=round(param.Nfft*str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100);
-        param.Fs=handles.sgram.Fs;
-        param.channel=str2num(get(handles.edit_chan,'String'));
-        param.dumpsize=100000;
-        param.nstart=0;
-        param.nsamples=0;
-        param.f_low=1000*str2num(get(handles.edit_fmin,'String'));
-        param.f_high=1000*str2num(get(handles.edit_fmax,'String'));
-        if sec_avg>0
-            param.sec_avg=sec_avg;
-        else
-            param.sec_avg=param.Nfft/param.Fs;  %Make a spectrogram--no averaging
-        end
-        
-        write_Java_script('PSD',param);
-        ! ./masterPSD.scr > outt.txt &
-        return
+if strcmp(Batch_mode,'Start Bulk Processing File')
+    uiwait(msgbox(sprintf('Processing all data in file %s\n for %s',fullfile(handles.mydir,handles.myfile), Batch_type)));
+    param.exten=['*' handles.myfile];
+else
+    uiwait(msgbox(sprintf('Processing all data in folder %s\n for %s',fullfile(handles.mydir), Batch_type)));
+    
+    param.exten=['*' handles.myext];
 end
-        
+
+data_folder_name		=	uigetdir('.', 'Select a folder to store analysis results:');
+param.dir_out=data_folder_name;
+param.file_dir=handles.mydir;
+contents=get(handles.popupmenu_Nfft,'String');
+param.Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
+contents=get(handles.popupmenu_ovlap,'String');
+param.ovlap=round(param.Nfft*str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100);
+param.Fs=handles.sgram.Fs;
+param.channel=str2num(get(handles.edit_chan,'String'));
+param.dumpsize=100000;
+param.nstart=0;
+param.nsamples=0;
+param.f_low=1000*str2num(get(handles.edit_fmin,'String'));
+param.f_high=1000*str2num(get(handles.edit_fmax,'String'));
+if sec_avg>0
+    param.sec_avg=sec_avg;
+else
+    param.sec_avg=param.Nfft/param.Fs;  %Make a spectrogram--no averaging
+end
+
+write_Java_script('PSD',param);
+! ./masterPSD.scr > outt.txt &
+return
+end
+
 % --------------------------------------------------------------------
 function MenuItem_psd_Callback(hObject, eventdata, handles)
 % hObject    handle to MenuItem_psd (see GCBO)
