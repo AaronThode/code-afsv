@@ -3,7 +3,7 @@
 % PdB: a power spectral density, in terms of dB units.  Can be a row or column vector
 % F:   vector of frequencies that accompanies
 % df_search:  Half-bandwidth to permit for a peak search, Hz.
-%       If a vector, element I of df_search is returns in peaks{I}
+%       If a vector, element I of df_search is returned in peaks{I}
 % frange:  [fmin fmax] frequency range in Hz to search for peaks.
 % thresholddB:  SNR (dB) of peak compared to adjacent bins
 % Idebug:  Optional structure for plotting.  If exists, has following fields:
@@ -50,17 +50,14 @@ if_max	=	if_max(1);
 dF=F(2)-F(1);
 Isearch=ceil(df_search/dF);
 
-dP=diff(PdB(if_min:if_max));
+dP=diff(PdB(if_min:if_max));  %Restricted to specified bandwidth
 test1=sign(dP(1:(end-1)));
 test2=dP(2:end).*(dP(1:(end-1)));%The sign restricts to maxima
-Ipeak=if_min+find(test1>0&test2<0);  %Note no restrictions on level
+Ipeak=if_min+find(test1>0&test2<0)-1;  %Note no restrictions on level
 
 
-%peaks.Fmax=F(Ipeak);
-%peaks.PdBmax=PdB(Ipeak);
 
-
-for Ipar=1:length(Isearch)
+for Ipar=1:length(df_search)
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%Simple ISI_tone...%%%%%%%
@@ -69,9 +66,9 @@ for Ipar=1:length(Isearch)
     peaks{Ipar}.isi.P=[];
     for I=1:length(Ipeak)
         index=Ipeak(I)+([-Isearch(Ipar):-1 1:Isearch(Ipar)]);  %indicies of ranges to search
-        index=index(index>0);
+        index=index(index>0); %Make sure indicies are between 1 and max frequency
         index=index(index<=length(P));
-        if (P(Ipeak(I))./median(P(index))>=threshold)
+        if (P(Ipeak(I))/median(P(index))>=threshold)
             peaks{Ipar}.isi.F=[peaks{Ipar}.isi.F F(Ipeak(I))];
             peaks{Ipar}.isi.P=[peaks{Ipar}.isi.P P(Ipeak(I))];
         end
@@ -82,10 +79,10 @@ for Ipar=1:length(Isearch)
     
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%My adaptive search %%%%%%%
+    %%%% My adaptive search %%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    % here df_is a maximum peak width permitted
+    % here df_search defines a maximum half-peak width permitted
     peaks{Ipar}.adp.F=[];
     peaks{Ipar}.adp.PdBint=[];
     peaks{Ipar}.adp.PdB=[];
@@ -100,10 +97,10 @@ for Ipar=1:length(Isearch)
         
         index=Ipeak(I)+(-Isearch(Ipar):-1 );
         index=index(index>0);
-       
-        Il=Ipeak(I)-find((PdB(Ipeak(I))-thresholddB)>PdB(index), 1, 'last' );
+        index=fliplr(index);
+        Il=Ipeak(I)-find((PdB(Ipeak(I))-thresholddB)>PdB(index), 1, 'first' ); %Bug fix April 6, 2014
         
-        if isempty(Il)||isempty(Iu)
+        if isempty(Il)||isempty(Iu)  %Any peak exceeds max bandwidth
             continue
         end
         

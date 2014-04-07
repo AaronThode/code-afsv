@@ -362,7 +362,7 @@ function MenuItem_boatdet_Callback(hObject, eventdata, handles)
 %		F		:	{dbl}(f)	Frequency vector
 %       Idebug:                 scalar that determines if debug output given...
 %
-persistent Batch_vars Batch_desc
+persistent Batch_vars Batch_desc resett
 
 Batch_type	=	get(hObject, 'Label');
 Batch_mode	=	input_batchmode(Batch_type);
@@ -372,12 +372,23 @@ if	isempty(Batch_mode)
     return;
 end
 
-if isempty(Batch_vars)
+if isempty(resett)
+    resett=0;  %Allows context-dependent Batch_vars, based on Batch_mode selection
+end
+
+if isempty(Batch_vars)||resett  %Default
     Batch_vars.threshold	=	'5';	Batch_desc{1}	=	'dB threshold between peak and surrounding values at +/-df_search';
-    Batch_vars.df_search	=	'10';	Batch_desc{2}	=	'+-/Hz to examine around each local maximum';
+    Batch_vars.df_search	=	'10';	Batch_desc{2}	=	'maximum half-bandwidth to examine around each local maximum';
     Batch_vars.f_min	=	get(handles.edit_fmin,'string');	Batch_desc{3}	=	'minimum frequency to examine (kHz)';
     Batch_vars.f_max	=	get(handles.edit_fmax,'string');	Batch_desc{4}	=	'maximum frequency to examine (kHz)';
-    Batch_vars.sec_avg	=	'2';	Batch_desc{5}	=	'Averaging time of spectrogram (sec)--ignored for bulk loading';
+    Batch_vars.sec_avg	=	'2';	Batch_desc{5}	=	'Averaging time of spectrogram (sec)--ignored when bulk loading';
+    resett=0;
+end
+
+if ~isempty(strfind(Batch_mode,'Start Bulk Processing'))
+    clear Batch_vars Batch_desc
+    Batch_vars.sec_avg	=	'2';	Batch_desc{1}	=	'Averaging time of spectrogram (sec)';
+    resett=1;
     
 end
 Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
@@ -390,12 +401,15 @@ end
 
 try
     sec_avg=str2double(Batch_vars.sec_avg);
-    threshold=str2double(Batch_vars.threshold);
-    df_search=str2double(Batch_vars.df_search);
-    f_min=1000*str2double(Batch_vars.f_min);
-    f_max=1000*str2double(Batch_vars.f_max);
-    if f_min>f_max
-        return
+    
+    if isfield(Batch_vars,'threshold')
+        threshold=str2double(Batch_vars.threshold);
+        df_search=str2double(Batch_vars.df_search);
+        f_min=1000*str2double(Batch_vars.f_min);
+        f_max=1000*str2double(Batch_vars.f_max);
+        if f_min>f_max
+            return
+        end
     end
 catch
     uiwait(errordlg('Vessel Processing cancelled! Bad batch parameters'));
@@ -608,15 +622,12 @@ switch	Batch_mode
                 Ipass=find(Tabs>=Tabs_stationary(Is)&Tabs<=Tabs_stationary(Is+1));
                 PfdB_avg	=	sum(PSD_dB(:,Ipass),2)/length(Ipass);
                 peakss=peak_picker_Thode(PfdB_avg,F,df_search,[f_min f_max],threshold,[]);
-                
+                boat_detections=merge_structure(boat_detections,peakss{1}.adp,Maxbands,Npeaks);
+                    
                 if isempty(boat_detections)
-                   boat_detections=merge_structure(boat_detections,peakss{1}.adp,Maxbands,Npeaks);
-                   Tabs_all=median(Tabs(Ipass));
-                   
+                    Tabs_all=median(Tabs(Ipass));
                 else
-                    %Needs to handle case where boat_detections is empty.
-                   boat_detections=merge_structure(boat_detections,peakss{1}.adp,Maxbands,Npeaks);
-                   Tabs_all=[Tabs_all median(Tabs(Ipass))];
+                    Tabs_all=[Tabs_all median(Tabs(Ipass))];
                 end
                 
                
@@ -691,46 +702,58 @@ end
         
         hprint=figure;
         
-        subplot(4,1,1)
+        subplot(2,1,1)
         plot(Tabs_all,boat_detections.Npeaks,'ko');grid on
-        xlim([twin1 twin2]);
-        ylabel('Bands detected');
+        [AX,H1,H2]=plotyy(Tabs_all,boat_detections.Npeaks,Tabs_all,boat_detections.pdBinttotal(1,:));
+        %plot(Tabs_all,boat_detections.Npeaks);
+        ylabel(AX(1),'Bands detected');
+        ylabel(AX(2),'Int. power, dB re 1uPa');
+        
+        pmax=ceil(max(boat_detections.pdBinttotal(1,:)));
+        pmin=floor(min(boat_detections.pdBinttotal(1,:)));
+        ylimm=get(AX(2),'ylim');ylimm(1)=pmin;ylimm(2)=pmax;
+        ylim(AX(2),ylimm);
+        set(AX(2),'ytick',round(linspace(0,pmax,4)));
         if isempty(date_tick_chc) %auto adjustment has failed..
             date_tick_chc=get_datetick_style('auto',twin2-twin1,'datenumber');
         end
-        datetick('x',date_tick_chc,'keeplimits');
-        set(gca,'fontweight','bold','fontsize',14);
+        
+        for IJ=1:length(AX)
+            xlim(AX(IJ),[twin1 twin2]);
+            datetick(AX(IJ),'x',date_tick_chc,'keeplimits');
+            set(AX(IJ),'fontweight','bold','fontsize',14);
+            grid(AX(IJ),'on');
+        end
         
         %sec_avg=params.Nsamps*params.dn/params.Fs;
-        titlestr=(sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f',datestr(twin1,30),datestr(twin2,30),sec_avg));
+        titlestr=(sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f, stationary time: %s sec', ...
+            datestr(twin1,30),datestr(twin2,30),sec_avg,Batch_vars_bulkload.stationary_time));
         title(titlestr);
         
-        subplot(4,1,2)
-        plot(Tabs_all,boat_detections.pdBinttotal(1,:),'ko');grid on
-        title('Total integrated power under bands');
-        xlim([twin1 twin2]);
-        datetick('x',date_tick_chc,'keeplimits');
-        set(gca,'fontweight','bold','fontsize',14);
-        ylabel('dB re 1uPa');ylimm=ylim;ylimm(1)=0;ylim(ylimm);
         
-        subplot(4,1,3)
-        plot(Tabs_all,boat_detections.F(1:boat_detections.maxbands,:)','o');
-        ylim([0  1000*str2num(get(handles.edit_fmax,'String'))]);
+        subplot(2,1,2)
+        colorstr='bgrcmyk';
+        for J=1:boat_detections.maxbands
+           ff=boat_detections.F(J,:);
+           bw=boat_detections.bandwidth(J,:)/2;
+            
+           XX=[1;1]*Tabs_all;
+           YY=[ff+bw;ff-bw];
+           Icolor=max([1 rem(J,length(colorstr))]);
+           hh=line(XX,YY,'color',colorstr(Icolor),'linewidth',3);
+           hold on
+        end
         xlim([twin1 twin2]);
         datetick('x',date_tick_chc,'keeplimits');
         set(gca,'fontweight','bold','fontsize',14);
         grid on
         ylabel('Hz');
-        title('Frequency bands detected')
-        
-        subplot(4,1,4)
-        plot(Tabs_all,boat_detections.bandwidth(1:boat_detections.maxbands,:),'o');
-        ylim([0  2*max(df_search)]);
-        xlim([twin1 twin2]);
-        datetick('x',date_tick_chc,'keeplimits');
-        set(gca,'fontweight','bold','fontsize',14);
-        grid on
-        title('bandwidths detected');
+        title(sprintf('%s-%s kHz bands scanned, adaptive bandwidth %s Hz, threshold %s dB', ...
+            Batch_vars.f_min,Batch_vars.f_max,Batch_vars.df_search,Batch_vars.threshold))
+       %  threshold=str2double(Batch_vars.threshold);
+    %df_search=str2double(Batch_vars.df_search);
+   
+        ylim([0 str2num(get(handles.edit_fmax,'string'))*1000]);
         
     end
 end

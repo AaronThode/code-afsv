@@ -20,6 +20,7 @@ Npeaks=[];
 for I=1:length(varnames)
     tmp=new_struct.(varnames{I});
     if isempty(tmp)
+        boat_detections.index=boat_detections.index+1;  %Advance though detection
         return  %No change to structure if no new information
     end
     if size(tmp,2)>1
@@ -39,7 +40,7 @@ if nargin>4
     end
 end
 
-boat_detections.index=II+1;
+boat_detections.index=boat_detections.index+1;
 
 
 end
