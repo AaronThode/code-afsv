@@ -6077,11 +6077,15 @@ switch filetype
             tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
         catch
             disp([myfile ': convert_date failure']);
-            minn	=	input('Enter start date in format [yr mo day hr min sec] or hit return: ');
-            if isempty(minn)
-                minn=[1970 1 1 0 0 0];
+            try
+                tmin=datenum(get(handles.text_mintime,'String'));
+            catch
+                minn	=	input('Enter start date in format [yr mo day hr min sec] or hit return: ');
+                if isempty(minn)
+                    minn=[1970 1 1 0 0 0];
+                end
+                tmin	=	datenum(minn);
             end
-            tmin	=	datenum(minn);
             tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
         end
         tdate_vec	=	datevec(tdate_start - tmin);
