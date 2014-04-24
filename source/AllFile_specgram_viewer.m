@@ -2738,7 +2738,7 @@ tlen=handles.tlen;
 mydir=pwd;
 Ichan='all';
 %[x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
-[x,~,Fs,~,~,hdr]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
+[x,~,Fs,~,~,hdr]=load_data(handles.filetype,tdate_start,tlen,Ichan,handles);
 
 if ~isempty(strfind(lower(computer),'mac'))
     Islash=strfind(handles.mydir,'/');
@@ -2796,8 +2796,7 @@ if strcmpi(handles.filetype,'MDAT')
         figure(1)
         set(gcf,'pos',[291         628        1513         991]);
         Iplot=0;
-        %[x,t,Fs,tstart,junk1,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
-        [x,~,Fs,~,~,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
+        [x,~,Fs,~,~,head]=load_data(handles.filetype, tdate_start,tlen,'all',handles);
         
         for Ichan=1:head.Nchan
             
@@ -3099,7 +3098,7 @@ mydir=pwd;
 
 %Ichan='all';  %Hardwire first channel
 Ichan=str2double(get(handles.edit_chan,'String'));
-[x,~,Fs,tstart]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
+[x,~,Fs,tstart]=load_data(handles.filetype,tdate_start,tlen,Ichan,handles);
 
 Nmax=(2^16)-1;
 Fs_want=125000;  %Actual playback rate
@@ -3295,7 +3294,7 @@ tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 mydir=pwd;
 Ichan='all';  %Hardwire first channel
-[x,~,Fs,~,~,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,Ichan,handles);
+[x,~,Fs,~,~,head]=load_data(handles.filetype, tdate_start,tlen,Ichan,handles);
 x=x.';
 
 %%For MDAT file, channel 1 is already shallowest channel, so remove data below...
@@ -3558,7 +3557,7 @@ twant=tmp(1);
 tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 %for Ichan=1:8
-[x,~,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles); %#ok<*ASGLU>
+[x,~,Fs,tstart,junk,head]=load_data(handles.filetype, tdate_start,tlen,'all',handles); %#ok<*ASGLU>
 if size(x,2)>1
     x=x';
 end
@@ -3675,7 +3674,7 @@ function pushbutton_tilt_Callback(hObject, eventdata, handles)
 tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 %for Ichan=1:8
-[x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
+[x,t,Fs,tstart,junk,head]=load_data(handles.filetype,tdate_start,tlen,'all',handles);
 
 %x(1) is shallowest element...
 if size(x,2)>1
@@ -3785,7 +3784,7 @@ end
 tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 %for Ichan=1:8
-[data.x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
+[data.x,t,Fs,tstart,junk,head]=load_data(handles.filetype, tdate_start,tlen,'all',handles);
 
 %xall{Ichan}=x;
 %end
@@ -5190,6 +5189,7 @@ status	=	true;
 
 end
 
+%%%%%%%%%%%load_and_display_spectrogram%%%%
 function	handles	=	load_and_display_spectrogram(handles)
 
 cla;
@@ -5209,7 +5209,9 @@ mydir	=	pwd;
 Ichan	=	eval(get(handles.edit_chan,'String'));  
 
 try
-    [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,...
+   % [x,t,Fs,tmin,tmax,head]	=	...
+    %load_data(filetype,tdate_start,tlen,Ichan,handles)
+    [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype, ...
         handles.tdate_start,tlen,Ichan,handles);
     
     %%Change file display if a transformation of a basic file has
@@ -5512,7 +5514,7 @@ handles.tdate_max=	-1;
 %cd(handles.mydir);
 
 try
-    [x,t,Fs,tmin,tmax]=load_data(filetype,-1,-1,1,1,handles);
+    [x,t,Fs,tmin,tmax]=load_data(filetype,-1,1,1,handles);
 catch %no file selected
     %errordlg(sprintf('No %s file selected',filetype));
     errorflag=1;
@@ -5661,7 +5663,7 @@ end
 %%%%%%%%%%%%%%%%%%%%
 
 function [x,t,Fs,tmin,tmax,head]	=	...
-    load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)
+    load_data(filetype,tdate_start,tlen,Ichan,handles)
 %%% tmin,tmax, t are datenumbers
 %   x rows are samples, columns are channels
 
@@ -5869,7 +5871,7 @@ switch filetype
         tmax =tmin+datenum(0,0,0,0,0,head.np/Fs);
         head.Nchan	=	head.N_Chan;
         
-        if ~exist('tdate_start') || isempty(tdate_start) || tstart_min < 0||tdate_start < 0
+        if ~exist('tdate_start') || isempty(tdate_start) || tdate_start < 0
             x=[];
             return
         end
@@ -6017,8 +6019,8 @@ switch filetype
             -1.229223450332553e+00];
         
     case 'WAV'
-        Nsamples	=	wavread([mydir '/' myfile],'size');
-        [~,Fs]		=	wavread([mydir '/' myfile],1,'native');
+        Nsamples	=	wavread(fullfile(mydir,myfile),'size');
+        [~,Fs]		=	wavread(fullfile(mydir,myfile),1,'native');
         Nsamples	=	Nsamples(1);
         handles.Fs	=	Fs;
         
@@ -6066,40 +6068,44 @@ switch filetype
         
         head.cable_factor=2*pi*(110e-9)*140.0;  %Unit resistance 140 ohm, capacitance 110 nF
         
-        if tstart_min<0
-            try
-                tmin	=	convert_date(myfile,'_');
-                tmax	=	convert_date(myfile,'_') + datenum(0,0,0,0,0,Nsamples/Fs);
-            catch
-                disp([myfile ': convert_date failure']);
-                minn	=	input('Enter start date in format [yr mo day hr min sec]: ');
-                if isempty(minn)
-                    minn=zeros(1,6);
-                end
-                tmin	=	datenum(minn);
-                tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
+               
+        try
+            tmin	=	convert_date(myfile,'_');
+            if isempty(tmin)
+                tmin=(now);
             end
-        else
-            tmin		=	tstart_min;
-            tmax		=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
-            tdate_vec	=	datevec(tdate_start - tmin);
-            nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);
-            N1			=	1 + round(nsec*handles.Fs);
-            N2			=	N1 + round(tlen*handles.Fs);
-            [x,Fs]		=	wavread([mydir '/' myfile],[N1 N2],'native');
-            
-            if ~strcmp(Ichan,'all')
-                x		=	x(:,Ichan);
+            tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
+        catch
+            disp([myfile ': convert_date failure']);
+            minn	=	input('Enter start date in format [yr mo day hr min sec] or hit return: ');
+            if isempty(minn)
+                minn=[1970 1 1 0 0 0];
             end
-            
-            t	=	(1:length(x))/Fs;
+            tmin	=	datenum(minn);
+            tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
         end
+        tdate_vec	=	datevec(tdate_start - tmin);
+        nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);
+        N1			=	1 + round(nsec*handles.Fs);
+        N2			=	N1 + round(tlen*handles.Fs);
+        
+        
+        [x,Fs]		=	wavread(fullfile(mydir,myfile),[N1 N2],'native');
+        
+        if ~strcmp(Ichan,'all')
+            x		=	x(:,Ichan);
+        end
+        
+        t	=	(1:length(x))/Fs;
+        
         x			=	double(x)*sens;
         head.Nchan	=	size(x,2);
-        
+
 end
 
-
+if isempty(tmin) || isempty(tmax)
+    disp('load_data: Warning, tmin and tmax should never be empty when exiting..');
+end
 %%%Optional Teager-Kaiser filtering...
 if teager
     %%Assume that x is in form [ channel time]
@@ -6161,7 +6167,7 @@ mydir=pwd;
 
 %Ichan='all';  %Hardwire first channel
 %Ichan=str2double(get(handles.edit_chan,'String'));
-[x,t,Fs,tstart,tend,head]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,'all',handles);
+[x,t,Fs,tstart,tend,head]=load_data(handles.filetype,tdate_start,tlen,'all',handles);
 
 disp('Click on two extreme corners, click below axis twice to reject:');
 tmp=ginput(2);
