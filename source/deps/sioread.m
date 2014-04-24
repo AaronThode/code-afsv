@@ -9,7 +9,7 @@ function [x, Header] = sioread(filename,p1,npi,channels)
 % Inputs:
 % 	filename: Name of sio file to read
 % 	p1:	Point to start reading ( 0 < p1 < np)
-% 	npi: 	Number of points to read in
+% 	npi: 	Number of points to read in (if 0, read in all points)
 % 	channels: Single number or vector containing the channels to read
 % 		(example-to read channels 4 thru 10 enter 4:10)
 %
@@ -88,7 +88,7 @@ fid=fopen(filename,'r',endian);
  Header.comment		=	char(com(:).');
  
  %	If no channels or points requested, just return header
- if isempty(npi) || isempty(channels) || (npi==0) || (channels==0)
+ if nargin==1|| isempty(npi) || isempty(channels) || (npi==0) || (max(channels)==0)
 	x	=	[];
 	return;
  end

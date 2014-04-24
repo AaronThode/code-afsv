@@ -82,11 +82,11 @@
     <matlab>
       <root>/Applications/MATLAB_R2012b.app</root>
       <path>
+        <directory>/Users/thode/Desktop/Ulysses</directory>
         <directory>/Users/thode/repos/code-afsv/source</directory>
         <directory>/Users/thode/repos/code-afsv/source/deps</directory>
         <directory>/Users/thode/Projects/Schultz.dir/MATLAB/ICI_detectors.dir</directory>
         <directory>/Users/thode/Documents/MATLAB</directory>
-        <directory>/Users/thode/Desktop/Ulysses</directory>
         <directory>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/Automated_Arctic_Software/AirgunProcessing.dir</directory>
         <directory>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/Automated_Arctic_Software/CommonScripts.dir</directory>
         <directory>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/Automated_Arctic_Software/ComputerSpecificScripts.dir</directory>

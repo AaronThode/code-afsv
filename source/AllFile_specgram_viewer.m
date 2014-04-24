@@ -378,7 +378,7 @@ end
 
 if isempty(Batch_vars)||resett  %Default
     Batch_vars.threshold	=	'5';	Batch_desc{1}	=	'dB threshold between peak and surrounding values at +/-df_search';
-    Batch_vars.df_search	=	'10';	Batch_desc{2}	=	'maximum half-bandwidth to examine around each local maximum';
+    Batch_vars.df_search	=	'0.2';	Batch_desc{2}	=	'maximum half-bandwidth (kHz) to examine around each local maximum';
     Batch_vars.f_min	=	get(handles.edit_fmin,'string');	Batch_desc{3}	=	'minimum frequency to examine (kHz)';
     Batch_vars.f_max	=	get(handles.edit_fmax,'string');	Batch_desc{4}	=	'maximum frequency to examine (kHz)';
     Batch_vars.sec_avg	=	'2';	Batch_desc{5}	=	'Averaging time of spectrogram (sec)--ignored when bulk loading';
@@ -404,7 +404,7 @@ try
     
     if isfield(Batch_vars,'threshold')
         threshold=str2double(Batch_vars.threshold);
-        df_search=str2double(Batch_vars.df_search);
+        df_search=1000*str2double(Batch_vars.df_search);
         f_min=1000*str2double(Batch_vars.f_min);
         f_max=1000*str2double(Batch_vars.f_max);
         if f_min>f_max
@@ -508,7 +508,7 @@ switch	Batch_mode
                 try
                     sec_avg=str2double(Batch_vars.sec_avg);
                     threshold=str2double(Batch_vars.threshold);
-                    df_search=str2double(Batch_vars.df_search);
+                    df_search=1000*str2double(Batch_vars.df_search);
                     f_min=1000*str2double(Batch_vars.f_min);
                     f_max=1000*str2double(Batch_vars.f_max);
                 catch
@@ -5206,7 +5206,7 @@ if isempty(tlen)
     handles.tlen=tlen;
 end
 mydir	=	pwd;
-Ichan	=	str2double(get(handles.edit_chan,'String'));  %Hardwire first channel
+Ichan	=	eval(get(handles.edit_chan,'String'));  
 
 try
     [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,...
@@ -5656,21 +5656,24 @@ end
 
 end
 
+%%%%%%%%%%%%%%%%%%%%
+%%% load_data.m%%%%%
+%%%%%%%%%%%%%%%%%%%%
 
-%%% load_data.m%%%%
 function [x,t,Fs,tmin,tmax,head]	=	...
     load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)
 %%% tmin,tmax, t are datenumbers
 %   x rows are samples, columns are channels
 
-persistent  keyword
+persistent  keyword 
+
 mydir=handles.mydir;
 myfile=handles.myfile;
 teager=get(handles.checkbox_teager,'Value');
 set(handles.edit_normal_rotation,'Vis','Off');  %Set off for the moment
 set(handles.text_normal_rotation,'Vis','Off');  %Set off for the moment
 
-
+Fs=[];
 x=[];
 t=[];
 tmin=[];
@@ -5833,14 +5836,64 @@ switch filetype
         end
     case 'SIO'
         %x,t,Fs,tmin,tmax,head
-        Fs=input('Enter a sampling frequency in Hz:','s');
-        [~, head] = sioread(fullfile(mydir,myfile),1,[],[]);
+        %load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)gff
         
-        %%Assume start time is of form 14047225500
+        %Extract start date and time
+        %if ~exist('tstart_min') || isempty(tstart_min) || tstart_min < 0
+            Idot=strfind(myfile,'.');
+            success=0;
+            for II=1:(length(Idot)-1)
+                if success || Idot(II+1)-Idot(II)~= 12
+                    continue
+                end
+                template=myfile((Idot(II)+1):(Idot(II+1)-1));
+                try
+                    tmin=datenum(2000+str2num(template(1:2)),0,str2num(template(3:5)), ...
+                        str2num(template(6:7)),str2num(template(8:9)),str2num(template(10:11)));
+                    %tstart_min=tmin;
+                    success=1;
+                catch
+                    tmin= now;
+                end
+            end
+        %end
+        Fs_default=25000;
+        if isempty(Fs)
+            Fs=input('Enter a sampling frequency in Hz per channel [25000]:','s');
+            if isempty(Fs),Fs=Fs_default;end
+        end
+        [~, head] = sioread(fullfile(mydir,myfile));
         
         %%	Data parameters needed
-        Np		=	Header.PperChan;
-        Nchan	=	Header.N_Chan;
+        head.np		=	head.PperChan;
+        tmax =tmin+datenum(0,0,0,0,0,head.np/Fs);
+        head.Nchan	=	head.N_Chan;
+        
+        if ~exist('tdate_start') || isempty(tdate_start) || tstart_min < 0||tdate_start < 0
+            x=[];
+            return
+        end
+        
+        
+        np_start=1+round((tdate_start-tmin)*24*3600*Fs);
+        if np_start>head.np
+            errordlg('load_data:  SIO start time exceeds points available!');
+            return
+        end
+        
+     
+            
+        if max(Ichan)>head.Nchan
+             errordlg(sprintf('load_data:  SIO channel request: %i, max channels: %i',max(Ichan),head.Nchan));
+            return
+        end
+        
+        npi=round(tlen*Fs);
+        if np_start+npi>head.np
+            errordlg('load_data:  SIO end time exceeds points available!');
+            return
+        end
+        [x,head]=sioread(fullfile(mydir,myfile),np_start,npi,Ichan);
         
         
         
@@ -9647,13 +9700,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%TIMEWARP functions below %%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-
 % --------------------------------------------------------------------
 function image_processor_Callback(hObject, eventdata, handles)
 % hObject    handle to image_processor (see GCBO)
@@ -9747,3 +9793,5 @@ param.ovlap=(str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100);
 [features,final_image]=extract_image_features(handles.x, cbegin,param,2);
 
 end
+
+
