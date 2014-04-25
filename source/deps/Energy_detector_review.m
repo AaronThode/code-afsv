@@ -140,6 +140,10 @@ detsum=dir([ '*detsum']);
 [data_all,head]=readEnergySummary(detsum.name, Inf);
 
 %cd(mydir);
+if isempty(data_all.ctime)
+    errordlg('No events detected!');
+    return
+end
 tmin=datestr(datenum(1970,1,1,0,0,data_all.ctime(1)));
 tmax=datestr(datenum(1970,1,1,0,0,data_all.ctime(end)));
 fprintf('Start time: %s End time:%s\n',datestr(tmin),datestr(tmax));

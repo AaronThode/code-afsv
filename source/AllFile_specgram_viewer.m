@@ -1031,13 +1031,18 @@ switch	Batch_mode
             
             case 'Plot percentiles'
                 %Remove excess storage
-                
-                Icount=Icount-length(Istrip);
+                %Icount=Icount-length(Istrip);
                 if Icount<length(Tabs_all)
                     Tabs_all=Tabs_all(1:Icount);
                     PSD_all=PSD_all(:,1:Icount);
                     
                 end
+                
+                Igood=find(Tabs_all>0);
+                Tabs_all=Tabs_all(Igood);
+                PSD_all=PSD_all(:,Igood);
+                
+                
                 pms.y_label='dB re 1uPa';
                 yes=1;
                 while yes
@@ -1127,7 +1132,7 @@ switch	Batch_mode
                         datestr(Tabs_all(1),30),(pms.fmin(Iprint)),(pms.fmax(Iprint)),tmp);
                     print(hprint(Iprint),'-djpeg',save_tag)
                     saveas(hprint(Iprint), save_tag, 'fig');
-                    save(save_tag,'Tabs_all','PSD_all','pms','params','titlestr','Batch_vars_bulkload','sec_avg');
+                    save(save_tag,'Tabs_all','PSD_all','pms','params','Batch_vars_bulkload','sec_avg');
                     
                 end
                 
@@ -1148,6 +1153,7 @@ switch	Batch_mode
                         
                         
                         save_str=sprintf('PSD_%s', save_tag{II});
+                        if ~exist('pms'),pms=[];end
                         save(save_str,'pms','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
                         uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
                         
@@ -6072,7 +6078,7 @@ switch filetype
         try
             tmin	=	convert_date(myfile,'_');
             if isempty(tmin)
-                tmin=(now);
+               tmin=datenum([1970 1 1 0 0 0]);
             end
             tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
         catch
@@ -6089,12 +6095,19 @@ switch filetype
             tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
         end
         tdate_vec	=	datevec(tdate_start - tmin);
-        nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);
+        nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);  %Ignores differences in days
         N1			=	1 + round(nsec*handles.Fs);
         N2			=	N1 + round(tlen*handles.Fs);
         
-        
-        [x,Fs]		=	wavread(fullfile(mydir,myfile),[N1 N2],'native');
+        try
+            [x,Fs]		=	wavread(fullfile(mydir,myfile),[N1 N2],'native');
+        catch
+            x=[];
+            Fs=[];
+            t=[];
+            head.Nchan=0;
+            return
+        end
         
         if ~strcmp(Ichan,'all')
             x		=	x(:,Ichan);
