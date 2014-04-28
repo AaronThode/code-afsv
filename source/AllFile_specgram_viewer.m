@@ -637,6 +637,17 @@ switch	Batch_mode
             if split_windows
                 
                 [hprint(Iplot),save_tag{Iplot}]=plot_boat_detections(boat_detections,Tabs_all);
+                if Ifinal_file-Icurrent_file>10
+                    save_str=sprintf('Boat_%s', save_tag{Iplot});
+                    save(save_str,'boat_detections','Tabs_all','params','titlestr','Batch_vars','Batch_vars_bulkload','sec_avg');
+                    %uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
+                    
+                    orient tall
+                    print(hprint(II),'-djpeg',save_str);
+                    saveas(hprint(II),save_str,'fig');
+                    close(hprint(II));
+                       
+                end
                 Tabs_all=[]; boat_detections=[];
                 Iplot=Iplot+1;
             end
@@ -652,29 +663,32 @@ switch	Batch_mode
             Iplot=Iplot+1;
         end
         
-        yess=menu('Save boat detection Data and figure?','Yes','No');
-        if yess==1
+        if Ifinal_file-Icurrent_file>10
             
-            Nfigs=sort(get(0,'Child'));
-            Nfigs=Nfigs(Nfigs<150);
-            
-            for II=1:length(Nfigs)
+            yess=menu('Save boat detection Data and figure?','Yes','No');
+            if yess==1
                 
+                Nfigs=sort(get(0,'Child'));
+                Nfigs=Nfigs(Nfigs<150);
                 
-                save_str=sprintf('Boat_%s', save_tag{II});
-                save(save_str,'boat_detections','Tabs_all','params','titlestr','Batch_vars','Batch_vars_bulkload','sec_avg');
-                uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
+                for II=1:length(Nfigs)
+                    
+                    
+                    save_str=sprintf('Boat_%s', save_tag{II});
+                    save(save_str,'boat_detections','Tabs_all','params','titlestr','Batch_vars','Batch_vars_bulkload','sec_avg');
+                    uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
+                    
+                    orient tall
+                    print(hprint(II),'-djpeg',save_str);
+                    saveas(hprint(II),save_str,'fig');
+                    if length(Nfigs)>10
+                        close(hprint(II));
+                    end
+                    
+                end %II
                 
-                orient tall
-                print(hprint(II),'-djpeg',save_str);
-                saveas(hprint(II),save_str,'fig');
-                if length(Nfigs)>10
-                    close(hprint(II));
-                end
-                
-            end %II
-            
-        end %%yes
+            end %%yes
+        end %If Ifinal_file
 end
 
 %%%%Inner function for plotting statistical values associated with PSD
