@@ -667,7 +667,10 @@ switch	Batch_mode
                 
                 orient tall
                 print(hprint(II),'-djpeg',save_str);
-                
+                saveas(hprint(II),save_str,'fig');
+                if length(Nfigs)>10
+                    close(hprint(II));
+                end
                 
             end %II
             
@@ -2095,8 +2098,8 @@ end
 
 end
 
-% Asks user for specified batch processing parameters
-function	Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type)
+% Asks user for specified batch processing parameters-return strings
+function	[Batch_vars, Batch_names]	=	input_batchparams(Batch_vars, Batch_desc, Batch_type, num_out)
 
 if	isstruct(Batch_vars)
     names		=	fieldnames(Batch_vars);
@@ -2140,9 +2143,19 @@ end
 
 for	ii	=	1:N_fields
     Batch_vars.(names{ii})	=	answer{ii};
-end
+    if nargin>3
+        try
+            Batch_vars.(names{ii})	=	eval(answer{ii});
+        end
+        
+    end
 end
 
+Batch_names=fieldnames(Batch_vars);
+
+end
+
+% Asks user for specified batch processing parameters-return numerics
 
 %%	Button callbacks
 
@@ -9729,15 +9742,57 @@ function image_processor_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+param.morph=[];
+
+%%%%%%%%%%%%%%%
+%%%%Equalization%%%%
 Ip=0;
+Batch_vars.MinFreq='0'; Ip=Ip+1;Batch_desc{Ip}	=	'Minimum Frequency (Hz) to crop initial image';
+Batch_vars.MaxFreq='500'; Ip=Ip+1;Batch_desc{Ip}	=	'Maximum Frequency (Hz) to crop initial image';
+Batch_vars.eq_time	=	'1';            Ip=Ip+1;Batch_desc{Ip}	=	'Time (sec) used to create background  noise estimate. Used if ''equalization'' is Inf';
+Batch_vars.equalization = 'Inf';        Ip=Ip+1;Batch_desc{Ip}	=	'Precomputed noise equalization spectrum; first column: Frequecies in Hz; Secon column: PSD (dB) value of noise';
+
+Batch_type	=	[get(hObject, 'Label') 'equalization parameters'];
+[Batch_vars, Batch_names]	=	input_batchparams(Batch_vars, Batch_desc, Batch_type,1);
+for I=1:length(Batch_desc)
+   param.morph.(Batch_names{I})=Batch_vars.(Batch_names{I});
+end
+Batch_vars=[];Batch_desc=[];Batch_names=[];
+
+%%%%%%%%%%%%%%
+%%%Ridge Extraction
+%%%%%%%%%%%%%%
+
 Batch_vars.threshold_chc='local_peaks'; Ip=Ip+1;Batch_desc{Ip}	=	'Algorithm for picking local ridge maximum (local_peaks[default],otsu,reconstruction)';
-Batch_vars.eq_time	=	'1';            Ip=Ip+1;Batch_desc{Ip}	=	'Time (sec) used to create background  noise estimate.';
 Batch_vars.SNRmin	=	'10';           Ip=Ip+1;Batch_desc{Ip}	=	'Min dB level, for thresholding background noise';
+param.morph.local_bandwidth.max=500;
+param.morph.local_bandwidth.min=0;
+param.morph.time_band_product.min=1;
+param.morph.time_band_product.max=Inf;
+
 Batch_vars.dynamic_range	=	'3.11';	Ip=Ip+1;Batch_desc{Ip}	=	'%dB below ridge maximum a pixel is allowed to have';
 Batch_vars.dynamic_range2	=	'7';	Ip=Ip+1;Batch_desc{Ip}	=	'dB below maximum a pixel is allowed to have, horizontal (regional) maximum';
 
-Batch_type	=	get(hObject, 'Label');
-Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
+Batch_type	=	[get(hObject, 'Label') 'ridge extraction parameters'];
+param.morph	=	input_batchparams(Batch_vars, Batch_desc, Batch_type,1);
+Batch_vars=[];Batch_desc=[];
+
+%%%%%%%%%%%%%%%%%%%%%
+%%Morphological Processing
+
+param.morph.gap_f=11;  %For dilation results
+param.morph.gap_t=0.04;  %MIGHT NEED TO CHANGE BACK TO 0.3 For dilation results, might need
+
+param.morph.background.on=1;  %Execute contour linking and processing
+param.morph.background.gap_f=param.merge.gap_f;
+param.morph.background.gap_t=param.merge.gap_t;
+
+Batch_type	=	[get(hObject, 'Label') 'ridge extraction parameters'];
+param.morph	=	input_batchparams(Batch_vars, Batch_desc, Batch_type,1);
+Batch_vars=[];Batch_desc=[];
+
+
+%%%%%%%%%
 
 param.median.on=0;
 param.median.size=[0.2 20];
@@ -9754,8 +9809,6 @@ param.filter.sigma=0.5;  %Units of pixel size.
 %param.morph.dynamic_range=3.11;  %dB below maximum a pixel is allowed to have
 %param.morph.dynamic_range2=7;  %dB below maximum a pixel is allowed to have, horizontal (regional) maximum
 
-param.morph.gap_f=11;  %For dilation results
-param.morph.gap_t=0.04;  %MIGHT NEED TO CHANGE BACK TO 0.3 For dilation results, might need
 
 param.merge.ovlap=0.25;
 param.merge.max_frequency_separation=50;
@@ -9785,8 +9838,6 @@ param.morph.robust_fmax.max=500;
 param.morph.robust_bandwidth.max=500;
 param.morph.robust_bandwidth.min=0;
 
-param.morph.local_bandwidth.max=500;
-param.morph.local_bandwidth.min=0;
 
 param.morph.Orientation.max=90;
 param.morph.Orientation.min=-90;
