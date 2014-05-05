@@ -5699,8 +5699,8 @@ function [x,t,Fs,tmin,tmax,head]	=	...
     load_data(filetype,tdate_start,tlen,Ichan,handles)
 %%% tmin,tmax, t are datenumbers
 %   x rows are samples, columns are channels
-
-persistent  keyword 
+%   head.geom.rd:  If multiple channels are present, this gives spacing
+persistent  Fs_keep keyword space
 
 mydir=handles.mydir;
 myfile=handles.myfile;
@@ -5872,7 +5872,7 @@ switch filetype
     case 'SIO'
         %x,t,Fs,tmin,tmax,head
         %load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)gff
-        
+        set(handles.text_channel,'String','Channel [-angle (deg)]');
         %Extract start date and time
         %if ~exist('tstart_min') || isempty(tstart_min) || tstart_min < 0
             Idot=strfind(myfile,'.');
@@ -5893,9 +5893,13 @@ switch filetype
             end
         %end
         Fs_default=25000;
-        if isempty(Fs)
+        if isempty(Fs_keep)
             Fs=input('Enter a sampling frequency in Hz per channel [25000]:','s');
             if isempty(Fs),Fs=Fs_default;end
+            head.Fs=Fs;
+            Fs_keep=Fs;
+        else
+            Fs=Fs_keep;
         end
         [~, head] = sioread(fullfile(mydir,myfile));
         
@@ -5916,7 +5920,6 @@ switch filetype
             return
         end
         
-     
             
         if max(Ichan)>head.Nchan
              errordlg(sprintf('load_data:  SIO channel request: %i, max channels: %i',max(Ichan),head.Nchan));
@@ -5928,8 +5931,36 @@ switch filetype
             errordlg('load_data:  SIO end time exceeds points available!');
             return
         end
-        [x,head]=sioread(fullfile(mydir,myfile),np_start,npi,Ichan);
         
+        beamform_data=0;
+        if -Ichan>=0
+            if isempty(space)
+                prompt = {'Enter spacing[m] between elements for SIO file:'};
+                dlg_title = 'SIO file spacing';
+                num_lines = 1;
+                def = {'0.1'};
+                answer = inputdlg(prompt,dlg_title,num_lines,def);
+                space=eval(answer{1});
+            end
+            head.geom.rd=(0:(head.Nchan-1))*space;
+            beamform_data=1;
+            thta=90-abs(Ichan);
+            Ichan=1:head.Nchan;
+        end
+        
+        [x,~]=sioread(fullfile(mydir,myfile),np_start,npi,Ichan);
+        
+        if beamform_data==1
+            try
+                space=head.geom.rd(2)-head.geom.rd(1);
+                xtot=delaynsum(x,thta,space,Fs,Ichan);
+                x=xtot;
+                head.thta=thta;
+            catch
+                disp('load_data: sioread beamform failure');
+                keyboard
+            end
+        end
         
         
         %-----------------------------------------------------------------------

@@ -12,6 +12,7 @@ function [x, Header] = sioread(filename,p1,npi,channels)
 % 	npi: 	Number of points to read in (if 0, read in all points)
 % 	channels: Single number or vector containing the channels to read
 % 		(example-to read channels 4 thru 10 enter 4:10)
+%       First channel is channel 1.
 %
 % Example:  xdata = sioread('../data.dir/test1.sio',10,100,[1 2 4:6]);
 % xdata will be a matlab array of 100 points and 5 channels.  The
