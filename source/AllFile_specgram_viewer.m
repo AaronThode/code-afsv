@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 09-Apr-2014 11:17:07
+% Last Modified by GUIDE v2.5 05-May-2014 13:36:37
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -3327,9 +3327,12 @@ tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 mydir=pwd;
 Ichan='all';  %Hardwire first channel
+set(handles.togglebutton_ChannelBeam,'String','Channel');
 [x,~,Fs,~,~,head]=load_data(handles.filetype, tdate_start,tlen,Ichan,handles);
-x=x.';
-
+%Will need to have columns be channels, rows time
+if floor(tlen*Fs)~=size(x,1)
+    x=x.';
+end
 %%For MDAT file, channel 1 is already shallowest channel, so remove data below...
 
 Fs=round(Fs);
@@ -3391,7 +3394,7 @@ elseif Ichc==2  %extractKsexact
     ftmp=ginput(2);
     frange=sort(ftmp(:,2)*1000);
     fprintf('frange: %6.2f to %6.2f Hz\n',frange);
-    threshold=input('Enter threshold in dB:');
+    threshold=input('Enter threshold in dB[-Inf]:');
     if isempty(threshold)
         threshold=-Inf;
     end
@@ -3497,6 +3500,7 @@ if yes>1
     colorbar
     cmap=colormap;
     caxis([60 100])
+    caxis('auto');
     set(gca,'fontweight','bold','fontsize',14);
     xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
     title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start),Nfft,length(head.geom.rd)));
@@ -3515,8 +3519,9 @@ if yes>1
         
     end
     orient tall
+    
     print(gcf,'-djpeg',sprintf('BeamformingExample_%s',datestr(tdate_start,30)));
-    keyboard
+    
     
 end
 
@@ -3527,7 +3532,7 @@ end
 %     save(srcname,'Ksout','head');
 % end
 %Save only non-zero CSDM to *.in file
-if Ichc==2
+if Ichc==2||0
     
     Ksout.Nfft=Nfft;
     Ksout.ovlap=ovlap;
@@ -5488,7 +5493,7 @@ elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
     % set(gcf,'pos',[30   322  1229   426])
     set(gca,'fontweight','bold','fontsize',14);
     xlabel('Time (sec)');ylabel('Correlation lag (sec)');
-end
+end  %Spectrogram, new fig
 
 handles.x	=	x;
 handles.Fs	=	Fs;
@@ -5513,6 +5518,10 @@ else
     set(handles.pushbutton_modalfiltering,'vis','off');
     set(handles.pushbutton_tilt,'vis','off');
     
+end
+
+if strcmpi(handles.filetype,'sio')
+    set(handles.pushbutton_CSDM,'vis','on');
 end
 
 if strcmpi(handles.filetype,'psd')
@@ -5872,10 +5881,17 @@ switch filetype
     case 'SIO'
         %x,t,Fs,tmin,tmax,head
         %load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)gff
-        set(handles.text_channel,'String','Channel [-angle (deg)]');
+        %set(handles.text_channel,'String','Channel [-angle (deg)]');
+        sio_chc=get(handles.togglebutton_ChannelBeam,'String');
+        [~, head] = sioread(fullfile(mydir,myfile));
+        
         %Extract start date and time
         %if ~exist('tstart_min') || isempty(tstart_min) || tstart_min < 0
-            Idot=strfind(myfile,'.');
+        Idot=strfind(myfile,'.');
+        
+        if isfield(head,'date')
+            tmin=head.date;
+        else
             success=0;
             for II=1:(length(Idot)-1)
                 if success || Idot(II+1)-Idot(II)~= 12
@@ -5891,17 +5907,22 @@ switch filetype
                     tmin= now;
                 end
             end
-        %end
-        Fs_default=25000;
-        if isempty(Fs_keep)
-            Fs=input('Enter a sampling frequency in Hz per channel [25000]:','s');
-            if isempty(Fs),Fs=Fs_default;end
-            head.Fs=Fs;
-            Fs_keep=Fs;
-        else
-            Fs=Fs_keep;
         end
-        [~, head] = sioread(fullfile(mydir,myfile));
+        %end
+        
+        if isfield(head,'Fs')
+            Fs=head.Fs;
+        else
+            Fs_default=25000;
+            if isempty(Fs_keep)
+                Fs=input('Enter a sampling frequency in Hz per channel [25000]:','s');
+                if isempty(Fs),Fs=Fs_default;end
+                head.Fs=Fs;
+                Fs_keep=Fs;
+            else
+                Fs=Fs_keep;
+            end
+        end
         
         %%	Data parameters needed
         head.np		=	head.PperChan;
@@ -5921,9 +5942,35 @@ switch filetype
         end
         
             
-        if max(Ichan)>head.Nchan
-             errordlg(sprintf('load_data:  SIO channel request: %i, max channels: %i',max(Ichan),head.Nchan));
-            return
+        %%%If beamforming is desired for a look at a given direction...
+        beamform_data=0;
+        get_geometry=0;
+        if strcmpi(sio_chc,'angle')
+            beamform_data=1;
+            get_geometry=1;
+        elseif strcmpi(Ichan,'all')
+            Ichan=1:head.Nchan;
+            beamform_data=0;
+            get_geometry=1;
+        end
+        
+        if beamform_data==1
+            thta=-Ichan;
+            Ichan=1:head.Nchan;
+        end
+        
+        %If loading single channel, check that request is reasonable...
+        if beamform_data==0
+            if max(Ichan)>head.Nchan
+                errordlg(sprintf('load_data:  SIO channel request: %i, max channels: %i',max(Ichan),head.Nchan));
+                return
+            end
+            
+            if max(Ichan)<1
+                errordlg(sprintf('load_data:  SIO channel request: %i is less than 1',max(Ichan)));
+                return
+            end
+            
         end
         
         npi=round(tlen*Fs);
@@ -5932,8 +5979,9 @@ switch filetype
             return
         end
         
-        beamform_data=0;
-        if -Ichan>=0
+       
+       
+       if get_geometry==1
             if isempty(space)
                 prompt = {'Enter spacing[m] between elements for SIO file:'};
                 dlg_title = 'SIO file spacing';
@@ -5941,14 +5989,22 @@ switch filetype
                 def = {'0.1'};
                 answer = inputdlg(prompt,dlg_title,num_lines,def);
                 space=eval(answer{1});
+                fprintf('Half-wavelength frequency: %6.2f Hz\n',1500/(2*space));
             end
             head.geom.rd=(0:(head.Nchan-1))*space;
-            beamform_data=1;
-            thta=90-abs(Ichan);
-            Ichan=1:head.Nchan;
+            
+            
         end
         
+        
         [x,~]=sioread(fullfile(mydir,myfile),np_start,npi,Ichan);
+        %Data arranged so that time are rows, columns are channels
+        
+        %Flip data ....
+        
+        if size(x,2)>1
+            x=fliplr(x);
+        end
         
         if beamform_data==1
             try
@@ -5960,7 +6016,7 @@ switch filetype
                 disp('load_data: sioread beamform failure');
                 keyboard
             end
-        end
+         end
         
         
         %-----------------------------------------------------------------------
@@ -9914,3 +9970,24 @@ param.ovlap=(str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100);
 end
 
 
+
+% --- Executes on button press in togglebutton_ChannelBeam.
+function togglebutton_ChannelBeam_Callback(hObject, eventdata, handles)
+% hObject    handle to togglebutton_ChannelBeam (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of togglebutton_ChannelBeam
+onn=get(hObject,'Value');
+if onn
+    
+    set(hObject,'Value',1)
+    set(hObject,'String','Angle')
+    
+else
+    set(hObject,'Value',0)
+    set(hObject,'String','Channel')
+end
+guidata(hObject, handles);
+
+end
