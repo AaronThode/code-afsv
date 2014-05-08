@@ -3400,7 +3400,8 @@ elseif Ichc==2  %extractKsexact
     end
     [Ksout.Kstot,Ksout.freq,Ksout.VV,Ksout.EE]=extractKsexact(x,ovlap,Nfft,chann,frange,Fs,-1,Nfft,0,threshold);
     if ~isempty(Ksout.EE)
-        Ksout.SNR=Ksout.EE(1,:)./Ksout.EE(2,:);
+        %Ksout.SNR=Ksout.EE(1,:)./Ksout.EE(2,:);
+        Ksout.SNR=Ksout.EE(1,:)./sum(Ksout.EE(2:end,:));
     else
         Ksout.SNR=Inf*ones(size(Ksout.freq));
     end
@@ -3408,12 +3409,12 @@ end
 
 figure
 plot(Ksout.freq,10*log10(Ksout.SNR),'-x');ylabel('dB SNR');xlabel('Freq (Hz)')
-grid on;title('estimated SNR of CSDM frequency components')
+grid on;title('estimated SNR of CSDM frequency components: first eignvalue/sum(rest)')
 
 
 yes=menu('Beamform?','No','Conventional','MV','Both','Reflection Coefficient Estimation','MFP');
-
-if yes>1
+yes_eigen=0;
+while yes>1
     
     if yes<6
         angles=input('Enter vector of angles (-90:90):');
@@ -3423,17 +3424,35 @@ if yes>1
     end
     switch yes
         case 2
+            beam_str='CV';
             B=conventional_beamforming(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
+            Ieig=input('Pick eigenvector [return yields none]:');
+            if ~isempty(Ieig)
+                V1=squeeze(Ksout.VV(:,Ieig,:));
+                for If=1:length(Ksout.freq)
+                    Ksout.Kstot_eig(:,:,If)=V1(:,If)*V1(:,If)';
+                end
+                B_eig=conventional_beamforming(Ksout.Kstot_eig,angles,Ksout.freq,head.geom.rd,1495);
+                yes_eigen=1;
+            end
+            
         case 3
+            beam_str='MV';
+            
             B=MV_beamforming(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
         case 4
+            beam_str='CVnMV';
+            
             B=conventional_beamforming(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
             
             B2=MV_beamforming(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
         case 5
+            beam_str='RC';
+            
             R=derive_reflection_coefficient2(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
         case 6
             %Simple Pekeris waveguide determined from DASAR cutoff frequencies
+            beam_str='MFP';
             
             prompt1={'Model file..','tilt offset between top and bottom phone (m)','ranges (m)', 'depths (m):','plot intermediate images?', ...
                 'Nfft for plotting:','Frequency SNR_cutoff (dB), or array with specific frequencies to process..','Primary Eigenvector only?','receiver depths (m):'};
@@ -3492,10 +3511,12 @@ if yes>1
             end
             return
     end
-    figure
-    if yes==4
+    
+    figure(1);clf
+    if yes==4||yes_eigen*yes==2
         subplot(2,1,1)
     end
+    
     imagesc(Ksout.freq,angles,10*log10(B'));
     colorbar
     cmap=colormap;
@@ -3506,24 +3527,73 @@ if yes>1
     title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start),Nfft,length(head.geom.rd)));
     set(gcf,'colormap',cmap(1:4:64,:));
     
+    figure(2);clf
+    if yes==4||yes_eigen*yes==2
+        subplot(2,1,1)
+    end
+    
+    df=Ksout.freq(2)-Ksout.freq(1);
+    plot(angles,sum(10*log10((B)))/length(Ksout.freq),'k');
+    set(gca,'fontweight','bold','fontsize',14);
+    ylabel('Mean dB Beampower ');xlabel('Angle from horizontal (deg)');grid on;
+    title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start),Nfft,length(head.geom.rd)));
+    
     if yes==4
+        figure(1)
         subplot(2,1,2);
         imagesc(Ksout.freq,angles,10*log10(B2'));
         colorbar
         %cmap=colormap;
         caxis([60 100])
+        caxis('auto');
         set(gca,'fontweight','bold','fontsize',14);
         xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
         title('MV processor');
         %set(gcf,'colormap',cmap(1:4:64,:));
         
+        figure(2);
+        subplot(2,1,2)
+        plot(angles,sum(10*log10((B2)))/length(Ksout.freq),'k');
+        set(gca,'fontweight','bold','fontsize',14);
+        ylabel('Mean Beampower (dB)');xlabel('Angle from horizontal (deg)');grid on;
+        title(sprintf('Eigenvector %i only: %s, %i FFT, %i elements',Ieig,datestr(tdate_start),Nfft,length(head.geom.rd)));
+        
+    elseif yes_eigen*yes==2
+        figure(1)
+        subplot(2,1,2)
+        imagesc(Ksout.freq,angles,10*log10(B_eig'));
+        colorbar
+        %cmap=colormap;
+        caxis([60 100])
+        caxis('auto');
+        set(gca,'fontweight','bold','fontsize',14);
+        xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
+        title(sprintf('Eigenvector %i only: %s, %i FFT, %i elements',Ieig,datestr(tdate_start),Nfft,length(head.geom.rd)));
+        %set(gcf,'colormap',cmap(1:4:64,:));
+        
+        figure(2);
+        subplot(2,1,2)
+        plot(angles,sum(10*log10((B_eig)))/length(Ksout.freq),'k');
+        set(gca,'fontweight','bold','fontsize',14);
+        ylabel('Mean dB Beampower ');xlabel('Angle from horizontal (deg)');grid on;
+       title(sprintf('Eigenvector %i only: %s, %i FFT, %i elements',Ieig,datestr(tdate_start),Nfft,length(head.geom.rd)));
+         
     end
-    orient tall
     
-    print(gcf,'-djpeg',sprintf('BeamformingExample_%s',datestr(tdate_start,30)));
+    yes_print=menu('Print?','Yes','No');
+    if yes_print==1
+        for III=1:2
+            figure(III)
+            orient tall
+        
+            print(gcf,'-djpeg',sprintf('Beamforming%s_%s_%ito%ideg_%4.2fres_%i.jpg', ...
+                beam_str,datestr(tdate_start,30),min(angles),max(angles),angles(2)-angles(1),III));
+        end
+    end
     
-    
-end
+    yes=menu('Beamform?','No','Conventional','MV','Both','Reflection Coefficient Estimation','MFP');
+
+end  %while yes
 
 % yes=input('Type ''y'' to write a file:','s');
 % if strcmp(yes,'y')
@@ -3532,7 +3602,8 @@ end
 %     save(srcname,'Ksout','head');
 % end
 %Save only non-zero CSDM to *.in file
-if Ichc==2||0
+yes=menu('Save CSDM?','Yes','No');
+if yes==1
     
     Ksout.Nfft=Nfft;
     Ksout.ovlap=ovlap;
@@ -3542,13 +3613,7 @@ if Ichc==2||0
         
     end
     
-    srcname=sprintf('CSDM_Nfft%i_%s',Nfft,datestr(tdate_start,30));
-    save(srcname,'Ksout','head','tdate_start','tlen');
-    write_covmat(Ksout.freq,Ksout.Kstot,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
-    
-    srcname=sprintf('CSDM_Nfft%i_%s_eigenvector',Nfft,datestr(tdate_start,30));
-    write_covmat(Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
-    
+   
     %     srcname=sprintf('CSDM_Nfft%i_%s_flipped',Nfft,datestr(tdate_start,30));
     %     write_covmat(Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
     %
@@ -3563,10 +3628,16 @@ if Ichc==2||0
         imagesc(abs(squeeze(Ksout.VV(:,I,:))));
         
     end
+    srcname=sprintf('CSDM_Nfft%i_%s',Nfft,datestr(tdate_start,30));
+    save(srcname,'Ksout','head','tdate_start','tlen');
+    write_covmat(Ksout.freq,Ksout.Kstot,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
+    
+    srcname=sprintf('CSDM_Nfft%i_%s_eigenvector',Nfft,datestr(tdate_start,30));
+    write_covmat(Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
     
 end
 
-keyboard;
+%keyboard;
 
 % figure;
 % axx=plotyy(freq_all,SNRest,freq_all,pwr_est);grid on;
