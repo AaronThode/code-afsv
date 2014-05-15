@@ -9,9 +9,10 @@ function [x, Header] = sioread(filename,p1,npi,channels)
 % Inputs:
 % 	filename: Name of sio file to read
 % 	p1:	Point to start reading ( 0 < p1 < np)
-% 	npi: 	Number of points to read in
+% 	npi: 	Number of points to read in (if 0, read in all points)
 % 	channels: Single number or vector containing the channels to read
 % 		(example-to read channels 4 thru 10 enter 4:10)
+%       First channel is channel 1.
 %
 % Example:  xdata = sioread('../data.dir/test1.sio',10,100,[1 2 4:6]);
 % xdata will be a matlab array of 100 points and 5 channels.  The
@@ -70,6 +71,13 @@ fid=fopen(filename,'r',endian);
  bs=fread(fid,1,'long');  % should be 32677
  fn=fread(fid,24,'char'); % Read in the file name
  com= fread(fid,72,'char'); % Read in the Comment String
+ year=fread(fid,1,'long');
+ day=fread(fid,1,'long');
+ hour=fread(fid,1,'long');
+ min=fread(fid,1,'long');
+ temp=fread(fid,10,'float');
+ Fs=temp(4);
+ AD=temp(6);
  
  rechan=ceil(nr/nc);     %records per channel
  ptrec=rl/sl;            %points/record
@@ -86,9 +94,21 @@ fid=fopen(filename,'r',endian);
  Header.PperRec		=	ptrec;
  Header.fname		=	char(fn(:).');
  Header.comment		=	char(com(:).');
+ Header.date=datenum(year,0,day,hour,min,0);
+ Header.Fs=Fs;
  
+%  so for a random MFNA data file:    RAVA6.14049032400.000.sio  
+% 
+% usr(  1)= 0.282222E-41      usi(  1)=         2014       year
+% usr(  2)= 0.686636E-43      usi(  2)=           49         Jday
+% usr(  3)= 0.420390E-44      usi(  3)=            3          Hour
+% usr(  4)= 0.336312E-43      usi(  4)=           24         Min
+% usr(  8)=  25000.0          usi(  8)=   1187205120       sampling frequency
+% usr(  9)= 0.224208E-43      usi(  9)=           16         A/D number of bits
+% usr( 10)=  2.50000          usi( 10)=   1075838976     A/D peak voltage range ( 2x this is full scale )
+
  %	If no channels or points requested, just return header
- if isempty(npi) || isempty(channels) || (npi==0) || (channels==0)
+ if nargin==1|| isempty(npi) || isempty(channels) || (npi==0) || (max(channels)==0)
 	x	=	[];
 	return;
  end

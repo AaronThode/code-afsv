@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 09-Apr-2014 11:17:07
+% Last Modified by GUIDE v2.5 05-May-2014 13:36:37
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -378,7 +378,7 @@ end
 
 if isempty(Batch_vars)||resett  %Default
     Batch_vars.threshold	=	'5';	Batch_desc{1}	=	'dB threshold between peak and surrounding values at +/-df_search';
-    Batch_vars.df_search	=	'10';	Batch_desc{2}	=	'maximum half-bandwidth to examine around each local maximum';
+    Batch_vars.df_search	=	'0.2';	Batch_desc{2}	=	'maximum half-bandwidth (kHz) to examine around each local maximum';
     Batch_vars.f_min	=	get(handles.edit_fmin,'string');	Batch_desc{3}	=	'minimum frequency to examine (kHz)';
     Batch_vars.f_max	=	get(handles.edit_fmax,'string');	Batch_desc{4}	=	'maximum frequency to examine (kHz)';
     Batch_vars.sec_avg	=	'2';	Batch_desc{5}	=	'Averaging time of spectrogram (sec)--ignored when bulk loading';
@@ -404,7 +404,7 @@ try
     
     if isfield(Batch_vars,'threshold')
         threshold=str2double(Batch_vars.threshold);
-        df_search=str2double(Batch_vars.df_search);
+        df_search=1000*str2double(Batch_vars.df_search);
         f_min=1000*str2double(Batch_vars.f_min);
         f_max=1000*str2double(Batch_vars.f_max);
         if f_min>f_max
@@ -508,7 +508,7 @@ switch	Batch_mode
                 try
                     sec_avg=str2double(Batch_vars.sec_avg);
                     threshold=str2double(Batch_vars.threshold);
-                    df_search=str2double(Batch_vars.df_search);
+                    df_search=1000*str2double(Batch_vars.df_search);
                     f_min=1000*str2double(Batch_vars.f_min);
                     f_max=1000*str2double(Batch_vars.f_max);
                 catch
@@ -637,6 +637,17 @@ switch	Batch_mode
             if split_windows
                 
                 [hprint(Iplot),save_tag{Iplot}]=plot_boat_detections(boat_detections,Tabs_all);
+                if Ifinal_file-Icurrent_file>10
+                    save_str=sprintf('Boat_%s', save_tag{Iplot});
+                    save(save_str,'boat_detections','Tabs_all','params','titlestr','Batch_vars','Batch_vars_bulkload','sec_avg');
+                    %uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
+                    
+                    orient tall
+                    print(hprint(II),'-djpeg',save_str);
+                    saveas(hprint(II),save_str,'fig');
+                    close(hprint(II));
+                       
+                end
                 Tabs_all=[]; boat_detections=[];
                 Iplot=Iplot+1;
             end
@@ -652,26 +663,32 @@ switch	Batch_mode
             Iplot=Iplot+1;
         end
         
-        yess=menu('Save boat detection Data and figure?','Yes','No');
-        if yess==1
+        if Ifinal_file-Icurrent_file>10
             
-            Nfigs=sort(get(0,'Child'));
-            Nfigs=Nfigs(Nfigs<150);
-            
-            for II=1:length(Nfigs)
+            yess=menu('Save boat detection Data and figure?','Yes','No');
+            if yess==1
                 
+                Nfigs=sort(get(0,'Child'));
+                Nfigs=Nfigs(Nfigs<150);
                 
-                save_str=sprintf('Boat_%s', save_tag{II});
-                save(save_str,'boat_detections','Tabs_all','params','titlestr','Batch_vars','Batch_vars_bulkload','sec_avg');
-                uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
+                for II=1:length(Nfigs)
+                    
+                    
+                    save_str=sprintf('Boat_%s', save_tag{II});
+                    save(save_str,'boat_detections','Tabs_all','params','titlestr','Batch_vars','Batch_vars_bulkload','sec_avg');
+                    uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
+                    
+                    orient tall
+                    print(hprint(II),'-djpeg',save_str);
+                    saveas(hprint(II),save_str,'fig');
+                    if length(Nfigs)>10
+                        close(hprint(II));
+                    end
+                    
+                end %II
                 
-                orient tall
-                print(hprint(II),'-djpeg',save_str);
-                
-                
-            end %II
-            
-        end %%yes
+            end %%yes
+        end %If Ifinal_file
 end
 
 %%%%Inner function for plotting statistical values associated with PSD
@@ -1031,13 +1048,18 @@ switch	Batch_mode
             
             case 'Plot percentiles'
                 %Remove excess storage
-                
-                Icount=Icount-length(Istrip);
+                %Icount=Icount-length(Istrip);
                 if Icount<length(Tabs_all)
                     Tabs_all=Tabs_all(1:Icount);
                     PSD_all=PSD_all(:,1:Icount);
                     
                 end
+                
+                Igood=find(Tabs_all>0);
+                Tabs_all=Tabs_all(Igood);
+                PSD_all=PSD_all(:,Igood);
+                
+                
                 pms.y_label='dB re 1uPa';
                 yes=1;
                 while yes
@@ -1127,7 +1149,7 @@ switch	Batch_mode
                         datestr(Tabs_all(1),30),(pms.fmin(Iprint)),(pms.fmax(Iprint)),tmp);
                     print(hprint(Iprint),'-djpeg',save_tag)
                     saveas(hprint(Iprint), save_tag, 'fig');
-                    save(save_tag,'Tabs_all','PSD_all','pms','params','titlestr','Batch_vars_bulkload','sec_avg');
+                    save(save_tag,'Tabs_all','PSD_all','pms','params','Batch_vars_bulkload','sec_avg');
                     
                 end
                 
@@ -1148,6 +1170,7 @@ switch	Batch_mode
                         
                         
                         save_str=sprintf('PSD_%s', save_tag{II});
+                        if ~exist('pms'),pms=[];end
                         save(save_str,'pms','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
                         uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
                         
@@ -2089,8 +2112,8 @@ end
 
 end
 
-% Asks user for specified batch processing parameters
-function	Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type)
+% Asks user for specified batch processing parameters-return strings
+function	[Batch_vars, Batch_names]	=	input_batchparams(Batch_vars, Batch_desc, Batch_type, num_out)
 
 if	isstruct(Batch_vars)
     names		=	fieldnames(Batch_vars);
@@ -2134,9 +2157,19 @@ end
 
 for	ii	=	1:N_fields
     Batch_vars.(names{ii})	=	answer{ii};
-end
+    if nargin>3
+        try
+            Batch_vars.(names{ii})	=	eval(answer{ii});
+        end
+        
+    end
 end
 
+Batch_names=fieldnames(Batch_vars);
+
+end
+
+% Asks user for specified batch processing parameters-return numerics
 
 %%	Button callbacks
 
@@ -2224,7 +2257,7 @@ if	~isempty(new_date)
     end
     newval	=	(new_date-tmin)/(tmax-tmin);
     handles.tdate_start		=	new_date;
-    set(hObject,'String', datestr(new_date, 0));
+    set(hObject,'String', datestr(new_date, 'dd-mmm-yyyy HH:MM:SS.FFF'));
     set(handles.slider_datestr,'Value',newval);
     guidata(hObject, handles);
 end
@@ -2382,7 +2415,7 @@ tmax	=	handles.tdate_max;
 
 datenumm	=	tmin + myval*(tmax-tmin);
 handles.tdate_start		=	datenumm;
-set(handles.edit_datestr,'String',datestr(datenumm,0));
+set(handles.edit_datestr,'String',datestr(datenumm,'dd-mmm-yyyy HH:MM:SS.FFF'));
 
 guidata(hObject, handles);
 end
@@ -2738,7 +2771,7 @@ tlen=handles.tlen;
 mydir=pwd;
 Ichan='all';
 %[x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
-[x,~,Fs,~,~,hdr]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
+[x,~,Fs,~,~,hdr]=load_data(handles.filetype,tdate_start,tlen,Ichan,handles);
 
 if ~isempty(strfind(lower(computer),'mac'))
     Islash=strfind(handles.mydir,'/');
@@ -2796,8 +2829,7 @@ if strcmpi(handles.filetype,'MDAT')
         figure(1)
         set(gcf,'pos',[291         628        1513         991]);
         Iplot=0;
-        %[x,t,Fs,tstart,junk1,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
-        [x,~,Fs,~,~,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
+        [x,~,Fs,~,~,head]=load_data(handles.filetype, tdate_start,tlen,'all',handles);
         
         for Ichan=1:head.Nchan
             
@@ -3099,7 +3131,7 @@ mydir=pwd;
 
 %Ichan='all';  %Hardwire first channel
 Ichan=str2double(get(handles.edit_chan,'String'));
-[x,~,Fs,tstart]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
+[x,~,Fs,tstart]=load_data(handles.filetype,tdate_start,tlen,Ichan,handles);
 
 Nmax=(2^16)-1;
 Fs_want=125000;  %Actual playback rate
@@ -3295,9 +3327,12 @@ tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 mydir=pwd;
 Ichan='all';  %Hardwire first channel
-[x,~,Fs,~,~,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,Ichan,handles);
-x=x.';
-
+set(handles.togglebutton_ChannelBeam,'String','Channel');
+[x,~,Fs,~,~,head]=load_data(handles.filetype, tdate_start,tlen,Ichan,handles);
+%Will need to have columns be channels, rows time
+if floor(tlen*Fs)~=size(x,1)
+    x=x.';
+end
 %%For MDAT file, channel 1 is already shallowest channel, so remove data below...
 
 Fs=round(Fs);
@@ -3359,13 +3394,14 @@ elseif Ichc==2  %extractKsexact
     ftmp=ginput(2);
     frange=sort(ftmp(:,2)*1000);
     fprintf('frange: %6.2f to %6.2f Hz\n',frange);
-    threshold=input('Enter threshold in dB:');
+    threshold=input('Enter threshold in dB[-Inf]:');
     if isempty(threshold)
         threshold=-Inf;
     end
     [Ksout.Kstot,Ksout.freq,Ksout.VV,Ksout.EE]=extractKsexact(x,ovlap,Nfft,chann,frange,Fs,-1,Nfft,0,threshold);
     if ~isempty(Ksout.EE)
-        Ksout.SNR=Ksout.EE(1,:)./Ksout.EE(2,:);
+        %Ksout.SNR=Ksout.EE(1,:)./Ksout.EE(2,:);
+        Ksout.SNR=Ksout.EE(1,:)./sum(Ksout.EE(2:end,:));
     else
         Ksout.SNR=Inf*ones(size(Ksout.freq));
     end
@@ -3373,12 +3409,12 @@ end
 
 figure
 plot(Ksout.freq,10*log10(Ksout.SNR),'-x');ylabel('dB SNR');xlabel('Freq (Hz)')
-grid on;title('estimated SNR of CSDM frequency components')
+grid on;title('estimated SNR of CSDM frequency components: first eignvalue/sum(rest)')
 
 
 yes=menu('Beamform?','No','Conventional','MV','Both','Reflection Coefficient Estimation','MFP');
-
-if yes>1
+yes_eigen=0;
+while yes>1
     
     if yes<6
         angles=input('Enter vector of angles (-90:90):');
@@ -3388,17 +3424,35 @@ if yes>1
     end
     switch yes
         case 2
+            beam_str='CV';
             B=conventional_beamforming(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
+            Ieig=input('Pick eigenvector [return yields none]:');
+            if ~isempty(Ieig)
+                V1=squeeze(Ksout.VV(:,Ieig,:));
+                for If=1:length(Ksout.freq)
+                    Ksout.Kstot_eig(:,:,If)=V1(:,If)*V1(:,If)';
+                end
+                B_eig=conventional_beamforming(Ksout.Kstot_eig,angles,Ksout.freq,head.geom.rd,1495);
+                yes_eigen=1;
+            end
+            
         case 3
+            beam_str='MV';
+            
             B=MV_beamforming(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
         case 4
+            beam_str='CVnMV';
+            
             B=conventional_beamforming(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
             
             B2=MV_beamforming(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
         case 5
+            beam_str='RC';
+            
             R=derive_reflection_coefficient2(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
         case 6
             %Simple Pekeris waveguide determined from DASAR cutoff frequencies
+            beam_str='MFP';
             
             prompt1={'Model file..','tilt offset between top and bottom phone (m)','ranges (m)', 'depths (m):','plot intermediate images?', ...
                 'Nfft for plotting:','Frequency SNR_cutoff (dB), or array with specific frequencies to process..','Primary Eigenvector only?','receiver depths (m):'};
@@ -3457,36 +3511,89 @@ if yes>1
             end
             return
     end
-    figure
-    if yes==4
+    
+    figure(1);clf
+    if yes==4||yes_eigen*yes==2
         subplot(2,1,1)
     end
+    
     imagesc(Ksout.freq,angles,10*log10(B'));
     colorbar
     cmap=colormap;
     caxis([60 100])
+    caxis('auto');
     set(gca,'fontweight','bold','fontsize',14);
     xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
     title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start),Nfft,length(head.geom.rd)));
     set(gcf,'colormap',cmap(1:4:64,:));
     
+    figure(2);clf
+    if yes==4||yes_eigen*yes==2
+        subplot(2,1,1)
+    end
+    
+    df=Ksout.freq(2)-Ksout.freq(1);
+    plot(angles,sum(10*log10((B)))/length(Ksout.freq),'k');
+    set(gca,'fontweight','bold','fontsize',14);
+    ylabel('Mean dB Beampower ');xlabel('Angle from horizontal (deg)');grid on;
+    title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start),Nfft,length(head.geom.rd)));
+    
     if yes==4
+        figure(1)
         subplot(2,1,2);
         imagesc(Ksout.freq,angles,10*log10(B2'));
         colorbar
         %cmap=colormap;
         caxis([60 100])
+        caxis('auto');
         set(gca,'fontweight','bold','fontsize',14);
         xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
         title('MV processor');
         %set(gcf,'colormap',cmap(1:4:64,:));
         
+        figure(2);
+        subplot(2,1,2)
+        plot(angles,sum(10*log10((B2)))/length(Ksout.freq),'k');
+        set(gca,'fontweight','bold','fontsize',14);
+        ylabel('Mean Beampower (dB)');xlabel('Angle from horizontal (deg)');grid on;
+        title(sprintf('Eigenvector %i only: %s, %i FFT, %i elements',Ieig,datestr(tdate_start),Nfft,length(head.geom.rd)));
+        
+    elseif yes_eigen*yes==2
+        figure(1)
+        subplot(2,1,2)
+        imagesc(Ksout.freq,angles,10*log10(B_eig'));
+        colorbar
+        %cmap=colormap;
+        caxis([60 100])
+        caxis('auto');
+        set(gca,'fontweight','bold','fontsize',14);
+        xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
+        title(sprintf('Eigenvector %i only: %s, %i FFT, %i elements',Ieig,datestr(tdate_start),Nfft,length(head.geom.rd)));
+        %set(gcf,'colormap',cmap(1:4:64,:));
+        
+        figure(2);
+        subplot(2,1,2)
+        plot(angles,sum(10*log10((B_eig)))/length(Ksout.freq),'k');
+        set(gca,'fontweight','bold','fontsize',14);
+        ylabel('Mean dB Beampower ');xlabel('Angle from horizontal (deg)');grid on;
+       title(sprintf('Eigenvector %i only: %s, %i FFT, %i elements',Ieig,datestr(tdate_start),Nfft,length(head.geom.rd)));
+         
     end
-    orient tall
-    print(gcf,'-djpeg',sprintf('BeamformingExample_%s',datestr(tdate_start,30)));
-    keyboard
     
-end
+    yes_print=menu('Print?','Yes','No');
+    if yes_print==1
+        for III=1:2
+            figure(III)
+            orient tall
+        
+            print(gcf,'-djpeg',sprintf('Beamforming%s_%s_%ito%ideg_%4.2fres_%i.jpg', ...
+                beam_str,datestr(tdate_start,30),min(angles),max(angles),angles(2)-angles(1),III));
+        end
+    end
+    
+    yes=menu('Beamform?','No','Conventional','MV','Both','Reflection Coefficient Estimation','MFP');
+
+end  %while yes
 
 % yes=input('Type ''y'' to write a file:','s');
 % if strcmp(yes,'y')
@@ -3495,7 +3602,8 @@ end
 %     save(srcname,'Ksout','head');
 % end
 %Save only non-zero CSDM to *.in file
-if Ichc==2
+yes=menu('Save CSDM?','Yes','No');
+if yes==1
     
     Ksout.Nfft=Nfft;
     Ksout.ovlap=ovlap;
@@ -3505,13 +3613,7 @@ if Ichc==2
         
     end
     
-    srcname=sprintf('CSDM_Nfft%i_%s',Nfft,datestr(tdate_start,30));
-    save(srcname,'Ksout','head','tdate_start','tlen');
-    write_covmat(Ksout.freq,Ksout.Kstot,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
-    
-    srcname=sprintf('CSDM_Nfft%i_%s_eigenvector',Nfft,datestr(tdate_start,30));
-    write_covmat(Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
-    
+   
     %     srcname=sprintf('CSDM_Nfft%i_%s_flipped',Nfft,datestr(tdate_start,30));
     %     write_covmat(Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
     %
@@ -3526,10 +3628,16 @@ if Ichc==2
         imagesc(abs(squeeze(Ksout.VV(:,I,:))));
         
     end
+    srcname=sprintf('CSDM_Nfft%i_%s',Nfft,datestr(tdate_start,30));
+    save(srcname,'Ksout','head','tdate_start','tlen');
+    write_covmat(Ksout.freq,Ksout.Kstot,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
+    
+    srcname=sprintf('CSDM_Nfft%i_%s_eigenvector',Nfft,datestr(tdate_start,30));
+    write_covmat(Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
     
 end
 
-keyboard;
+%keyboard;
 
 % figure;
 % axx=plotyy(freq_all,SNRest,freq_all,pwr_est);grid on;
@@ -3558,7 +3666,7 @@ twant=tmp(1);
 tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 %for Ichan=1:8
-[x,~,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles); %#ok<*ASGLU>
+[x,~,Fs,tstart,junk,head]=load_data(handles.filetype, tdate_start,tlen,'all',handles); %#ok<*ASGLU>
 if size(x,2)>1
     x=x';
 end
@@ -3675,7 +3783,7 @@ function pushbutton_tilt_Callback(hObject, eventdata, handles)
 tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 %for Ichan=1:8
-[x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
+[x,t,Fs,tstart,junk,head]=load_data(handles.filetype,tdate_start,tlen,'all',handles);
 
 %x(1) is shallowest element...
 if size(x,2)>1
@@ -3785,7 +3893,7 @@ end
 tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 %for Ichan=1:8
-[data.x,t,Fs,tstart,junk,head]=load_data(handles.filetype,handles.tdate_min , tdate_start,tlen,'all',handles);
+[data.x,t,Fs,tstart,junk,head]=load_data(handles.filetype, tdate_start,tlen,'all',handles);
 
 %xall{Ichan}=x;
 %end
@@ -4650,7 +4758,7 @@ tlen			=	handles.tlen;
 tlen			=	tlen/60/60/24;	%	convert to fractional days
 new_date		=	new_date + tlen;
 %	Trigger callback to update/check other GUI elements
-set(handles.edit_datestr, 'String', datestr(new_date,0));
+set(handles.edit_datestr, 'String', datestr(new_date,'dd-mmm-yyyy HH:MM:SS.FFF'));
 edit_datestr_Callback(handles.edit_datestr, [], handles)
 handles		=	guidata(handles.edit_datestr);
 
@@ -4670,7 +4778,7 @@ tlen			=	handles.tlen;
 tlen			=	tlen/60/60/24;	%	convert to fractional days
 new_date		=	new_date - tlen;
 %	Trigger callback to update/check other GUI elements
-set(handles.edit_datestr, 'String', datestr(new_date,0));
+set(handles.edit_datestr, 'String', datestr(new_date,'dd-mmm-yyyy HH:MM:SS.FFF'));
 edit_datestr_Callback(handles.edit_datestr, [], handles)
 handles		=	guidata(handles.edit_datestr);
 
@@ -5190,6 +5298,7 @@ status	=	true;
 
 end
 
+%%%%%%%%%%%load_and_display_spectrogram%%%%
 function	handles	=	load_and_display_spectrogram(handles)
 
 cla;
@@ -5206,10 +5315,12 @@ if isempty(tlen)
     handles.tlen=tlen;
 end
 mydir	=	pwd;
-Ichan	=	str2double(get(handles.edit_chan,'String'));  %Hardwire first channel
+Ichan	=	eval(get(handles.edit_chan,'String'));  
 
 try
-    [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,...
+   % [x,t,Fs,tmin,tmax,head]	=	...
+    %load_data(filetype,tdate_start,tlen,Ichan,handles)
+    [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype, ...
         handles.tdate_start,tlen,Ichan,handles);
     
     %%Change file display if a transformation of a basic file has
@@ -5453,7 +5564,7 @@ elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
     % set(gcf,'pos',[30   322  1229   426])
     set(gca,'fontweight','bold','fontsize',14);
     xlabel('Time (sec)');ylabel('Correlation lag (sec)');
-end
+end  %Spectrogram, new fig
 
 handles.x	=	x;
 handles.Fs	=	Fs;
@@ -5478,6 +5589,10 @@ else
     set(handles.pushbutton_modalfiltering,'vis','off');
     set(handles.pushbutton_tilt,'vis','off');
     
+end
+
+if strcmpi(handles.filetype,'sio')
+    set(handles.pushbutton_CSDM,'vis','on');
 end
 
 if strcmpi(handles.filetype,'psd')
@@ -5512,7 +5627,7 @@ handles.tdate_max=	-1;
 %cd(handles.mydir);
 
 try
-    [x,t,Fs,tmin,tmax]=load_data(filetype,-1,-1,1,1,handles);
+    [x,t,Fs,tmin,tmax]=load_data(filetype,-1,1,1,handles);
 catch %no file selected
     %errordlg(sprintf('No %s file selected',filetype));
     errorflag=1;
@@ -5532,7 +5647,7 @@ set(handles.slider_datestr,'sliderstep',[small_step big_step]);
 
 set(handles.slider_datestr,'Value',0.5);
 handles.tdate_start		=	0.5*(tmin+tmax);
-set(handles.edit_datestr,'String',datestr(handles.tdate_start,0));
+set(handles.edit_datestr,'String',datestr(handles.tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'));
 
 set(handles.text_mintime,'String',datestr(tmin,0));
 set(handles.text_maxtime,'String',datestr(tmax,0));
@@ -5656,21 +5771,24 @@ end
 
 end
 
+%%%%%%%%%%%%%%%%%%%%
+%%% load_data.m%%%%%
+%%%%%%%%%%%%%%%%%%%%
 
-%%% load_data.m%%%%
 function [x,t,Fs,tmin,tmax,head]	=	...
-    load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)
+    load_data(filetype,tdate_start,tlen,Ichan,handles)
 %%% tmin,tmax, t are datenumbers
 %   x rows are samples, columns are channels
+%   head.geom.rd:  If multiple channels are present, this gives spacing
+persistent  Fs_keep keyword space
 
-persistent  keyword
 mydir=handles.mydir;
 myfile=handles.myfile;
 teager=get(handles.checkbox_teager,'Value');
 set(handles.edit_normal_rotation,'Vis','Off');  %Set off for the moment
 set(handles.text_normal_rotation,'Vis','Off');  %Set off for the moment
 
-
+Fs=[];
 x=[];
 t=[];
 tmin=[];
@@ -5833,15 +5951,143 @@ switch filetype
         end
     case 'SIO'
         %x,t,Fs,tmin,tmax,head
-        Fs=input('Enter a sampling frequency in Hz:','s');
-        [~, head] = sioread(fullfile(mydir,myfile),1,[],[]);
+        %load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)gff
+        %set(handles.text_channel,'String','Channel [-angle (deg)]');
+        sio_chc=get(handles.togglebutton_ChannelBeam,'String');
+        [~, head] = sioread(fullfile(mydir,myfile));
         
-        %%Assume start time is of form 14047225500
+        %Extract start date and time
+        %if ~exist('tstart_min') || isempty(tstart_min) || tstart_min < 0
+        Idot=strfind(myfile,'.');
+        
+        if isfield(head,'date')
+            tmin=head.date;
+        else
+            success=0;
+            for II=1:(length(Idot)-1)
+                if success || Idot(II+1)-Idot(II)~= 12
+                    continue
+                end
+                template=myfile((Idot(II)+1):(Idot(II+1)-1));
+                try
+                    tmin=datenum(2000+str2num(template(1:2)),0,str2num(template(3:5)), ...
+                        str2num(template(6:7)),str2num(template(8:9)),str2num(template(10:11)));
+                    %tstart_min=tmin;
+                    success=1;
+                catch
+                    tmin= now;
+                end
+            end
+        end
+        %end
+        
+        if isfield(head,'Fs')
+            Fs=head.Fs;
+        else
+            Fs_default=25000;
+            if isempty(Fs_keep)
+                Fs=input('Enter a sampling frequency in Hz per channel [25000]:','s');
+                if isempty(Fs),Fs=Fs_default;end
+                head.Fs=Fs;
+                Fs_keep=Fs;
+            else
+                Fs=Fs_keep;
+            end
+        end
         
         %%	Data parameters needed
-        Np		=	Header.PperChan;
-        Nchan	=	Header.N_Chan;
+        head.np		=	head.PperChan;
+        tmax =tmin+datenum(0,0,0,0,0,head.np/Fs);
+        head.Nchan	=	head.N_Chan;
         
+        if ~exist('tdate_start') || isempty(tdate_start) || tdate_start < 0
+            x=[];
+            return
+        end
+        
+        
+        np_start=1+round((tdate_start-tmin)*24*3600*Fs);
+        if np_start>head.np
+            errordlg('load_data:  SIO start time exceeds points available!');
+            return
+        end
+        
+            
+        %%%If beamforming is desired for a look at a given direction...
+        beamform_data=0;
+        get_geometry=0;
+        if strcmpi(sio_chc,'angle')
+            beamform_data=1;
+            get_geometry=1;
+        elseif strcmpi(Ichan,'all')
+            Ichan=1:head.Nchan;
+            beamform_data=0;
+            get_geometry=1;
+        end
+        
+        if beamform_data==1
+            thta=-Ichan;
+            Ichan=1:head.Nchan;
+        end
+        
+        %If loading single channel, check that request is reasonable...
+        if beamform_data==0
+            if max(Ichan)>head.Nchan
+                errordlg(sprintf('load_data:  SIO channel request: %i, max channels: %i',max(Ichan),head.Nchan));
+                return
+            end
+            
+            if max(Ichan)<1
+                errordlg(sprintf('load_data:  SIO channel request: %i is less than 1',max(Ichan)));
+                return
+            end
+            
+        end
+        
+        npi=round(tlen*Fs);
+        if np_start+npi>head.np
+            errordlg('load_data:  SIO end time exceeds points available!');
+            return
+        end
+        
+       
+       
+       if get_geometry==1
+            if isempty(space)
+                prompt = {'Enter spacing[m] between elements for SIO file:'};
+                dlg_title = 'SIO file spacing';
+                num_lines = 1;
+                def = {'0.1'};
+                answer = inputdlg(prompt,dlg_title,num_lines,def);
+                space=eval(answer{1});
+                fprintf('Half-wavelength frequency: %6.2f Hz\n',1500/(2*space));
+            end
+            head.geom.rd=(0:(head.Nchan-1))*space;
+            
+            
+        end
+        
+        
+        [x,~]=sioread(fullfile(mydir,myfile),np_start,npi,Ichan);
+        %Data arranged so that time are rows, columns are channels
+        
+        %Flip data ....
+        
+        if size(x,2)>1
+            x=fliplr(x);
+        end
+        
+        if beamform_data==1
+            try
+                space=head.geom.rd(2)-head.geom.rd(1);
+                xtot=delaynsum(x,thta,space,Fs,Ichan);
+                x=xtot;
+                head.thta=thta;
+            catch
+                disp('load_data: sioread beamform failure');
+                keyboard
+            end
+         end
         
         
         %-----------------------------------------------------------------------
@@ -5964,8 +6210,8 @@ switch filetype
             -1.229223450332553e+00];
         
     case 'WAV'
-        Nsamples	=	wavread([mydir '/' myfile],'size');
-        [~,Fs]		=	wavread([mydir '/' myfile],1,'native');
+        Nsamples	=	wavread(fullfile(mydir,myfile),'size');
+        [~,Fs]		=	wavread(fullfile(mydir,myfile),1,'native');
         Nsamples	=	Nsamples(1);
         handles.Fs	=	Fs;
         
@@ -6013,40 +6259,55 @@ switch filetype
         
         head.cable_factor=2*pi*(110e-9)*140.0;  %Unit resistance 140 ohm, capacitance 110 nF
         
-        if tstart_min<0
+               
+        try
+            tmin	=	convert_date(myfile,'_');
+            if isempty(tmin)
+               tmin=datenum([1970 1 1 0 0 0]);
+            end
+            tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
+        catch
+            disp([myfile ': convert_date failure']);
             try
-                tmin	=	convert_date(myfile,'_');
-                tmax	=	convert_date(myfile,'_') + datenum(0,0,0,0,0,Nsamples/Fs);
+                tmin=datenum(get(handles.text_mintime,'String'));
             catch
-                disp([myfile ': convert_date failure']);
-                minn	=	input('Enter start date in format [yr mo day hr min sec]: ');
+                minn	=	input('Enter start date in format [yr mo day hr min sec] or hit return: ');
                 if isempty(minn)
-                    minn=zeros(1,6);
+                    minn=[1970 1 1 0 0 0];
                 end
                 tmin	=	datenum(minn);
-                tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
             end
-        else
-            tmin		=	tstart_min;
-            tmax		=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
-            tdate_vec	=	datevec(tdate_start - tmin);
-            nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);
-            N1			=	1 + round(nsec*handles.Fs);
-            N2			=	N1 + round(tlen*handles.Fs);
-            [x,Fs]		=	wavread([mydir '/' myfile],[N1 N2],'native');
-            
-            if ~strcmp(Ichan,'all')
-                x		=	x(:,Ichan);
-            end
-            
-            t	=	(1:length(x))/Fs;
+            tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
         end
+        tdate_vec	=	datevec(tdate_start - tmin);
+        nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);  %Ignores differences in days
+        N1			=	1 + round(nsec*handles.Fs);
+        N2			=	N1 + round(tlen*handles.Fs);
+        
+        try
+            [x,Fs]		=	wavread(fullfile(mydir,myfile),[N1 N2],'native');
+        catch
+            x=[];
+            Fs=[];
+            t=[];
+            head.Nchan=0;
+            return
+        end
+        
+        if ~strcmp(Ichan,'all')
+            x		=	x(:,Ichan);
+        end
+        
+        t	=	(1:length(x))/Fs;
+        
         x			=	double(x)*sens;
         head.Nchan	=	size(x,2);
-        
+
 end
 
-
+if isempty(tmin) || isempty(tmax)
+    disp('load_data: Warning, tmin and tmax should never be empty when exiting..');
+end
 %%%Optional Teager-Kaiser filtering...
 if teager
     %%Assume that x is in form [ channel time]
@@ -6108,7 +6369,7 @@ mydir=pwd;
 
 %Ichan='all';  %Hardwire first channel
 %Ichan=str2double(get(handles.edit_chan,'String'));
-[x,t,Fs,tstart,tend,head]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,'all',handles);
+[x,t,Fs,tstart,tend,head]=load_data(handles.filetype,tdate_start,tlen,'all',handles);
 
 disp('Click on two extreme corners, click below axis twice to reject:');
 tmp=ginput(2);
@@ -8515,7 +8776,7 @@ set(handles.edit_maxfreq,'String', num2str(GUI_params.filter.f_max));
 %	Plot parameters
 set(handles.edit_fmin,'String', num2str(GUI_params.fmin));
 set(handles.edit_fmax,'String', num2str(GUI_params.fmax));
-set(handles.edit_datestr, 'String', datestr(GUI_params.tdate_start));
+set(handles.edit_datestr, 'String', datestr(GUI_params.tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'));
 edit_datestr_Callback(handles.edit_datestr, [], handles)
 handles		=	guidata(handles.edit_datestr);
 
@@ -9045,7 +9306,7 @@ tlen		=	datenum(0,0,0,0,0,handles.tlen);
 
 %	New start date for window
 new_date	=	start_time - tlen/2;
-set(handles.edit_datestr, 'String', datestr(new_date));
+set(handles.edit_datestr, 'String', datestr(new_date,'dd-mmm-yyyy HH:MM:SS.FFF'));
 edit_datestr_Callback(handles.edit_datestr, [], handles)
 handles		=	guidata(handles.edit_datestr);
 
@@ -9653,15 +9914,57 @@ function image_processor_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+param.morph=[];
+
+%%%%%%%%%%%%%%%
+%%%%Equalization%%%%
 Ip=0;
+Batch_vars.MinFreq='0'; Ip=Ip+1;Batch_desc{Ip}	=	'Minimum Frequency (Hz) to crop initial image';
+Batch_vars.MaxFreq='500'; Ip=Ip+1;Batch_desc{Ip}	=	'Maximum Frequency (Hz) to crop initial image';
+Batch_vars.eq_time	=	'1';            Ip=Ip+1;Batch_desc{Ip}	=	'Time (sec) used to create background  noise estimate. Used if ''equalization'' is Inf';
+Batch_vars.equalization = 'Inf';        Ip=Ip+1;Batch_desc{Ip}	=	'Precomputed noise equalization spectrum; first column: Frequecies in Hz; Secon column: PSD (dB) value of noise';
+
+Batch_type	=	[get(hObject, 'Label') 'equalization parameters'];
+[Batch_vars, Batch_names]	=	input_batchparams(Batch_vars, Batch_desc, Batch_type,1);
+for I=1:length(Batch_desc)
+   param.morph.(Batch_names{I})=Batch_vars.(Batch_names{I});
+end
+Batch_vars=[];Batch_desc=[];Batch_names=[];
+
+%%%%%%%%%%%%%%
+%%%Ridge Extraction
+%%%%%%%%%%%%%%
+
 Batch_vars.threshold_chc='local_peaks'; Ip=Ip+1;Batch_desc{Ip}	=	'Algorithm for picking local ridge maximum (local_peaks[default],otsu,reconstruction)';
-Batch_vars.eq_time	=	'1';            Ip=Ip+1;Batch_desc{Ip}	=	'Time (sec) used to create background  noise estimate.';
 Batch_vars.SNRmin	=	'10';           Ip=Ip+1;Batch_desc{Ip}	=	'Min dB level, for thresholding background noise';
+param.morph.local_bandwidth.max=500;
+param.morph.local_bandwidth.min=0;
+param.morph.time_band_product.min=1;
+param.morph.time_band_product.max=Inf;
+
 Batch_vars.dynamic_range	=	'3.11';	Ip=Ip+1;Batch_desc{Ip}	=	'%dB below ridge maximum a pixel is allowed to have';
 Batch_vars.dynamic_range2	=	'7';	Ip=Ip+1;Batch_desc{Ip}	=	'dB below maximum a pixel is allowed to have, horizontal (regional) maximum';
 
-Batch_type	=	get(hObject, 'Label');
-Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, Batch_type);
+Batch_type	=	[get(hObject, 'Label') 'ridge extraction parameters'];
+param.morph	=	input_batchparams(Batch_vars, Batch_desc, Batch_type,1);
+Batch_vars=[];Batch_desc=[];
+
+%%%%%%%%%%%%%%%%%%%%%
+%%Morphological Processing
+
+param.morph.gap_f=11;  %For dilation results
+param.morph.gap_t=0.04;  %MIGHT NEED TO CHANGE BACK TO 0.3 For dilation results, might need
+
+param.morph.background.on=1;  %Execute contour linking and processing
+param.morph.background.gap_f=param.merge.gap_f;
+param.morph.background.gap_t=param.merge.gap_t;
+
+Batch_type	=	[get(hObject, 'Label') 'ridge extraction parameters'];
+param.morph	=	input_batchparams(Batch_vars, Batch_desc, Batch_type,1);
+Batch_vars=[];Batch_desc=[];
+
+
+%%%%%%%%%
 
 param.median.on=0;
 param.median.size=[0.2 20];
@@ -9678,8 +9981,6 @@ param.filter.sigma=0.5;  %Units of pixel size.
 %param.morph.dynamic_range=3.11;  %dB below maximum a pixel is allowed to have
 %param.morph.dynamic_range2=7;  %dB below maximum a pixel is allowed to have, horizontal (regional) maximum
 
-param.morph.gap_f=11;  %For dilation results
-param.morph.gap_t=0.04;  %MIGHT NEED TO CHANGE BACK TO 0.3 For dilation results, might need
 
 param.merge.ovlap=0.25;
 param.merge.max_frequency_separation=50;
@@ -9709,8 +10010,6 @@ param.morph.robust_fmax.max=500;
 param.morph.robust_bandwidth.max=500;
 param.morph.robust_bandwidth.min=0;
 
-param.morph.local_bandwidth.max=500;
-param.morph.local_bandwidth.min=0;
 
 param.morph.Orientation.max=90;
 param.morph.Orientation.min=-90;
@@ -9738,6 +10037,27 @@ param.ovlap=(str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100);
  cbegin=3600*24*(handles.tdate_start-datenum(1970,1,1,0,0,0));
  
 [features,final_image]=extract_image_features(handles.x, cbegin,param,2);
+
+end
+
+% --- Executes on button press in togglebutton_ChannelBeam.
+function togglebutton_ChannelBeam_Callback(hObject, eventdata, handles)
+% hObject    handle to togglebutton_ChannelBeam (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of togglebutton_ChannelBeam
+onn=get(hObject,'Value');
+if onn
+    
+    set(hObject,'Value',1)
+    set(hObject,'String','Angle')
+    
+else
+    set(hObject,'Value',0)
+    set(hObject,'String','Channel')
+end
+guidata(hObject, handles);
 
 end
 
@@ -10462,4 +10782,7 @@ end
 
 
 end
+
+
+
 
