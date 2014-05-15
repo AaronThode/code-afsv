@@ -2257,7 +2257,7 @@ if	~isempty(new_date)
     end
     newval	=	(new_date-tmin)/(tmax-tmin);
     handles.tdate_start		=	new_date;
-    set(hObject,'String', datestr(new_date, 0));
+    set(hObject,'String', datestr(new_date, 'dd-mmm-yyyy HH:MM:SS.FFF'));
     set(handles.slider_datestr,'Value',newval);
     guidata(hObject, handles);
 end
@@ -2415,7 +2415,7 @@ tmax	=	handles.tdate_max;
 
 datenumm	=	tmin + myval*(tmax-tmin);
 handles.tdate_start		=	datenumm;
-set(handles.edit_datestr,'String',datestr(datenumm,0));
+set(handles.edit_datestr,'String',datestr(datenumm,'dd-mmm-yyyy HH:MM:SS.FFF'));
 
 guidata(hObject, handles);
 end
@@ -4758,7 +4758,7 @@ tlen			=	handles.tlen;
 tlen			=	tlen/60/60/24;	%	convert to fractional days
 new_date		=	new_date + tlen;
 %	Trigger callback to update/check other GUI elements
-set(handles.edit_datestr, 'String', datestr(new_date,0));
+set(handles.edit_datestr, 'String', datestr(new_date,'dd-mmm-yyyy HH:MM:SS.FFF'));
 edit_datestr_Callback(handles.edit_datestr, [], handles)
 handles		=	guidata(handles.edit_datestr);
 
@@ -4778,7 +4778,7 @@ tlen			=	handles.tlen;
 tlen			=	tlen/60/60/24;	%	convert to fractional days
 new_date		=	new_date - tlen;
 %	Trigger callback to update/check other GUI elements
-set(handles.edit_datestr, 'String', datestr(new_date,0));
+set(handles.edit_datestr, 'String', datestr(new_date,'dd-mmm-yyyy HH:MM:SS.FFF'));
 edit_datestr_Callback(handles.edit_datestr, [], handles)
 handles		=	guidata(handles.edit_datestr);
 
@@ -5647,7 +5647,7 @@ set(handles.slider_datestr,'sliderstep',[small_step big_step]);
 
 set(handles.slider_datestr,'Value',0.5);
 handles.tdate_start		=	0.5*(tmin+tmax);
-set(handles.edit_datestr,'String',datestr(handles.tdate_start,0));
+set(handles.edit_datestr,'String',datestr(handles.tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'));
 
 set(handles.text_mintime,'String',datestr(tmin,0));
 set(handles.text_maxtime,'String',datestr(tmax,0));
@@ -8776,7 +8776,7 @@ set(handles.edit_maxfreq,'String', num2str(GUI_params.filter.f_max));
 %	Plot parameters
 set(handles.edit_fmin,'String', num2str(GUI_params.fmin));
 set(handles.edit_fmax,'String', num2str(GUI_params.fmax));
-set(handles.edit_datestr, 'String', datestr(GUI_params.tdate_start));
+set(handles.edit_datestr, 'String', datestr(GUI_params.tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'));
 edit_datestr_Callback(handles.edit_datestr, [], handles)
 handles		=	guidata(handles.edit_datestr);
 
@@ -9306,7 +9306,7 @@ tlen		=	datenum(0,0,0,0,0,handles.tlen);
 
 %	New start date for window
 new_date	=	start_time - tlen/2;
-set(handles.edit_datestr, 'String', datestr(new_date));
+set(handles.edit_datestr, 'String', datestr(new_date,'dd-mmm-yyyy HH:MM:SS.FFF'));
 edit_datestr_Callback(handles.edit_datestr, [], handles)
 handles		=	guidata(handles.edit_datestr);
 
