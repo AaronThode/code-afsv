@@ -1122,7 +1122,7 @@ switch	Batch_mode
                         ylabel(pms.y_label,'fontsize',14,'fontweight','bold');
                         uiwait(msgbox('Please click on screen to print out percentiles used'));
                         gtext(sprintf('Percentiles: %s',num2str(pms.percentiles)),'fontweight','bold','fontsize',18)
-                        
+                        save PercentileResults percents pms
                         
                     end  %if Nf?3
                     yes=menu('Redo formatting? (Time formatting only)','Yes','No');
@@ -5916,15 +5916,21 @@ switch filetype
             mystr='XYZ';
             Ispace=strfind(myfile,'_');
             Ispace=Ispace(2)+1;
+            x=[];
             for Iacc=1:3
                 myfile_temp=myfile;
                 myfile_temp(Ispace)=mystr(Iacc);
-                
+                try
                 [x0,t]=load_mt([mydir filesep myfile_temp],nsec,tlen);
-                if Iacc==1
+                if isempty(x)
                     x=zeros(length(x0),3);
                 end
                 x(:,Iacc)=x0;
+                catch
+                    fprintf('Channel %s of %s not available...\n',mystr(Iacc),myfile_temp);
+                    
+                end
+                
             end
             head.Nchan=3;
             
@@ -5950,7 +5956,7 @@ switch filetype
             end
             
             x=x(:,Ichan);
-            myfile(Ispace)=mystr(Ichan);
+            %myfile(Ispace)=mystr(Ichan);
             
             head.myfile=myfile;
             
