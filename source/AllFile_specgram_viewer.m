@@ -1115,14 +1115,14 @@ switch	Batch_mode
                         pms.title=sprintf('Spectral power between %i and %i Hz, averaged %6.2f sec, beginning %s', ...
                             pms.fmin(Iff),pms.fmax(Iff),sec_avg,datestr(Tabs_all(1)));
                         
-                        [~,hprint]=create_percentile_distributions(Tabs_all, squeeze(PSD_all), pms,0);
+                        [percents,hprint]=create_percentile_distributions(Tabs_all, squeeze(PSD_all), pms,0);
                         %[output(Iff,:,:),hprint]=create_percentile_distributions(Tabs, sumPSD,pms, suppress_output);
                         %datetick('x',date_tick_chc,'keeplimits','keepticks');
                         xlabel(pms.x_label,'fontsize',14,'fontweight','bold');
                         ylabel(pms.y_label,'fontsize',14,'fontweight','bold');
                         uiwait(msgbox('Please click on screen to print out percentiles used'));
                         gtext(sprintf('Percentiles: %s',num2str(pms.percentiles)),'fontweight','bold','fontsize',18)
-                        
+                        save PercentileResults percents pms
                         
                     end  %if Nf?3
                     yes=menu('Redo formatting? (Time formatting only)','Yes','No');
@@ -3417,41 +3417,52 @@ yes_eigen=0;
 while yes>1
     
     if yes<6
-        angles=input('Enter vector of angles (-90:90):');
-        if isempty(angles)
-            angles=-90:90;
+        
+        prompt1={'Vector of angles (deg) [(-90:90)]','hydrophone indicies [all]'};
+        def1={'-90:90', sprintf('[1:%i]',length(chann))};
+        
+        answer=inputdlg(prompt1,'Beamforming parameters',1,def1);
+        try
+            angles=eval(answer{1});
+            Igood_el=eval(answer{2});
+        catch
+            errdlg('Could not understand your beamforming parameters');
+            return
+            
         end
     end
     switch yes
         case 2
             beam_str='CV';
-            B=conventional_beamforming(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
+            B=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),1485);
+            figure(20);
+            imagesc(Ksout.freq,[],10*log10(abs(Ksout.EE)));xlabel('frequency (Hz)');ylabel('Eigenvalue');colorbar
+            
             Ieig=input('Pick eigenvector [return yields none]:');
             if ~isempty(Ieig)
                 V1=squeeze(Ksout.VV(:,Ieig,:));
                 for If=1:length(Ksout.freq)
                     Ksout.Kstot_eig(:,:,If)=V1(:,If)*V1(:,If)';
                 end
-                B_eig=conventional_beamforming(Ksout.Kstot_eig,angles,Ksout.freq,head.geom.rd,1495);
+                B_eig=conventional_beamforming(Ksout.Kstot_eig(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),1495);
                 yes_eigen=1;
             end
             
         case 3
             beam_str='MV';
             
-            B=MV_beamforming(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
+            B=MV_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),1495);
         case 4
             beam_str='CVnMV';
             
-            B=conventional_beamforming(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
+            B=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),1495);
             
-            B2=MV_beamforming(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
+            B2=MV_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),1495);
         case 5
             beam_str='RC';
             
-            R=derive_reflection_coefficient2(Ksout.Kstot,angles,Ksout.freq,head.geom.rd,1495);
+            R=derive_reflection_coefficient2(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),1495);
         case 6
-            %Simple Pekeris waveguide determined from DASAR cutoff frequencies
             beam_str='MFP';
             
             prompt1={'Model file..','tilt offset between top and bottom phone (m)','ranges (m)', 'depths (m):','plot intermediate images?', ...
@@ -3512,84 +3523,8 @@ while yes>1
             return
     end
     
-    figure(1);clf
-    if yes==4||yes_eigen*yes==2
-        subplot(2,1,1)
-    end
+    plot_beamforming_results;
     
-    imagesc(Ksout.freq,angles,10*log10(B'));
-    colorbar
-    cmap=colormap;
-    caxis([60 100])
-    caxis('auto');
-    set(gca,'fontweight','bold','fontsize',14);
-    xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
-    title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start),Nfft,length(head.geom.rd)));
-    set(gcf,'colormap',cmap(1:4:64,:));
-    
-    figure(2);clf
-    if yes==4||yes_eigen*yes==2
-        subplot(2,1,1)
-    end
-    
-    df=Ksout.freq(2)-Ksout.freq(1);
-    plot(angles,sum(10*log10((B)))/length(Ksout.freq),'k');
-    set(gca,'fontweight','bold','fontsize',14);
-    ylabel('Mean dB Beampower ');xlabel('Angle from horizontal (deg)');grid on;
-    title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start),Nfft,length(head.geom.rd)));
-    
-    if yes==4
-        figure(1)
-        subplot(2,1,2);
-        imagesc(Ksout.freq,angles,10*log10(B2'));
-        colorbar
-        %cmap=colormap;
-        caxis([60 100])
-        caxis('auto');
-        set(gca,'fontweight','bold','fontsize',14);
-        xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
-        title('MV processor');
-        %set(gcf,'colormap',cmap(1:4:64,:));
-        
-        figure(2);
-        subplot(2,1,2)
-        plot(angles,sum(10*log10((B2)))/length(Ksout.freq),'k');
-        set(gca,'fontweight','bold','fontsize',14);
-        ylabel('Mean Beampower (dB)');xlabel('Angle from horizontal (deg)');grid on;
-        title(sprintf('Eigenvector %i only: %s, %i FFT, %i elements',Ieig,datestr(tdate_start),Nfft,length(head.geom.rd)));
-        
-    elseif yes_eigen*yes==2
-        figure(1)
-        subplot(2,1,2)
-        imagesc(Ksout.freq,angles,10*log10(B_eig'));
-        colorbar
-        %cmap=colormap;
-        caxis([60 100])
-        caxis('auto');
-        set(gca,'fontweight','bold','fontsize',14);
-        xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
-        title(sprintf('Eigenvector %i only: %s, %i FFT, %i elements',Ieig,datestr(tdate_start),Nfft,length(head.geom.rd)));
-        %set(gcf,'colormap',cmap(1:4:64,:));
-        
-        figure(2);
-        subplot(2,1,2)
-        plot(angles,sum(10*log10((B_eig)))/length(Ksout.freq),'k');
-        set(gca,'fontweight','bold','fontsize',14);
-        ylabel('Mean dB Beampower ');xlabel('Angle from horizontal (deg)');grid on;
-       title(sprintf('Eigenvector %i only: %s, %i FFT, %i elements',Ieig,datestr(tdate_start),Nfft,length(head.geom.rd)));
-         
-    end
-    
-    yes_print=menu('Print?','Yes','No');
-    if yes_print==1
-        for III=1:2
-            figure(III)
-            orient tall
-        
-            print(gcf,'-djpeg',sprintf('Beamforming%s_%s_%ito%ideg_%4.2fres_%i.jpg', ...
-                beam_str,datestr(tdate_start,30),min(angles),max(angles),angles(2)-angles(1),III));
-        end
-    end
     
     yes=menu('Beamform?','No','Conventional','MV','Both','Reflection Coefficient Estimation','MFP');
 
@@ -3648,6 +3583,90 @@ end
 % xlabel('Frequency (Hz)');
 % ylabel('dB SNR');
 
+
+    function plot_beamforming_results
+        try
+            close(1);
+        end
+        figure(1);clf
+        if yes==4||yes_eigen*yes==2
+            subplot(2,1,1)
+        end
+        
+        imagesc(Ksout.freq,angles,10*log10(B'));
+        colorbar
+        cmap=colormap;
+        caxis([60 100])
+        caxis('auto');
+        set(gca,'fontweight','bold','fontsize',14);
+        xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
+        title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
+        set(gcf,'colormap',cmap(1:4:64,:));
+        
+        figure(2);clf
+        if yes==4||yes_eigen*yes==2
+            subplot(2,1,1)
+        end
+        
+        df=Ksout.freq(2)-Ksout.freq(1);
+        plot(angles,sum(10*log10((B)))/length(Ksout.freq),'k');
+        set(gca,'fontweight','bold','fontsize',14);
+        ylabel('Mean dB Beampower ');xlabel('Angle from horizontal (deg)');grid on;
+        title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
+        
+        if yes==4
+            figure(1)
+            subplot(2,1,2);
+            imagesc(Ksout.freq,angles,10*log10(abs(B2)'));
+            colorbar
+            %cmap=colormap;
+            caxis([60 100])
+            caxis('auto');
+            set(gca,'fontweight','bold','fontsize',14);
+            xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
+            title('MV processor');
+            %set(gcf,'colormap',cmap(1:4:64,:));
+            
+            figure(2);
+            subplot(2,1,2)
+            plot(angles,sum(10*log10((B2)))/length(Ksout.freq),'k');
+            set(gca,'fontweight','bold','fontsize',14);
+            ylabel('Mean Beampower (dB)');xlabel('Angle from horizontal (deg)');grid on;
+            title(sprintf(' %s, %i FFT, %i elements',datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
+            
+        elseif yes_eigen*yes==2
+            figure(1)
+            subplot(2,1,2)
+            imagesc(Ksout.freq,angles,10*log10(B_eig'));
+            colorbar
+            %cmap=colormap;
+            caxis([60 100])
+            caxis('auto');
+            set(gca,'fontweight','bold','fontsize',14);
+            xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
+            title(sprintf('Eigenvector %i only: %s, %i FFT, %i elements',Ieig,datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
+            %set(gcf,'colormap',cmap(1:4:64,:));
+            
+            figure(2);
+            subplot(2,1,2)
+            plot(angles,sum(10*log10((B_eig)))/length(Ksout.freq),'k');
+            set(gca,'fontweight','bold','fontsize',14);
+            ylabel('Mean dB Beampower ');xlabel('Angle from horizontal (deg)');grid on;
+            title(sprintf('Eigenvector %i only: %s, %i FFT, %i elements',Ieig,datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
+            
+        end
+        
+        yes_print=menu('Print?','Yes','No');
+        if yes_print==1
+            for III=1:2
+                figure(III)
+                orient tall
+                
+                print(gcf,'-djpeg',sprintf('Beamforming%s_%s_%ito%ideg_%4.2fres_%i.jpg', ...
+                    beam_str,datestr(tdate_start,30),min(angles),max(angles),angles(2)-angles(1),III));
+            end
+        end
+    end %function plot_beamforming_results
 end
 
 % --- Executes on button press in pushbutton_Mode.
@@ -5897,15 +5916,21 @@ switch filetype
             mystr='XYZ';
             Ispace=strfind(myfile,'_');
             Ispace=Ispace(2)+1;
+            x=[];
             for Iacc=1:3
                 myfile_temp=myfile;
                 myfile_temp(Ispace)=mystr(Iacc);
-                
+                try
                 [x0,t]=load_mt([mydir filesep myfile_temp],nsec,tlen);
-                if Iacc==1
+                if isempty(x)
                     x=zeros(length(x0),3);
                 end
                 x(:,Iacc)=x0;
+                catch
+                    fprintf('Channel %s of %s not available...\n',mystr(Iacc),myfile_temp);
+                    
+                end
+                
             end
             head.Nchan=3;
             
@@ -5931,7 +5956,7 @@ switch filetype
             end
             
             x=x(:,Ichan);
-            myfile(Ispace)=mystr(Ichan);
+            %myfile(Ispace)=mystr(Ichan);
             
             head.myfile=myfile;
             
