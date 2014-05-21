@@ -9972,24 +9972,11 @@ end
 end
 
 
-function out_param=merge_image_params(in_param,Batch_vars,Batch_desc,Batch_type)
-out_param=in_param;
-[Batch_vars, Batch_names]	=	input_batchparams(Batch_vars, Batch_desc, Batch_type,1);
-for I=1:length(Batch_desc)
-    %Isplit=strfind(Batch_names{I},'SUBFIELD')-2;
-    %if ~isempty(Isplit)
-    %    name1=Batch_names{I}(1:min(Isplit));
-    %    name2=Batch_names{I}((min(Isplit)+2+length('SUBFIELD')):end);
-    %    out_param.(name1).(name2)=Batch_vars.(Batch_names{I});
-   % else
-        out_param.(Batch_names{I})=Batch_vars.(Batch_names{I});
-   % end
-end
-end
+
     
 function [out_param]=load_image_parameters(input_param,batch_chc,label_str)
 
-chc_list={'Equalization','Ridge Extraction','Morphological Processing','All'};
+chc_list={'Defaults','Equalization','Filtering','Ridge Extraction','Morphological Processing','All'};
 
 %Check if input parm fields present, otherwise assign
 out_param=input_param;
@@ -9999,13 +9986,14 @@ if nargin==1
     return
 end
 
-do_all=strcmp(batch_chc,chc_list{end});
+do_all=strcmp(batch_chc,chc_list{end})||strcmp(batch_chc,'Defaults');
+load_defaults=strcmp(batch_chc,'Defaults');
 
 %%%%%%%%%%%%%%%%%%%%
 %%%%Equalization%%%%
 %%%%%%%%%%%%%%%%%%%%
 
-if strcmp(chc_list{1},batch_chc)||do_all
+if strcmp(chc_list{2},batch_chc)||do_all
     
     Ip=0;
     
@@ -10015,7 +10003,7 @@ if strcmp(chc_list{1},batch_chc)||do_all
     Batch_vars.eq_time	=	'1';            Ip=Ip+1;Batch_desc{Ip}	=	'Time (sec) used to create background  noise estimate. Used if ''equalization'' is Inf';
     Batch_vars.equalization = '[]';        Ip=Ip+1;Batch_desc{Ip}	=	'Precomputed noise equalization spectrum; first column: Frequecies in Hz; Secon column: PSD (dB) value of noise';
     
-    out_param.morph=merge_image_params(out_param.morph,Batch_vars,Batch_desc,Batch_type);
+    out_param.morph=merge_image_params(out_param.morph,Batch_vars,Batch_desc,Batch_type,load_defaults);
     if isempty(out_param.morph.equalization)
        out_param.morph= rmfield(out_param.morph,'equalization');
     end
@@ -10025,7 +10013,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%Image Filtering
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if strcmp(chc_list{2},batch_chc)||do_all
+if strcmp(chc_list{3},batch_chc)||do_all
     
     Ip=0;
     
@@ -10033,7 +10021,7 @@ if strcmp(chc_list{2},batch_chc)||do_all
     
     Batch_vars.on='0';Ip=Ip+1;Batch_desc{Ip}	=	'0: none, 1: Conduct median filtering';
     Batch_vars.size='[0.2 20]';  Ip=Ip+1;Batch_desc{Ip}	=	'Median filter size in units of [sec Hz] for spectrogram';%
-    out_param.median=merge_image_params(out_param.median,Batch_vars,Batch_desc,Batch_type);
+    out_param.median=merge_image_params(out_param.median,Batch_vars,Batch_desc,Batch_type,load_defaults);
     Batch_type=[];Batch_vars=[];Batch_desc=[];
     
     %parameters for gaussian filtering..
@@ -10044,7 +10032,7 @@ if strcmp(chc_list{2},batch_chc)||do_all
     Batch_vars.on='0';  Ip=Ip+1;Batch_desc{Ip}	=	'0: none, 1:asymetric gaussian, 2: symmetric gaussian';%
     Batch_vars.size='[0.2 0.2]';  Ip=Ip+1;Batch_desc{Ip}	=	'Gaussian filter size in units of [sec Hz] for spectrogram';%
     Batch_vars.sigma='0.5';  Ip=Ip+1;Batch_desc{Ip}	=	'Sigma in units of pixel size';%
-    out_param.filter=merge_image_params(out_param.filter,Batch_vars,Batch_desc,Batch_type);
+    out_param.filter=merge_image_params(out_param.filter,Batch_vars,Batch_desc,Batch_type,load_defaults);
     Batch_type=[];Batch_vars=[];Batch_desc=[];
 end
 
@@ -10052,7 +10040,7 @@ end
 %%%Ridge Extraction
 %%%%%%%%%%%%%%%%%%%%%%%
 
-if strcmp(chc_list{3},batch_chc)||do_all
+if strcmp(chc_list{4},batch_chc)||do_all
     
     Ip=0;
     Batch_type	=	[label_str ' Ridge extraction parameters'];
@@ -10066,7 +10054,7 @@ if strcmp(chc_list{3},batch_chc)||do_all
     Batch_vars.dynamic_range	=	'3.11';	Ip=Ip+1;Batch_desc{Ip}	=	'%dB below ridge maximum a pixel is allowed to have';
     Batch_vars.dynamic_range2	=	'7';	Ip=Ip+1;Batch_desc{Ip}	=	'dB below maximum a pixel is allowed to have, horizontal (regional) maximum';
     
-    out_param.morph=merge_image_params(out_param.morph,Batch_vars,Batch_desc,Batch_type);
+    out_param.morph=merge_image_params(out_param.morph,Batch_vars,Batch_desc,Batch_type,load_defaults);
     
     out_param.morph.local_bandwidth=parse_min_max(out_param.morph.local_bandwidth);
     out_param.morph.time_band_product=parse_min_max(out_param.morph.time_band_product);
@@ -10080,7 +10068,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-if strcmp(chc_list{4},batch_chc)||do_all
+if strcmp(chc_list{5},batch_chc)||do_all
     Ip=0;
     Batch_type	=	[label_str ' Morphological processing parameters'];
     
@@ -10096,7 +10084,7 @@ if strcmp(chc_list{4},batch_chc)||do_all
     Batch_vars.Centroid_freq='[0 500]';Ip=Ip+1;Batch_desc{Ip}	=	'minimum and maximum  of centroid frequency (Hz)';
     Batch_vars.Eccentricity='[0 1]';Ip=Ip+1;Batch_desc{Ip}	=	'minimum and maximum  of segment eccentricity ';
     
-    out_param.morph=merge_image_params(out_param.morph,Batch_vars,Batch_desc,Batch_type);
+    out_param.morph=merge_image_params(out_param.morph,Batch_vars,Batch_desc,Batch_type,load_defaults);
     Batch_type=[];Batch_vars=[];Batch_desc=[];
     
     out_param.morph.duration=parse_min_max(out_param.morph.duration);
@@ -10114,7 +10102,7 @@ if strcmp(chc_list{4},batch_chc)||do_all
     Batch_vars.gap_f='20';Ip=Ip+1;Batch_desc{Ip}	=	'Background trace: vertical dilation object size in Hz';
     Batch_vars.gap_t='0.1';Ip=Ip+1;Batch_desc{Ip}	=	'Background trace: horizontal dilation object size in sec';
     
-    out_param.morph.background=merge_image_params(out_param.morph.background,Batch_vars,Batch_desc,Batch_type);
+    out_param.morph.background=merge_image_params(out_param.morph.background,Batch_vars,Batch_desc,Batch_type,load_defaults);
     Batch_type=[];Batch_vars=[];Batch_desc=[];
     
     Ip=0;
@@ -10125,7 +10113,7 @@ if strcmp(chc_list{4},batch_chc)||do_all
     Batch_vars.gap_t='0.1';Ip=Ip+1;Batch_desc{Ip}	=	'maximum time separation between segments allowed for sequential merger (sec)';
     Batch_vars.gap_f='20'; Ip=Ip+1;Batch_desc{Ip}	=	'maximum frequency separation between segments allowed for sequential merger (Hz)';
     
-    out_param.merge=merge_image_params(out_param.merge,Batch_vars,Batch_desc,Batch_type);
+    out_param.merge=merge_image_params(out_param.merge,Batch_vars,Batch_desc,Batch_type,load_defaults);
     Batch_type=[];Batch_vars=[];Batch_desc=[];
     
     
@@ -10134,6 +10122,33 @@ end
 
 out_param.morph.want_contour=[];
 
+    function outt_param=merge_image_params(in_param,Batch_vars,Batch_desc,Batch_type,load_default)
+        outt_param=in_param;
+        
+        if nargin<5
+            load_default=0;
+        end
+        
+        if load_default==0
+            [Batch_vars, Batch_names]	=	input_batchparams(Batch_vars, Batch_desc, Batch_type,1);
+            for I=1:length(Batch_desc)
+                outt_param.(Batch_names{I})=Batch_vars.(Batch_names{I});
+            end
+        else
+            Batch_names=fieldnames(Batch_vars);
+            
+            for I=1:length(Batch_names)
+                try
+                    outt_param.(Batch_names{I})=eval(Batch_vars.(Batch_names{I}));
+                catch
+                    outt_param.(Batch_names{I})=(Batch_vars.(Batch_names{I}));
+                    
+                end
+            end
+            
+        end
+        
+    end
 
     function x=parse_min_max(x)
         warning('off');
