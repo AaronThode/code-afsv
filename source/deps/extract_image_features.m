@@ -36,7 +36,6 @@
 %           local_bandwidth: [1x1 struct]
 %           MaxFreq: 500  %Maximum frequency to process image
 %           MinFreq: 0    %Minimum frequency to process image
-%           percent_safety_trim: 0.7500
 %           robust_fmax: [1x1 struct]
 %           robust_fmin: [1x1 struct]
 %           threshold_chc: 'local_peaks'
@@ -1500,7 +1499,6 @@ for I=1:numObjects
         keyboard;
     end
     %[sorted_bandwidth,Ipass]=sort(local_bandwidth);
-    %Ipass=Ipass(1:round(param.morph.percent_safety_trim*length(Ipass)));
     %local_bandwidth=median(local_bandwidth(Ipass));
     
     feature(I).comment='';
