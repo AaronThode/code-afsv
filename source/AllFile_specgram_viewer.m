@@ -1001,6 +1001,7 @@ switch	Batch_mode
         tabs_loop_begin=tabs_start;
         PSD_all=[];Tabs_all=[];
         Iplot=1;
+        Nfigs=length(Icurrent_file:Ifinal_file);
         for I=Icurrent_file:Ifinal_file
             fname=Other_FileNames(I).name;
             fprintf('Processing %s...\n',fname);
@@ -1016,6 +1017,39 @@ switch	Batch_mode
                         [hprint(Iplot),save_tag{Iplot}]=image_PSD(min(Tabs_all), max(Tabs_all));
                         PSD_all=[];Tabs_all=[];
                         Iplot=Iplot+1;
+                        if Nfigs>10
+                            save_str=sprintf('PSD_%s', save_tag{Iplot});
+                            if ~exist('pms'),pms=[];end
+                            save(save_str,'pms','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
+                            %uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
+                            
+                            orient landscape
+                            print(hprint(Iplot),'-djpeg',save_str);
+                            
+                            %Plot zooms if desired
+                            figure(hprint(Iplot));
+                            Tabs_limm=get(gca,'xlim');
+                            Tabs_frame=unique([Tabs_limm(1):plot_interval:Tabs_limm(2) Tabs_limm(2)]);
+                            Tabs_frame(isnan(Tabs_frame))=[];
+                            
+                            
+                            for JJ=1:(length(Tabs_frame)-1)
+                                try
+                                    xlim([Tabs_frame(JJ) Tabs_frame(JJ+1)]);
+                                    datetick('x',date_tick_chc,'keeplimits');
+                                    save_str=sprintf('PSDzoom_%s_%s', datestr(Tabs_frame(JJ),30), datestr(Tabs_frame(JJ+1),30));
+                                    titlestr=sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f', ...
+                                        datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
+                                    title(titlestr);
+                                    print(hprint(Iplot),'-djpeg',save_str);
+                                catch
+                                    disp('Failure to plot Tabs_frame: plot_interval is likely bad');
+                                end
+                                
+                            end
+                            close;
+                            
+                        end  %if Nfigs>20
                     end
                 case 'Plot percentiles'
                     
@@ -1181,9 +1215,11 @@ switch	Batch_mode
                         figure(hprint(II));
                         Tabs_limm=get(gca,'xlim');
                         Tabs_frame=unique([Tabs_limm(1):plot_interval:Tabs_limm(2) Tabs_limm(2)]);
+                        Tabs_frame(isnan(Tabs_frame))=[];
                         
                         
                         for JJ=1:(length(Tabs_frame)-1)
+                            try
                             xlim([Tabs_frame(JJ) Tabs_frame(JJ+1)]);
                             datetick('x',date_tick_chc,'keeplimits');
                             save_str=sprintf('PSDzoom_%s_%s', datestr(Tabs_frame(JJ),30), datestr(Tabs_frame(JJ+1),30));
@@ -1191,6 +1227,9 @@ switch	Batch_mode
                                 datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
                             title(titlestr);
                             print(hprint(II),'-djpeg',save_str);
+                            catch
+                               disp('Failure to plot Tabs_frame: plot_interval is likely bad'); 
+                            end
                             
                         end
                         
