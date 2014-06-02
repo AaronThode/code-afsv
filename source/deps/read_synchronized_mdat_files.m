@@ -16,6 +16,7 @@ function [x,fparms]=read_synchronized_mdat_files(fname_in,tdate_start,tlen)
         
         if isempty(fparms.synch.file)
             x=xbot;
+            cd(thisdir);
             return
         end
         

@@ -805,6 +805,7 @@ else
     param.sec_avg=param.Nfft/param.Fs;  %Make a spectrogram--no averaging
 end
 
+cd(param.dir_out);
 write_Java_script('PSD',param);
 ! ./masterPSD.scr > outt.txt &
 return
@@ -1491,6 +1492,7 @@ switch	Batch_mode
         param.f_high=1000*str2num(get(handles.edit_fmax,'String'));
         param.sec_avg=param.Nfft/param.Fs;
         
+        cd(param.dir_out);
         write_Java_script('PSD',param);
         ! ./masterPSD.scr > outt.txt &
         return
@@ -2822,7 +2824,7 @@ chan=get(handles.edit_chan,'String');
 save_name=sprintf('soundsamp%s_%s',handles.mydir((Islash(end)+1):end),datestr(tdate_start,30));
 disp(['Saving ...' save_name]);
 
-save_path	=	fullfile(pwd, save_name);  %AARON: save to local directory, not server
+save_path	=	fullfile(handles.outputdir, save_name);  %AARON: save to local directory, not server
 
 try
     if size(x,2)>size(x,1)
@@ -2955,7 +2957,7 @@ if strcmpi(handles.filetype,'MDAT')
         end
         
         return
-    end
+    end  %if mychc==2
 end  %MDAT
 
 handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
@@ -2982,7 +2984,7 @@ tlen=handles.tlen;
 chan=get(handles.edit_chan,'String');
 Idot=strfind(handles.myfile,'.')-1;
 save_name=sprintf('soundsamp_%s_%s_%s',handles.myfile(1:Idot),datestr(tdate_start,30),chan);
-save_path	=	fullfile(pwd, save_name);
+save_path	=	fullfile(handles.outputdir, save_name);
 disp(['Printing %s ...' save_name]);
 
 orient landscape
