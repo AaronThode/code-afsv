@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="AllFile_specgram_viewer_Mac" location="/Users/jit/Work/matlab/AllFile_specgram_viewer" file="/Users/jit/Work/matlab/AllFile_specgram_viewer/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.app" build-checksum="4118370654" preferred-package-location="/Users/jit/Work/matlab/AllFile_specgram_viewer/AllFile_specgram_viewer_Mac/for_redistribution">
+  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="AllFile_specgram_viewer_Mac" location="/Users/thode/repos/code-afsv" file="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.app" build-checksum="3162547188" preferred-package-location="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution">
     <param.appname>AllFile_specgram_viewer_Mac</param.appname>
     <param.authnamewatermark>Aaron Thode</param.authnamewatermark>
     <param.email>athode@ucsd.edu</param.email>
@@ -48,9 +48,9 @@
     <param.net.tsa.namespace>AllFile_specgram_viewer_Mac</param.net.tsa.namespace>
     <param.net.tsa.superclass />
     <param.net.tsa.metadata />
-    <param.net.tsa.metadata.assembly>/Users/jit</param.net.tsa.metadata.assembly>
-    <param.create.log>false</param.create.log>
-    <param.log.file />
+    <param.net.tsa.metadata.assembly>/Users/thode/Documents/MATLAB</param.net.tsa.metadata.assembly>
+    <param.create.log>true</param.create.log>
+    <param.log.file>test</param.log.file>
     <unset>
       <param.summary />
       <param.description />
@@ -84,8 +84,6 @@
       <param.net.tsa.superclass />
       <param.net.tsa.metadata />
       <param.net.tsa.metadata.assembly />
-      <param.create.log />
-      <param.log.file />
     </unset>
     <fileset.main>
       <file>${PROJECT_ROOT}/source/AllFile_specgram_viewer.m</file>
@@ -95,7 +93,6 @@
       <file>${PROJECT_ROOT}/source/AllFile_specgram_viewer.fig</file>
       <file>${PROJECT_ROOT}/source/AllFile_specgram_viewer.m</file>
       <file>${PROJECT_ROOT}/source/JAVA_instructions.doc</file>
-      <file>${PROJECT_ROOT}/source/PreProcessV1.jar</file>
       <file>${PROJECT_ROOT}/source/WORKLOG_vesselnoise.txt</file>
       <file>${PROJECT_ROOT}/source/deps/104703.JPG</file>
       <file>${PROJECT_ROOT}/source/deps/Bulk_Processing_ShippingIndex.m</file>
@@ -153,18 +150,17 @@
     </fileset.resources>
     <fileset.package>
       <file>${PROJECT_ROOT}/change.log</file>
+      <file>${PROJECT_ROOT}/source/PreProcessV1.jar</file>
     </fileset.package>
     <build-deliverables>
-      <file name="readme.txt" location="${PROJECT_ROOT}/AllFile_specgram_viewer_Mac/for_testing" optional="true">/Users/jit/Work/matlab/AllFile_specgram_viewer/AllFile_specgram_viewer_Mac/for_testing/readme.txt</file>
-      <file name="AllFile_specgram_viewer_Mac.app" location="${PROJECT_ROOT}/AllFile_specgram_viewer_Mac/for_testing" optional="false">/Users/jit/Work/matlab/AllFile_specgram_viewer/AllFile_specgram_viewer_Mac/for_testing/AllFile_specgram_viewer_Mac.app</file>
-      <file name="run_AllFile_specgram_viewer_Mac.sh" location="${PROJECT_ROOT}/AllFile_specgram_viewer_Mac/for_testing" optional="false">/Users/jit/Work/matlab/AllFile_specgram_viewer/AllFile_specgram_viewer_Mac/for_testing/run_AllFile_specgram_viewer_Mac.sh</file>
+      <file name="run_AllFile_specgram_viewer_Mac.sh" location="${PROJECT_ROOT}/AllFile_specgram_viewer_Mac/for_testing" optional="false">/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_testing/run_AllFile_specgram_viewer_Mac.sh</file>
+      <file name="readme.txt" location="${PROJECT_ROOT}/AllFile_specgram_viewer_Mac/for_testing" optional="true">/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_testing/readme.txt</file>
+      <file name="AllFile_specgram_viewer_Mac.app" location="${PROJECT_ROOT}/AllFile_specgram_viewer_Mac/for_testing" optional="false">/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_testing/AllFile_specgram_viewer_Mac.app</file>
     </build-deliverables>
     <workflow />
     <matlab>
       <root>/Applications/MATLAB_R2013b.app</root>
-      <toolboxes>
-        <toolbox name="fixedpoint" />
-      </toolboxes>
+      <toolboxes />
     </matlab>
     <platform>
       <unix>true</unix>
@@ -175,7 +171,7 @@
       <vista>false</vista>
       <linux>false</linux>
       <solaris>false</solaris>
-      <osver>10.9.2</osver>
+      <osver>10.9.3</osver>
       <os32>false</os32>
       <os64>true</os64>
       <arch>maci64</arch>
