@@ -939,10 +939,10 @@ switch	Batch_mode
         
     case 'Load Bulk Processing'
         close_all_figures;
-        Batch_vars_bulkload.start_time	=	'folder start';
+        Batch_vars_bulkload.start_time	=	'select';
         
         Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", "file start" for current file , "select" to choose file from list, "folder start" for first file in folder)';
-        Batch_vars_bulkload.end_time	=	'folder end';
+        Batch_vars_bulkload.end_time	=	'select';
         Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "select" to choose file from list, "folder end" to import through last file)';
         Batch_vars_bulkload.time_window      =   'file';
         Batch_desc{3} =  'hours to display in a single window; "all" means put in a single file, "file" displays one file per figure';
@@ -1025,8 +1025,10 @@ switch	Batch_mode
                         continue
                     end
                     Iplot=Iplot+1;
-                    
-                    [hprint(Iplot),save_tag{Iplot}]=image_PSD(min(Tabs_all), max(Tabs_all));
+                    [~,local_fname{Iplot},~]=fileparts(fname);
+                   
+                    [hprint(Iplot),save_tag{Iplot}]=image_PSD(min(Tabs_all), max(Tabs_all),local_fname{Iplot});
+                               
                     save_str=sprintf('PSD_%s', save_tag{Iplot});
                     if ~exist('pms'),pms=[];end
                     save(save_str,'pms','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
@@ -1036,10 +1038,11 @@ switch	Batch_mode
                     if Nfigs>Nfigs_max
                         
                         orient landscape
+                        figure(hprint(Iplot));
+                        
                         print(hprint(Iplot),'-djpeg',save_str);
                         
                         %Plot zooms if desired
-                        figure(hprint(Iplot));
                         Tabs_limm=get(gca,'xlim');
                         Tabs_frame=unique([Tabs_limm(1):plot_interval:Tabs_limm(2) Tabs_limm(2)]);
                         Tabs_frame(isnan(Tabs_frame))=[];
@@ -1050,8 +1053,9 @@ switch	Batch_mode
                                 xlim([Tabs_frame(JJ) Tabs_frame(JJ+1)]);
                                 datetick('x',date_tick_chc,'keeplimits');
                                 save_str_zoom=sprintf('PSDzoom_%s_%s', datestr(Tabs_frame(JJ),30), datestr(Tabs_frame(JJ+1),30));
-                                titlestr=sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f', ...
-                                    datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
+                                
+                                titlestr=sprintf('%s\nStart time: %s, End Time: %s, seconds averaged: %6.2f', ...
+                                    local_fname{Iplot},datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
                                 title(titlestr);
                                 print(hprint(Iplot),'-djpeg',save_str_zoom);
                             catch
@@ -1132,8 +1136,9 @@ switch	Batch_mode
                             xlim([Tabs_frame(JJ) Tabs_frame(JJ+1)]);
                             datetick('x',date_tick_chc,'keeplimits');
                             save_str_zoom=sprintf('PSDzoom_%s_%s', datestr(Tabs_frame(JJ),30), datestr(Tabs_frame(JJ+1),30));
-                            titlestr=sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f', ...
-                                datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
+                            %[~,local_fname,~]=fileparts(fname);
+                            titlestr=sprintf('%s\nStart time: %s, End Time: %s, seconds averaged: %6.2f', ...
+                                local_fname{II},datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
                             title(titlestr);
                             print(hprint(II),'-djpeg',save_str_zoom);
                             catch
@@ -1284,7 +1289,7 @@ switch	Batch_mode
 end %switch Batch Mode
 
 
-    function [hprint,save_tag]=image_PSD(twin1,twin2)
+    function [hprint,save_tag]=image_PSD(twin1,twin2,file_name)
         
         if isempty(Tabs_all)
             hprint=-1;save_tag=-1;
@@ -1313,7 +1318,8 @@ end %switch Batch Mode
         end
         datetick('x',date_tick_chc,'keeplimits');
         %sec_avg=params.Nsamps*params.dn/params.Fs;
-        titlestr=(sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f',datestr(twin1,30),datestr(twin2,30),sec_avg));
+        %[~,local_fname,~]=fileparts(fname);
+        titlestr=(sprintf('%s\n Start time: %s, End Time: %s, seconds averaged: %6.2f',file_name,datestr(twin1,30),datestr(twin2,30),sec_avg));
         title(titlestr);
         save_tag=[datestr(twin1,30) '_' datestr(twin2,30)];
     end
@@ -1550,9 +1556,9 @@ switch	Batch_mode
     case 'Load Bulk Processing'
         
         
-        Batch_vars_bulkload.start_time	=	'folder start';
+        Batch_vars_bulkload.start_time	=	'select';
         Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", "file start" for current file , "select" to choose file from list, "folder start" for first file in folder)';
-        Batch_vars_bulkload.end_time	=	'folder end';
+        Batch_vars_bulkload.end_time	=	'select';
         Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "folder end" to import through end of folder)';
         
         
@@ -1771,17 +1777,34 @@ Iscore=min(strfind(FileName,'_chan'));
 token2=FileName((Iscore+1):end);  %PSD files having the same input parameters..
 
 Other_FileNames=dir(['*_' token2]);
+
+%Sort by numerical order, not ASCII order.
+
+
 if isempty(Other_FileNames)
     uiwait(errordlg('load_PSD_Bulk_Run cannot find matches to file you selected:','Files not found!'));
     return;
 end
 
-
+tabs_select_start=[];
+tabs_select_end=[];
+tabs_selectEnd_start=[];
+tabs_selectEnd_end=[];
 for II=1:length(Other_FileNames)
     [~,~,~,~,params]=read_Java_PSD(Other_FileNames(II).name,0,Inf,1); %Read header only
     tabs_file_start(II)=params.tstart_file;
     tabs_file_end(II)=params.tend_file;
-    if strcmp(Other_FileNames(II).name,FileName)
+   
+    
+end
+
+%Sort by start time
+[tabs_file_start,Isort]=sort(tabs_file_start);
+tabs_file_end=tabs_file_end(Isort);
+Other_FileNames=Other_FileNames(Isort);
+
+for II=1:length(Other_FileNames)
+     if strcmp(Other_FileNames(II).name,FileName)
         tabs_select_start=tabs_file_start(II);
         tabs_select_end=tabs_file_end(II);
         Iselect_file=II;
@@ -1790,10 +1813,10 @@ for II=1:length(Other_FileNames)
         tabs_selectEnd_end=tabs_file_end(II);
         IselectEnd_file=II;
         
-        
     end
     
 end
+
 
 tabs_folder_start=tabs_file_start(1);  %datenumber of start of data in folder (assuming all filenames have chronological order)
 tabs_folder_end=tabs_file_end(end);  %datenumber of end of data in folder (assuming all filenames have chronological order)
@@ -1806,11 +1829,15 @@ tabs_folder_end=tabs_file_end(end);  %datenumber of end of data in folder (assum
 % tabs_start=params.tstart_file;  %datenumber of start of data in focal file (assuming all filenames have chronological order)
 
 
-
 %%Translate start time.  Need to define tabs_start and Icurrent_file
 switch lower(Batch_vars_bulkload.start_time)
     case 'select'
-        tabs_start=tabs_select_start;
+        if ~isempty(tabs_select_start)
+            tabs_start=tabs_select_start;
+        else
+            uiwait(msgbox('Start file not selected'));
+            return
+        end
         %Reset other variables
         Icurrent_file=Iselect_file;
     case 'here'  %Use edit window
@@ -1854,10 +1881,15 @@ end
 %%Translate end time;  Need to define tabs_end and Ifinal_file
 switch lower(Batch_vars_bulkload.end_time)
     case 'select'
-        tabs_end=tabs_selectEnd_end;
-        %Reset other variables
+        if ~isempty(tabs_selectEnd_end)
+            tabs_end=tabs_selectEnd_end;
+            
+        else
+            uiwait(msgbox('End file not selected'));
+            return
+        end
         Ifinal_file=IselectEnd_file;
-       
+        
     case 'here' %Use edit window
         tabs_end=datenum(get(handles.edit_datestr,'String'))+datenum(0,0,0,0,0,str2num(get(handles.edit_winlen,'string')));
         Ifinal_file=Icurrent_file;  %Load one file only
@@ -5500,6 +5532,7 @@ if strcmpi(handles.filetype,'psd')
     set(handles.popupmenu_Nfft,'Value',Value);
     
     ovlap=100*(1-hdr.dn/hdr.Nfft);
+    Nfft=hdr.Nfft;
     contents=get(handles.popupmenu_ovlap,'String');
     Value=find(strcmp(contents,int2str(ovlap))>0);
     set(handles.popupmenu_ovlap,'Value',Value);
@@ -5551,7 +5584,7 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
         figure;
     end
     
-    if length(x(:,1))<Nfft
+    if length(x(:,1))<Nfft/2
         return
     end
     if ~(strcmp(handles.filetype,'PSD'))

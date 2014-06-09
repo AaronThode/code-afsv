@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="AllFile_specgram_viewer_Mac" location="/Users/thode/repos/code-afsv" file="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.app" build-checksum="3162547188" preferred-package-location="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution">
+  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="AllFile_specgram_viewer_Mac" location="/Users/thode/repos/code-afsv" file="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.app" build-checksum="1027655040" preferred-package-location="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution">
     <param.appname>AllFile_specgram_viewer_Mac</param.appname>
     <param.authnamewatermark>Aaron Thode</param.authnamewatermark>
     <param.email>athode@ucsd.edu</param.email>
@@ -94,12 +94,11 @@
       <file>${PROJECT_ROOT}/source/AllFile_specgram_viewer.m</file>
       <file>${PROJECT_ROOT}/source/JAVA_instructions.doc</file>
       <file>${PROJECT_ROOT}/source/WORKLOG_vesselnoise.txt</file>
-      <file>${PROJECT_ROOT}/source/deps/104703.JPG</file>
       <file>${PROJECT_ROOT}/source/deps/Bulk_Processing_ShippingIndex.m</file>
       <file>${PROJECT_ROOT}/source/deps/Energy_detector_review.m</file>
       <file>${PROJECT_ROOT}/source/deps/SplashScreen.m</file>
-      <file>${PROJECT_ROOT}/source/deps/boxPlot.m</file>
-      <file>${PROJECT_ROOT}/source/deps/boxPlot_percentile.m</file>
+      <file>${PROJECT_ROOT}/source/deps/boxplot.m</file>
+      <file>${PROJECT_ROOT}/source/deps/boxplot_percentile.m</file>
       <file>${PROJECT_ROOT}/source/deps/brickwall_bpf.m</file>
       <file>${PROJECT_ROOT}/source/deps/brickwall_hpf.m</file>
       <file>${PROJECT_ROOT}/source/deps/brickwall_lpf.m</file>
@@ -150,6 +149,9 @@
     </fileset.resources>
     <fileset.package>
       <file>${PROJECT_ROOT}/change.log</file>
+      <file>${PROJECT_ROOT}/compiled/run_Ulysses_Mac.sh</file>
+      <file>${PROJECT_ROOT}/compiled/start_Ulysses_Mac.sh</file>
+      <file>${PROJECT_ROOT}/source/104703.JPG</file>
       <file>${PROJECT_ROOT}/source/PreProcessV1.jar</file>
     </fileset.package>
     <build-deliverables>

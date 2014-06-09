@@ -17,18 +17,16 @@ else
   DYLD_LIBRARY_PATH=.:${MCRROOT}/runtime/maci64 ;
   DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${MCRROOT}/bin/maci64 ;
   DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${MCRROOT}/sys/os/maci64;
-  XAPPLRESDIR=${MCRROOT}/X11/app-defaults ;
   export DYLD_LIBRARY_PATH;
-  export XAPPLRESDIR;
   echo DYLD_LIBRARY_PATH is ${DYLD_LIBRARY_PATH};
   shift 1
   args=
   while [ $# -gt 0 ]; do
       token=$1
-      args="${args} ${token}" 
+      args="${args} \"${token}\"" 
       shift
   done
-  "${exe_dir}"/AllFile_specgram_viewer_Mac.app/Contents/MacOS/AllFile_specgram_viewer_Mac $args
+  eval "\"${exe_dir}/AllFile_specgram_viewer_Mac.app/Contents/MacOS/AllFile_specgram_viewer_Mac\"" $args
 fi
 exit
 
