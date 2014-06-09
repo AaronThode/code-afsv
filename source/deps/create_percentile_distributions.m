@@ -3,7 +3,7 @@ function [output,hprint]=create_percentile_distributions(xdata,ydata,param, supp
 %function hprint=percentile_boxplots(xdata,x_inc_boxplot,ydata,ylimits,xlabel_inc,percentiles,label_style)
 
 % xdata: vector of data associated with x-axis.  Can be datenumbers
-% ydata: data associated with x-axis data
+% ydata: data associated with x-axis data, rows are for separate plots
 %  param:  structure of variables including
 %     x_inc: interval to compute boxplot over, same units as
 %       xdata
@@ -102,9 +102,14 @@ if suppress_output==0
        title(param.title,'fontsize',14,'fontweight','bold'); 
     end
     
+    %xlabel(pms.x_label,'fontsize',14,'fontweight','bold');
+    %ylabel(pms.y_label,'fontsize',14,'fontweight','bold');
+    
+    
+    
 end
 
-data=boxPlot_percentile(data_fin,percentiles,1);
+data=boxplot_percentile(data_fin,percentiles,1);
 if isempty(data)
     output.data=[];
     output.x=[];
@@ -117,7 +122,7 @@ output.percentiles=percentiles;
 %ylim(ylimits);
 
     function make_boxplot(data_fin,tbin,x_inc_boxplot,xlabel_inc,percentiles,label_style,ylimits)
-        test=boxPlot_percentile(data_fin,percentiles,0);
+        test=boxplot_percentile(data_fin,percentiles,0);
         
         if isempty(test)
             return

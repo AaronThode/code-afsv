@@ -82,7 +82,6 @@ fseek(fid,0,-1);  %rewind the file
 %%If beamformed data, advance past header file
 status=fseek(fid,byte_offset_header,-1);
 
-
 %%Error in function below, dT should be actually  dn*(Nsamps-1) only
 %%dT=(Nfft+(dn-1)*Nsamps)/Fs;  %Time increment for PSD function
 

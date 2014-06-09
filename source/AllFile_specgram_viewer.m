@@ -938,6 +938,7 @@ switch	Batch_mode
         
         
     case 'Load Bulk Processing'
+        close_all_figures;
         Batch_vars_bulkload.start_time	=	'folder start';
         
         Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", "file start" for current file , "select" to choose file from list, "folder start" for first file in folder)';
@@ -1000,13 +1001,18 @@ switch	Batch_mode
         
         %Start processing
         tabs_loop_begin=tabs_start;
+        Nfigs_max=10;
         PSD_all=[];Tabs_all=[];
-        Iplot=1;
+        Iplot=0;
         Nfigs=length(Icurrent_file:Ifinal_file);
         for I=Icurrent_file:Ifinal_file
             fname=Other_FileNames(I).name;
             fprintf('Processing %s...\n',fname);
             [PSD,F,Tsec,Tabs,params]=read_Java_PSD(fname,tabs_loop_begin,Inf);  %Read an entire file into memory
+            
+            %If we load more than one  file, start at the beginning
+            tabs_loop_begin=0;
+            
             sec_avg=(params.Nfft+params.dn*params.Nsamps)/params.Fs;
             
             Istrip=find(Tabs<=tabs_end);
@@ -1014,44 +1020,51 @@ switch	Batch_mode
                 case 'Display and Print Figure'
                     PSD_all=[PSD_all PSD(:,Istrip)];
                     Tabs_all=[Tabs_all Tabs(Istrip)];
-                    if split_windows
-                        [hprint(Iplot),save_tag{Iplot}]=image_PSD(min(Tabs_all), max(Tabs_all));
-                        PSD_all=[];Tabs_all=[];
-                        Iplot=Iplot+1;
-                        if Nfigs>10
-                            save_str=sprintf('PSD_%s', save_tag{Iplot});
-                            if ~exist('pms'),pms=[];end
-                            save(save_str,'pms','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
-                            %uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
-                            
-                            orient landscape
-                            print(hprint(Iplot),'-djpeg',save_str);
-                            
-                            %Plot zooms if desired
-                            figure(hprint(Iplot));
-                            Tabs_limm=get(gca,'xlim');
-                            Tabs_frame=unique([Tabs_limm(1):plot_interval:Tabs_limm(2) Tabs_limm(2)]);
-                            Tabs_frame(isnan(Tabs_frame))=[];
-                            
-                            
-                            for JJ=1:(length(Tabs_frame)-1)
-                                try
-                                    xlim([Tabs_frame(JJ) Tabs_frame(JJ+1)]);
-                                    datetick('x',date_tick_chc,'keeplimits');
-                                    save_str=sprintf('PSDzoom_%s_%s', datestr(Tabs_frame(JJ),30), datestr(Tabs_frame(JJ+1),30));
-                                    titlestr=sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f', ...
-                                        datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
-                                    title(titlestr);
-                                    print(hprint(Iplot),'-djpeg',save_str);
-                                catch
-                                    disp('Failure to plot Tabs_frame: plot_interval is likely bad');
-                                end
-                                
-                            end
-                            close;
-                            
-                        end  %if Nfigs>20
+                    
+                    if ~split_windows
+                        continue
                     end
+                    Iplot=Iplot+1;
+                    
+                    [hprint(Iplot),save_tag{Iplot}]=image_PSD(min(Tabs_all), max(Tabs_all));
+                    save_str=sprintf('PSD_%s', save_tag{Iplot});
+                    if ~exist('pms'),pms=[];end
+                    save(save_str,'pms','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
+                    %uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
+                    disp([save_str ' mat and jpg file written to ' pwd '\n']);
+                    
+                    if Nfigs>Nfigs_max
+                        
+                        orient landscape
+                        print(hprint(Iplot),'-djpeg',save_str);
+                        
+                        %Plot zooms if desired
+                        figure(hprint(Iplot));
+                        Tabs_limm=get(gca,'xlim');
+                        Tabs_frame=unique([Tabs_limm(1):plot_interval:Tabs_limm(2) Tabs_limm(2)]);
+                        Tabs_frame(isnan(Tabs_frame))=[];
+                        
+                        
+                        for JJ=1:(length(Tabs_frame)-1)
+                            try
+                                xlim([Tabs_frame(JJ) Tabs_frame(JJ+1)]);
+                                datetick('x',date_tick_chc,'keeplimits');
+                                save_str_zoom=sprintf('PSDzoom_%s_%s', datestr(Tabs_frame(JJ),30), datestr(Tabs_frame(JJ+1),30));
+                                titlestr=sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f', ...
+                                    datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
+                                title(titlestr);
+                                print(hprint(Iplot),'-djpeg',save_str_zoom);
+                            catch
+                                disp('Failure to plot Tabs_frame: plot_interval is likely bad');
+                            end
+                            
+                        end
+                        close;
+                        
+                    end  %if Nfigs>Nfigs_max
+                    PSD_all=[];Tabs_all=[];
+                    
+                    
                 case 'Plot percentiles'
                     
                     %%Process PSD matrix..
@@ -1073,14 +1086,66 @@ switch	Batch_mode
                     Icount=Icount+length(Istrip);
             end  %switch
             
-            %If we move into additional files, start at the beginning
-            tabs_loop_begin=0;
             
         end  %Icurrent_file
         
         
         switch PSDButtonName
-            
+            case 'Display and Print Figure'
+                
+                
+                if ~split_windows
+                    [hprint(1),save_tag{1}]=image_PSD(min(Tabs_all), max(Tabs_all));
+                    save_str=sprintf('PSD_%s', save_tag{1});
+                    if ~exist('pms'),pms=[];end
+                    save(save_str,'pms','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
+                    disp([save_str ' mat and jpg file written to ' pwd '\n']);
+                    
+                end
+                
+                if Nfigs>Nfigs_max
+                    return
+                end
+                yess=menu('Save PSD figures?','Yes','No');
+                if yess==1
+                    
+                    Nfigs=sort(get(0,'Child'));
+                    Nfigs=Nfigs(Nfigs<150);
+                   
+                    for II=1:length(Nfigs)
+                        
+                        save_str=sprintf('PSD_%s', save_tag{II});
+                    
+                         %uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
+                        orient landscape
+                        print(hprint(II),'-djpeg',save_str);
+                        
+                        %Plot zooms if desired
+                        figure(hprint(II));
+                        Tabs_limm=get(gca,'xlim');
+                        Tabs_frame=unique([Tabs_limm(1):plot_interval:Tabs_limm(2) Tabs_limm(2)]);
+                        Tabs_frame(isnan(Tabs_frame))=[];
+                        
+                        
+                        for JJ=1:(length(Tabs_frame)-1)
+                            try
+                            xlim([Tabs_frame(JJ) Tabs_frame(JJ+1)]);
+                            datetick('x',date_tick_chc,'keeplimits');
+                            save_str_zoom=sprintf('PSDzoom_%s_%s', datestr(Tabs_frame(JJ),30), datestr(Tabs_frame(JJ+1),30));
+                            titlestr=sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f', ...
+                                datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
+                            title(titlestr);
+                            print(hprint(II),'-djpeg',save_str_zoom);
+                            catch
+                               disp('Failure to plot Tabs_frame: plot_interval is likely bad'); 
+                            end
+                            
+                        end
+                        
+                    end %II
+                    
+                end %%yes
+                
             case 'Plot percentiles'
                 %Remove excess storage
                 %Icount=Icount-length(Istrip);
@@ -1099,20 +1164,55 @@ switch	Batch_mode
                 yes=1;
                 while yes
                     close_all_figures;  %Close all open figures..
-                    if Nf>3
-                        %%Process PSD matrix..
-                        for Iff=1:length(pms.fmin)
-                            %Igood= (F>=pms.fmin(Iff)&F<=pms.fmax(Iff));
-                            sumPSD=PSD_all(Iff,:);  %Now power spectral density converted to power
-                            pms.title=sprintf('Spectral power between %i and %i Hz, beginning %s',pms.fmin(Iff),pms.fmax(Iff),datestr(Tabs_all(1)));
-                            [temp,hprint]=create_percentile_distributions(Tabs_all, sumPSD,pms, 1);
-                            if Iff==1
-                                p_matrix=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
-                                XX=temp.x;
-                            end
-                            p_matrix(Iff,:,:)=temp.data;
+                    clear hprint
+                
+                    if Nf<=5
+                        suppress_output=0;
+                    else
+                        suppress_output=1;
+                    end
+                    %%Process PSD matrix..
+                    for Iff=1:length(pms.fmin)
+                        tmp=datevec(pms.x_inc);
+                        tmp=3600*tmp(4)+60*tmp(5)+tmp(6);
+                        save_tag{Iff}=sprintf('Percentile_PSD_%s_%s_fmin%iHz_fmax%iHz_interval%isec', ...
+                            datestr(Tabs_all(1),30),datestr(Tabs_all(end),30),(pms.fmin(Iff)),(pms.fmax(Iff)),tmp);
+                        sumPSD=PSD_all(Iff,:);  %Now power spectral density converted to power
+                        pms.title=sprintf('Spectral power between %i and %i Hz, averaged %6.2f sec, beginning %s', ...
+                            pms.fmin(Iff),pms.fmax(Iff),sec_avg,datestr(Tabs_all(1)));
+                        if suppress_output==0
+                            [temp,hprint(Iff)]=create_percentile_distributions(Tabs_all, sumPSD,pms, suppress_output);
+                        else
+                            [temp]=create_percentile_distributions(Tabs_all, sumPSD,pms, suppress_output);
+                            
                         end
+                       
+                        if Iff==1
+                            p_matrix=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
+                            XX=temp.x;
+                            
+                            if suppress_output==0
+                                uiwait(msgbox('Please click on screen to print out percentiles used'));
+                                try
+                                    gtext(sprintf('Percentiles: %s',num2str(pms.percentiles)),'fontweight','bold','fontsize',18)
+                                end
+                            end
+                        end
+                        p_matrix(Iff,:,:)=temp.data;
                         
+                        if suppress_output==0
+                            save(save_tag{Iff}, 'pms','Tabs_all','sumPSD');
+                        end
+                    end
+                    
+                    
+                    %if isempty(date_tick_chc) %auto adjustment has failed..
+                        %date_tick_chc=get_datetick_style('auto',pms.xlabel_inc,'datenumber');
+                    %end
+                    %pms.label_style=date_tick_chc;
+                    
+                    if suppress_output==1
+                         
                         %%Plot contour plots if enough frequency bands
                         clear hprint
                         for Ipp=1:length(pms.percentiles)
@@ -1126,13 +1226,9 @@ switch	Batch_mode
                             
                             %Ibin=XX(Ibin);
                             set(gca,'xtick',XX(Ibin));
-                            if isempty(date_tick_chc) %auto adjustment has failed..
-                                date_tick_chc=get_datetick_style('auto',pms.xlabel_inc,'datenumber');
-                            end
-                            datetick('x',date_tick_chc,'keepticks','keeplimits')
+                            
+                            datetick('x',pms.label_style,'keepticks','keeplimits')
                             %set(gca,'xticklabel',);
-                            
-                            
                             
                             colorbar
                             caxis(pms.y_limits);
@@ -1141,26 +1237,11 @@ switch	Batch_mode
                             ylabel('Frequency (Hz)','fontweight','bold','fontsize',14);
                             grid on;
                             
-                        end
-                    else  %only one or two frequeny bands
-                        if isempty(date_tick_chc) %auto adjustment has failed..
-                            date_tick_chc=get_datetick_style('auto',pms.xlabel_inc,'datenumber');
-                        end
-                        pms.label_style=date_tick_chc;
-                        pms.title=sprintf('Spectral power between %i and %i Hz, averaged %6.2f sec, beginning %s', ...
-                            pms.fmin(Iff),pms.fmax(Iff),sec_avg,datestr(Tabs_all(1)));
-                        
-                        [percents,hprint]=create_percentile_distributions(Tabs_all, squeeze(PSD_all), pms,0);
-                        %[output(Iff,:,:),hprint]=create_percentile_distributions(Tabs, sumPSD,pms, suppress_output);
-                        %datetick('x',date_tick_chc,'keeplimits','keepticks');
-                        xlabel(pms.x_label,'fontsize',14,'fontweight','bold');
-                        ylabel(pms.y_label,'fontsize',14,'fontweight','bold');
-                        uiwait(msgbox('Please click on screen to print out percentiles used'));
-                        gtext(sprintf('Percentiles: %s',num2str(pms.percentiles)),'fontweight','bold','fontsize',18)
-                        save PercentileResults percents pms
-                        
-                    end  %if Nf?3
-                    yes=menu('Redo formatting? (Time formatting only)','Yes','No');
+                           
+                            
+                        end %for Ipp
+                    end
+                    yes=menu('Redo formatting? ','Yes','No');
                     if yes==1
                         pms=get_PSD_percentile_params(pms.fmin/1000,pms.fmax/1000,pms.def);
                         if isempty(pms)
@@ -1180,64 +1261,23 @@ switch	Batch_mode
                 for Iprint=1:length(hprint)
                     tmp=datevec(pms.x_inc);
                     tmp=3600*tmp(4)+60*tmp(5)+tmp(6);
-                    save_tag=sprintf('PSD_%s_fmin%iHz_fmax%iHz_interval%isec', ...
-                        datestr(Tabs_all(1),30),(pms.fmin(Iprint)),(pms.fmax(Iprint)),tmp);
+                    
+                    if suppress_output==0
+                    save_tag=sprintf('Percentile_PSD_%s_%s_fmin%iHz_fmax%iHz_interval%isec', ...
+                            datestr(Tabs_all(1),30),datestr(Tabs_all(end),30),(pms.fmin(Iprint)),(pms.fmax(Iprint)),tmp);
+                    else
+                       save_tag=sprintf('Percentile%i_PSD_%s_%s_fmin%iHz_fmax%iHz_interval%isec', ...
+                            100*pms.percentiles(Iprint),datestr(Tabs_all(1),30),datestr(Tabs_all(end),30),min(pms.fmin),max(pms.fmax),tmp);
+                     
+                    end
+                    set(hprint(Iprint),'paperpositionmode','auto')
                     print(hprint(Iprint),'-djpeg',save_tag)
                     saveas(hprint(Iprint), save_tag, 'fig');
                     save(save_tag,'Tabs_all','PSD_all','pms','params','Batch_vars_bulkload','sec_avg');
                     
                 end
                 
-            case 'Display and Print Figure'
-                
-                
-                if ~split_windows
-                    [hprint(1),save_tag{1}]=image_PSD(min(Tabs_all), max(Tabs_all));
-                end
-                
-                yess=menu('Save PSD Data and figure?','Yes','No');
-                if yess==1
-                    
-                    Nfigs=sort(get(0,'Child'));
-                    Nfigs=Nfigs(Nfigs<150);
-                    
-                    for II=1:length(Nfigs)
-                        
-                        
-                        save_str=sprintf('PSD_%s', save_tag{II});
-                        if ~exist('pms'),pms=[];end
-                        save(save_str,'pms','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
-                        uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
-                        
-                        orient landscape
-                        print(hprint(II),'-djpeg',save_str);
-                        
-                        %Plot zooms if desired
-                        figure(hprint(II));
-                        Tabs_limm=get(gca,'xlim');
-                        Tabs_frame=unique([Tabs_limm(1):plot_interval:Tabs_limm(2) Tabs_limm(2)]);
-                        Tabs_frame(isnan(Tabs_frame))=[];
-                        
-                        
-                        for JJ=1:(length(Tabs_frame)-1)
-                            try
-                            xlim([Tabs_frame(JJ) Tabs_frame(JJ+1)]);
-                            datetick('x',date_tick_chc,'keeplimits');
-                            save_str=sprintf('PSDzoom_%s_%s', datestr(Tabs_frame(JJ),30), datestr(Tabs_frame(JJ+1),30));
-                            titlestr=sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f', ...
-                                datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
-                            title(titlestr);
-                            print(hprint(II),'-djpeg',save_str);
-                            catch
-                               disp('Failure to plot Tabs_frame: plot_interval is likely bad'); 
-                            end
-                            
-                        end
-                        
-                    end %II
-                    
-                end %%yes
-                
+            
         end  %switch
     otherwise
         error('Batch mode not recognized');
@@ -1333,13 +1373,14 @@ end
 %
 function pms=get_PSD_percentile_params(fmin,fmax,def_old)
 
+    
 if exist('def_old','var')
     def=def_old;
     def{3}=num2str(1000*fmin);
     def{4}=num2str(1000*fmax);
     
 else
-    def = {'Date/Time','2*3600',num2str(1000*fmin),num2str(1000*fmax),'[70 120]','4*3600','[0.01 0.1 .25 .5 .75 0.9 .99]'};
+    def = {'Date/Time','4*3600',num2str(1000*fmin),num2str(1000*fmax),'[90 140]','48*3600','[0.1 0.5 0.9]'};
     
 end
 yes=1;
@@ -1360,15 +1401,25 @@ while yes
     pms.fmax=str2num(answer{4});
     pms.y_limits=str2num(answer{5});
     pms.xlabel_inc=datenum(0,0,0,0,0,str2num(answer{6}));
-    pms.percentiles=eval(answer{7});
+    pms.percentiles=str2num(answer{7});
     
     if rem(length(pms.percentiles),2)==0
         uiwait(msgbox('Must be an odd number of percentiles'));
     else
         yes=0;
     end
-    
+    date_tick_chc=get_datetick_style('auto',pms.xlabel_inc,'datenumber');
+
+    pms.label_style=date_tick_chc;
     pms.def=answer;
+    
+    prompt = {'Datenumber Format, examples include "mm/dd", "dd", "dd/HH", "HH" or "HH:MM":'};
+    dlg_title = 'Check the datenumber format...';
+    num_lines = 1;
+    def2{1}=date_tick_chc;
+    answer = inputdlg(prompt,dlg_title,num_lines,def2);
+    pms.label_style=answer{1};
+    
     % if pms.xlabel_inc>=datenum(0,0,0,12,0,0) %label spacing on order of days
     %     pms.label_style='dd';
     % elseif pms.xlabel_inc>=datenum(0,0,0,1,0,0);  % If label spacing is over one hour
@@ -1680,18 +1731,37 @@ bulk_params.Icurrent_file=[];
 bulk_params.Ifinal_file=[];
 bulk_params.FF=[];
 
-dialog_title	=	'Select an example Bulk file to load: Note that I am looking in analysis directory, not data directory';
 if isfield(handles,'myfile')
     [~,token,extt] = fileparts(handles.myfile);
 else
     token=[];
 end
 
-
+%Select first example file
+if ~strcmp(Batch_vars_bulkload.start_time,'select')
+    
+    dialog_title	=	'Select an example Bulk file to load: Note that I am looking in analysis directory, not data directory';
+else
+    dialog_title	=	'Select the first Bulk file to load: Note that I am looking in analysis directory, not data directory';
+    
+end
 [FileName,DirectoryName] = uigetfile([token '*.psd'],dialog_title);
 if isnumeric(FileName)
     disp('No file selected');
     return;
+end
+
+%Select second example file if needed
+if strcmp(Batch_vars_bulkload.end_time,'select')
+    dialog_title	=	'Select the final Bulk file to load: Note that I am looking in analysis directory, not data directory';
+
+    [FileNameEnd,DirectoryNameEnd] = uigetfile([token '*.psd'],dialog_title);
+    if isnumeric(FileName)
+        disp('No second file selected');
+        return;
+    end
+else
+    FileNameEnd='';
 end
 
 fprintf('Changing working directory to %s\n',DirectoryName);
@@ -1711,6 +1781,17 @@ for II=1:length(Other_FileNames)
     [~,~,~,~,params]=read_Java_PSD(Other_FileNames(II).name,0,Inf,1); %Read header only
     tabs_file_start(II)=params.tstart_file;
     tabs_file_end(II)=params.tend_file;
+    if strcmp(Other_FileNames(II).name,FileName)
+        tabs_select_start=tabs_file_start(II);
+        tabs_select_end=tabs_file_end(II);
+        Iselect_file=II;
+    elseif strcmp(Other_FileNames(II).name,FileNameEnd)
+        tabs_selectEnd_start=tabs_file_start(II);
+        tabs_selectEnd_end=tabs_file_end(II);
+        IselectEnd_file=II;
+        
+        
+    end
     
 end
 
@@ -1728,6 +1809,10 @@ tabs_folder_end=tabs_file_end(end);  %datenumber of end of data in folder (assum
 
 %%Translate start time.  Need to define tabs_start and Icurrent_file
 switch lower(Batch_vars_bulkload.start_time)
+    case 'select'
+        tabs_start=tabs_select_start;
+        %Reset other variables
+        Icurrent_file=Iselect_file;
     case 'here'  %Use edit window
         tabs_start=datenum(get(handles.edit_datestr,'String'));
         Icurrent_file=find(tabs_start>=tabs_file_start, 1, 'last' );
@@ -1768,6 +1853,11 @@ end
 
 %%Translate end time;  Need to define tabs_end and Ifinal_file
 switch lower(Batch_vars_bulkload.end_time)
+    case 'select'
+        tabs_end=tabs_selectEnd_end;
+        %Reset other variables
+        Ifinal_file=IselectEnd_file;
+       
     case 'here' %Use edit window
         tabs_end=datenum(get(handles.edit_datestr,'String'))+datenum(0,0,0,0,0,str2num(get(handles.edit_winlen,'string')));
         Ifinal_file=Icurrent_file;  %Load one file only
