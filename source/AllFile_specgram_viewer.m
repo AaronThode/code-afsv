@@ -894,7 +894,7 @@ switch	Batch_mode
                 
                 pms.y_label='dB re 1uPa';
                 Tabs=datenum(get(handles.edit_datestr,'String'))+datenum(0,0,0,0,0,Tnew);
-                if length(pms.fmin)>3
+                if length(pms.fmin)>5
                     suppress_output=1;
                 else
                     suppress_output=0;
@@ -907,17 +907,21 @@ switch	Batch_mode
                     pms.title=sprintf('Spectral power between %i and %i Hz, beginning %s',pms.fmin(Iff),pms.fmax(Iff),datestr(Tabs(1)));
                     [temp,hprint]=create_percentile_distributions(Tabs, sumPSD,pms, suppress_output);
                     if Iff==1
-                        p_matrix=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
-                        XX=temp.x;
+                        percents.data=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
+                        percents.x=temp.x;
+                        percents.percentiles=pms.percentiles;
+                           
+                        
                     end
-                    p_matrix(Iff,:,:)=temp.data;
+                    percents.data(Iff,:,:)=temp.data;
+                    percents.title{Iff}=pms.title;
                 end
                 
                 %%Plot contour plots if enough frequency bands
                 if suppress_output
                     for Ipp=1:length(pms.percentiles)
                         figure
-                        imagesc(XX,pms.fmin,squeeze(p_matrix(:,Ipp,:)));
+                        imagesc(percents.x,pms.fmin,squeeze(percents.data(:,Ipp,:)));
                         axis('xy');
                         datetick('x',pms.label_style);
                         colorbar
@@ -985,6 +989,8 @@ switch	Batch_mode
         Ifinal_file=bulk_params.Ifinal_file;
         FF=bulk_params.FF;
         
+        
+        %%%%%%%%%Final actions for PSD output displays%%%%%%%%
         PSDButtonName = questdlg('What do you want to do now?', ...
             'PSD options', ...
             'Display and Print Figure', 'Plot percentiles', 'Display and Print Figure');
@@ -1094,6 +1100,8 @@ switch	Batch_mode
         end  %Icurrent_file
         
         
+        %%All files have been loaded and processed.
+        
         switch PSDButtonName
             case 'Display and Print Figure'
                 
@@ -1150,7 +1158,7 @@ switch	Batch_mode
                     end %II
                     
                 end %%yes
-                
+                %%%%%%Plot and save percentile files to file
             case 'Plot percentiles'
                 %Remove excess storage
                 %Icount=Icount-length(Istrip);
@@ -1193,9 +1201,9 @@ switch	Batch_mode
                         end
                        
                         if Iff==1
-                            p_matrix=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
-                            XX=temp.x;
-                            
+                            percents.data=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
+                            percents.x=temp.x;
+                            percents.percentiles=pms.percentiles;
                             if suppress_output==0
                                 uiwait(msgbox('Please click on screen to print out percentiles used'));
                                 try
@@ -1203,12 +1211,14 @@ switch	Batch_mode
                                 end
                             end
                         end
-                        p_matrix(Iff,:,:)=temp.data;
-                        
-                        if suppress_output==0
-                            save(save_tag{Iff}, 'pms','Tabs_all','sumPSD');
-                        end
-                    end
+                        percents.data(Iff,:,:)=temp.data;
+                        percents.title{Iff}=pms.title;
+                        %if suppress_output==0
+                          %  save(save_tag{Iff}, 'pms','Tabs_all','sumPSD','percents');
+                           % save(save_tag,'Tabs_all','PSD_all','pms','params','Batch_vars_bulkload','sec_avg','percents');
+                    
+                        %end
+                    end  %length pms.fmin
                     
                     
                     %if isempty(date_tick_chc) %auto adjustment has failed..
@@ -1222,15 +1232,15 @@ switch	Batch_mode
                         clear hprint
                         for Ipp=1:length(pms.percentiles)
                             hprint(Ipp)=figure;
-                            imagesc(XX,pms.fmin,squeeze(p_matrix(:,Ipp,:)));
+                            imagesc(percents.x,pms.fmin,squeeze(percents.data(:,Ipp,:)));
                             axis('xy');
                             %datetick('x',date_tick_chc);
                             Ibin=get(gca,'xtick');
                             Istep=floor(pms.xlabel_inc/pms.x_inc);
-                            Ibin=1:Istep:length(XX);
+                            Ibin=1:Istep:length(percents.x);
                             
-                            %Ibin=XX(Ibin);
-                            set(gca,'xtick',XX(Ibin));
+                            %Ibin=percents.x(Ibin);
+                            set(gca,'xtick',percents.x(Ibin));
                             
                             datetick('x',pms.label_style,'keepticks','keeplimits')
                             %set(gca,'xticklabel',);
@@ -1245,7 +1255,7 @@ switch	Batch_mode
                            
                             
                         end %for Ipp
-                    end
+                    end  %suppress_output==1
                     yes=menu('Redo formatting? ','Yes','No');
                     if yes==1
                         pms=get_PSD_percentile_params(pms.fmin/1000,pms.fmax/1000,pms.def);
@@ -1278,7 +1288,7 @@ switch	Batch_mode
                     set(hprint(Iprint),'paperpositionmode','auto')
                     print(hprint(Iprint),'-djpeg',save_tag)
                     saveas(hprint(Iprint), save_tag, 'fig');
-                    save(save_tag,'Tabs_all','PSD_all','pms','params','Batch_vars_bulkload','sec_avg');
+                    save(save_tag,'Tabs_all','PSD_all','pms','params','Batch_vars_bulkload','sec_avg','percents');
                     
                 end
                 
