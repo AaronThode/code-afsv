@@ -5820,7 +5820,7 @@ handles.tdate_max=	-1;
 %cd(handles.mydir);
 
 try
-    [x,t,Fs,tmin,tmax]=load_data(filetype,-1,1,1,handles);
+    [x,t,Fs,tmin,tmax]=load_data(filetype,-1,10,1,handles);
 catch %no file selected
     %errordlg(sprintf('No %s file selected',filetype));
     errorflag=1;
@@ -5992,7 +5992,7 @@ filetype	=	upper(filetype);
 switch filetype
     case 'PSD'
         [x,F,t,Tabs,params]=read_Java_PSD(fullfile(mydir,myfile),tdate_start,tlen);
-        if ~isempty(t)
+        if ~isempty(t)&&length(t)>1
             Fs=1./(t(2)-t(1));
             t=t-t(1);
         else
