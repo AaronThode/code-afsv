@@ -1,9 +1,9 @@
 %%%%%%%%%%%read_mt_header.m%%%%%%%
 % Read in mt header information
 %function head=read_mt_header(fname),
-function head=read_mt_header(fname),
+function head=read_mt_header(fname)
 
-if isempty(findstr(fname,'.mt')),
+if isempty(strfind(lower(fname),'.mt'))
     fname=[fname '.mt'];    
 end
 %fname='aa_Sound_2003_08120945.mt';

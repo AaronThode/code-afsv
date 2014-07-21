@@ -4979,7 +4979,7 @@ pushbutton_update_Callback(handles.pushbutton_update,eventdata,handles);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%Beginning of annoation subroutines %%%%%%%%%%
+%%%%%Beginning of annotation subroutines %%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%	new annotation stuff
 
@@ -5584,6 +5584,11 @@ else
     
 end  %if PSD
 
+handles.old_display_view=[];
+if isfield(handles,'display_view')
+    handles.old_display_view=handles.display_view;
+end
+    
 handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
 
 if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New Fig')
@@ -5672,11 +5677,22 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
     end
 elseif strcmp(handles.display_view,'Time Series') %%Time series
     
-    %%Check that we are looking at acoustic data
+       
+    %%Check that we are looking at acoustic data and are in spectrogram
+    %%mode
     if isempty(strfind(handles.myfile,'Press'))
-        disp('Enter min and max frequency, or return to see raw time series:');
-        tmp=ginput(2);
-        if ~isempty(tmp)&&size(tmp,1)==2
+       % msgbox('Enter min and max frequency, or hit return to skip filtering:','modal');
+       if strcmp(handles.old_display_view,'Spectrogram')
+           ButtonName = questdlg('Filter? (If yes, click on two frequency values in spectrogram)');
+       else
+           ButtonName='No';
+       end
+       
+       %if ~isempty(tmp)&&size(tmp,1)==2
+        %%Check that are on current spectrogram view
+        if strcmp(ButtonName,'Yes')
+            tmp=ginput(2);
+        
             freq=sort(tmp(:,2))*1000;
             minfreq=freq(1);maxfreq=freq(2);
             %y=quick_filter(x(:,1),Fs,freq(1),freq(2))
@@ -5693,8 +5709,14 @@ elseif strcmp(handles.display_view,'Time Series') %%Time series
     end
     
     t=(1:length(x(:,1)))/Fs;
-    plot(t,y);grid on;
-    xlabel('Time (sec)');ylabel('Amplitude');
+    xlabel('Time (sec)');
+    if strfind(hdr.calunits,'mPa')
+        plot(handles.axes1,t,1000*y);grid on;
+        ylabel('uPa');
+    else
+        plot(handles.axes1,t,y);grid on;
+        ylabel('Amplitude');
+    end
 elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
     fmax=1000*str2double(get(handles.edit_fmax,'String'));
     fmin=1000*str2double(get(handles.edit_fmin,'String'));
@@ -5965,7 +5987,7 @@ end
 end
 
 %%%%%%%%%%%%%%%%%%%%
-%%% load_data.m%%%%%
+%%% function load_data.m%%%%%
 %%%%%%%%%%%%%%%%%%%%
 
 function [x,t,Fs,tmin,tmax,head]	=	...
@@ -6071,7 +6093,8 @@ switch filetype
         head.Nchan=length(Ichan);
     case 'MT'
         %[x,t,Fs]=load_mt_mult(handles.mydir,tdate_start,tlen);
-        head=read_mt_header([mydir filesep myfile]);
+        %head=read_mt_header([mydir filesep myfile]);
+        head=read_mt_header(fullfile(mydir, myfile));
         
         tmin=head.tstart;
         tmax=head.tend;
@@ -6144,7 +6167,7 @@ switch filetype
                 Ichan=1;
             end
             if tdate_start>0
-                [x,t]=load_mt([mydir filesep myfile],nsec,tlen);
+                [x,t]=load_mt(fullfile(mydir , myfile),nsec,tlen);
             end
             head.Nchan=1;
         end
@@ -8665,7 +8688,11 @@ close(hh);
 end
 
 %	Checks Notes folder for existing files and loads them
-%%%%%%Thode: load_notes_file
+%Where new annotations are created...
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%% load_notes_file %%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function	handles		=	load_notes_file(handles, new_folder)
 
 
@@ -8713,6 +8740,8 @@ end
 %	Default output file name
 user_name	=	getusername();
 multiple_times_present=0;
+
+
 if strfind(handles.myfile,'*')  %If inputs indicates that multiple files from different times are to be merged
     Istart=3;
     file_name	=	['Multiple' fname(Istart:end) '-notes-' user_name '.mat'];
@@ -9526,7 +9555,9 @@ else
 end
 end
 
-%	helper function for default template
+%%%  Annotation template, Annotations template
+%	 Defines default fields
+%%load_default_template
 function	[Description, Template, edit_fields]	=	load_default_template()
 %edit fields are fields you can edit...
 Description	=	{'Start Time',...

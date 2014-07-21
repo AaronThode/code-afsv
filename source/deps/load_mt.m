@@ -7,7 +7,7 @@ function [x,t,head,tdate]=load_mt(fname,tstart,tsec,uncal_chc)
 % uncal_chc; If exists, return uncalibrated values.
 % All times in seconds
 
-if isempty(findstr(fname,'.mt')),
+if isempty(strfind(lower(fname),'.mt')),
     fname=[fname '.mt'];    
 end
 head=read_mt_header(fname);
@@ -36,7 +36,7 @@ fclose(fid);
 %Optional calibration...
 N=(2.^head.samplebits)-1;
 if ~exist('uncal_chc'),
-    switch head.signing,
+    switch head.signing
         case 'S',
             calmean=0.5*(head.calmin+head.calmax);
             x=calmean+x*(head.calmax-head.calmin)/N;
