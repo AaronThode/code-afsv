@@ -1,0 +1,141 @@
+ant:
+<ant>
+  <mkdir dir="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution" />
+  <mkdir dir="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_testing" />
+</ant>
+mcc -o AllFile_specgram_viewer_Mac -W WinMain:AllFile_specgram_viewer_Mac -T link:exe -d /Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_testing -R '-logfile,test' -v /Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m -a /Users/thode/repos/code-afsv/source/104703.JPG -a /Users/thode/repos/code-afsv/source/deps/104703.JPG -a /Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.fig -a /Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m -a /Users/thode/repos/code-afsv/source/deps/boxPlot.m -a /Users/thode/repos/code-afsv/source/deps/boxplot.m -a /Users/thode/repos/code-afsv/source/deps/boxPlot_percentile.m -a /Users/thode/repos/code-afsv/source/deps/boxplot_percentile.m -a /Users/thode/repos/code-afsv/source/deps/brickwall_bpf.m -a /Users/thode/repos/code-afsv/source/deps/brickwall_hpf.m -a /Users/thode/repos/code-afsv/source/deps/brickwall_lpf.m -a /Users/thode/repos/code-afsv/source/deps/Bulk_Processing_ShippingIndex.m -a /Users/thode/repos/code-afsv/source/deps/close_all_figures.m -a /Users/thode/repos/code-afsv/source/deps/compare_files.m -a /Users/thode/repos/code-afsv/source/deps/convert_date.m -a /Users/thode/repos/code-afsv/source/deps/create_percentile_distributions.m -a /Users/thode/repos/code-afsv/source/deps/crude_decimate_uneven.m -a /Users/thode/repos/code-afsv/source/deps/ctime2str.m -a /Users/thode/repos/code-afsv/source/deps/delaynsum.m -a /Users/thode/repos/code-afsv/source/deps/Energy_detector_review.m -a /Users/thode/repos/code-afsv/source/deps/example_splash.png -a /Users/thode/repos/code-afsv/source/deps/extract_image_features.m -a /Users/thode/repos/code-afsv/source/deps/extract_ridge_traces.m -a /Users/thode/repos/code-afsv/source/deps/extract_SEL_n_PSD.m -a /Users/thode/repos/code-afsv/source/deps/extract_transient_levels.m -a /Users/thode/repos/code-afsv/source/deps/fmodany.m -a /Users/thode/repos/code-afsv/source/deps/gaussian_asym_filter.m -a /Users/thode/repos/code-afsv/source/deps/get_level_metrics_simple.m -a /Users/thode/repos/code-afsv/source/deps/hist2D.m -a /Users/thode/repos/code-afsv/source/JAVA_instructions.doc -a /Users/thode/repos/code-afsv/source/deps/kurtosis.m -a /Users/thode/repos/code-afsv/source/deps/load_mt.m -a /Users/thode/repos/code-afsv/source/deps/load_program_location.m -a /Users/thode/repos/code-afsv/source/deps/merge_structure.m -a /Users/thode/repos/code-afsv/source/deps/peak_picker_Thode.m -a /Users/thode/repos/code-afsv/source/deps/plot_data_boxplot.m -a /Users/thode/repos/code-afsv/source/deps/plot_data_boxplot_percentile.m -a /Users/thode/repos/code-afsv/source/deps/plot_letter_label.m -a /Users/thode/repos/code-afsv/source/deps/read_adi_file.m -a /Users/thode/repos/code-afsv/source/deps/read_dat_file.m -a /Users/thode/repos/code-afsv/source/deps/read_Java_PSD.m -a /Users/thode/repos/code-afsv/source/deps/read_Java_SEL.m -a /Users/thode/repos/code-afsv/source/deps/read_mdat_file.m -a /Users/thode/repos/code-afsv/source/deps/read_mt_header.m -a /Users/thode/repos/code-afsv/source/deps/read_synchronized_mdat_files.m -a /Users/thode/repos/code-afsv/source/deps/readEnergy_header.m -a /Users/thode/repos/code-afsv/source/deps/readEnergySnips.m -a /Users/thode/repos/code-afsv/source/deps/readEnergySummary.m -a /Users/thode/repos/code-afsv/source/deps/readgsi.m -a /Users/thode/repos/code-afsv/source/deps/readgsif_header.m -a /Users/thode/repos/code-afsv/source/deps/readsiof.m -a /Users/thode/repos/code-afsv/source/deps/readsiof_header.m -a /Users/thode/repos/code-afsv/source/deps/scatter_transparent.m -a /Users/thode/repos/code-afsv/source/deps/shipdet_metrics.m -a /Users/thode/repos/code-afsv/source/deps/simulate_FMsweep_with_noise.m -a /Users/thode/repos/code-afsv/source/deps/sioread.m -a /Users/thode/repos/code-afsv/source/deps/SplashScreen.m -a /Users/thode/repos/code-afsv/source/deps/tftb_window.m -a /Users/thode/repos/code-afsv/source/WORKLOG_vesselnoise.txt -a /Users/thode/repos/code-afsv/source/deps/write_Java_script.m -a /Users/thode/repos/code-afsv/source/deps/writeEnergyDetectorCshell.m 
+Compiler version: 5.0 (R2013b)
+Dependency analysis by DEPFUN.
+Processing /Applications/MATLAB_R2013b.app/toolbox/matlab/maci64/mcc.enc
+Processing /Applications/MATLAB_R2013b.app/toolbox/signal/maci64/mcc.enc
+Processing /Applications/MATLAB_R2013b.app/toolbox/images/maci64/mcc.enc
+Processing /Applications/MATLAB_R2013b.app/toolbox/stats/maci64/mcc.enc
+Processing /Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.fig
+Processing /Applications/MATLAB_R2013b.app/toolbox/shared/controllib/general/maci64/mcc.enc
+Processing /Applications/MATLAB_R2013b.app/toolbox/shared/imageslib/maci64/mcc.enc
+Processing /Applications/MATLAB_R2013b.app/toolbox/shared/coder/maci64/mcc.enc
+Processing /Applications/MATLAB_R2013b.app/toolbox/matlab/guide/guideopts.fig
+Processing /Applications/MATLAB_R2013b.app/toolbox/shared/spcuilib/maci64/mcc.enc
+Processing /Applications/MATLAB_R2013b.app/toolbox/matlab/system/maci64/mcc.enc
+Processing /Applications/MATLAB_R2013b.app/toolbox/shared/optimlib/maci64/mcc.enc
+Processing include files...
+2 item(s) added.
+Processing directories installed with MCR...
+The file /Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_testing/mccExcludedFiles.log contains a list of functions excluded from the CTF archive.
+0 item(s) added.
+Generating MATLAB path for the compiled application...
+Created 72 path items.
+[Warning: Adding path "/Users/thode/repos/code-afsv/source" to Compiler path
+instance.] 
+Parsing file "/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m"
+	(Referenced from: "Compiler Command Line").
+Parsing file "/Applications/MATLAB_R2013b.app/toolbox/compiler/deploy/deployprint.m"
+	(Referenced from: "Compiler Command Line").
+Parsing file "/Applications/MATLAB_R2013b.app/toolbox/compiler/deploy/printdlg.m"
+	(Referenced from: "Compiler Command Line").
+Deleting 93 temporary MEX authorization files.
+Removing: '/tmp/034f61YvV1o_13558.auth'.
+Removing: '/tmp/034f61Yl5mK_13558.auth'.
+Removing: '/tmp/034f6jUoTeT_13558.auth'.
+Removing: '/tmp/034f6pppxqT_13558.auth'.
+Removing: '/tmp/034f6GAhDiw_13558.auth'.
+Removing: '/tmp/034f6Tj3wic_13558.auth'.
+Removing: '/tmp/034f6v0rGLG_13558.auth'.
+Removing: '/tmp/034f6UNnZID_13558.auth'.
+Removing: '/tmp/034f6uNUtSG_13558.auth'.
+Removing: '/tmp/034f606aTmt_13558.auth'.
+Removing: '/tmp/034f6qhg6Jk_13558.auth'.
+Removing: '/tmp/034f6F11Oct_13558.auth'.
+Removing: '/tmp/034f6SvK6Yl_13558.auth'.
+Removing: '/tmp/034f6yWVh0j_13558.auth'.
+Removing: '/tmp/034f6IY5D0M_13558.auth'.
+Removing: '/tmp/034f6Mlc8KN_13558.auth'.
+Removing: '/tmp/034f6I6VrK4_13558.auth'.
+Removing: '/tmp/034f6JCuBhk_13558.auth'.
+Removing: '/tmp/034f65BER4k_13558.auth'.
+Removing: '/tmp/034f6e0O6lj_13558.auth'.
+Removing: '/tmp/034f6GTifDX_13558.auth'.
+Removing: '/tmp/034f6fc43UY_13558.auth'.
+Removing: '/tmp/034f6RRxcur_13558.auth'.
+Removing: '/tmp/034f68is0b3_13558.auth'.
+Removing: '/tmp/034f6KlbhpG_13558.auth'.
+Removing: '/tmp/034f6TaKmuK_13558.auth'.
+Removing: '/tmp/034f61XqSPe_13558.auth'.
+Removing: '/tmp/034f6NVt5gZ_13558.auth'.
+Removing: '/tmp/034f6QVUHJ1_13558.auth'.
+Removing: '/tmp/034f6DMzvon_13558.auth'.
+Removing: '/tmp/034f6o0MqJJ_13558.auth'.
+Removing: '/tmp/034f69iTmVV_13558.auth'.
+Removing: '/tmp/034f6tdtdYX_13558.auth'.
+Removing: '/tmp/034f6ij9wec_13558.auth'.
+Removing: '/tmp/034f6BNUuEx_13558.auth'.
+Removing: '/tmp/034f6chM2ZC_13558.auth'.
+Removing: '/tmp/034f6FohDzh_13558.auth'.
+Removing: '/tmp/034f6xUT3RJ_13558.auth'.
+Removing: '/tmp/034f6v8N27F_13558.auth'.
+Removing: '/tmp/034f67kdd3B_13558.auth'.
+Removing: '/tmp/034f6fN23wc_13558.auth'.
+Removing: '/tmp/034f6uuJ1Ci_13558.auth'.
+Removing: '/tmp/034f6l3Oppn_13558.auth'.
+Removing: '/tmp/034f69ribYj_13558.auth'.
+Removing: '/tmp/034f69ozTXI_13558.auth'.
+Removing: '/tmp/034f6OfrfUe_13558.auth'.
+Removing: '/tmp/034f64iqMk7_13558.auth'.
+Removing: '/tmp/034f6KzQ0Nt_13558.auth'.
+Removing: '/tmp/034f6riRwnP_13558.auth'.
+Removing: '/tmp/034f6En8owb_13558.auth'.
+Removing: '/tmp/034f6Nlq1Bn_13558.auth'.
+Removing: '/tmp/034f6t1z9fx_13558.auth'.
+Removing: '/tmp/034f6r4bQpC_13558.auth'.
+Removing: '/tmp/034f6rS8a3a_13558.auth'.
+Removing: '/tmp/034f6QDncrt_13558.auth'.
+Removing: '/tmp/034f607Ymxy_13558.auth'.
+Removing: '/tmp/034f6pBuArI_13558.auth'.
+Removing: '/tmp/034f6j7IWkk_13558.auth'.
+Removing: '/tmp/034f6nIPq9s_13558.auth'.
+Removing: '/tmp/034f6qaZfQQ_13558.auth'.
+Removing: '/tmp/034f6caeACI_13558.auth'.
+Removing: '/tmp/034f6lmQI0J_13558.auth'.
+Removing: '/tmp/034f6F3pflo_13558.auth'.
+Removing: '/tmp/034f62goYuT_13558.auth'.
+Removing: '/tmp/034f6hKvdzQ_13558.auth'.
+Removing: '/tmp/034f6E42aAv_13558.auth'.
+Removing: '/tmp/034f6KPQHki_13558.auth'.
+Removing: '/tmp/034f6YB7Px5_13558.auth'.
+Removing: '/tmp/034f6EwoiGy_13558.auth'.
+Removing: '/tmp/034f64FdH25_13558.auth'.
+Removing: '/tmp/034f6piPkz7_13558.auth'.
+Removing: '/tmp/034f6jPFYON_13558.auth'.
+Removing: '/tmp/034f6wi39ww_13558.auth'.
+Removing: '/tmp/034f6IbmTQQ_13558.auth'.
+Removing: '/tmp/034f6g6u2fY_13558.auth'.
+Removing: '/tmp/034f6k9EvKL_13558.auth'.
+Removing: '/tmp/034f6qploYl_13558.auth'.
+Removing: '/tmp/034f6DKbLSk_13558.auth'.
+Removing: '/tmp/034f6GHQVEg_13558.auth'.
+Removing: '/tmp/034f6MuHFwY_13558.auth'.
+Removing: '/tmp/034f671OEvF_13558.auth'.
+Removing: '/tmp/034f6U1YeCa_13558.auth'.
+Removing: '/tmp/034f6nozyLA_13558.auth'.
+Removing: '/tmp/034f6kWq5ka_13558.auth'.
+Removing: '/tmp/034f634Opss_13558.auth'.
+Removing: '/tmp/034f6uraXnW_13558.auth'.
+Removing: '/tmp/034f6QbQXnR_13558.auth'.
+Removing: '/tmp/034f6cZHQT4_13558.auth'.
+Removing: '/tmp/034f6cmfTKI_13558.auth'.
+Removing: '/tmp/034f67nilyM_13558.auth'.
+Removing: '/tmp/034f63jV4Oh_13558.auth'.
+Removing: '/tmp/034f6m648o6_13558.auth'.
+Removing: '/tmp/034f6JyMobP_13558.auth'.
+Generating file "/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_testing/readme.txt".
+Generating file "/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_testing/run_AllFile_specgram_viewer_Mac.sh".
+Packaging...
+Adding custom icon /Applications/MATLAB_R2013b.app/toolbox/compiler/Resources/default_icon.icns to /Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_testing/AllFile_specgram_viewer_Mac.app.
+Creating the bundle...
+Copying $/Applications/MATLAB_R2013b.app/toolbox/compiler/maci64/setup.app tp /Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution/AFSV_installer.app.
+Copying $/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution/bundle.zip tp /Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution/AFSV_installer.app/Contents/Resources/bundle.zip.
+Copying $/var/folders/vd/yn2088ld4zx0dzxm_ywbg9sr0001_q/T/splash6179855657683385737.tmp tp /Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution/AFSV_installer.app/Contents/Resources/splash.png.
+Copying $/Applications/MATLAB_R2013b.app/toolbox/compiler/Resources/default_icon.icns tp /Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution/AFSV_installer.app/Contents/Resources/installer.icns.
+Web based installer created at /Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution/AFSV_installer.app.
+Packaging complete.
+Source '/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_testing/AllFile_specgram_viewer_Mac.app' exists but is a directory
