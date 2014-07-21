@@ -3,7 +3,7 @@ function [output,hprint]=create_percentile_distributions(xdata,ydata,param, supp
 %function hprint=percentile_boxplots(xdata,x_inc_boxplot,ydata,ylimits,xlabel_inc,percentiles,label_style)
 
 % xdata: vector of data associated with x-axis.  Can be datenumbers
-% ydata: data associated with x-axis data
+% ydata: data associated with x-axis data, rows are for separate plots
 %  param:  structure of variables including
 %     x_inc: interval to compute boxplot over, same units as
 %       xdata
@@ -12,7 +12,7 @@ function [output,hprint]=create_percentile_distributions(xdata,ydata,param, supp
 %     label_style:  if exists, sets datenumber style on x-axis
 %     x_label, y_label: plot labels for x and y axis.
 %     percentiles: percentile distribution...
-%
+%     title: title to plot, if plot generated
 % suppress_output:  If exists, do not plot data, just return
 %      percentile data instead...
 %
@@ -55,7 +55,7 @@ t2_mid=datevec(t2);t2_mid(4:6)=0;t2_mid(3)=t2_mid(3)+1;t2_mid=datenum(t2_mid);
 %If the new span is much greater than old span, shrink the plot bounds.
 frac=(t2-t1)./(t2_mid-t1_mid);
     
-if frac<0.75 %This only occurs for less than a day...round to nearest hour
+if frac<0.75 %The events in question only occur for less than a day...round to nearest hour
    t1_mid=datevec(t1);t1_mid(5:6)=0;t1_mid=datenum(t1_mid);
    t2_mid=datevec(t2);t2_mid(5:6)=0;t2_mid(4)=t2_mid(4)+1;t2_mid=datenum(t2_mid);
    frac=(t2-t1)./(t2_mid-t1_mid);    
@@ -71,7 +71,7 @@ end
 
 
 
-tbin=t1_mid:x_inc_boxplot:t2_mid;  %Shorter time scale
+tbin=t1_mid:x_inc_boxplot:t2_mid;  %This is the 'x' output: times for which percentiles computed.
 
 [Ncount,Binn]=histc(xdata,tbin);  %%OK, sort times of observations by category
 data_fin=NaN*ones(max(Ncount),length(Ncount));
@@ -102,9 +102,14 @@ if suppress_output==0
        title(param.title,'fontsize',14,'fontweight','bold'); 
     end
     
+    %xlabel(pms.x_label,'fontsize',14,'fontweight','bold');
+    %ylabel(pms.y_label,'fontsize',14,'fontweight','bold');
+    
+    
+    
 end
 
-data=boxPlot_percentile(data_fin,percentiles,1);
+data=boxplot_percentile(data_fin,percentiles,1);
 if isempty(data)
     output.data=[];
     output.x=[];
@@ -117,7 +122,7 @@ output.percentiles=percentiles;
 %ylim(ylimits);
 
     function make_boxplot(data_fin,tbin,x_inc_boxplot,xlabel_inc,percentiles,label_style,ylimits)
-        test=boxPlot_percentile(data_fin,percentiles,0);
+        test=boxplot_percentile(data_fin,percentiles,0);
         
         if isempty(test)
             return

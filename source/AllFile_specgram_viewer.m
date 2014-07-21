@@ -805,6 +805,7 @@ else
     param.sec_avg=param.Nfft/param.Fs;  %Make a spectrogram--no averaging
 end
 
+cd(param.dir_out);
 write_Java_script('PSD',param);
 ! ./masterPSD.scr > outt.txt &
 return
@@ -893,7 +894,7 @@ switch	Batch_mode
                 
                 pms.y_label='dB re 1uPa';
                 Tabs=datenum(get(handles.edit_datestr,'String'))+datenum(0,0,0,0,0,Tnew);
-                if length(pms.fmin)>3
+                if length(pms.fmin)>5
                     suppress_output=1;
                 else
                     suppress_output=0;
@@ -906,17 +907,21 @@ switch	Batch_mode
                     pms.title=sprintf('Spectral power between %i and %i Hz, beginning %s',pms.fmin(Iff),pms.fmax(Iff),datestr(Tabs(1)));
                     [temp,hprint]=create_percentile_distributions(Tabs, sumPSD,pms, suppress_output);
                     if Iff==1
-                        p_matrix=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
-                        XX=temp.x;
+                        percents.data=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
+                        percents.x=temp.x;
+                        percents.percentiles=pms.percentiles;
+                           
+                        
                     end
-                    p_matrix(Iff,:,:)=temp.data;
+                    percents.data(Iff,:,:)=temp.data;
+                    percents.title{Iff}=pms.title;
                 end
                 
                 %%Plot contour plots if enough frequency bands
                 if suppress_output
                     for Ipp=1:length(pms.percentiles)
                         figure
-                        imagesc(XX,pms.fmin,squeeze(p_matrix(:,Ipp,:)));
+                        imagesc(percents.x,pms.fmin,squeeze(percents.data(:,Ipp,:)));
                         axis('xy');
                         datetick('x',pms.label_style);
                         colorbar
@@ -937,10 +942,11 @@ switch	Batch_mode
         
         
     case 'Load Bulk Processing'
-        Batch_vars_bulkload.start_time	=	'folder start';
+        close_all_figures;
+        Batch_vars_bulkload.start_time	=	'select';
         
         Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", "file start" for current file , "select" to choose file from list, "folder start" for first file in folder)';
-        Batch_vars_bulkload.end_time	=	'folder end';
+        Batch_vars_bulkload.end_time	=	'select';
         Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "select" to choose file from list, "folder end" to import through last file)';
         Batch_vars_bulkload.time_window      =   'file';
         Batch_desc{3} =  'hours to display in a single window; "all" means put in a single file, "file" displays one file per figure';
@@ -983,6 +989,8 @@ switch	Batch_mode
         Ifinal_file=bulk_params.Ifinal_file;
         FF=bulk_params.FF;
         
+        
+        %%%%%%%%%Final actions for PSD output displays%%%%%%%%
         PSDButtonName = questdlg('What do you want to do now?', ...
             'PSD options', ...
             'Display and Print Figure', 'Plot percentiles', 'Display and Print Figure');
@@ -999,12 +1007,18 @@ switch	Batch_mode
         
         %Start processing
         tabs_loop_begin=tabs_start;
+        Nfigs_max=10;
         PSD_all=[];Tabs_all=[];
-        Iplot=1;
+        Iplot=0;
+        Nfigs=length(Icurrent_file:Ifinal_file);
         for I=Icurrent_file:Ifinal_file
             fname=Other_FileNames(I).name;
             fprintf('Processing %s...\n',fname);
             [PSD,F,Tsec,Tabs,params]=read_Java_PSD(fname,tabs_loop_begin,Inf);  %Read an entire file into memory
+            
+            %If we load more than one  file, start at the beginning
+            tabs_loop_begin=0;
+            
             sec_avg=(params.Nfft+params.dn*params.Nsamps)/params.Fs;
             
             Istrip=find(Tabs<=tabs_end);
@@ -1012,11 +1026,55 @@ switch	Batch_mode
                 case 'Display and Print Figure'
                     PSD_all=[PSD_all PSD(:,Istrip)];
                     Tabs_all=[Tabs_all Tabs(Istrip)];
-                    if split_windows
-                        [hprint(Iplot),save_tag{Iplot}]=image_PSD(min(Tabs_all), max(Tabs_all));
-                        PSD_all=[];Tabs_all=[];
-                        Iplot=Iplot+1;
+                    
+                    if ~split_windows
+                        continue
                     end
+                    Iplot=Iplot+1;
+                    [~,local_fname{Iplot},~]=fileparts(fname);
+                   
+                    [hprint(Iplot),save_tag{Iplot}]=image_PSD(min(Tabs_all), max(Tabs_all),local_fname{Iplot});
+                               
+                    save_str=sprintf('PSD_%s', save_tag{Iplot});
+                    if ~exist('pms'),pms=[];end
+                    save(save_str,'pms','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
+                    %uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
+                    disp([save_str ' mat and jpg file written to ' pwd '\n']);
+                    
+                    if Nfigs>Nfigs_max
+                        
+                        orient landscape
+                        figure(hprint(Iplot));
+                        
+                        print(hprint(Iplot),'-djpeg',save_str);
+                        
+                        %Plot zooms if desired
+                        Tabs_limm=get(gca,'xlim');
+                        Tabs_frame=unique([Tabs_limm(1):plot_interval:Tabs_limm(2) Tabs_limm(2)]);
+                        Tabs_frame(isnan(Tabs_frame))=[];
+                        
+                        
+                        for JJ=1:(length(Tabs_frame)-1)
+                            try
+                                xlim([Tabs_frame(JJ) Tabs_frame(JJ+1)]);
+                                datetick('x',date_tick_chc,'keeplimits');
+                                save_str_zoom=sprintf('PSDzoom_%s_%s', datestr(Tabs_frame(JJ),30), datestr(Tabs_frame(JJ+1),30));
+                                
+                                titlestr=sprintf('%s\nStart time: %s, End Time: %s, seconds averaged: %6.2f', ...
+                                    local_fname{Iplot},datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
+                                title(titlestr);
+                                print(hprint(Iplot),'-djpeg',save_str_zoom);
+                            catch
+                                disp('Failure to plot Tabs_frame: plot_interval is likely bad');
+                            end
+                            
+                        end
+                        close;
+                        
+                    end  %if Nfigs>Nfigs_max
+                    PSD_all=[];Tabs_all=[];
+                    
+                    
                 case 'Plot percentiles'
                     
                     %%Process PSD matrix..
@@ -1038,14 +1096,69 @@ switch	Batch_mode
                     Icount=Icount+length(Istrip);
             end  %switch
             
-            %If we move into additional files, start at the beginning
-            tabs_loop_begin=0;
             
         end  %Icurrent_file
         
         
+        %%All files have been loaded and processed.
+        
         switch PSDButtonName
-            
+            case 'Display and Print Figure'
+                
+                
+                if ~split_windows
+                    [hprint(1),save_tag{1}]=image_PSD(min(Tabs_all), max(Tabs_all));
+                    save_str=sprintf('PSD_%s', save_tag{1});
+                    if ~exist('pms'),pms=[];end
+                    save(save_str,'pms','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
+                    disp([save_str ' mat and jpg file written to ' pwd '\n']);
+                    
+                end
+                
+                if Nfigs>Nfigs_max
+                    return
+                end
+                yess=menu('Save PSD figures?','Yes','No');
+                if yess==1
+                    
+                    Nfigs=sort(get(0,'Child'));
+                    Nfigs=Nfigs(Nfigs<150);
+                   
+                    for II=1:length(Nfigs)
+                        
+                        save_str=sprintf('PSD_%s', save_tag{II});
+                    
+                         %uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
+                        orient landscape
+                        print(hprint(II),'-djpeg',save_str);
+                        
+                        %Plot zooms if desired
+                        figure(hprint(II));
+                        Tabs_limm=get(gca,'xlim');
+                        Tabs_frame=unique([Tabs_limm(1):plot_interval:Tabs_limm(2) Tabs_limm(2)]);
+                        Tabs_frame(isnan(Tabs_frame))=[];
+                        
+                        
+                        for JJ=1:(length(Tabs_frame)-1)
+                            try
+                            xlim([Tabs_frame(JJ) Tabs_frame(JJ+1)]);
+                            datetick('x',date_tick_chc,'keeplimits');
+                            save_str_zoom=sprintf('PSDzoom_%s_%s', datestr(Tabs_frame(JJ),30), datestr(Tabs_frame(JJ+1),30));
+                            %[~,local_fname,~]=fileparts(fname);
+                            titlestr=sprintf('%s\nStart time: %s, End Time: %s, seconds averaged: %6.2f', ...
+                                local_fname{II},datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
+                            title(titlestr);
+                            print(hprint(II),'-djpeg',save_str_zoom);
+                            catch
+                               disp('Failure to plot Tabs_frame: plot_interval is likely bad'); 
+                            end
+                            
+                        end
+                        
+                    end %II
+                    
+                end %%yes
+                %%%%%%Plot and save percentile files to file
             case 'Plot percentiles'
                 %Remove excess storage
                 %Icount=Icount-length(Istrip);
@@ -1064,40 +1177,73 @@ switch	Batch_mode
                 yes=1;
                 while yes
                     close_all_figures;  %Close all open figures..
-                    if Nf>3
-                        %%Process PSD matrix..
-                        for Iff=1:length(pms.fmin)
-                            %Igood= (F>=pms.fmin(Iff)&F<=pms.fmax(Iff));
-                            sumPSD=PSD_all(Iff,:);  %Now power spectral density converted to power
-                            pms.title=sprintf('Spectral power between %i and %i Hz, beginning %s',pms.fmin(Iff),pms.fmax(Iff),datestr(Tabs_all(1)));
-                            [temp,hprint]=create_percentile_distributions(Tabs_all, sumPSD,pms, 1);
-                            if Iff==1
-                                p_matrix=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
-                                XX=temp.x;
-                            end
-                            p_matrix(Iff,:,:)=temp.data;
+                    clear hprint
+                
+                    if Nf<=5
+                        suppress_output=0;
+                    else
+                        suppress_output=1;
+                    end
+                    %%Process PSD matrix..
+                    for Iff=1:length(pms.fmin)
+                        tmp=datevec(pms.x_inc);
+                        tmp=3600*tmp(4)+60*tmp(5)+tmp(6);
+                        save_tag{Iff}=sprintf('Percentile_PSD_%s_%s_fmin%iHz_fmax%iHz_interval%isec', ...
+                            datestr(Tabs_all(1),30),datestr(Tabs_all(end),30),(pms.fmin(Iff)),(pms.fmax(Iff)),tmp);
+                        sumPSD=PSD_all(Iff,:);  %Now power spectral density converted to power
+                        pms.title=sprintf('Spectral power between %i and %i Hz, averaged %6.2f sec, beginning %s', ...
+                            pms.fmin(Iff),pms.fmax(Iff),sec_avg,datestr(Tabs_all(1)));
+                        if suppress_output==0
+                            [temp,hprint(Iff)]=create_percentile_distributions(Tabs_all, sumPSD,pms, suppress_output);
+                        else
+                            [temp]=create_percentile_distributions(Tabs_all, sumPSD,pms, suppress_output);
+                            
                         end
-                        
+                       
+                        if Iff==1
+                            percents.data=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
+                            percents.x=temp.x;
+                            percents.percentiles=pms.percentiles;
+                            if suppress_output==0
+                                uiwait(msgbox('Please click on screen to print out percentiles used'));
+                                try
+                                    gtext(sprintf('Percentiles: %s',num2str(pms.percentiles)),'fontweight','bold','fontsize',18)
+                                end
+                            end
+                        end
+                        percents.data(Iff,:,:)=temp.data;
+                        percents.title{Iff}=pms.title;
+                        %if suppress_output==0
+                          %  save(save_tag{Iff}, 'pms','Tabs_all','sumPSD','percents');
+                           % save(save_tag,'Tabs_all','PSD_all','pms','params','Batch_vars_bulkload','sec_avg','percents');
+                    
+                        %end
+                    end  %length pms.fmin
+                    
+                    
+                    %if isempty(date_tick_chc) %auto adjustment has failed..
+                        %date_tick_chc=get_datetick_style('auto',pms.xlabel_inc,'datenumber');
+                    %end
+                    %pms.label_style=date_tick_chc;
+                    
+                    if suppress_output==1
+                         
                         %%Plot contour plots if enough frequency bands
                         clear hprint
                         for Ipp=1:length(pms.percentiles)
                             hprint(Ipp)=figure;
-                            imagesc(XX,pms.fmin,squeeze(p_matrix(:,Ipp,:)));
+                            imagesc(percents.x,pms.fmin,squeeze(percents.data(:,Ipp,:)));
                             axis('xy');
                             %datetick('x',date_tick_chc);
                             Ibin=get(gca,'xtick');
                             Istep=floor(pms.xlabel_inc/pms.x_inc);
-                            Ibin=1:Istep:length(XX);
+                            Ibin=1:Istep:length(percents.x);
                             
-                            %Ibin=XX(Ibin);
-                            set(gca,'xtick',XX(Ibin));
-                            if isempty(date_tick_chc) %auto adjustment has failed..
-                                date_tick_chc=get_datetick_style('auto',pms.xlabel_inc,'datenumber');
-                            end
-                            datetick('x',date_tick_chc,'keepticks','keeplimits')
+                            %Ibin=percents.x(Ibin);
+                            set(gca,'xtick',percents.x(Ibin));
+                            
+                            datetick('x',pms.label_style,'keepticks','keeplimits')
                             %set(gca,'xticklabel',);
-                            
-                            
                             
                             colorbar
                             caxis(pms.y_limits);
@@ -1106,26 +1252,11 @@ switch	Batch_mode
                             ylabel('Frequency (Hz)','fontweight','bold','fontsize',14);
                             grid on;
                             
-                        end
-                    else  %only one or two frequeny bands
-                        if isempty(date_tick_chc) %auto adjustment has failed..
-                            date_tick_chc=get_datetick_style('auto',pms.xlabel_inc,'datenumber');
-                        end
-                        pms.label_style=date_tick_chc;
-                        pms.title=sprintf('Spectral power between %i and %i Hz, averaged %6.2f sec, beginning %s', ...
-                            pms.fmin(Iff),pms.fmax(Iff),sec_avg,datestr(Tabs_all(1)));
-                        
-                        [percents,hprint]=create_percentile_distributions(Tabs_all, squeeze(PSD_all), pms,0);
-                        %[output(Iff,:,:),hprint]=create_percentile_distributions(Tabs, sumPSD,pms, suppress_output);
-                        %datetick('x',date_tick_chc,'keeplimits','keepticks');
-                        xlabel(pms.x_label,'fontsize',14,'fontweight','bold');
-                        ylabel(pms.y_label,'fontsize',14,'fontweight','bold');
-                        uiwait(msgbox('Please click on screen to print out percentiles used'));
-                        gtext(sprintf('Percentiles: %s',num2str(pms.percentiles)),'fontweight','bold','fontsize',18)
-                        save PercentileResults percents pms
-                        
-                    end  %if Nf?3
-                    yes=menu('Redo formatting? (Time formatting only)','Yes','No');
+                           
+                            
+                        end %for Ipp
+                    end  %suppress_output==1
+                    yes=menu('Redo formatting? ','Yes','No');
                     if yes==1
                         pms=get_PSD_percentile_params(pms.fmin/1000,pms.fmax/1000,pms.def);
                         if isempty(pms)
@@ -1145,66 +1276,30 @@ switch	Batch_mode
                 for Iprint=1:length(hprint)
                     tmp=datevec(pms.x_inc);
                     tmp=3600*tmp(4)+60*tmp(5)+tmp(6);
-                    save_tag=sprintf('PSD_%s_fmin%iHz_fmax%iHz_interval%isec', ...
-                        datestr(Tabs_all(1),30),(pms.fmin(Iprint)),(pms.fmax(Iprint)),tmp);
+                    
+                    if suppress_output==0
+                    save_tag=sprintf('Percentile_PSD_%s_%s_fmin%iHz_fmax%iHz_interval%isec', ...
+                            datestr(Tabs_all(1),30),datestr(Tabs_all(end),30),(pms.fmin(Iprint)),(pms.fmax(Iprint)),tmp);
+                    else
+                       save_tag=sprintf('Percentile%i_PSD_%s_%s_fmin%iHz_fmax%iHz_interval%isec', ...
+                            100*pms.percentiles(Iprint),datestr(Tabs_all(1),30),datestr(Tabs_all(end),30),min(pms.fmin),max(pms.fmax),tmp);
+                     
+                    end
+                    set(hprint(Iprint),'paperpositionmode','auto')
                     print(hprint(Iprint),'-djpeg',save_tag)
                     saveas(hprint(Iprint), save_tag, 'fig');
-                    save(save_tag,'Tabs_all','PSD_all','pms','params','Batch_vars_bulkload','sec_avg');
+                    save(save_tag,'Tabs_all','PSD_all','pms','params','Batch_vars_bulkload','sec_avg','percents');
                     
                 end
                 
-            case 'Display and Print Figure'
-                
-                
-                if ~split_windows
-                    [hprint(1),save_tag{1}]=image_PSD(min(Tabs_all), max(Tabs_all));
-                end
-                
-                yess=menu('Save PSD Data and figure?','Yes','No');
-                if yess==1
-                    
-                    Nfigs=sort(get(0,'Child'));
-                    Nfigs=Nfigs(Nfigs<150);
-                    
-                    for II=1:length(Nfigs)
-                        
-                        
-                        save_str=sprintf('PSD_%s', save_tag{II});
-                        if ~exist('pms'),pms=[];end
-                        save(save_str,'pms','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
-                        uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
-                        
-                        orient landscape
-                        print(hprint(II),'-djpeg',save_str);
-                        
-                        %Plot zooms if desired
-                        figure(hprint(II));
-                        Tabs_limm=get(gca,'xlim');
-                        Tabs_frame=unique([Tabs_limm(1):plot_interval:Tabs_limm(2) Tabs_limm(2)]);
-                        
-                        
-                        for JJ=1:(length(Tabs_frame)-1)
-                            xlim([Tabs_frame(JJ) Tabs_frame(JJ+1)]);
-                            datetick('x',date_tick_chc,'keeplimits');
-                            save_str=sprintf('PSDzoom_%s_%s', datestr(Tabs_frame(JJ),30), datestr(Tabs_frame(JJ+1),30));
-                            titlestr=sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f', ...
-                                datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
-                            title(titlestr);
-                            print(hprint(II),'-djpeg',save_str);
-                            
-                        end
-                        
-                    end %II
-                    
-                end %%yes
-                
+            
         end  %switch
     otherwise
         error('Batch mode not recognized');
 end %switch Batch Mode
 
 
-    function [hprint,save_tag]=image_PSD(twin1,twin2)
+    function [hprint,save_tag]=image_PSD(twin1,twin2,file_name)
         
         if isempty(Tabs_all)
             hprint=-1;save_tag=-1;
@@ -1233,7 +1328,8 @@ end %switch Batch Mode
         end
         datetick('x',date_tick_chc,'keeplimits');
         %sec_avg=params.Nsamps*params.dn/params.Fs;
-        titlestr=(sprintf('Start time: %s, End Time: %s, seconds averaged: %6.2f',datestr(twin1,30),datestr(twin2,30),sec_avg));
+        %[~,local_fname,~]=fileparts(fname);
+        titlestr=(sprintf('%s\n Start time: %s, End Time: %s, seconds averaged: %6.2f',file_name,datestr(twin1,30),datestr(twin2,30),sec_avg));
         title(titlestr);
         save_tag=[datestr(twin1,30) '_' datestr(twin2,30)];
     end
@@ -1293,13 +1389,14 @@ end
 %
 function pms=get_PSD_percentile_params(fmin,fmax,def_old)
 
+    
 if exist('def_old','var')
     def=def_old;
     def{3}=num2str(1000*fmin);
     def{4}=num2str(1000*fmax);
     
 else
-    def = {'Date/Time','2*3600',num2str(1000*fmin),num2str(1000*fmax),'[70 120]','4*3600','[0.01 0.1 .25 .5 .75 0.9 .99]'};
+    def = {'Date/Time','4*3600',num2str(1000*fmin),num2str(1000*fmax),'[90 140]','48*3600','[0.1 0.5 0.9]'};
     
 end
 yes=1;
@@ -1320,15 +1417,25 @@ while yes
     pms.fmax=str2num(answer{4});
     pms.y_limits=str2num(answer{5});
     pms.xlabel_inc=datenum(0,0,0,0,0,str2num(answer{6}));
-    pms.percentiles=eval(answer{7});
+    pms.percentiles=str2num(answer{7});
     
     if rem(length(pms.percentiles),2)==0
         uiwait(msgbox('Must be an odd number of percentiles'));
     else
         yes=0;
     end
-    
+    date_tick_chc=get_datetick_style('auto',pms.xlabel_inc,'datenumber');
+
+    pms.label_style=date_tick_chc;
     pms.def=answer;
+    
+    prompt = {'Datenumber Format, examples include "mm/dd", "dd", "dd/HH", "HH" or "HH:MM":'};
+    dlg_title = 'Check the datenumber format...';
+    num_lines = 1;
+    def2{1}=date_tick_chc;
+    answer = inputdlg(prompt,dlg_title,num_lines,def2);
+    pms.label_style=answer{1};
+    
     % if pms.xlabel_inc>=datenum(0,0,0,12,0,0) %label spacing on order of days
     %     pms.label_style='dd';
     % elseif pms.xlabel_inc>=datenum(0,0,0,1,0,0);  % If label spacing is over one hour
@@ -1452,15 +1559,16 @@ switch	Batch_mode
         param.f_high=1000*str2num(get(handles.edit_fmax,'String'));
         param.sec_avg=param.Nfft/param.Fs;
         
+        cd(param.dir_out);
         write_Java_script('PSD',param);
         ! ./masterPSD.scr > outt.txt &
         return
     case 'Load Bulk Processing'
         
         
-        Batch_vars_bulkload.start_time	=	'folder start';
+        Batch_vars_bulkload.start_time	=	'select';
         Batch_desc{1}	=	'Time to begin loading (e.g. "here" to use visible start time, "datenum(2011,1,2,0,0,0)", "file start" for current file , "select" to choose file from list, "folder start" for first file in folder)';
-        Batch_vars_bulkload.end_time	=	'folder end';
+        Batch_vars_bulkload.end_time	=	'select';
         Batch_desc{2}	=	'Time to end loading (e.g. "here" to use GUI end time, "2" for two hours from start time, "datenum(2011,1,2,0,0,0)", "file end" for time at current file end, "folder end" to import through end of folder)';
         
         
@@ -1639,18 +1747,37 @@ bulk_params.Icurrent_file=[];
 bulk_params.Ifinal_file=[];
 bulk_params.FF=[];
 
-dialog_title	=	'Select an example Bulk file to load: Note that I am looking in analysis directory, not data directory';
 if isfield(handles,'myfile')
     [~,token,extt] = fileparts(handles.myfile);
 else
     token=[];
 end
 
-
+%Select first example file
+if ~strcmp(Batch_vars_bulkload.start_time,'select')
+    
+    dialog_title	=	'Select an example Bulk file to load: Note that I am looking in analysis directory, not data directory';
+else
+    dialog_title	=	'Select the first Bulk file to load: Note that I am looking in analysis directory, not data directory';
+    
+end
 [FileName,DirectoryName] = uigetfile([token '*.psd'],dialog_title);
 if isnumeric(FileName)
     disp('No file selected');
     return;
+end
+
+%Select second example file if needed
+if strcmp(Batch_vars_bulkload.end_time,'select')
+    dialog_title	=	'Select the final Bulk file to load: Note that I am looking in analysis directory, not data directory';
+
+    [FileNameEnd,DirectoryNameEnd] = uigetfile([token '*.psd'],dialog_title);
+    if isnumeric(FileName)
+        disp('No second file selected');
+        return;
+    end
+else
+    FileNameEnd='';
 end
 
 fprintf('Changing working directory to %s\n',DirectoryName);
@@ -1660,18 +1787,46 @@ Iscore=min(strfind(FileName,'_chan'));
 token2=FileName((Iscore+1):end);  %PSD files having the same input parameters..
 
 Other_FileNames=dir(['*_' token2]);
+
+%Sort by numerical order, not ASCII order.
+
+
 if isempty(Other_FileNames)
     uiwait(errordlg('load_PSD_Bulk_Run cannot find matches to file you selected:','Files not found!'));
     return;
 end
 
-
+tabs_select_start=[];
+tabs_select_end=[];
+tabs_selectEnd_start=[];
+tabs_selectEnd_end=[];
 for II=1:length(Other_FileNames)
     [~,~,~,~,params]=read_Java_PSD(Other_FileNames(II).name,0,Inf,1); %Read header only
     tabs_file_start(II)=params.tstart_file;
     tabs_file_end(II)=params.tend_file;
+   
     
 end
+
+%Sort by start time
+[tabs_file_start,Isort]=sort(tabs_file_start);
+tabs_file_end=tabs_file_end(Isort);
+Other_FileNames=Other_FileNames(Isort);
+
+for II=1:length(Other_FileNames)
+     if strcmp(Other_FileNames(II).name,FileName)
+        tabs_select_start=tabs_file_start(II);
+        tabs_select_end=tabs_file_end(II);
+        Iselect_file=II;
+    elseif strcmp(Other_FileNames(II).name,FileNameEnd)
+        tabs_selectEnd_start=tabs_file_start(II);
+        tabs_selectEnd_end=tabs_file_end(II);
+        IselectEnd_file=II;
+        
+    end
+    
+end
+
 
 tabs_folder_start=tabs_file_start(1);  %datenumber of start of data in folder (assuming all filenames have chronological order)
 tabs_folder_end=tabs_file_end(end);  %datenumber of end of data in folder (assuming all filenames have chronological order)
@@ -1684,9 +1839,17 @@ tabs_folder_end=tabs_file_end(end);  %datenumber of end of data in folder (assum
 % tabs_start=params.tstart_file;  %datenumber of start of data in focal file (assuming all filenames have chronological order)
 
 
-
 %%Translate start time.  Need to define tabs_start and Icurrent_file
 switch lower(Batch_vars_bulkload.start_time)
+    case 'select'
+        if ~isempty(tabs_select_start)
+            tabs_start=tabs_select_start;
+        else
+            uiwait(msgbox('Start file not selected'));
+            return
+        end
+        %Reset other variables
+        Icurrent_file=Iselect_file;
     case 'here'  %Use edit window
         tabs_start=datenum(get(handles.edit_datestr,'String'));
         Icurrent_file=find(tabs_start>=tabs_file_start, 1, 'last' );
@@ -1727,6 +1890,16 @@ end
 
 %%Translate end time;  Need to define tabs_end and Ifinal_file
 switch lower(Batch_vars_bulkload.end_time)
+    case 'select'
+        if ~isempty(tabs_selectEnd_end)
+            tabs_end=tabs_selectEnd_end;
+            
+        else
+            uiwait(msgbox('End file not selected'));
+            return
+        end
+        Ifinal_file=IselectEnd_file;
+        
     case 'here' %Use edit window
         tabs_end=datenum(get(handles.edit_datestr,'String'))+datenum(0,0,0,0,0,str2num(get(handles.edit_winlen,'string')));
         Ifinal_file=Icurrent_file;  %Load one file only
@@ -2142,7 +2315,7 @@ end
 num_lines		=	1;
 
 %	Title for window
-dlgTitle	=	['Please enter the required parameters for processing ' Batch_type];
+dlgTitle	=	['Parameters for  ' Batch_type];
 
 
 %	Create input dialogbox
@@ -2783,7 +2956,7 @@ chan=get(handles.edit_chan,'String');
 save_name=sprintf('soundsamp%s_%s',handles.mydir((Islash(end)+1):end),datestr(tdate_start,30));
 disp(['Saving ...' save_name]);
 
-save_path	=	fullfile(pwd, save_name);  %AARON: save to local directory, not server
+save_path	=	fullfile(handles.outputdir, save_name);  %AARON: save to local directory, not server
 
 try
     if size(x,2)>size(x,1)
@@ -2916,7 +3089,7 @@ if strcmpi(handles.filetype,'MDAT')
         end
         
         return
-    end
+    end  %if mychc==2
 end  %MDAT
 
 handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
@@ -2943,7 +3116,7 @@ tlen=handles.tlen;
 chan=get(handles.edit_chan,'String');
 Idot=strfind(handles.myfile,'.')-1;
 save_name=sprintf('soundsamp_%s_%s_%s',handles.myfile(1:Idot),datestr(tdate_start,30),chan);
-save_path	=	fullfile(pwd, save_name);
+save_path	=	fullfile(handles.outputdir, save_name);
 disp(['Printing %s ...' save_name]);
 
 orient landscape
@@ -4806,7 +4979,7 @@ pushbutton_update_Callback(handles.pushbutton_update,eventdata,handles);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%Beginning of annoation subroutines %%%%%%%%%%
+%%%%%Beginning of annotation subroutines %%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%	new annotation stuff
 
@@ -5369,6 +5542,7 @@ if strcmpi(handles.filetype,'psd')
     set(handles.popupmenu_Nfft,'Value',Value);
     
     ovlap=100*(1-hdr.dn/hdr.Nfft);
+    Nfft=hdr.Nfft;
     contents=get(handles.popupmenu_ovlap,'String');
     Value=find(strcmp(contents,int2str(ovlap))>0);
     set(handles.popupmenu_ovlap,'Value',Value);
@@ -5410,6 +5584,11 @@ else
     
 end  %if PSD
 
+handles.old_display_view=[];
+if isfield(handles,'display_view')
+    handles.old_display_view=handles.display_view;
+end
+    
 handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
 
 if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New Fig')
@@ -5420,7 +5599,7 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
         figure;
     end
     
-    if length(x(:,1))<Nfft
+    if length(x(:,1))<Nfft/2
         return
     end
     if ~(strcmp(handles.filetype,'PSD'))
@@ -5498,11 +5677,22 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
     end
 elseif strcmp(handles.display_view,'Time Series') %%Time series
     
-    %%Check that we are looking at acoustic data
+       
+    %%Check that we are looking at acoustic data and are in spectrogram
+    %%mode
     if isempty(strfind(handles.myfile,'Press'))
-        disp('Enter min and max frequency, or return to see raw time series:');
-        tmp=ginput(2);
-        if ~isempty(tmp)&&size(tmp,1)==2
+       % msgbox('Enter min and max frequency, or hit return to skip filtering:','modal');
+       if strcmp(handles.old_display_view,'Spectrogram')
+           ButtonName = questdlg('Filter? (If yes, click on two frequency values in spectrogram)');
+       else
+           ButtonName='No';
+       end
+       
+       %if ~isempty(tmp)&&size(tmp,1)==2
+        %%Check that are on current spectrogram view
+        if strcmp(ButtonName,'Yes')
+            tmp=ginput(2);
+        
             freq=sort(tmp(:,2))*1000;
             minfreq=freq(1);maxfreq=freq(2);
             %y=quick_filter(x(:,1),Fs,freq(1),freq(2))
@@ -5519,8 +5709,14 @@ elseif strcmp(handles.display_view,'Time Series') %%Time series
     end
     
     t=(1:length(x(:,1)))/Fs;
-    plot(t,y);grid on;
-    xlabel('Time (sec)');ylabel('Amplitude');
+    xlabel('Time (sec)');
+    if strfind(hdr.calunits,'mPa')
+        plot(handles.axes1,t,1000*y);grid on;
+        ylabel('uPa');
+    else
+        plot(handles.axes1,t,y);grid on;
+        ylabel('Amplitude');
+    end
 elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
     fmax=1000*str2double(get(handles.edit_fmax,'String'));
     fmin=1000*str2double(get(handles.edit_fmin,'String'));
@@ -5646,7 +5842,7 @@ handles.tdate_max=	-1;
 %cd(handles.mydir);
 
 try
-    [x,t,Fs,tmin,tmax]=load_data(filetype,-1,1,1,handles);
+    [x,t,Fs,tmin,tmax]=load_data(filetype,-1,10,1,handles);
 catch %no file selected
     %errordlg(sprintf('No %s file selected',filetype));
     errorflag=1;
@@ -5791,7 +5987,7 @@ end
 end
 
 %%%%%%%%%%%%%%%%%%%%
-%%% load_data.m%%%%%
+%%% function load_data.m%%%%%
 %%%%%%%%%%%%%%%%%%%%
 
 function [x,t,Fs,tmin,tmax,head]	=	...
@@ -5818,7 +6014,7 @@ filetype	=	upper(filetype);
 switch filetype
     case 'PSD'
         [x,F,t,Tabs,params]=read_Java_PSD(fullfile(mydir,myfile),tdate_start,tlen);
-        if ~isempty(t)
+        if ~isempty(t)&&length(t)>1
             Fs=1./(t(2)-t(1));
             t=t-t(1);
         else
@@ -5897,7 +6093,8 @@ switch filetype
         head.Nchan=length(Ichan);
     case 'MT'
         %[x,t,Fs]=load_mt_mult(handles.mydir,tdate_start,tlen);
-        head=read_mt_header([mydir filesep myfile]);
+        %head=read_mt_header([mydir filesep myfile]);
+        head=read_mt_header(fullfile(mydir, myfile));
         
         tmin=head.tstart;
         tmax=head.tend;
@@ -5970,7 +6167,7 @@ switch filetype
                 Ichan=1;
             end
             if tdate_start>0
-                [x,t]=load_mt([mydir filesep myfile],nsec,tlen);
+                [x,t]=load_mt(fullfile(mydir , myfile),nsec,tlen);
             end
             head.Nchan=1;
         end
@@ -8491,7 +8688,11 @@ close(hh);
 end
 
 %	Checks Notes folder for existing files and loads them
-%%%%%%Thode: load_notes_file
+%Where new annotations are created...
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%% load_notes_file %%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function	handles		=	load_notes_file(handles, new_folder)
 
 
@@ -8539,6 +8740,8 @@ end
 %	Default output file name
 user_name	=	getusername();
 multiple_times_present=0;
+
+
 if strfind(handles.myfile,'*')  %If inputs indicates that multiple files from different times are to be merged
     Istart=3;
     file_name	=	['Multiple' fname(Istart:end) '-notes-' user_name '.mat'];
@@ -9352,7 +9555,9 @@ else
 end
 end
 
-%	helper function for default template
+%%%  Annotation template, Annotations template
+%	 Defines default fields
+%%load_default_template
 function	[Description, Template, edit_fields]	=	load_default_template()
 %edit fields are fields you can edit...
 Description	=	{'Start Time',...
@@ -9940,129 +10145,228 @@ function image_processor_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 param.morph=[];
+cbegin=3600*24*(handles.tdate_start-datenum(1970,1,1,0,0,0));
+ 
+chc_list=    load_image_parameters(1);
 
-%%%%%%%%%%%%%%%
-%%%%Equalization%%%%
-Ip=0;
-Batch_vars.MinFreq='0'; Ip=Ip+1;Batch_desc{Ip}	=	'Minimum Frequency (Hz) to crop initial image';
-Batch_vars.MaxFreq='500'; Ip=Ip+1;Batch_desc{Ip}	=	'Maximum Frequency (Hz) to crop initial image';
-Batch_vars.eq_time	=	'1';            Ip=Ip+1;Batch_desc{Ip}	=	'Time (sec) used to create background  noise estimate. Used if ''equalization'' is Inf';
-Batch_vars.equalization = 'Inf';        Ip=Ip+1;Batch_desc{Ip}	=	'Precomputed noise equalization spectrum; first column: Frequecies in Hz; Secon column: PSD (dB) value of noise';
-
-Batch_type	=	[get(hObject, 'Label') 'equalization parameters'];
-[Batch_vars, Batch_names]	=	input_batchparams(Batch_vars, Batch_desc, Batch_type,1);
-for I=1:length(Batch_desc)
-   param.morph.(Batch_names{I})=Batch_vars.(Batch_names{I});
-end
-Batch_vars=[];Batch_desc=[];Batch_names=[];
-
-%%%%%%%%%%%%%%
-%%%Ridge Extraction
-%%%%%%%%%%%%%%
-
-Batch_vars.threshold_chc='local_peaks'; Ip=Ip+1;Batch_desc{Ip}	=	'Algorithm for picking local ridge maximum (local_peaks[default],otsu,reconstruction)';
-Batch_vars.SNRmin	=	'10';           Ip=Ip+1;Batch_desc{Ip}	=	'Min dB level, for thresholding background noise';
-param.morph.local_bandwidth.max=500;
-param.morph.local_bandwidth.min=0;
-param.morph.time_band_product.min=1;
-param.morph.time_band_product.max=Inf;
-
-Batch_vars.dynamic_range	=	'3.11';	Ip=Ip+1;Batch_desc{Ip}	=	'%dB below ridge maximum a pixel is allowed to have';
-Batch_vars.dynamic_range2	=	'7';	Ip=Ip+1;Batch_desc{Ip}	=	'dB below maximum a pixel is allowed to have, horizontal (regional) maximum';
-
-Batch_type	=	[get(hObject, 'Label') 'ridge extraction parameters'];
-param.morph	=	input_batchparams(Batch_vars, Batch_desc, Batch_type,1);
-Batch_vars=[];Batch_desc=[];
-
-%%%%%%%%%%%%%%%%%%%%%
-%%Morphological Processing
-
-param.morph.gap_f=11;  %For dilation results
-param.morph.gap_t=0.04;  %MIGHT NEED TO CHANGE BACK TO 0.3 For dilation results, might need
-
-param.morph.background.on=1;  %Execute contour linking and processing
-param.morph.background.gap_f=param.merge.gap_f;
-param.morph.background.gap_t=param.merge.gap_t;
-
-Batch_type	=	[get(hObject, 'Label') 'ridge extraction parameters'];
-param.morph	=	input_batchparams(Batch_vars, Batch_desc, Batch_type,1);
-Batch_vars=[];Batch_desc=[];
-
-
-%%%%%%%%%
-
-param.median.on=0;
-param.median.size=[0.2 20];
-
-%parameters for gaussian filtering..
-param.filter.on=0;  %If one, asymetric gaussian, if two, symmetric gaussian
-param.filter.size=[0.2 0.2];  %Filter in units of [sec Hz] for spectrgram
-param.filter.sigma=0.5;  %Units of pixel size.
-
-
-%Morphological analysis.  Other parameters are derived from above...
-%param.morph.threshold_fudge=0.75;
-%param.morph.SNRmin=10;  %min dB level, for thresholding background noise
-%param.morph.dynamic_range=3.11;  %dB below maximum a pixel is allowed to have
-%param.morph.dynamic_range2=7;  %dB below maximum a pixel is allowed to have, horizontal (regional) maximum
-
-
-param.merge.ovlap=0.25;
-param.merge.max_frequency_separation=50;
-param.merge.gap_t=0.1;
-param.merge.gap_f=20;
-
-param.morph.background.on=1;  %Execute contour linking and processing
-param.morph.background.gap_f=param.merge.gap_f;
-param.morph.background.gap_t=param.merge.gap_t;
-
-param.morph.MinFreq=0;  %Minimum frequency to crop image
-param.morph.MaxFreq=500; %Maximum frequency to crop image.
-
-param.morph.duration.min=0.15;
-param.morph.duration.max=5;
-
-%param.morph.time_band_product.min=9.529000000000001e-01;
-param.morph.time_band_product.min=1;
-param.morph.time_band_product.max=Inf;
-
-param.morph.robust_fmin.min=0;
-param.morph.robust_fmin.max=500;
-
-param.morph.robust_fmax.min=0;
-param.morph.robust_fmax.max=500;
-
-param.morph.robust_bandwidth.max=500;
-param.morph.robust_bandwidth.min=0;
-
-
-param.morph.Orientation.max=90;
-param.morph.Orientation.min=-90;
-
-%param.morph.Centroid_freq.max=200;
-%param.morph.Centroid_freq.min=85;
-
-param.morph.Centroid_freq.max=500;
-param.morph.Centroid_freq.min=0;
-
-param.morph.Eccentricity.max=1;
-param.morph.Eccentricity.min=0.0;
-
-param.morph.percent_safety_trim=0.75;
-param.morph.want_contour=[];
-
- param.Fs=handles.Fs;
-       
+param.Fs=handles.Fs;
 contents=get(handles.popupmenu_Nfft,'String');
 param.Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
 contents=get(handles.popupmenu_ovlap,'String');
 param.ovlap=(str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100);
 
+%param.morph=[];
+param.morph.background=[];
+param.filter=[];
+param.merge=[];
+param.median=[];
 
- cbegin=3600*24*(handles.tdate_start-datenum(1970,1,1,0,0,0));
- 
-[features,final_image]=extract_image_features(handles.x, cbegin,param,2);
+%Load everything
+%param=load_image_parameters(param,chc_list{end},get(hObject, 'Label'));
 
+yess=1;
+while yess==1
+    Ichc=menu('Select a group of image processing parameters to define ...', chc_list);
+    param=load_image_parameters(param,chc_list{Ichc},get(hObject, 'Label'));
+
+    [features,final_image]=extract_image_features(handles.x, cbegin,param,2);
+    yess=menu('Redo?','Yes','No');
+    
+end
+
+end
+
+
+
+    
+function [out_param]=load_image_parameters(input_param,batch_chc,label_str)
+
+chc_list={'Defaults','Equalization','Filtering','Ridge Extraction','Morphological Processing','All'};
+
+%Check if input parm fields present, otherwise assign
+out_param=input_param;
+
+if nargin==1
+    out_param=chc_list;
+    return
+end
+
+do_all=strcmp(batch_chc,chc_list{end})||strcmp(batch_chc,'Defaults');
+load_defaults=strcmp(batch_chc,'Defaults');
+
+%%%%%%%%%%%%%%%%%%%%
+%%%%Equalization%%%%
+%%%%%%%%%%%%%%%%%%%%
+
+if strcmp(chc_list{2},batch_chc)||do_all
+    
+    Ip=0;
+    
+    Batch_type	=	[label_str ' Equalization parameters'];
+    Batch_vars.MinFreq='0'; Ip=Ip+1;Batch_desc{Ip}	=	'Minimum Frequency (Hz) to crop initial image';
+    Batch_vars.MaxFreq='500'; Ip=Ip+1;Batch_desc{Ip}	=	'Maximum Frequency (Hz) to crop initial image';
+    Batch_vars.eq_time	=	'1';            Ip=Ip+1;Batch_desc{Ip}	=	'Time (sec) used to create background  noise estimate. Used if ''equalization'' is Inf';
+    Batch_vars.equalization = '[]';        Ip=Ip+1;Batch_desc{Ip}	=	'Precomputed noise equalization spectrum; first column: Frequecies in Hz; Secon column: PSD (dB) value of noise';
+    
+    out_param.morph=merge_image_params(out_param.morph,Batch_vars,Batch_desc,Batch_type,load_defaults);
+    if isempty(out_param.morph.equalization)
+       out_param.morph= rmfield(out_param.morph,'equalization');
+    end
+    Batch_type=[];Batch_vars=[];Batch_desc=[];
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%Image Filtering
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if strcmp(chc_list{3},batch_chc)||do_all
+    
+    Ip=0;
+    
+    Batch_type	=	[label_str ' Median image filtering parameters'];
+    
+    Batch_vars.on='0';Ip=Ip+1;Batch_desc{Ip}	=	'0: none, 1: Conduct median filtering';
+    Batch_vars.size='[0.2 20]';  Ip=Ip+1;Batch_desc{Ip}	=	'Median filter size in units of [sec Hz] for spectrogram';%
+    out_param.median=merge_image_params(out_param.median,Batch_vars,Batch_desc,Batch_type,load_defaults);
+    Batch_type=[];Batch_vars=[];Batch_desc=[];
+    
+    %parameters for gaussian filtering..
+    Ip=0;
+    
+    Batch_type	=	[label_str ' Gaussian image filtering parameters'];
+    
+    Batch_vars.on='0';  Ip=Ip+1;Batch_desc{Ip}	=	'0: none, 1:asymetric gaussian, 2: symmetric gaussian';%
+    Batch_vars.size='[0.2 0.2]';  Ip=Ip+1;Batch_desc{Ip}	=	'Gaussian filter size in units of [sec Hz] for spectrogram';%
+    Batch_vars.sigma='0.5';  Ip=Ip+1;Batch_desc{Ip}	=	'Sigma in units of pixel size';%
+    out_param.filter=merge_image_params(out_param.filter,Batch_vars,Batch_desc,Batch_type,load_defaults);
+    Batch_type=[];Batch_vars=[];Batch_desc=[];
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+%%%Ridge Extraction
+%%%%%%%%%%%%%%%%%%%%%%%
+
+if strcmp(chc_list{4},batch_chc)||do_all
+    
+    Ip=0;
+    Batch_type	=	[label_str ' Ridge extraction parameters'];
+    
+    Batch_vars.threshold_chc='local_peaks'; Ip=Ip+1;Batch_desc{Ip}	=	'Algorithm for picking local ridge maximum (local_peaks[default],otsu,reconstruction)';
+    Batch_vars.SNRmin	=	'10';           Ip=Ip+1;Batch_desc{Ip}	=	'Min dB level, for thresholding background noise';
+    
+    Batch_vars.local_bandwidth='[0 500]'; Ip=Ip+1;Batch_desc{Ip}	=	'minimum and maximum value of local ridge bandwidth (Hz)';
+    Batch_vars.time_band_product='[1 Inf]'; Ip=Ip+1;Batch_desc{Ip}	=	'minimum and maximum value of time bandwidth product (s-Hz)';
+    
+    Batch_vars.dynamic_range	=	'3.11';	Ip=Ip+1;Batch_desc{Ip}	=	'%dB below ridge maximum a pixel is allowed to have';
+    Batch_vars.dynamic_range2	=	'7';	Ip=Ip+1;Batch_desc{Ip}	=	'dB below maximum a pixel is allowed to have, horizontal (regional) maximum';
+    
+    out_param.morph=merge_image_params(out_param.morph,Batch_vars,Batch_desc,Batch_type,load_defaults);
+    
+    out_param.morph.local_bandwidth=parse_min_max(out_param.morph.local_bandwidth);
+    out_param.morph.time_band_product=parse_min_max(out_param.morph.time_band_product);
+    
+    
+    Batch_type=[];Batch_vars=[];Batch_desc=[];
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%Morphological Processing
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+if strcmp(chc_list{5},batch_chc)||do_all
+    Ip=0;
+    Batch_type	=	[label_str ' Morphological processing parameters'];
+    
+    Batch_vars.gap_f='11';  Ip=Ip+1;Batch_desc{Ip}	=	'Ridge trace: vertical dilation object size in Hz';
+    Batch_vars.gap_t='0.04';  Ip=Ip+1;Batch_desc{Ip}	=	'Ridge trace: horizontal dilation object size in sec';
+    
+    
+    Batch_vars.duration='[0.15 5]';Ip=Ip+1;Batch_desc{Ip}	=	'minimum and maximum duration of segment allowed (sec)';
+    Batch_vars.robust_fmin='[0 500]';Ip=Ip+1;Batch_desc{Ip}	=	'minimum and maximum  of robust minimum frequency (Hz)';
+    Batch_vars.robust_fmax='[0 500]';Ip=Ip+1;Batch_desc{Ip}	=	'minimum and maximum  of robust maximum frequency (Hz)';
+    Batch_vars.robust_bandwidth='[0 500]';Ip=Ip+1;Batch_desc{Ip}	=	'minimum and maximum  of robust bandwidth (Hz)';
+    Batch_vars.Orientation='[-90 90]';Ip=Ip+1;Batch_desc{Ip}	=	'minimum and maximum  of segment orientation (deg)';
+    Batch_vars.Centroid_freq='[0 500]';Ip=Ip+1;Batch_desc{Ip}	=	'minimum and maximum  of centroid frequency (Hz)';
+    Batch_vars.Eccentricity='[0 1]';Ip=Ip+1;Batch_desc{Ip}	=	'minimum and maximum  of segment eccentricity ';
+    
+    out_param.morph=merge_image_params(out_param.morph,Batch_vars,Batch_desc,Batch_type,load_defaults);
+    Batch_type=[];Batch_vars=[];Batch_desc=[];
+    
+    out_param.morph.duration=parse_min_max(out_param.morph.duration);
+    out_param.morph.robust_fmin=parse_min_max(out_param.morph.robust_fmin);
+    out_param.morph.robust_fmax=parse_min_max(out_param.morph.robust_fmax);
+    out_param.morph.robust_bandwidth=parse_min_max(out_param.morph.robust_bandwidth);
+    out_param.morph.Orientation=parse_min_max(out_param.morph.Orientation);
+    out_param.morph.Centroid_freq=parse_min_max(out_param.morph.Centroid_freq);
+    out_param.morph.Eccentricity=parse_min_max(out_param.morph.Eccentricity);
+    
+    Ip=0;
+    Batch_type	=	[label_str ' Background Morphological processing parameters'];
+    
+    Batch_vars.on='1';  Ip=Ip+1;Batch_desc{Ip}	=	'1: Permit background contour processing; 0: ridge tracing only';
+    Batch_vars.gap_f='20';Ip=Ip+1;Batch_desc{Ip}	=	'Background trace: vertical dilation object size in Hz';
+    Batch_vars.gap_t='0.1';Ip=Ip+1;Batch_desc{Ip}	=	'Background trace: horizontal dilation object size in sec';
+    
+    out_param.morph.background=merge_image_params(out_param.morph.background,Batch_vars,Batch_desc,Batch_type,load_defaults);
+    Batch_type=[];Batch_vars=[];Batch_desc=[];
+    
+    Ip=0;
+    Batch_type	=	[label_str ' Segment merging processing parameters'];
+    
+    Batch_vars.ovlap='0.25';Ip=Ip+1;Batch_desc{Ip}	=	'minimum overlap between segmentes for merger (0-1.0)';
+    Batch_vars.max_frequency_separation='50';Ip=Ip+1;Batch_desc{Ip}	=	'maximum frequency sepearation allowed for parallel merger (Hz)';
+    Batch_vars.gap_t='0.1';Ip=Ip+1;Batch_desc{Ip}	=	'maximum time separation between segments allowed for sequential merger (sec)';
+    Batch_vars.gap_f='20'; Ip=Ip+1;Batch_desc{Ip}	=	'maximum frequency separation between segments allowed for sequential merger (Hz)';
+    
+    out_param.merge=merge_image_params(out_param.merge,Batch_vars,Batch_desc,Batch_type,load_defaults);
+    Batch_type=[];Batch_vars=[];Batch_desc=[];
+    
+    
+end
+%%%%%%%%%
+
+out_param.morph.want_contour=[];
+
+    function outt_param=merge_image_params(in_param,Batch_vars,Batch_desc,Batch_type,load_default)
+        outt_param=in_param;
+        
+        if nargin<5
+            load_default=0;
+        end
+        
+        if load_default==0
+            [Batch_vars, Batch_names]	=	input_batchparams(Batch_vars, Batch_desc, Batch_type,1);
+            for I=1:length(Batch_desc)
+                outt_param.(Batch_names{I})=Batch_vars.(Batch_names{I});
+            end
+        else
+            Batch_names=fieldnames(Batch_vars);
+            
+            for I=1:length(Batch_names)
+                try
+                    outt_param.(Batch_names{I})=eval(Batch_vars.(Batch_names{I}));
+                catch
+                    outt_param.(Batch_names{I})=(Batch_vars.(Batch_names{I}));
+                    
+                end
+            end
+            
+        end
+        
+    end
+
+    function x=parse_min_max(x)
+        warning('off');
+        if ~isnumeric(x)
+            temp=eval(x);
+        else
+            temp=x;
+        end
+        %temp=eval(x);
+        x.min=temp(1);
+        x.max=temp(2);
+        warning('on');
+    end
 end
 
 % --- Executes on button press in togglebutton_ChannelBeam.

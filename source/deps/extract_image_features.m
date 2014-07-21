@@ -36,7 +36,6 @@
 %           local_bandwidth: [1x1 struct]
 %           MaxFreq: 500  %Maximum frequency to process image
 %           MinFreq: 0    %Minimum frequency to process image
-%           percent_safety_trim: 0.7500
 %           robust_fmax: [1x1 struct]
 %           robust_fmin: [1x1 struct]
 %           threshold_chc: 'local_peaks'
@@ -53,9 +52,12 @@
 %           gap_t: 0.1000
 %           gap_f: 20
 %
-%
+% Parameters for filtering, applied before ridge tracing
+%     param.median.on
 %     param.median.size=[0.2 50] (sec, Hz); %Used to derive bandwidth of
 %       median filter
+%
+%     param.filter.on
 %     param.filter.size=[0.2 50] (sec,Hz); %LoG filter size
 %     param.filter.sigma=0.75; %standard deviation for LoG parameter
 %
@@ -224,6 +226,8 @@ dT=T(2)-T(1);dF=F(2)-F(1);%dimensions of image "pixels"
 %%Option 1: Original thresholding method
 %param.morph.threshold_chc='otsu';
 if strcmp(param.morph.threshold_chc,'local_peaks')
+    
+    %%Conduct median filtering and gaussian filtering if desired...
     Bfilt=filter_image(Beq);
     
     %%%%%extract_ridge_trace for foreground (contour) image.  Iopen goes through
@@ -558,7 +562,7 @@ end
             return
         end
         %Optional median filter
-        if isfield(param,'median')&&param.median.on==1,
+        if isfield(param,'median')&&param.median.on==1
             min_duration=ceil(param.median.size(1)/(dT));
             min_freq=ceil(param.median.size(2)/(dF));
             
@@ -568,7 +572,7 @@ end
             
         end
         %%Optional Gaussian filtering
-        if isfield(param,'filter')&&param.filter.on==2,    %apply gaussian filter to B
+        if isfield(param,'filter')&&param.filter.on==2    %apply gaussian filter to B
             %disp('applying gaussian filter');
             
             min_duration=ceil(param.filter.size(1)/dT);
@@ -599,7 +603,7 @@ end
                 
             end
             Imed=Ifilt;
-        elseif isfield(param,'filter')&&param.filter.on==1,    %apply assymetric gaussian filters
+        elseif isfield(param,'filter')&&param.filter.on==1    %apply assymetric gaussian filters
             
             
             %disp('applying gaussian filter');
@@ -1495,7 +1499,6 @@ for I=1:numObjects
         keyboard;
     end
     %[sorted_bandwidth,Ipass]=sort(local_bandwidth);
-    %Ipass=Ipass(1:round(param.morph.percent_safety_trim*length(Ipass)));
     %local_bandwidth=median(local_bandwidth(Ipass));
     
     feature(I).comment='';
