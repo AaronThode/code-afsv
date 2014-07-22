@@ -7552,6 +7552,9 @@ end
 % keyboard
 end
 
+
+
+%% MFP
 function save_result=matched_field_processor(model_name,tilt_offset,ranges,depths,Kstot,freq,SNR,rd,SNRmin,data_name)
 conj_flag=1;  %If one, conjugate data...
 
@@ -7725,124 +7728,9 @@ for Itilt=1:length(tilt_offset)
         print(gcf,'-djpeg',[savename '.jpg']);
     end
 end %tilt
-end
+end %matched_field_processor
 
-function [MFP_replica_file_out,range_str_out,default_tilt_out,default_SNR_out]=load_MFP_scenario
-
-%%MFP replicas can be divided into Pekeris models, and more complex models...
-
-if strcmp(getenv('USER'),'thode')
-    model_dir='/Users/thode/Projects/Arctic_2010/PropagationModeling.dir/';
-elseif strcmp(getenv('USER'),'shabadi');
-    model_dir='/Users/shabadi/Documents/Shima-SIO/PropagationModeling.dir/';
-elseif strcmp(getenv('USERNAME'),'bonnelju');
-    model_dir=fullfile('C:','Users','bonnelju','Desktop','SanDiego','PropagationModeling.dir');
-    %model_dir='C:\Users\bonnelju\Desktop\SanDiego\PropagationModeling.dir\';
-end
-
-%%%%%%%%Short-Range Estimate%%%%%%%%%%%%%%%%
-MFP_replica_file{2}{1}=fullfile(model_dir,'Depth55m_Fixed.dir','ShallowBeaufortWhaleInversionSSP_ShortRange_CSDM_Nfft2048_20100820T014239_eigenvector_10to500Hz.mat');
-%MFP_replica_file{2}{1}=[model_dir 'Depth55m_Fixed.dir/ShallowBeaufortWhaleInversionSSP_ShortRange_CSDM_Nfft2048_20100820T014239_eigenvector_10to500Hz.mat'];
-default_tilt{2}{1}='1.94';
-range_str{2}{1}='100:5:5000';
-default_SNR{2}{1}=[45.78 76.29 88.5 170.9 210.6 253.3];
-
-MFP_replica_file{2}{2}=fullfile(model_dir,'Depth_55m_fixed_Pekeris.dir','ShallowBeaufortPekeris_ShortRange_arctic_pekeris1707_KRAKEN_flat55m_10to500Hz.mat');
-%MFP_replica_file{2}{2}=[model_dir '/Depth_55m_fixed_Pekeris.dir/ShallowBeaufortPekeris_ShortRange_arctic_pekeris1707_KRAKEN_flat55m_10to500Hz.mat'];
-default_tilt{2}{2}='2.41';
-range_str{2}{2}=range_str{2}{1};
-default_SNR{2}{2}=default_SNR{2}{1};
-
-%%%%%%%%%%%%%Medium range 7 km est%%%%%%%%%%%%%%%%
-MFP_replica_file{3}{1}=fullfile(model_dir,'Depth55m_Fixed.dir','ShallowBeaufortWhaleInversionSSP_MidRange_CSDM_Nfft2048_20100831T004830_eigenvector_10to500Hz.mat');
-%MFP_replica_file{3}{1}=[model_dir '/Depth55m_Fixed.dir/ShallowBeaufortWhaleInversionSSP_MidRange_CSDM_Nfft2048_20100831T004830_eigenvector_10to500Hz.mat'];
-%/Users/thode/Projects/Arctic_2010/MidRangeMFPInversion.dir/Thermocline_11dB_eigenvector_inversion.dir/RunAA
-%SSP EOF included, 40 pop, thermocline depth fixed, depth restricted to 55 m, gradient greater than -50 m/s
-%receiver depth limited to +/1 m/s.
-default_tilt{3}{1}='1.35';
-range_str{3}{1}='5000:100:10000';
-default_SNR{3}{1}=[112.9 116 119 122.1 164.8 167.8 170.9 174 177 180.1 235 238];  %Original 12 frequencies
-%used for inversion
-%default_SNR{3}{1}=[116 119 122.1 164.8 167.8 170.9 174 177 180.1 ]; %Plotting results
-
-MFP_replica_file{3}{2}=fullfile(model_dir,'Depth_55m_fixed_Pekeris.dir','ShallowBeaufortPekeris_MidRange_arctic_pekeris1638_KRAKEN_flat55m_10to500Hz.mat');
-%MFP_replica_file{3}{2}=[model_dir '/Depth_55m_fixed_Pekeris.dir/ShallowBeaufortPekeris_MidRange_arctic_pekeris1638_KRAKEN_flat55m_10to500Hz.mat'];
-default_tilt{3}{2}='1.585';
-range_str{3}{2}=range_str{3}{1};
-default_SNR{3}{2}=default_SNR{3}{1};
-
-MFP_replica_file{3}{3}=fullfile(model_dir,'Depth_55m_fixed_Pekeris.dir','ShallowBeaufortPekeris_MidRange_arctic_pekeris1638_KRAKEN_flat55m_10to500Hz.mat');
-%MFP_replica_file{3}{2}=[model_dir '/Depth_55m_fixed_Pekeris.dir/ShallowBeaufortPekeris_MidRange_arctic_pekeris1638_KRAKEN_flat55m_10to500Hz.mat'];
-default_tilt{3}{3}='1.585';
-range_str{3}{3}=range_str{3}{1};
-default_SNR{3}{3}=default_SNR{3}{1};
-
-%%%%%%%%%%%%%%%%%Long range estimate (17 km)%%%%%%%%%%%%%%%%%%%%%%%%
-MFP_replica_file{4}{1}=fullfile(model_dir,'Depth55m_Fixed.dir','ShallowBeaufortWhaleInversionSSP_FarRange_CSDM_Nfft8192_20100831T105013_10to500Hz.mat');
-%MFP_replica_file{4}{1}=[model_dir '/Depth55m_Fixed.dir/ShallowBeaufortWhaleInversionSSP_FarRange_CSDM_Nfft8192_20100831T105013_10to500Hz.mat'];
-default_tilt{4}{1}='1.35';
-range_str{4}{1}='5000:100:20000';
-%default_SNR=12;
-default_SNR{4}{1}=[74.01 78.58 85.45 88.5 90.03 92.32 93.08 95.37 99.95 103 107.6 109.9];
-
-MFP_replica_file{4}{2}=fullfile(model_dir,'Depth_55m_fixed_Pekeris.dir','ShallowBeaufortPekeris_FarRange_arctic_pekeris1692_KRAKEN_flat55m_10to500Hz.mat');
-%MFP_replica_file{4}{2}=[model_dir '/Depth_55m_fixed_Pekeris.dir/ShallowBeaufortPekeris_FarRange_arctic_pekeris1692_KRAKEN_flat55m_10to500Hz.mat'];
-default_tilt{4}{2}='1.585';
-range_str{4}{2}=range_str{4}{1};
-default_SNR{4}{2}=default_SNR{4}{1};
-
-%%%%%%%%%%%%%%%%%35 km range estimate%%%%%%%%%%%%%%%%
-MFP_replica_file{5}{1}=fullfile(model_dir,'Depth55m_Fixed.dir','ShallowBeaufortWhaleInversionSSP_UltraRange_CSDM_Nfft8192_20100831T105748_10to500Hz.mat');
-%MFP_replica_file{5}{1}=[model_dir '/Depth55m_Fixed.dir/ShallowBeaufortWhaleInversionSSP_UltraRange_CSDM_Nfft8192_20100831T105748_10to500Hz.mat'];
-
-default_tilt{5}{1}='3.93';
-range_str{5}{1}='30000:100:40000';
-range_str{5}{1}='100:100:40000';
-default_SNR{5}{1}=[99.1800  102.2000  105.3000  108.3000  111.4000  114.4000  117.5000  120.5000 ...
-    123.6000  126.6000  129.7000  132.8000  135.8000  138.9000  141.9000  145.0000 ...
-    148.0000  151.1000  154.1000  157.2000  160.2000 ];
-%default_SNR=default_SNR(1:(end-1));
-% default_SNR=default_SNR((end-3):end)
-
-MFP_replica_file{5}{2}=fullfile(model_dir,'Depth_55m_fixed_Pekeris.dir','ShallowBeaufortPekeris_UltraRange_arctic_pekeris1553_KRAKEN_flat55m_10to500Hz.mat');
-%MFP_replica_file{5}{2}=[model_dir '/Depth_55m_fixed_Pekeris.dir/ShallowBeaufortPekeris_UltraRange_arctic_pekeris1553_KRAKEN_flat55m_10to500Hz.mat'];
-default_tilt{5}{2}='3.34';
-range_str{5}{2}=range_str{5}{1};
-default_SNR{5}{2}=default_SNR{5}{1};
-
-
-%Averaged Pekeris model...
-for I=2:5
-    %%Averaged Pekeris model
-    MFP_replica_file{I}{3}=fullfile(model_dir,'Depth_55m_fixed_Pekeris.dir','ShallowBeaufortPekeris_arctic_pekeris1673_KRAKEN_flat55m_10to500Hz.mat');
-    default_tilt{I}{3}=default_tilt{I}{2};
-    range_str{I}{3}=range_str{I}{2};
-    default_SNR{I}{3}=default_SNR{I}{2};
-    
-end
-
-yes=menu('Which inversion?','Blank...','Whale Close Range inversion', ...
-    'Whale 7km Range inversion','Whale 15km Range inversion','Whale 35km Range inversion');
-
-MFP_replica_file_out=MFP_replica_file{yes};
-default_tilt_out=default_tilt{yes};
-range_str_out=range_str{yes};
-default_SNR_out=default_SNR{yes};
-
-yes=menu('Which model?','Detailed model','Inverted Pekeris','Average Pekeris','All');
-
-if yes<4
-    MFP_replica_file_out=MFP_replica_file_out(yes);
-    default_tilt_out=default_tilt_out(yes);
-    range_str_out=range_str_out(yes);
-    default_SNR_out=default_SNR_out(yes);
-    
-end
-
-
-
-end
-
+%% Correlograms
 function [mean_corr,tindex,TT_plot,pwr,pwr_tot,yscale]= create_incoherent_correlogram(TT,FF,B,param,flo,fhi)
 %function [mean_corr,tindex,TT_plot,pwr,pwr_tot,yscale]= create_incoherent_correlogram(TT,FF,B,param,flo,fhi)
 
@@ -7912,7 +7800,7 @@ for I=1:Ntime
     
     
 end  %Ntime
-end
+end %create_incoherent_correlogram
 
 function [XC_eq,XC,Trel,tt,pwrr]= create_coherent_correlogram(x,fs,param,flo,fhi)
 %function [XC_eq,XC,Trel,tt,pwr]= create_coherent_correlogram(x,fs,param,flo,fhi)
@@ -7977,7 +7865,7 @@ for I=1:size(XC,1)
     XC_eq(I,:)=XC(I,:)-eq;
 end
 
-%%Trim away portions of autocorrelation that will not have creaks (ici_range)
+%Trim away portions of autocorrelation that will not have creaks (ici_range)
 Iwant=find(tt>ici_range(1)&tt<ici_range(2));
 
 %Remove times not of interest, normalize zero lag to one.
@@ -7994,68 +7882,7 @@ tt=tt(Iwant);
 
 end  %create_coherent_correlogram
 
-function  [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,linel)
-
-%LL=3;
-
-
-if nargin==3,
-    VM=[];
-    A=[];
-    B=[];
-    ANG=[];
-elseif nargin==4,
-    A=[];
-    B=[];
-    ANG=[];
-end
-%Convert to km
-VM=VM/1000;
-DASAR_coords=DASAR_coords/1000;
-A=A/1000;
-B=B/1000;
-
-if ~exist('linel', 'var')
-    linel=35; %length of bearing lines in km
-end
-%subplot(3,1,LL);
-xg=mean(DASAR_coords(:,1));
-yg=mean(DASAR_coords(:,2));
-DASAR_coordsn(:,1)=DASAR_coords(:,1)-xg;
-DASAR_coordsn(:,2)=DASAR_coords(:,2)-yg;
-
-plot(DASAR_coords(:,1)-xg,DASAR_coords(:,2)-yg,'r^','markersize',5,'markerfacecolor',[1 0 0]);hold on
-set(gca,'fontweight','bold','fontsize',14);
-xlabel('Easting (km)');
-ylabel('Northing (km)');
-grid on;
-
-%Convert bearings from nautical to mathematical frame.
-if ~isempty(bearings)
-    bearings=(90-bearings(Igood))*pi/180;
-    for I=1:length(Igood)
-        XX=DASAR_coords(Igood(I),1)+[0 linel*cos(bearings(I))]-xg;
-        YY=DASAR_coords(Igood(I),2)+[0 linel*sin(bearings(I))]-yg;
-        line(XX,YY);
-    end
-end
-if ~isempty(VM)
-    VMn=[VM(:,1)-xg VM(:,2)-yg];
-    plot(VMn(1),VMn(2),'ks','markerfacecolor',[0 0 0],'markersize',5);
-end
-
-
-%Plot error elipps
-if ~isempty(A)
-    %ELLIPSE(ra,rb,ang,x0,y0)
-    h=ellipse(A,B,ANG,VM(1)-xg,VM(2)-yg,'k');
-    set(h,'linewidth',0.5);
-end
-
-hold off;
-
-end
-
+%% Ellipse
 function h=ellipse(ra,rb,ang,x0,y0,C,Nb)
 % Ellipse adds ellipses to the current plot
 %
@@ -8207,6 +8034,7 @@ end;
 
 end
 
+
 function c = cond2(A)
 %COND2   Condition number with respect to inversion.
 %   COND2(X) returns the 2-norm condition number (the ratio of the
@@ -8274,200 +8102,7 @@ else
 end
 end
 
-function [VM,Qhat,w,outcome] = vmmle_r(angle,dasar,r,k)
-%[VM,QHAT,W,OUTCOME] = VMMLE(ANGLE,DASAR,R,K)
-%   Von Mises MLE estimate of location of animal target, based on:
-%
-%   Lenth,R.V. 1981.  On finding the source of a signal.
-%     Technometrics 23:149-154.
-%
-%   [VM,QHAT,W,QHAT] = VMMLE(ANGLE,DASAR,R,K) processes a single observation
-%   comprised of ANGLE (an n-by-1 column vector of bearings), DASAR
-%   (an n-by-2 matrix of coordinates for the DASAR source of each
-%   bearing), and K (an n-by-1 vector of bearing standard error
-%   estimates, expressed as the von Mises concentration parameter kappa,
-%   associated with each DASAR).  R is a character code for method -
-%   either 'm' for the standard (non-robust) MLE, 'a' for the Andrews
-%   robust procedure, or 'h' for the Huber robust procedure.
-%   VM is the von Mises estimate of location, QHAT is the associated
-%   covariance matrix estimate and W is a 1-by-n row vector of weights:
-%   for the MLE, either all 1's if the procedure converged or 0's if not;
-%   for the Andrews, generally a mix of 1's and 0's; and for the Huber,
-%   generally a mix of values between 0 and 1.  OUTCOME is a character
-%   array identifying whether a good solution was found, and if not,
-%   the reason for failure.
-
-if nargin<3,
-    r = 'm';
-end
-if nargin<4||all(k==0)          % Estimate kappa from the data
-    kest = true;
-else
-    kest = false;
-end
-r = lower(r);
-robust = strfind('mah',r);
-if isempty(robust),
-    error('Input r must be either "m", "a", or "h"');
-end
-failed = {'less than 2 bearings','negative variance estimates',...
-    'solution behind DASARs','failed to converge'};
-n = length(angle);
-
-if n<=1  %If only one set of bearings present...
-    outcome = failed{1};
-else
-    cond_num = 1e15;       % For test of singularity.
-    tc = 1.5;              % Tuning constant for robust versions.
-    dist1 = 1;             % Was 0.1
-    maxiter = 50;
-    x = dasar(:,1);
-    y = dasar(:,2);
-    iter = 0;
-    theta = (90-angle)*pi/180;  %Mathematical angle defined
-    theta = (theta<-pi)*2*pi + theta;
-    s = sin(theta);
-    c = cos(theta);
-    z = s.*x - c.*y;
-    sstar = s';
-    cstar = c';
-    w = ones(1,n);
-    M1 = [sstar; -cstar]*[s -c];
-    converge = 0;
-    if cond2(M1)<cond_num,
-        M2 = [sstar; -cstar]* z;
-        xyhat = M1\M2;
-        while (~converge)&&(iter<maxiter),
-            iter = iter+1;
-            xyold = xyhat;
-            % d = dist(xyhat', [x y]');
-            
-            for JJ=1:length(x)
-                d(JJ)=sqrt((xyhat(1)-x(JJ)).^2+(xyhat(2)-y(JJ)).^2);
-            end
-            if (robust>1) && (n>2), % Need 3 or more bearings to calculate weights for
-                dxy = repmat(xyhat',n,1)-[x y];      % robust methods
-                muhat = cart2pol(dxy(:,1),dxy(:,2));
-                Cd = cos([theta-muhat]');
-                if kest,
-                    Cbar = abs(w*Cd'/sum(w))^(n/(n-2));  % Abs is ad hoc but may avoid temporary numeric problems in iteration
-                    k = inv(2*(1-Cbar)+(1-Cbar)^2*(0.48794-0.82905*Cbar-1.3915*Cbar^2)/Cbar);
-                end
-                t = sqrt(2*k'.*(1-Cd));
-                if robust==2,
-                    phit = tc*sin(t/tc).*(abs(t)<tc*pi);
-                else
-                    phit = sign(t).*min(abs(t),tc);
-                end
-                same = (Cd==1);     % Take care when estimated & observed bearings
-                t(same) = 1;        %   are identical; avoid division by zero.
-                phit(same) = 1;     %   Usually occurs with just 2 intersecting bearings.
-                w = phit./t;
-            end    %  if robust>1
-            sstar = w.*(xyhat(2)-y')./(d.^3);
-            cstar = w.*(xyhat(1)-x')./(d.^3);
-            M1 = [sstar; (-cstar)]*[s -c];
-            if ((n-sum(~w))>1) && (cond2(M1)<cond_num),
-                M2 = [sstar; -cstar]*z;
-                xyhat = M1\M2;
-                converge = sum(abs(xyhat-xyold)<dist1)==2;
-            else
-                break    % If either condition above occurs, convergence will very
-            end        %    likely fail, so break out of while loop.
-        end  % while
-    end    % if cond2
-    if converge,
-        dxy = repmat(xyhat',n,1)-[x y];
-        muhat = cart2pol(dxy(:,1),dxy(:,2));
-        Cd = cos([theta-muhat]');
-        if kest && (n>2),
-            Cbar = (w*Cd'/sum(w))^(n/(n-2));   % Exponent is small sample size correction
-            k = inv(2*(1-Cbar)+(1-Cbar)^2*(0.48794-0.82905*Cbar-1.3915*Cbar^2)/Cbar);
-        end
-        if Cd*w'>0,             % Weighted average of cosine differences (check
-            VM = xyhat';          %   on bad solutions behind DASARs)
-            if kest && (n==2),     % Cannot estimate Qhat with only 2 bearings
-                Qhat = nan*ones(2);
-                outcome = 'successful; 2 bearings; no Kappa';
-            else
-                k = k';
-                cv = -(k.*sstar*c + k.*cstar*s)/2;
-                M3 = [k.*sstar*s cv; cv k.*cstar*c];
-                Qhat = inv(M3);
-            end
-            if ~kest || (n>2),
-                if all(diag(Qhat)>0),
-                    outcome = 'successful';       % Successful solution
-                else
-                    outcome = failed{2};        % Implausible variance estimate(s)
-                end
-            end
-        else
-            outcome = failed{3};          % Bad solution behind DASARs
-        end % if all(Cd>0)
-    else
-        outcome = failed{4};            % No convergence
-    end   % if converge
-end     % if n<=1
-
-
-if isempty(strfind(outcome,'successful'));
-    %if ~isempty(strfind(failed,outcome))
-    VM = [nan nan];
-    Qhat = nan*ones(2);
-    w = zeros(1,n);
-end
-end
-
-function [brefa_table,Icol]=calibrate_bearing_Shell2007(cal_dir,fname,no_load_table)
-%function [brefa_table,Icol]=calibrate_bearing_Shell2007(cal_dir,fname,no_load_table)
-% Return nonlinear calibration data for 2007 Dasars
-% Input:
-%          cal_dir: base directory of calibration information
-%          fname: string similar in structure to 'S108H0T20080921T000000'
-%          no_load_table:  if exists, don't load table.
-% Note:  the calibration is assigned based on name of file, not name of enclosing directory..
-brefa_table=[];
-Islash=1+max(strfind(fname,'/'));
-if ~isempty(Islash)
-    fname=fname(Islash:end);
-end
-site=str2double(fname(2));
-dasar=lower(fname(5));
-Icol=double(dasar)-96;
-
-
-%%Date checking...
-%% In 2007 if a DASAR was redeployed it was reassigned a number...
-% if site==3&&strcmp(dasar,'g')
-%     datte=datenum(fname(8:end),'yyyymmddTHHMMSS');
-%     if datte>=datenum(2007,9,18,3,15,0)
-%         Icol=8;
-%     end
-% elseif site==5&&strcmp(dasar,'d')
-%     datte=datenum(fname(8:end),'yyyymmddTHHMMSS');
-%     if datte>=datenum(2007,9,18,19,0,0)
-%         Icol=8;
-%     end
-% elseif site==5&&strcmp(dasar,'e')
-%     datte=datenum(fname(8:end),'yyyymmddTHHMMSS');
-%     if datte>=datenum(2007,9,19,0,0,0)
-%         Icol=9;
-%     end
-% end
-
-
-if nargin==2
-    cal_dir=sprintf('%s/S%i07gsif/Caloutput07s%i/Bgrid07s%i.mat',cal_dir,site,site,site);
-    data=load(cal_dir);
-    brefa_table=data.bgridt;
-    
-    %     if site==1  %DASAR 1B failed, not reflected in bgrid table...
-    %        brefa_table=[brefa_table(:,1) zeros(size(bgridt,1),1) brefa_table(:,2:end)];
-    %     end
-end
-
-end
+%% write_covmat
 
 function status=write_covmat(freqvec,Cov,depth,srcname,titlestr)
 % write_covmat(farray,Ks,depth,srcname,titlestr)
@@ -8531,8 +8166,9 @@ end
 fprintf(fidout,'!  \n');
 status=fclose(fidout);
 unix('ls -l *.in');
-end
+end %write_covmat
 
+%% Audio files
 function audio_stop(player, ~, handles)
 %	Set controls
 ispaused	=	(player.CurrentSample > 1) &&...
@@ -8543,7 +8179,8 @@ if	~ispaused
     set(handles.pushbutton_pausesound, 'Enable', 'off');
 end
 
-end
+end %audio_stop
+
 
 function audio_timer(player, ~, handles)
 
@@ -8560,7 +8197,16 @@ if strcmp(player.Running, 'on')
     set(hline,'XData',x/Fs*[1 1]);
     drawnow expose;
 end
-end
+end %audio_timer
+
+%% ANNOTATIONS
+% load,edit, display, and save annotation files to Ulysses
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%   ANNOTATIONS annotations %%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%	Checks Notes folder for existing files and loads them
+%   Where new annotations are created...
 
 %	disables (or enables) note controls
 function	disable_notes_nav(handles, opt)
@@ -8575,128 +8221,13 @@ set(handles.pushbutton_notes_next, 'Enable', opt);
 set(handles.pushbutton_notes_prev, 'Enable', opt);
 set(handles.pushbutton_notes_screen, 'Enable', opt);
 
-end  %disable
+end  %disable_notes_nav
 
-%%load JAVA energy detector results into annotation format
-function Data=import_JAVA_Energy_into_notes(file_path,sel_names,Defaults,get_dialog)
-
-
-persistent filter_transition_band filter_passband_frequencies run_options
-
-[auto,head]		=	readEnergySummary(file_path, Inf);
-
-for Ifea=1:length(auto.names)
-    if strcmp(auto.names{Ifea},'max_freq')
-        Imaxx=Ifea;
-    elseif strcmp(auto.names{Ifea},'min_freq')
-        Iminn=Ifea;
-    end
-end
-
-
-Data			=	Defaults;
-Data.param	=	head;
-hh	=	waitbar(0,sprintf('Importing %s...',sel_names));
-for JJ = 1:length(auto.ctime)
-    if rem(JJ,500) == 0
-        waitbar(JJ/length(auto.ctime),hh);
-    end
-    Data.Events(JJ)			=	Defaults.Template;
-    Data.Events(JJ).start_time=	datenum(1970,1,1,0,0,auto.ctime(JJ));
-    Data.Events(JJ).author	=	'JAVA Energy Processor';
-    Data.Events(JJ).duration	=	num2str(auto.features(end,JJ));
-    Data.Events(JJ).min_freq	=	num2str(auto.features(Iminn,JJ));
-    Data.Events(JJ).max_freq	=	num2str(auto.features(Imaxx,JJ));
-end
-close(hh);
-
-%%If snips file exists, load level information.
-[pathstr,fname,extt] = fileparts(file_path);
-full_snips_name=fullfile(pathstr,[fname '.snips']);
-snips_name=dir(full_snips_name);
-if isempty(snips_name)
-    return
-    
-end
-
-min_freq_events=min(auto.features(Iminn,:));
-max_freq_events=max(auto.features(Imaxx,:));
-freq_spacing=min(diff(head.flow));
-%Making sure that min FIR passband frequency is below event
-%   detected.
-min_freq_events=max([10 min_freq_events-freq_spacing]);
-max_freq_events=min([head.Fs/2 max_freq_events+freq_spacing+1]);
-
-if get_dialog || isempty(filter_transition_band)  %If this is the first file loaded in a sequence
-    prompt={'Number of snips to import into RAM:', ...
-        'filter transition band (Hz):',...
-        'minimum passband frequency for FIR filters (Hz):', ...
-        'maximum passband frequency for FIR filters (Hz):', ...
-        'passband frequency spacing (Hz)', ...
-        'Debug plotting (1=yes; 0=no)'};
-    name='Parameters for importing JAVA snips file';
-    numlines=1;
-    defaultanswer={'500','2',num2str(min_freq_events),num2str(max_freq_events),num2str(freq_spacing),'0'};
-    answer=inputdlg(prompt,name,numlines,defaultanswer);
-    
-    
-    run_options.Ncalls_to_sample=str2double(answer{1});
-    filter_transition_band=str2double(answer{2});
-    min_freq_events=str2double(answer{3});
-    max_freq_events=str2double(answer{4})-filter_transition_band;
-    freq_spacing=str2double(answer{5});
-    run_options.debug=str2double(answer{6});
-    filter_passband_frequencies=min_freq_events:freq_spacing:max_freq_events;
-    filter_passband_frequencies=unique([filter_passband_frequencies max_freq_events]);
-    
-end
-
-
-transient_params=extract_transient_levels(full_snips_name,1:length(auto.ctime),auto, ...
-    round(head.Fs),head.bufferTime, ...
-    filter_transition_band,filter_passband_frequencies,run_options);
-
-
-hh	=	waitbar(0,sprintf('Importing %s...',sel_names));
-for JJ = 1:length(auto.ctime)
-    if rem(JJ,500) == 0
-        waitbar(JJ/length(auto.ctime),hh);
-    end
-    Data.Events(JJ)			=	Defaults.Template;
-    Data.Events(JJ).start_time=	datenum(1970,1,1,0,0,auto.ctime(JJ));
-    Data.Events(JJ).author	=	'JAVA Energy Processor+snips conversion';
-    Data.Events(JJ).duration	=	num2str(transient_params.level.t_Malme(JJ));
-    Data.Events(JJ).min_freq	=	num2str(auto.features(Iminn,JJ));
-    Data.Events(JJ).max_freq	=	num2str(auto.features(Imaxx,JJ));
-    
-    if (Data.Events(JJ).duration>0)
-        Data.Events(JJ).noise_se_dB		=	num2str(10*log10(transient_params.noise.SE(JJ)));
-        Data.Events(JJ).noise_rms_dB		=	num2str(20*log10(transient_params.noise.rms(JJ)));
-        Data.Events(JJ).noise_peakpsd_dB	=	0;
-        
-        Data.Events(JJ).signal_se_dB		=	num2str(10*log10(transient_params.level.SE_Malme(JJ)));
-        Data.Events(JJ).signal_rms_dB		=	num2str(20*log10(transient_params.level.rms_Malme(JJ)));
-        Data.Events(JJ).signal_peakpsd_dB	=	0;
-        
-        Data.Events(JJ).SNR_rms			=	num2str(transient_params.level.SNR(JJ));
-        Data.Events(JJ).SNR_rms_dB= num2str(10*log10(transient_params.level.SNR(JJ)));
-    end
-end
-close(hh);
-
-
-end
-
-%	Checks Notes folder for existing files and loads them
-%Where new annotations are created...
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%% load_notes_file %%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function	handles		=	load_notes_file(handles, new_folder)
 
 
-%	First check that current notes are saved before proceeding
+%%	First check that current notes are saved before proceeding
 if	~handles.notes.saved && ~handles.notes.readonly
     qtitle	=	'Unsaved changes';
     qstring	=	{'Warning: current changes to notes not saved!'...
@@ -8719,7 +8250,7 @@ if	~handles.notes.saved && ~handles.notes.readonly
 end
 
 
-%	New notes file disables all notes controls, until otherwise activated
+%%	New notes file disables all notes controls, until otherwise activated
 opt		=	'off';
 disable_notes_nav(handles, opt);
 set(handles.pushbutton_notes_new, 'Enable', opt);
@@ -8729,7 +8260,7 @@ set(handles.checkbox_notes_show, 'Enable', opt);
 set(handles.checkbox_notes_delete, 'Enable', opt);
 
 
-%	Switch to new folder and check for existing files
+%%	Switch to new folder and check for existing files
 if	exist('new_folder','var') && ~isempty(new_folder)
     folder_name	=	new_folder;
 else
@@ -8757,7 +8288,7 @@ end
 
 %	Jit: this should be done after finding all relevant files
 %	no point showing user this menu if there are no files to select
-%%AARON:  Give user option of loading automated detector
+%% AARON:  Give user option of loading automated detector
 %  or existing notes file
 file_opts	=	{'Manual Annotation', 'Automated Detector'};
 file_exts	=	{'.mat', '.detsum'};
@@ -8847,7 +8378,7 @@ end
 
 
 %	New file with default data template
-[Defaults.Description, Defaults.Template, edit_fields]	=	load_default_template();
+[Defaults.Description, Defaults.Template, edit_fields]	=	load_default_annotation_template();
 Defaults.Events		=	Defaults.Template;
 GUI_params	=	[];
 handles.notes.edit_fields	=	edit_fields;
@@ -8977,7 +8508,8 @@ N			=	length(handles.notes.Data.Events);
 msg			=	{[num2str(i_sel) ' of']; num2str(N)};
 set(handles.text_notenum, 'String', msg);
 
-end
+end  %load_notes_file
+% --------------------------------------------------------------------
 
 %	Load and apply ancilary window information from notes if present
 function	handles		=	load_gui_params(handles, GUI_params)
@@ -9008,7 +8540,8 @@ set(handles.edit_datestr, 'String', datestr(GUI_params.tdate_start,'dd-mmm-yyyy 
 edit_datestr_Callback(handles.edit_datestr, [], handles)
 handles		=	guidata(handles.edit_datestr);
 
-end
+end  %load_gui_params
+% --------------------------------------------------------------------
 
 %	Saves GUI parameters
 function	GUI_params		=	save_gui_params(handles)
@@ -9034,7 +8567,8 @@ GUI_params.fmin			=	str2double(get(handles.edit_fmin,'String'));
 GUI_params.fmax			=	str2double(get(handles.edit_fmax,'String'));
 GUI_params.tdate_start	=	handles.tdate_start;
 
-end
+end  %save_guid_params
+% --------------------------------------------------------------------
 
 %	Pops up window to edit event data
 function	NewEvent	=	edit_event(Event, Description, edit_fields)
@@ -9098,7 +8632,8 @@ for	ii	=	1:N_fields
 end
 
 
-end
+end %edit_event
+% --------------------------------------------------------------------
 
 function	params_extract	=	extract_automated_fields(Times,Freq,handles)
 
@@ -9178,7 +8713,118 @@ params_extract.signal_peakpsd_dB=	signal_peakpsd_dB;
 params_extract.SNR_rms_dB		=	SNR_rms_dB;
 
 
+end  %extract_automated_fields
+% --------------------------------------------------------------------
+
+%%load JAVA energy detector results into annotation format
+function Data=import_JAVA_Energy_into_notes(file_path,sel_names,Defaults,get_dialog)
+
+
+persistent filter_transition_band filter_passband_frequencies run_options
+
+[auto,head]		=	readEnergySummary(file_path, Inf);
+
+for Ifea=1:length(auto.names)
+    if strcmp(auto.names{Ifea},'max_freq')
+        Imaxx=Ifea;
+    elseif strcmp(auto.names{Ifea},'min_freq')
+        Iminn=Ifea;
+    end
 end
+
+
+Data			=	Defaults;
+Data.param	=	head;
+hh	=	waitbar(0,sprintf('Importing %s...',sel_names));
+for JJ = 1:length(auto.ctime)
+    if rem(JJ,500) == 0
+        waitbar(JJ/length(auto.ctime),hh);
+    end
+    Data.Events(JJ)			=	Defaults.Template;
+    Data.Events(JJ).start_time=	datenum(1970,1,1,0,0,auto.ctime(JJ));
+    Data.Events(JJ).author	=	'JAVA Energy Processor';
+    Data.Events(JJ).duration	=	num2str(auto.features(end,JJ));
+    Data.Events(JJ).min_freq	=	num2str(auto.features(Iminn,JJ));
+    Data.Events(JJ).max_freq	=	num2str(auto.features(Imaxx,JJ));
+end
+close(hh);
+
+%%If snips file exists, load level information.
+[pathstr,fname,extt] = fileparts(file_path);
+full_snips_name=fullfile(pathstr,[fname '.snips']);
+snips_name=dir(full_snips_name);
+if isempty(snips_name)
+    return
+    
+end
+
+min_freq_events=min(auto.features(Iminn,:));
+max_freq_events=max(auto.features(Imaxx,:));
+freq_spacing=min(diff(head.flow));
+%Making sure that min FIR passband frequency is below event
+%   detected.
+min_freq_events=max([10 min_freq_events-freq_spacing]);
+max_freq_events=min([head.Fs/2 max_freq_events+freq_spacing+1]);
+
+if get_dialog || isempty(filter_transition_band)  %If this is the first file loaded in a sequence
+    prompt={'Number of snips to import into RAM:', ...
+        'filter transition band (Hz):',...
+        'minimum passband frequency for FIR filters (Hz):', ...
+        'maximum passband frequency for FIR filters (Hz):', ...
+        'passband frequency spacing (Hz)', ...
+        'Debug plotting (1=yes; 0=no)'};
+    name='Parameters for importing JAVA snips file';
+    numlines=1;
+    defaultanswer={'500','2',num2str(min_freq_events),num2str(max_freq_events),num2str(freq_spacing),'0'};
+    answer=inputdlg(prompt,name,numlines,defaultanswer);
+    
+    
+    run_options.Ncalls_to_sample=str2double(answer{1});
+    filter_transition_band=str2double(answer{2});
+    min_freq_events=str2double(answer{3});
+    max_freq_events=str2double(answer{4})-filter_transition_band;
+    freq_spacing=str2double(answer{5});
+    run_options.debug=str2double(answer{6});
+    filter_passband_frequencies=min_freq_events:freq_spacing:max_freq_events;
+    filter_passband_frequencies=unique([filter_passband_frequencies max_freq_events]);
+    
+end
+
+
+transient_params=extract_transient_levels(full_snips_name,1:length(auto.ctime),auto, ...
+    round(head.Fs),head.bufferTime, ...
+    filter_transition_band,filter_passband_frequencies,run_options);
+
+
+hh	=	waitbar(0,sprintf('Importing %s...',sel_names));
+for JJ = 1:length(auto.ctime)
+    if rem(JJ,500) == 0
+        waitbar(JJ/length(auto.ctime),hh);
+    end
+    Data.Events(JJ)			=	Defaults.Template;
+    Data.Events(JJ).start_time=	datenum(1970,1,1,0,0,auto.ctime(JJ));
+    Data.Events(JJ).author	=	'JAVA Energy Processor+snips conversion';
+    Data.Events(JJ).duration	=	num2str(transient_params.level.t_Malme(JJ));
+    Data.Events(JJ).min_freq	=	num2str(auto.features(Iminn,JJ));
+    Data.Events(JJ).max_freq	=	num2str(auto.features(Imaxx,JJ));
+    
+    if (Data.Events(JJ).duration>0)
+        Data.Events(JJ).noise_se_dB		=	num2str(10*log10(transient_params.noise.SE(JJ)));
+        Data.Events(JJ).noise_rms_dB		=	num2str(20*log10(transient_params.noise.rms(JJ)));
+        Data.Events(JJ).noise_peakpsd_dB	=	0;
+        
+        Data.Events(JJ).signal_se_dB		=	num2str(10*log10(transient_params.level.SE_Malme(JJ)));
+        Data.Events(JJ).signal_rms_dB		=	num2str(20*log10(transient_params.level.rms_Malme(JJ)));
+        Data.Events(JJ).signal_peakpsd_dB	=	0;
+        
+        Data.Events(JJ).SNR_rms			=	num2str(transient_params.level.SNR(JJ));
+        Data.Events(JJ).SNR_rms_dB= num2str(10*log10(transient_params.level.SNR(JJ)));
+    end
+end
+close(hh);
+
+
+end %import_JAVA_Energy_into_notes
 
 %	Adds new event to notes structure and re-sorts chronologically
 function	[Event_set, ii]		=	add_event(Event_set, Event)
@@ -9203,7 +8849,8 @@ else
     end
 end
 
-end
+end  %add_event
+% --------------------------------------------------------------------
 
 %	Checks existing notes data structure for format compliance
 function	Data	=	check_notes(Data)
@@ -9273,7 +8920,8 @@ end
 %close(hh)
 
 
-end
+end %check_notes
+% --------------------------------------------------------------------
 
 %	Merge Events, inserting missing fields as needed
 function	[Data]		=	merge_data(Data1, Data2)
@@ -9325,9 +8973,10 @@ Data.Template		=	orderfields(Data.Template, names);
 Data.Events			=	orderfields(Data.Events, names);
 
 
-end
+end  %merge_data
+% --------------------------------------------------------------------
 
-%	Remove obsolute fields from old events, but save data into comments
+%	Remove obsolete fields from old events, but save data into comments
 function	Data		=	clean_data(Data, obsolete_fields)
 if	nargin < 2
     obsolete_fields		=	{'noise_db', 'peak_db'};	% default list
@@ -9371,7 +9020,8 @@ Data.Events				=	rmfield(Data.Events, obsolete_fields);
 Data.Description(i_of)	=	[];
 
 
-end
+end %clean_data
+% --------------------------------------------------------------------
 
 %	Overlays events within current window
 function	handles	=	plot_events(handles)
@@ -9467,7 +9117,8 @@ else
     set(handles.checkbox_notes_delete,'Enable','off');
 end
 
-end
+end %plot_events
+% --------------------------------------------------------------------
 
 %	Pops up new window with event details
 function	hdlg	=	show_event_info(Event, Description, hdlg)
@@ -9506,7 +9157,8 @@ htxt	=	uicontrol(hdlg, 'Style', 'edit',...
     'String', Message(:));
 
 
-end
+end %show_event_info
+% --------------------------------------------------------------------
 
 %	enable/disable any buttons that require an intial update first
 function	toggle_initial_buttons(handles, opt)
@@ -9523,7 +9175,8 @@ end
 %	enable next/prev window increment
 set(handles.pushbutton_next,'Enable',opt);
 set(handles.pushbutton_prev,'Enable',opt);
-end
+end  %toggle_initial_buttons
+% --------------------------------------------------------------------
 
 %	updates whole figure window according to selected event
 function	handles		=	update_events(handles)
@@ -9542,7 +9195,8 @@ handles		=	guidata(handles.edit_datestr);
 pushbutton_update_Callback(handles.pushbutton_update, [], handles);
 handles		=	guidata(handles.pushbutton_update);
 
-end
+end %update_events
+% --------------------------------------------------------------------
 
 %	Helper function to get current users id/name
 function	user_name	=	getusername()
@@ -9553,227 +9207,8 @@ elseif ispc
 else
     error('Unregognized system');
 end
-end
-
-%%%  Annotation template, Annotations template
-%	 Defines default fields
-%%load_default_template
-function	[Description, Template, edit_fields]	=	load_default_template()
-%edit fields are fields you can edit...
-Description	=	{'Start Time',...
-    'Author',...
-    'Pulse or FM?',...
-    'Call Type',...
-    'Min Freq (Hz)',...
-    'Max Freq (Hz)',...
-    'Duration (s)',...
-    'Noise SEL (dB re 1 uPa^2-s)',...
-    'Noise rms (dB re 1 uPa)',...
-    'Noise peak PSD (dB re 1uPa^2/Hz)',...
-    'Signal SEL (dB re 1 uPa^2-s)',...
-    'Signal rms (dB re 1 uPa)',...
-    'Signal peak PSD (dB re 1uPa^2/Hz)',...
-    'Signal SNR (rms)', ...
-    'Signal SNR (dB rms)', ...
-    '# of pulses',...
-    '# of harmonics',...
-    'Modulation (Hz)',...
-    'Confidence (1-5)',...
-    'Comments'};
-
-%	Default values
-Template.start_time			=	0;
-Template.author				=	'Your name';
-Template.sig_type			=	'NA';
-Template.call_type			=	'S1';
-Template.min_freq			=	0;
-Template.max_freq			=	5000;
-Template.duration			=	10;
-
-Template.noise_se_dB		=	0;
-Template.noise_rms_dB		=	0;
-Template.noise_peakpsd_dB	=	0;
-
-Template.signal_se_dB		=	0;
-Template.signal_rms_dB		=	0;
-Template.signal_peakpsd_dB	=	0;
-
-Template.SNR_rms			=	0;
-Template.SNR_rms_dB			=	0;
-
-Template.num_pulses			=	2;
-Template.num_harmonics		=	-1;
-Template.modulation			=	0;
-Template.confidence			=	3;
-Template.comments			=	'';
-
-edit_fields			=	fieldnames(Template);
-edit_fields(5:14)	=	[];
-
-% params_extract.noise_se_dB		=	noise_se_dB;
-% params_extract.noise_rms_dB		=	noise_rms_dB; %not 20 log because actually mean sqaure
-% params_extract.noise_peakpsd_dB	=	noise_peakpsd_dB;
-%
-% params_extract.signal_se_dB		=	signal_se_dB;
-% params_extract.signal_rms_dB	=	signal_rms_dB;  %not 20 log because actually mean sqaure
-% params_extract.signal_peakpsd_dB=	signal_peakpsd_dB;
-%
-% %params_extract.SNR_rms=SNR_rms;
-% params_extract.SNR_rms_dB		=	SNR_rms_dB;
-
-
-end
-
-
-%%	Functions that should be removed and referenced externally instead
-
-function x=calibrate_GSI_signal(xin, keyword,RawFileName)
-
-%calibrate_GSI_signal.m
-% Convert raw A/D value of presure sensor in DASAR to uPa
-% using sensitivity of 150 dB re 1uPa/V
-% and peak A/D voltage of 2.5 V
-%keyboard
-
-if isempty(xin)
-    x=[];
-    return
-end
-if strcmp(keyword,'short')||~isempty(strfind(keyword,'DASAR2007'))
-    [numd,dend] = DASAR_Shell_2007_equalization(1000,0);
-    filt.a=dend;
-    filt.b=numd;
-    amp_Scale = (2.5/65535)*(10^(149/20));
-    Nchan=size(xin,2);
-    
-    for I=1:Nchan
-        %xt=xin(:,I)-median(xin(:,I));%disp('subratc medi')
-        xt=xin(:,I)-(2^15);
-        x(:,I) = amp_Scale*filter(filt.b,filt.a,xt);
-        %x(:,I) = amp_Scale*filter(filt.a,filt.b,xt);
-    end
-elseif strcmp(keyword,'short')||~isempty(strfind(keyword,'DASARC'))
-    %     x=xin.*(2.5/(2^16-1));  %x in Volts
-    Nchan=size(xin,2);
-    %      %%This is a 10 Hz high pass filter
-    filt.a=[1.000000000000000e+00    -2.911197067426073e+00     2.826172902227507e+00    -9.149758348014339e-01];
-    filt.b=[5.140662826979191e-01    -9.510226229911504e-01     3.598463978885433e-01     7.710994240468787e-02];
-    amp_Scale = (2.5/65535)*(10^(149/20));
-    
-    for I=1:Nchan
-        %xt=xin(:,I)-median(xin(:,I));%disp('subratc medi')
-        xt=xin(:,I)-(2^15);
-        x(:,I) = amp_Scale*filter(filt.b,filt.a,xt);
-    end
-elseif strcmp(keyword,'filter')
-    error('calibrate_GSI_signal: filter no longer a valid keyword...')
-elseif ~isempty(strfind(keyword,'NorthStar08')),
-    
-    %%This has a 10 Hz high pass filter
-    filt.a=[1.000000000000000e+00    -2.911197067426073e+00     2.826172902227507e+00    -9.149758348014339e-01];
-    filt.b=[5.140662826979191e-01    -9.510226229911504e-01     3.598463978885433e-01     7.710994240468787e-02];
-    
-    %     % oml = oml - mean(oml); % uPa     get rid of DC. not needed, filter has zero @ DC
-    % x = (2.5/65535)* (10^(134/20))*filter(filt.b,filt.a,xin); % uPa     equalize
-    if ~isempty(strfind(RawFileName,'NS08A0'))||~isempty(strfind(RawFileName,'NA08Cx'))
-        amp_Scale = (2.5/65535)*(10^(134/20));
-    else
-        amp_Scale = (2.5/65535)*(10^(148.8/20));
-    end
-    %amp_Scale=1;
-    x = amp_Scale*filter(filt.b,filt.a,xin);
-    %
-    %     The Northstar deployments consist of 14 units, 12 of which are DASAR-Cs (built in 2008), and the other two DASAR-As (built in 2003).
-    % These DASAR-As are identical to the Liberty DASAR-As with which you are already familiar.
-    % By location, the breakdown is as follows (all units are DASAR-C unless marked otherwise):
-    %
-    % NA08A0 SN45
-    % NA08B0 SN51
-    % NA08C0 SN36
-    % NA08D0 SN37
-    % NA08E0 SN48
-    % NA08F0 SN47
-    % NA08G0 SN65
-    % NA08H0 SN52
-    % NA08I0 SN49
-    % NA08J0 SN50
-    % NS08A0 SN2 DASAR-A
-    % NS08B0 SN58
-    % NS08C0 SN59
-    % NA08Cx SN1 DASAR-A
-    % Response equalization for both types of DASAR (in the band 10 to 450 Hz) is very similar, with the only difference being a scalar gain value.
-    % The hydrophone to ADC gain is
-    % -149 dB V/uPa @ 100 Hz for the DASAR-C
-    % -134 dB V/uPa @ 100 Hz for the DASAR-A
-    %
-    % You have the code to equalization both of these. For your convenience I have copied the relevant email message below...
-    %
-    % ------------------------
-    % Aaron -
-    %
-    % For equalization of the omni channel on the BP DASAR-Cs, at sample rate 1 kHz and good for 10 Hz to 450 Hz analysis, you can use the
-    %same IIR filter and coefficient values as were used on the Liberty DASAR-As. The only major difference is a change in gross sensitivity:
-    % the DASAR-Cs are about 1/5 as sensitive as the DASAR-As. The same equalization can be used for all DASAR-Cs. Measurements in the Greeneridge
-    % in-air loudspeaker test box showed all 65 units to be fairly close in sensitivity, with deviations looking no worse than the uncertainty in the calibration itself.
-    %
-    % The DASAR-Cs start rolling off below about 4 Hz (with a high-pass characteristic), so I don't recommend doing any analysis below that frequency without different equalization. You should be OK with these coef values since you are staying between 10 and 450 Hz.
-    %
-    % This equalization as shown includes a second order high-pass filter with break freq 1 Hz. You have the code to change it to 10 Hz if desired.
-    %
-    % Again, only one line changes going from DASAR-A to DASAR-C...
-    %
-    % om = x * 2.5/65536; % convert from counts to V
-    % oml = 10^(148.8/20)*om; % uPa    convert from V to uPa   (WAS: 134 for DASAR-As, IS: 148.8 for DASAR-Cs)
-    %
-    % % this cascades the integrator with a 1 Hz high pass to cut low freqs
-    % % -0.2 db at 100 Hz (ideally 0 db)
-    % % -8.3 db at 250 Hz (ideally 20*log10(100/250)= -7.96
-    % b = [0.53503845807280  -0.98982114743468   0.37452692065096   0.08025576871092]; % 11/13/2005
-    % a = [1.00000000000000  -2.99111429220165   2.98226788807059  -0.99115359586894]; % 11/13/2005
-    % % oml = oml - mean(oml); % uPa     get rid of DC. not needed, filter has zero @ DC
-    % oml =  filter(b,a,oml); % uPa     equalize
-elseif ~isempty(strfind(keyword,'Liberty08')>0)
-    %om = xin * 2.5/65535; % convert from counts to V
-    %om = (10^(134/20))*om; % uPa    convert from V to uPa
-    %
-    %     % this cascades the integrator with a 1 Hz high pass to cut low freqs
-    %     % -0.2 db at 100 Hz (ideally 0 db)
-    %     % -8.3 db at 250 Hz (ideally 20*log10(100/250)= -7.96
-    % filt.b = [0.53503845807280  -0.98982114743468   0.37452692065096   0.08025576871092]; % 11/13/2005
-    %filt.a = [1.00000000000000  -2.99111429220165   2.98226788807059  -0.99115359586894]; % 11/13/2005
-    
-    
-    %This has a 10 Hz high pass filter
-    
-    filt.a=[1.000000000000000e+00    -2.911197067426073e+00     2.826172902227507e+00    -9.149758348014339e-01];
-    filt.b=[5.140662826979191e-01    -9.510226229911504e-01     3.598463978885433e-01     7.710994240468787e-02];
-    
-    %     % oml = oml - mean(oml); % uPa     get rid of DC. not needed, filter has zero @ DC
-    % x = (2.5/65535)* (10^(134/20))*filter(filt.b,filt.a,xin); % uPa     equalize
-    amp_Scale = (2.5/65535)*(10^(134/20));
-    %amp_Scale=1;
-    x = amp_Scale*filter(filt.b,filt.a,xin);
-    
-    %     keyboard;
-end
-
-if 1==0,
-    Fs=1000;
-    Nfft=256;
-    A=fft(filt.a,Nfft);
-    B=fft(filt.b,Nfft);
-    F=linspace(0.1,Fs,Nfft);
-    F=F(1:(Nfft/2));
-    W=20*log10(abs(B./A));
-    W=W(1:(Nfft/2));
-    freqz(filt.b,filt.a,Nfft,Fs)
-    hold on;plot(F,W,'r')
-    
-    figure;semilogx(F,W);xlim([1 1000]);grid on
-    
-end
-end
-
+end %getusername
+% --------------------------------------------------------------------
 
 % --- Executes on button press in pushbutton_notes_stats.
 function pushbutton_notes_stats_Callback(hObject, eventdata, handles)
@@ -9988,8 +9423,10 @@ catch
     uiwait(errdlg('Figures have been deleted','Can''t save figures'));
     
 end
-end
+end %pushbutton_notes_stats_Callback
+% --------------------------------------------------------------------
 
+%% 
 %[X.var,X.start,X.dx,X.label_inc,X.label,X.name,X.style]=get_histogram_vars(ButtonName,handles.notes.Data.Events);
 
 function X=get_histogram_vars(ButtonName,Events,Description)
@@ -10113,9 +9550,10 @@ end
 
 
 
-end
+end %get_histogram_vars
+% --------------------------------------------------------------------
 
-
+%% Accelerometer rotation files
 function edit_normal_rotation_Callback(hObject, eventdata, handles)
 % hObject    handle to edit_normal_rotation (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -10123,7 +9561,8 @@ function edit_normal_rotation_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit_normal_rotation as text
 %        str2double(get(hObject,'String')) returns contents of edit_normal_rotation as a double
-end
+end %edit_normal_rotation_Callback
+% --------------------------------------------------------------------
 
 % --- Executes during object creation, after setting all properties.
 function edit_normal_rotation_CreateFcn(hObject, eventdata, handles)
@@ -10136,7 +9575,7 @@ function edit_normal_rotation_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-end
+end %edit_normal_rotation_CreateFcn
 
 % --------------------------------------------------------------------
 function image_processor_Callback(hObject, eventdata, handles)
@@ -10174,11 +9613,9 @@ while yess==1
     
 end
 
-end
+end %image_processor_Callback
 
-
-
-    
+%% Image processing files
 function [out_param]=load_image_parameters(input_param,batch_chc,label_str)
 
 chc_list={'Defaults','Equalization','Filtering','Ridge Extraction','Morphological Processing','All'};
@@ -10367,7 +9804,7 @@ out_param.morph.want_contour=[];
         x.max=temp(2);
         warning('on');
     end
-end
+end %load_image_parameters
 
 % --- Executes on button press in togglebutton_ChannelBeam.
 function togglebutton_ChannelBeam_Callback(hObject, eventdata, handles)
@@ -10388,4 +9825,4 @@ else
 end
 guidata(hObject, handles);
 
-end
+end %togglebutton_ChannelBeam
