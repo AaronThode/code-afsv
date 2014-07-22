@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 05-May-2014 13:36:37
+% Last Modified by GUIDE v2.5 22-Jul-2014 11:45:56
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -8266,7 +8266,7 @@ if	exist('new_folder','var') && ~isempty(new_folder)
 else
     folder_name	=	handles.notes.folder_name;
 end
-[~,fname,~]		=	fileparts(handles.myfile);
+[~,fname,extt]		=	fileparts(handles.myfile);
 
 %	Default output file name
 user_name	=	getusername();
@@ -8283,7 +8283,6 @@ else
     file_name	=	[fname(Istart:end) '-notes-' user_name '.mat'];
     
 end
-
 
 
 %	Jit: this should be done after finding all relevant files
@@ -9826,3 +9825,24 @@ end
 guidata(hObject, handles);
 
 end %togglebutton_ChannelBeam
+
+%% Annotation Utilties
+% --------------------------------------------------------------------
+function Annotation_Utilities_Callback(hObject, eventdata, handles)
+% hObject    handle to Annotation_Utilities (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+end
+
+% --------------------------------------------------------------------
+function bowhead_detector_Callback(hObject, eventdata, handles)
+% hObject    handle to bowhead_detector (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Convert bowhead whale files into annotation files....
+[list_names,filter_params]=load_bowhead_detector_params(handles.outputdir);
+
+keyboard;
+
+end
