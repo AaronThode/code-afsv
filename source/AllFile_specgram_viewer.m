@@ -5295,11 +5295,14 @@ i_sel	=	handles.notes.i_sel;
 if	~isempty(Data.Events)
     if	~isempty(i_sel)
         Event	=	Data.Events(i_sel);
+        
     else
         Event	=	Data.Events(end);
     end
+    previous_start_time=Event.start_time;
 else
     Event	=	Data.Template;
+    previous_start_time=0;
 end
 
 %	Insert current values
@@ -5308,8 +5311,15 @@ Event.sig_type		=	sig_type;
 Event.min_freq		=	min_freq;
 Event.max_freq		=	max_freq;
 Event.duration		=	duration;
-if ~isfield(Event,'hash_tag')||isempty(Event.hash_tag)
-    Event.hash_tag      =   2*datenum(1970,1,1,0,0,0)-now;  %manual hashtags go back into past, automated into future.
+
+%Check that hash tag makes sense--if our selection is too far ahead or
+%behind in time, selct a new one...
+
+tmp=(abs(start_time-previous_start_time));
+yes_independent_selection=tmp>datenum(0,0,0,0,0,2);
+
+if yes_independent_selection||~isfield(Event,'hash_tag')||isempty(Event.hash_tag)
+    Event.hash_tag      =   2*datenum(1970,1,1,0,0,0)-now;  %manual hashtags go back into past, automated hashtags into future.
 end
 
 Event.noise_se_dB		=	params_extract.noise_se_dB;
