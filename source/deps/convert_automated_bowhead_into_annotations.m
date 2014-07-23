@@ -1,14 +1,14 @@
-function success_flag=convert_automated_bowhead_into_annotations(list_names,filter_params)
-%function success_flag=convert_automated_bowhead_into_annotations(list_names,filter_params)
+function success_flag=convert_automated_bowhead_into_annotations(list_name,filter_params)
+%function success_flag=convert_automated_bowhead_into_annotations(list_name,filter_params)
 %  Creates an annotation event from a location structure
 %  Note that the Event will have 'automated' and 'localization' fields,
 %   which are not present in a standard manual annotation.
 
 
 try
-    %list_names='S510G0T20100831T000000_BearingInterval_Huber_FilteredLocations';
-    [list_names,filter_params,station_position]=load_bowhead_detector_params('.');
-    data=load(list_names);
+    %list_name='S510G0T20100831T000000_BearingInterval_Huber_FilteredLocations';
+    %[list_name,filter_params,station_position]=load_bowhead_detector_params('.');
+    data=load(list_name);
     
     %%Create annotation file names for output
     [Defaults.Description, Defaults.Template, edit_fields]	=	load_default_annotation_template();
@@ -91,6 +91,12 @@ try
         
         
     end
+    
+    %Save annotation files to current directory...
+    
+    %We may have to switch to correct directory, will check...
+    keyboard
+    
     success_flag=1;
 catch
     success_flag=0;  
