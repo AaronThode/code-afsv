@@ -6,10 +6,16 @@ function [list_names,filter_params,station_locations]=load_bowhead_detector_para
 % station_locations:  structure with 'northing' and 'easting' fields for
 %       each DASAR, from 'A'(1)  to 'G'
 
-
+list_names=[];
+filter_params=[];
+station_locations=[];
 
 % Location folder with automated results to convert...
 dirname = uigetdir(outputdir, 'Select a folder with automated bowhead detector results...');
+
+if dirname==0
+    return
+end
 
 mydir=pwd;
 cd(dirname);
@@ -51,7 +57,6 @@ Site5_easting=[
     412949
     419139
     413253
-    0
     413492];
 
 Site5_northing=[
@@ -60,14 +65,13 @@ Site5_northing=[
     7802045
     7805333
     7809065
-    0
     7816110];
 
 %Save data to station_locations output variable
 station_locations.northing=Site5_northing;
 station_locations.easting=Site5_easting;
 
-IDASAR=logical([0 0 1 1 1 0 0]);  %DASARS CDE
+IDASAR=logical([0 0 1 1 1 0]);  %DASARS CDE
 
 Site5_northing=Site5_northing(IDASAR);
 Site5_easting=Site5_easting(IDASAR);

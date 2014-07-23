@@ -24,7 +24,7 @@ Description	=	{'Start Time',...
     'Signal SNR (dB rms)', ...
     '# of pulses',...
     '# of harmonics',...
-    'Modulation (Hz)',...
+    'Number of multipath',...
     'Confidence (1-5)',...
     'Comments', ...
     'Link Names (if you want to link this annotation to other annotation files)', ...
@@ -53,16 +53,18 @@ Template.signal_peakpsd_dB	=	0;
 Template.SNR_rms			=	0;
 Template.SNR_rms_dB			=	0;
 
-Template.num_pulses			=	2;
+Template.num_pulses			=	0;
 Template.num_harmonics		=	-1;
-Template.modulation			=	0;
+Template.multipath			=	0;
 Template.confidence			=	3;
 Template.comments			=	'';
 Template.link_names         =   '';
 Template.link_hashtags      =   '';
 
 edit_fields			=	fieldnames(Template);
-edit_fields(5:14)	=	[];
+edit_fields(10:17)	=	[];
+
+edit_fields(3)=[];
 
 % params_extract.noise_se_dB		=	noise_se_dB;
 % params_extract.noise_rms_dB		=	noise_rms_dB; %not 20 log because actually mean sqaure
