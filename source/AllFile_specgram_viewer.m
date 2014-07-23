@@ -9824,8 +9824,7 @@ else
     set(hObject,'String','Channel')
 end
 guidata(hObject, handles);
-
-end %togglebutton_ChannelBeam
+end
 
 %% Annotation Utilties
 % --------------------------------------------------------------------
@@ -9854,3 +9853,6 @@ end
 
 
 end
+
+
+
