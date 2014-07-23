@@ -3134,18 +3134,32 @@ function pushbutton_selectpoints_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 prompt={'Number of selections'};
-def={'3'};
+def={'2'};
 start_time=handles.tdate_start;
 lineNo=1;
 answer=inputdlg(prompt,'',lineNo,def);
-tmp=ginput(str2num(answer{1}));
-disp('Absolute times:')
-disp(datestr(start_time+datenum(0,0,0,0,0,tmp(:,1)),0));
-disp('Relative times and frequencies:');
-disp(tmp(:,1)');
-disp(tmp(:,2)');
-disp('Time elaspsed from first point:');
-disp(tmp(:,1)'-tmp(1,1));
+Np=str2num(answer{1});
+tmp=ginput(Np);
+
+msg=sprintf('Absolute time at start: %s \n' ,datestr(start_time+datenum(0,0,0,0,0,min(tmp(:,1))),0));
+for If=1:Np
+   msg=sprintf('%s Frequency %i: %6.2f Hz \n',msg,If,1000*tmp(If,2)); 
+end
+duration=max(tmp(:,1))-min(tmp(:,1));
+bandwidth=max(tmp(:,2))-min(tmp(:,2));
+msg=sprintf('%s Duration: %6.2f sec \n Bandwidth: %6.2f Hz \n Slope: %6.2f Hz/sec\n',msg,duration,1000*bandwidth,1000*bandwidth/duration);
+uiwait(msgbox(msg,'Modal'));
+
+disp(sprintf('Slope is %6.2f Hz/sec',1000*bandwidth/duration))
+% disp('Absolute times:')
+% disp(datestr(start_time+datenum(0,0,0,0,0,tmp(:,1)),0));
+% disp('Relative times and frequencies:');
+% disp(tmp(:,1)');
+% disp(tmp(:,2)');
+% disp('Time elaspsed from first point:');
+% disp(tmp(:,1)'-tmp(1,1));
+
+
 end
 
 % --- Executes on button press in pushbutton_fileread.
@@ -5294,6 +5308,9 @@ Event.sig_type		=	sig_type;
 Event.min_freq		=	min_freq;
 Event.max_freq		=	max_freq;
 Event.duration		=	duration;
+if ~isfield(Event,'hash_tag')||isempty(Event.hash_tag)
+    Event.hash_tag      =   2*datenum(1970,1,1,0,0,0)-now;  %manual hashtags go back into past, automated into future.
+end
 
 Event.noise_se_dB		=	params_extract.noise_se_dB;
 Event.noise_rms_dB		=	params_extract.noise_rms_dB;
@@ -5721,6 +5738,13 @@ else
             end
         end
         
+        %AARON:  if annotation contants own edit field matrix, use it
+        if	isfield(LSfile, 'edit_fields')
+            if isempty(LSfile.edit_fields)
+                handles.notes.edit_fields	=	LSfile.edit_fields;
+            end
+        end
+        
     end  %ii loop through all names.
     
     %	Always merge with current template data, to update old notes with
@@ -5890,14 +5914,24 @@ end
 names		=	fieldnames(Event);
 N_fields	=	length(names);
 defaults	=	cell(N_fields,1);
-for	ii	=	1:N_fields
-    value	=	Event.(names{ii});
-    defaults{ii}	=	num2str(value);
-end
 
 %	Size of each prompt field
 num_lines		=	ones(N_fields,1);
-num_lines(end)	=	2;
+for	ii	=	1:N_fields
+    value	=	Event.(names{ii});
+    if iscell(value)
+        defaults{ii}=cell2mat(value');
+        num_lines(ii)=size(defaults{ii},1);
+    else
+        defaults{ii}	=	num2str(value);
+        num_lines(ii)=min([1 size(defaults{ii},1)]);
+    end
+    
+end
+num_lines(end)	=	2; %for comments
+
+
+
 
 %	title for window
 dlgTitle	=	['Annotation for event at ' datestr(OldEvent.start_time)];
@@ -5968,14 +6002,22 @@ Tmin	=	min(Times);
 Tmax	=	max(Times);
 duration_noise	=	0.5*(Tmax-Tmin);
 i_time_noise1	=	(Tmin-duration_noise <= T) & (T < Tmin);
-i_time_noise2	=	(Tmax < T) & (T <= Tmax+duration_noise);
-%Shift one column earlier to avoid picking up first signal FFT bin
-if (sum(i_time_noise1)*dT < 0.9*duration_noise) ||...
-        (sum(i_time_noise2)*dT < 0.9*duration_noise)
-    disp('Selected signal too close to start of window; SNR cannot be computed');
+i_time_noise2	=	(Tmax < T) & (T <= Tmax+duration_noise);%Shift one column earlier to avoid picking up first signal FFT bin
+%if (sum(i_time_noise1)*dT < 0.9*duration_noise) ||...
+%        (sum(i_time_noise2)*dT < 0.9*duration_noise)
+
+if Tmin-duration_noise<=min(T) || Tmax+duration_noise>=max(T)
+    uiwait(msgbox('extract_automated_fields: Selected annotation too close to start or end of spectrogram window; automated SNR cannot be computed','modal'));
     params_extract	=	[];
     return
 end
+
+if sum(i_time_noise1)<2||sum(i_time_noise2)<2
+    uiwait(msgbox('extract_automated_fields: Selected annotation too short for chosen FFT size; automated SNR cannot be computed','modal'));
+    params_extract	=	[];
+    return
+end
+
 PSD_noise   =  [B(i_freq,i_time_noise1) B(i_freq,i_time_noise2)];
 
 %noise duration should equal signal duration from above procedure.
@@ -6204,7 +6246,12 @@ for ii	=	2:N
         %         if rem(jj,200)==0
         %             waitbar((ii*length(Data.Events)+jj)/(N*length(Data.Events)),hh);
         %         end
-        Data.Events(jj).(names{ii})		=	num2str(Data.Events(jj).(names{ii}));
+        
+        %AARON: it is useful to have fields that have substructures, so I
+        %will allow annotations to have cell matricies and subfields
+        try
+            Data.Events(jj).(names{ii})		=	num2str(Data.Events(jj).(names{ii}));
+        end
     end
 end
 %close(hh)
@@ -6416,7 +6463,8 @@ function	hdlg	=	show_event_info(Event, Description, hdlg)
 if nargin < 3 || isempty(hdlg) || ~ishandle(hdlg)
     hdlg	=	dialog('Windowstyle', 'normal');
     pos		=	get(hdlg, 'Position');
-    pos(3)	=	pos(3)/2;
+    pos(3)	=	pos(3)*.75;
+    pos(4)=pos(4)*1.5;
     set(hdlg,'Position',pos);
 else
     figure(hdlg);
@@ -6427,14 +6475,37 @@ end
 Title	=	'Annotation details';
 names	=	fieldnames(Event);
 Message	=	[Description(:).'; names(:).'];
+
+%%AARON: some annotations will not be easily presentable, such as
+%%'automated' or 'localization'.
+Ibad=[];
 for	ii	=	1:length(names)
+    if isstruct(Event.(names{ii}))
+        Ibad=[Ibad ii];
+        continue
+    end
+    if iscell(Event.(names{ii}))
+        temp			=	cell2mat(Event.(names{ii})');
+        Message{2,ii}	=	[char(9) char(9) temp(:).'];
+   
+        continue
+    end
+    
     temp			=	num2str(Event.(names{ii}));
+    if size(temp,1)>1
+        Ibad=[Ibad ii];
+        continue
+    end
     Message{2,ii}	=	[char(9) char(9) temp(:).'];
+    
 end
+Igood=setdiff(1:length(names),Ibad);
 %	comments don't need to be indented
 Message{2,ii}	=	temp;
 %	start_time should be formated
 Message{2,1}	=	datestr(Event.(names{1}), 'yyyy-mm-dd HH:MM:SS.FFF');
+
+Message=Message(:,Igood);
 
 %	Put details in window
 set(hdlg, 'Name', Title);
@@ -9844,10 +9915,16 @@ function bowhead_detector_Callback(hObject, eventdata, handles)
 
 %Load list of file names to be converted, along with criteria for filtering
 % the results into annotation (e.g. geographic restrictions...)
-[list_names,filter_params]=load_bowhead_detector_params(handles.outputdir);
+[list_names,filter_params,station_position]=load_bowhead_detector_params(handles.outputdir);
+if isempty(list_names)
+    return
+end
 
 for I=1:length(list_names)
-   success_flag=convert_automated_bowhead_into_annotations(list_names{I},filter_params); 
+   success_flag=convert_automated_bowhead_into_annotations(list_names{I},filter_params,station_position); 
+   if success_flag==0
+      uiwait(msgbox(sprintf('%s failed to process',list_names{I}),'Failed!','modal'));
+   end
     
 end
 

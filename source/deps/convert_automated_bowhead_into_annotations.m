@@ -1,4 +1,4 @@
-function success_flag=convert_automated_bowhead_into_annotations(list_names,filter_params)
+function success_flag=convert_automated_bowhead_into_annotations(list_names,filter_params,station_position)
 %function success_flag=convert_automated_bowhead_into_annotations(list_names,filter_params)
 %  Creates an annotation event from a location structure
 %  Note that the Event will have 'automated' and 'localization' fields,
@@ -6,18 +6,42 @@ function success_flag=convert_automated_bowhead_into_annotations(list_names,filt
 
 
 try
+    
+    %debug statements below...
     %list_names='S510G0T20100831T000000_BearingInterval_Huber_FilteredLocations';
-    [list_names,filter_params,station_position]=load_bowhead_detector_params('.');
+    %[list_names,filter_params,station_position]=load_bowhead_detector_params('.');
+    
     data=load(list_names);
     
     %%Create annotation file names for output
     [Defaults.Description, Defaults.Template, edit_fields]	=	load_default_annotation_template();
-    Defaults.Events		=	Defaults.Template;
     
-    for I=1:length(data.goodName)
-        annotation_names{I}	=	[data.goodName{I} '-notes-BowheadAutomated.mat'];
-        GUI_params	=	[];
-        Data{I}				=	Defaults;
+    %Add custom fields
+    Nd=length(Defaults.Description);
+    Defaults.Description{Nd+1}='Bowhead Automated Fields';
+    Defaults.Description{Nd+2}='Localization parameters';
+    Defaults.Description{Nd+3}='Bearing (deg)';
+    Defaults.Description{Nd+4}='Range (km)';
+    
+    Ne=length(edit_fields);
+    edit_fields{Ne+1}='bearing';
+    edit_fields{Ne+2}='range';
+    
+    Defaults.Template.automated=[];
+    Defaults.Template.localization=[];
+    Defaults.Template.bearing=0;
+    Defaults.Template.range=0;
+    
+    Defaults.Events		=	Defaults.Template;
+    Defaults.edit_fields=edit_fields;
+    
+    GUI_params	=	[];
+    
+    Ns=length(data.goodName);
+    
+    for J=1:Ns
+        annotation_names{J}	=	[data.goodName{J} '-notes-BowheadAutomated.mat'];
+        Data_all{J}				=	Defaults;
         
     end
     
@@ -58,13 +82,13 @@ try
     data.locations_ctime=data.locations_ctime(Igood,:);
     
     %Now convert each location into a series of annotations
-    Ns=length(data.goodName);
     
     %We cycle through each station at each location to make hashtag processing
     %easier.
     Icount=ones(Ns,1);
     for I=1:length(data.locations)
         hashtags=-1*ones(Ns,1);
+        isPresent=false(Ns,1);
         %First create each raw event, including assigning a hashtag
         for J=1:Ns
             
@@ -72,9 +96,10 @@ try
             if isempty(newEvent)
                 continue
             end
-            Data{J}.Events(Icount(J))=newEvent;
+            Data_all{J}.Events(Icount(J))=newEvent;
             Icount(J)=Icount(J)+1;
             hashtags(J)=newEvent.hash_tag;
+            isPresent(J)=true;
         end
         
         %Now that hashtag created, link common events together.  Stations not
@@ -84,11 +109,20 @@ try
         %  of memory, may be useful in case individual events are modified.
         
         for J=1:Ns
-            Data{J}.Events(Icount(J)-1).link_hashtags=hashtags;
+            if isPresent(J)
+                Data_all{J}.Events(Icount(J)-1).link_hashtags=hashtags;
+            end
             
         end
-        
-        
+     
+    end  % I
+    
+    %Now write events to output file.  Check where folder location is...
+    
+    
+    for J=1:Ns
+        Data=Data_all{J};
+        save(annotation_names{J},'Data','GUI_params');
         
     end
     success_flag=1;
@@ -117,14 +151,14 @@ duration=location.Totalduration(Istation);
 
 
 newEvent=Template;
-newEvent.start_time	=	datenum(1970,1,1,0,0,start_time,annotation_names);
-newEvent.sig_type		=	sig_type;
+newEvent.start_time	=	datenum(1970,1,1,0,0,start_time);
+newEvent.sig_type		=	'FM';
 newEvent.min_freq		=	min_freq;
 newEvent.max_freq		=	max_freq;
 newEvent.duration		=	duration;
-newEvent.hash_tag       =   now+datenum(0,0,0,0,0,Ihash);  %Just need a unique number within a given event
-newEvent.link_names    =    annotation_names;
-
+newEvent.hash_tag       =   now+datenum(0,0,Ihash,0,0,0);  %Just need a unique number within a given event
+newEvent.link_names    =    cell2mat(annotation_names');
+       
 %Copy over rest of automated data into a separate 'automated' field
 names=fieldnames(location);
 for Iname=1:length(names)
@@ -140,11 +174,16 @@ for Iname=1:length(names)
            %range.  But just in case...
            
            try
-               newEvent.localization.range=sqrt((station_position.easting-location.position.location(1)).^2+ ...
-                   (station_position.northing-location.position.location(2)).^2);
+               newEvent.localization.range=sqrt((station_position.easting(Istation)-location.position.location(1)).^2+ ...
+                   (station_position.northing(Istation)-location.position.location(2)).^2);
+               newEvent.range=newEvent.localization.range/1000; %km
+               newEvent.bearing=location.bearing(Istation);
            catch
               fprintf('convert_automated_bowhead_into_annotations: You cannot assign a range to this event: no position associated with this detection.\n'); 
            end
+           
+           
+           
        otherwise
            newEvent.automated.(names{Iname})=location.(names{Iname})(Istation);
    end
