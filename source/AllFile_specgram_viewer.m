@@ -5921,12 +5921,12 @@ for	ii	=	1:N_fields
     value	=	Event.(names{ii});
     if iscell(value)
         defaults{ii}=cell2mat(value');
-        num_lines(ii)=size(defaults{ii},1);
+        
     else
         defaults{ii}	=	num2str(value);
-        num_lines(ii)=min([1 size(defaults{ii},1)]);
+        
     end
-    
+    num_lines(ii)=max([1 size(defaults{ii},1)]);
 end
 num_lines(end)	=	2; %for comments
 
