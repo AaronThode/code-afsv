@@ -8373,10 +8373,10 @@ if	~isempty(listing)
         end
     end
     
-end
+end  %if listing is not empty (i.e. an annotation file already exists)
 
 
-%	New file with default data template
+%%	New file with default data template
 [Defaults.Description, Defaults.Template, edit_fields]	=	load_default_annotation_template();
 Defaults.Events		=	Defaults.Template;
 GUI_params	=	[];
@@ -8460,7 +8460,7 @@ end
 
 
 
-%	enable relevant buttons
+%%	enable relevant buttons
 disable_notes_nav(handles,opt);
 set(handles.checkbox_notes_show, 'Value', handles.notes.show);
 set(handles.checkbox_notes_show, 'Enable', opt);
@@ -9841,8 +9841,15 @@ function bowhead_detector_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Convert bowhead whale files into annotation files....
+
+%Load list of file names to be converted, along with criteria for filtering
+% the results into annotation (e.g. geographic restrictions...)
 [list_names,filter_params]=load_bowhead_detector_params(handles.outputdir);
 
-keyboard;
+for I=1:length(list_names)
+   success_flag=convert_automated_bowhead_into_annotations(list_names{I},filter_params); 
+    
+end
+
 
 end
