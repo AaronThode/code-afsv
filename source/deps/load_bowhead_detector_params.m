@@ -1,8 +1,13 @@
-function [list_names,filter_params]=load_bowhead_detector_params(outputdir)
+function [list_names,filter_params,station_locations]=load_bowhead_detector_params(outputdir)
 %function [list_names,filter_params]=load_bowhead_detector_params(outputdir)
 % list_names is a cell array of full pathnames to automated detection files
 % filter_params is a structure with two-element arrays for filtering
 %   automated results.  'easting' and 'northing' are built in
+% station_locations:  structure with 'northing' and 'easting' fields for
+%       each DASAR, from 'A'(1)  to 'G'
+
+
+
 % Location folder with automated results to convert...
 dirname = uigetdir(outputdir, 'Select a folder with automated bowhead detector results...');
 
@@ -58,14 +63,18 @@ Site5_northing=[
     0
     7816110];
 
+%Save data to station_locations output variable
+station_locations.northing=Site5_northing;
+station_locations.easting=Site5_easting;
+
 IDASAR=logical([0 0 1 1 1 0 0]);  %DASARS CDE
 
 Site5_northing=Site5_northing(IDASAR);
 Site5_easting=Site5_easting(IDASAR);
 
-xbuffer=50; %A little extra shrinking of the center site width
+xbuffer=50; %A little extra shrinking of the center site width, in meters (makes sure box of Center is inside of all DASARS
 filter_params.northing=[min(Site5_northing)+xbuffer max(Site5_northing)-xbuffer];  %Boxes at same latitude
-dl=abs(min(Site5_easting)-max(Site5_easting));
+dl=abs(min(Site5_easting)-max(Site5_easting));  %How wide should a box be?  For now, make width the same as the width of the 'center' box..
 %dl=10000; %10 km box width
 
 filter_params.easting=[min(Site5_easting)+xbuffer max(Site5_easting)-xbuffer];

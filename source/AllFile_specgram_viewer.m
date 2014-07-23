@@ -4978,10 +4978,11 @@ pushbutton_update_Callback(handles.pushbutton_update,eventdata,handles);
 
 end
 
+%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%Beginning of annotation subroutines %%%%%%%%%%
+%%%%%Beginning of annotation GUI subroutines %%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%	new annotation stuff
+%	new annotation stuff
 
 % --- Executes on button press in pushbutton_notes_last.
 function pushbutton_notes_last_Callback(hObject, eventdata, handles)
@@ -5483,2724 +5484,14 @@ guidata(hObject, handles);
 end
 
 
-%%	Supporting functions, i.e. not auto-generated callbacks
+%	Supporting functions, i.e. not auto-generated callbacks
 function	status	=	dependency_check()
 
 status	=	true;
 
 end
 
-%%%%%%%%%%%load_and_display_spectrogram%%%%
-function	handles	=	load_and_display_spectrogram(handles)
-
-cla;
-
-%tdate_start		=	handles.tdate_start;
-tlen	=	handles.tlen;
-if tlen<1e-2 %somehow window length is way too short
-    tlen=1;
-    set(handles.edit_winlen,'String',num2str(tlen));
-end
-if isempty(tlen)
-    tlen    =   str2double(get(handles.edit_winlen,'String'));
-    
-    handles.tlen=tlen;
-end
-mydir	=	pwd;
-Ichan	=	eval(get(handles.edit_chan,'String'));  
-
-try
-   % [x,t,Fs,tmin,tmax,head]	=	...
-    %load_data(filetype,tdate_start,tlen,Ichan,handles)
-    [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype, ...
-        handles.tdate_start,tlen,Ichan,handles);
-    
-    %%Change file display if a transformation of a basic file has
-    %%  occurred...
-    if isfield(hdr,'myfile')  %file has been processed (e.g. an accelerometer file)
-        handles.myfile=hdr.myfile;
-        additional_text=sprintf(hdr.transformation.description{1},hdr.transformation.value{1});
-    else
-        additional_text=[];
-    end
-    set(handles.text_filename,'String',[fullfile(handles.mydir, handles.myfile) ' ' additional_text]);
-    
-catch
-    uiwait(errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge'));
-    return
-end
-
-%%Imagesc PSD file
-
-if strcmpi(handles.filetype,'psd')
-    FF=(0:hdr.Nmax)*hdr.Fs/hdr.Nfft;
-    set(handles.edit_maxfreq,'String',num2str(hdr.Fs/2));
-    set(handles.edit_fmax,'String',num2str(hdr.Fs/2000));
-    
-    contents=get(handles.popupmenu_Nfft,'String');
-    Value=find(strcmp(contents,int2str(hdr.Nfft))>0);
-    set(handles.popupmenu_Nfft,'Value',Value);
-    
-    ovlap=100*(1-hdr.dn/hdr.Nfft);
-    Nfft=hdr.Nfft;
-    contents=get(handles.popupmenu_ovlap,'String');
-    Value=find(strcmp(contents,int2str(ovlap))>0);
-    set(handles.popupmenu_ovlap,'Value',Value);
-    
-    set(handles.edit_chan,'String','1');
-    
-else
-    
-    if isempty(x)
-        errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge');
-        return
-    end
-    if max(t)<=tlen
-        tlen	=	max(t);
-        handles.tlen	=	max(t);
-        set(handles.edit_winlen,'String',num2str(tlen));
-    end
-    
-    if size(x,2)>1
-        x=x';
-    end
-    
-    Fs=round(Fs);
-    
-    mymaxfreq=str2double(get(handles.edit_maxfreq,'String'));
-    
-    if mymaxfreq==0||mymaxfreq>Fs/2
-        handles.filter.f_max	=	Fs/2;
-        set(handles.edit_maxfreq,'String',num2str(Fs/2));
-    end
-    %disp(sprintf('Fs=%i',Fs));
-    contents=get(handles.popupmenu_Nfft,'String');
-    Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
-    
-    contents=get(handles.popupmenu_ovlap,'String');
-    ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
-    ovlap=min([1-1/Nfft ovlap]);
-    
-    
-end  %if PSD
-
-handles.old_display_view=[];
-if isfield(handles,'display_view')
-    handles.old_display_view=handles.display_view;
-end
-    
-handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
-
-if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New Fig')
-    
-    if strcmp(handles.display_view,'Spectrogram')
-        axes(handles.axes1);
-    else
-        figure;
-    end
-    
-    if length(x(:,1))<Nfft/2
-        return
-    end
-    if ~(strcmp(handles.filetype,'PSD'))
-        [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
-        %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
-        %     For real signals, variable 'B'
-        %     returns the one-sided modified periodogram estimate of the PSD of each
-        %     segment; for complex signals and in the case when a vector of
-        %     frequencies is specified, it returns the two-sided PSD.
-        handles.sgram.T		=	TT;
-        handles.sgram.F		=	FF;
-        handles.sgram.B		=	B;
-        handles.sgram.Nfft	=	Nfft;
-        handles.sgram.ovlap	=	ovlap;
-        handles.sgram.Fs	=	Fs;
-        
-        
-        
-        %%Add spectral calibration curve, if present
-        if isfield(hdr,'calcurv')
-            Xp_cal_fin=polyval(hdr.calcurv,FF/Fs);
-            
-            imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
-            %elseif isfield(hdr,'cable_factor')
-            %    Xp_cal_fin=20*log10(1+hdr.cable_factor*FF);  %Unit resistance 140 ohm, capacitance 110 nF
-            %    imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
-        else
-            
-            imagesc(TT,FF/1000,10*log10(B));%
-        end
-    else
-        
-        ppsd=10*log10(x);
-        imagesc(t,FF/1000,ppsd);
-        handles.sgram.T		=	t;
-        handles.sgram.F		=	FF;
-        handles.sgram.B		=	ppsd;
-        handles.sgram.Nfft	=	hdr.Nfft;
-        handles.sgram.ovlap	=	ovlap;
-        handles.sgram.Fs	=	Fs;
-    end
-    grid on
-    axis('xy')
-    fmax=str2double(get(handles.edit_fmax,'String'));
-    fmin=str2double(get(handles.edit_fmin,'String'));
-    if fmax==0,
-        ylim([0 Fs/2000]);
-        set(handles.edit_fmax,'String',num2str(Fs/2000));
-    else
-        ylim([fmin fmax]);
-    end
-    %ylim([0 1]);axis('xy')
-    climm(1)=str2double(get(handles.edit_mindB,'String'));
-    climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
-    %%If switching from correlogram, reset to suggested values
-    if climm(1)==0&&climm(2)<1
-        climm=[40 70];
-        set(handles.edit_mindB,'String',num2str(climm(1)));
-        set(handles.edit_dBspread,'String',num2str(climm(2)));
-        climm(2)=sum(climm);
-    end
-    
-    caxis(climm);
-    if get(handles.checkbox_grayscale,'Value')==1,
-        colormap(flipud(gray));
-    else
-        colormap(jet);
-    end
-    colorbar;
-    % set(gcf,'pos',[30   322  1229   426])
-    set(gca,'fontweight','bold','fontsize',14);
-    xlabel('Time (sec)');ylabel('Frequency (kHz)');
-    if ~strcmp(handles.display_view,'Spectrogram')
-        title(get(handles.text_filename,'String'));
-    end
-elseif strcmp(handles.display_view,'Time Series') %%Time series
-    
-       
-    %%Check that we are looking at acoustic data and are in spectrogram
-    %%mode
-    if isempty(strfind(handles.myfile,'Press'))
-       % msgbox('Enter min and max frequency, or hit return to skip filtering:','modal');
-       if strcmp(handles.old_display_view,'Spectrogram')
-           ButtonName = questdlg('Filter? (If yes, click on two frequency values in spectrogram)');
-       else
-           ButtonName='No';
-       end
-       
-       %if ~isempty(tmp)&&size(tmp,1)==2
-        %%Check that are on current spectrogram view
-        if strcmp(ButtonName,'Yes')
-            tmp=ginput(2);
-        
-            freq=sort(tmp(:,2))*1000;
-            minfreq=freq(1);maxfreq=freq(2);
-            %y=quick_filter(x(:,1),Fs,freq(1),freq(2))
-            frange=[0.8*minfreq minfreq maxfreq maxfreq+0.2*minfreq];
-            [N,Fo,Ao,W] = firpmord(frange,[0 1 0],[0.05 0.01 0.1],Fs);
-            B = firpm(N,Fo,Ao,W);
-            
-            y=filter(B,1,x(:,1)-mean(x(:,1)));
-        else
-            y=x(:,1)-mean(x(:,1));
-        end
-    else
-        y=x(:,1)/1000; %Pressure conversion
-    end
-    
-    t=(1:length(x(:,1)))/Fs;
-    xlabel('Time (sec)');
-    if strfind(hdr.calunits,'mPa')
-        plot(handles.axes1,t,1000*y);grid on;
-        ylabel('uPa');
-    else
-        plot(handles.axes1,t,y);grid on;
-        ylabel('Amplitude');
-    end
-elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
-    fmax=1000*str2double(get(handles.edit_fmax,'String'));
-    fmin=1000*str2double(get(handles.edit_fmin,'String'));
-    param.ovlap=ovlap;
-    param.Nfft=Nfft;
-    prompt1={'ICI range (s)','Correlation sample time (s)','Teager-Kaiser treatment?','Incoherent=1, Coherent=0 ?'};
-    dlgTitle1='Parameters for correlogram...';
-    def1={'[0.01 .25]', '0.25','0','1'};
-    answer=inputdlg(prompt1,dlgTitle1,1,def1);
-    param.ici_range=eval(answer{1});
-    param.time_sample=str2double(answer{2});
-    param.teager=str2double(answer{3});
-    alg_chc=str2double(answer{4});
-    
-    if alg_chc==1
-        [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
-        [mean_corr_org,tindex,TT_plot,pwr,pwr_tot,yscale]= create_incoherent_correlogram(TT,FF,B,param,fmin,fmax);
-        
-        
-    else
-        param.Nfft=round(param.time_sample*Fs);
-        [mean_corr_eq,mean_corr_org,tindex,TT_plot,pwr]= create_coherent_correlogram(x(:,1),Fs,param,fmin,fmax);
-        
-        %
-        
-    end
-    
-    dX=tindex(2)-tindex(1);  %X axis of new correlation image
-    Ntime=length(tindex)-1;
-    imagesc(tindex(1:(end-1)),TT_plot,mean_corr_org);caxis([0 0.3]);
-    
-    %colorbar('east','ycolor','w');
-    axis('xy')
-    % title(sprintf('mean correlation value extracted between %6.2f and %6.2f Hz, %6.2f overlap',freq(Ifreq),freq(Ifreq+1),param.ovlap));
-    climm(1)=str2double(get(handles.edit_mindB,'String'));
-    climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
-    
-    if climm(1)>1
-        climm(1)=0;
-        set(handles.edit_mindB,'String','0');
-    end
-    if climm(2)>1
-        climm(2)=1;
-        set(handles.edit_dBspread,'String','1');
-    end
-    caxis(climm);
-    
-    if alg_chc==0  %coherent Correlogram
-        caxis([-20 0]);
-        set(handles.edit_mindB,'String','-20');
-        set(handles.edit_dBspread,'String','20');
-    end
-    
-    if get(handles.checkbox_grayscale,'Value')==1,
-        colormap(flipud(gray));
-    else
-        colormap(jet);
-    end
-    colorbar;
-    % set(gcf,'pos',[30   322  1229   426])
-    set(gca,'fontweight','bold','fontsize',14);
-    xlabel('Time (sec)');ylabel('Correlation lag (sec)');
-end  %Spectrogram, new fig
-
-handles.x	=	x;
-handles.Fs	=	Fs;
-%tmp=ginput(2)
-
-if strcmpi(handles.filetype,'gsi')
-    set(handles.pushbutton_GSIbearing,'vis','on');
-    set(handles.pushbutton_GSI_localization,'vis','on');
-else
-    set(handles.pushbutton_GSIbearing,'vis','off');
-    set(handles.pushbutton_GSI_localization,'vis','off');
-end
-
-if strcmpi(handles.filetype,'mdat')||strcmpi(handles.filetype,'wav')||strcmpi(handles.filetype,'mat')
-    set(handles.pushbutton_CSDM,'vis','on');
-    set(handles.pushbutton_Mode,'vis','on');
-    set(handles.pushbutton_tilt,'vis','on');
-    set(handles.pushbutton_modalfiltering,'vis','on');
-else
-    set(handles.pushbutton_CSDM,'vis','off');
-    set(handles.pushbutton_Mode,'vis','off');
-    set(handles.pushbutton_modalfiltering,'vis','off');
-    set(handles.pushbutton_tilt,'vis','off');
-    
-end
-
-if strcmpi(handles.filetype,'sio')
-    set(handles.pushbutton_CSDM,'vis','on');
-end
-
-if strcmpi(handles.filetype,'psd')
-    set(handles.pushbutton_binary,'vis','off');
-    set(handles.pushbutton_pausesound,'vis','off');
-    set(handles.pushbutton_playsound,'vis','off');
-    set(handles.pushbutton_save,'vis','off');
-    set(handles.radiobutton_correlogram,'vis','off');
-    set(handles.radiobutton_timeseries,'vis','off');
-    
-else
-    set(handles.pushbutton_binary,'vis','on');
-    set(handles.pushbutton_pausesound,'vis','on');
-    set(handles.pushbutton_playsound,'vis','on');
-    set(handles.pushbutton_save,'vis','on');
-    set(handles.radiobutton_correlogram,'vis','on');
-    set(handles.radiobutton_timeseries,'vis','on');
-    
-end
-end
-
-function [handles,errorflag]	=	set_slider_controls(handles,filetype)
-%%Set min, max and other times associated with slider controls
-mydir			=	pwd;
-errorflag		=	0;
-handles.tdate_min=	-1;
-handles.tdate_max=	-1;
-%
-% if isempty(handles.mydir)
-%     handles.mydir=pwd;
-% end
-%cd(handles.mydir);
-
-try
-    [x,t,Fs,tmin,tmax]=load_data(filetype,-1,10,1,handles);
-catch %no file selected
-    %errordlg(sprintf('No %s file selected',filetype));
-    errorflag=1;
-    cd(mydir);
-    return
-end
-
-
-set(handles.slider_datestr,'Min',0);
-set(handles.slider_datestr,'Max',1);
-
-%	5sec and 10% increments
-T_len		=	(tmax-tmin)*24*60*60;
-small_step	=	5/T_len;				% 5s
-big_step	=	0.1;					% 10%
-set(handles.slider_datestr,'sliderstep',[small_step big_step]);
-
-set(handles.slider_datestr,'Value',0.5);
-handles.tdate_start		=	0.5*(tmin+tmax);
-set(handles.edit_datestr,'String',datestr(handles.tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'));
-
-set(handles.text_mintime,'String',datestr(tmin,0));
-set(handles.text_maxtime,'String',datestr(tmax,0));
-handles.tdate_min	=	tmin;
-handles.tdate_max	=	tmax;
-
-set(handles.edit_fmax,'String',Fs/2000);
-set(handles.edit_fmin,'String',0);
-%slider_step(1) = datenum(0,0,0,0,0,handles.tlen)/(maxx-minn);
-%slider_step(2) = min([datenum(0,0,0,0,5,0) 0.1*(maxx-minn)])/(maxx-minn);
-%set(handles.slider_datestr,'sliderstep',slider_step)
-% keyboard
-cd(mydir);
-
-end
-
-function [startup_info]=gui_startup_information
-
-%%%%Directory where GSI_specgram_viewer.m and function_handles files will be
-%%%%stored....
-[s,local_machine]=unix('hostname');
-local_machine=deblank(local_machine);
-startup_info.calibration_DASAR2007_dir=[];
-
-if strcmp(local_machine,'macmussel.ucsd.edu')
-    
-    startup_info.base_directory='/Users/Shared/MATLAB/AllFile_specgram_viewer';
-    
-    
-    startup_info.default_directory='/Volumes/';
-    startup_info.default_inputfiledir='/Users/thode/Projects/Insta-array/Alaska_Sperm';
-    
-    %%Default annotation file
-    startup_info.annotation_file='annotated.txt';
-    startup_info.function_handles_filename='mt_specgram_handles.mat';
-    
-    %%Name of default multipath storage file
-    startup_info.multipath_filename='gui_multipath_selections.mat';
-    startup_info.calibration_DASAR2007_dir='';
-elseif strfind(local_machine,'Jan-Straleys')
-    
-    startup_info.base_directory='/Users/janstraley/SEASWAP_2011';
-    
-    
-    startup_info.default_directory='/Users/janstraley/SEASWAP_2011';
-    startup_info.default_inputfiledir='/Users/janstraley/SEASWAP_2011';
-    
-    %%Default annotation file
-    startup_info.annotation_file='annotated.txt';
-    startup_info.function_handles_filename='mt_specgram_handles.mat';
-    
-    %%Name of default multipath storage file
-    startup_info.multipath_filename='gui_multipath_selections.mat';
-    startup_info.calibration_DASAR2007_dir='';
-elseif strfind(local_machine,'Janice')
-    
-    startup_info.base_directory='~/Desktop/MATLAB/AllFile_specgram_viewer';
-    
-    
-    startup_info.default_directory='~/Desktop';
-    startup_info.default_inputfiledir='/Users/thode/Projects/Insta-array/Alaska_Sperm';
-    
-    %%Default annotation file
-    startup_info.annotation_file='annotated.txt';
-    startup_info.function_handles_filename='mt_specgram_handles.mat';
-    
-    %%Name of default multipath storage file
-    startup_info.multipath_filename='gui_multipath_selections.mat';
-    startup_info.calibration_DASAR2007_dir='';
-    
-elseif strcmp(local_machine,'KatsMacPro.local')  %KatMacGSI
-    startup_info.base_directory='/Users/thode/MATLAB/AllFile_specgram_viewer';
-    
-    
-    startup_info.default_directory='/Volumes';
-    startup_info.default_inputfiledir='/Volumes';
-    
-    startup_info.annotation_file='annotated.txt';
-    startup_info.function_handles_filename='mt_specgram_handles.mat';
-    
-    %%Name of default multipath storage file
-    startup_info.multipath_filename='gui_multipath_selections.mat';
-    
-    
-elseif ~isempty(strfind('dgrebner',local_machine))
-    
-    startup_info.base_directory='/Users/dgrebner/Desktop/';
-    startup_info.default_directory=startup_info.base_directory;
-    startup_info.default_inputfiledir='/Users/thode/Projects/Insta-array/Alaska_Sperm';
-    startup_info.annotation_file='annotated.txt';
-    startup_info.calibration_DASAR2007_dir='';
-    
-    startup_info.function_handles_filename='mt_specgram_handles.mat';
-    
-    %%Name of default multipath storage file
-    startup_info.multipath_filename='gui_multipath_selections.mat';
-elseif ~isempty(strfind('thode',local_machine))
-    
-    startup_info.base_directory='/Users/thode/Projects/Arctic_2010/Data/Bottom_Unit';
-    startup_info.default_directory=startup_info.base_directory;
-    startup_info.default_inputfiledir='/Users/thode/Projects/Insta-array/Alaska_Sperm';
-    startup_info.annotation_file='annotated.txt';
-    
-    startup_info.function_handles_filename='mt_specgram_handles.mat';
-    startup_info.calibration_DASAR2007_dir='/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/RawData';
-    
-    %%Name of default multipath storage file
-    startup_info.multipath_filename='gui_multipath_selections.mat';
-else
-    startup_info.base_directory='~/Desktop/MATLAB';
-    startup_info.default_directory='~/Desktop';
-    startup_info.default_inputfiledir='~/Desktop';
-    startup_info.annotation_file='annotated.txt';
-    
-    startup_info.function_handles_filename='mt_specgram_handles.mat';
-    
-    %%Name of default multipath storage file
-    startup_info.multipath_filename='gui_multipath_selections.mat';
-    
-end
-
-end
-
-%%%%%%%%%%%%%%%%%%%%
-%%% function load_data.m%%%%%
-%%%%%%%%%%%%%%%%%%%%
-
-function [x,t,Fs,tmin,tmax,head]	=	...
-    load_data(filetype,tdate_start,tlen,Ichan,handles)
-%%% tmin,tmax, t are datenumbers
-%   x rows are samples, columns are channels
-%   head.geom.rd:  If multiple channels are present, this gives spacing
-persistent  Fs_keep keyword space
-
-mydir=handles.mydir;
-myfile=handles.myfile;
-teager=get(handles.checkbox_teager,'Value');
-set(handles.edit_normal_rotation,'Vis','Off');  %Set off for the moment
-set(handles.text_normal_rotation,'Vis','Off');  %Set off for the moment
-
-Fs=[];
-x=[];
-t=[];
-tmin=[];
-tmax=[];
-head=[];
-filetype	=	upper(filetype);
-
-switch filetype
-    case 'PSD'
-        [x,F,t,Tabs,params]=read_Java_PSD(fullfile(mydir,myfile),tdate_start,tlen);
-        if ~isempty(t)&&length(t)>1
-            Fs=1./(t(2)-t(1));
-            t=t-t(1);
-        else
-            Fs=1;
-        end
-        head=params;
-        
-        tmin=head.tstart_file;
-        tmax=head.tend_file;
-    case 'MAT'
-        
-        simulated=load(fullfile(mydir,myfile));
-        Fs=simulated.fs;
-        
-        x=simulated.x_sweep';
-        if strcmp(Ichan,'all')
-            Ichan=1:size(x,2);
-        end
-        if max(Ichan)>max(size(x,2)),
-            disp(['Channel too high, restricting to ' int2str(max(size(x,2)))]);
-            Ichan=max(size(x,2));
-        end
-        
-        x=x(:,Ichan);
-        
-        
-        if tdate_start==-1
-            tmin=datenum(0);
-        elseif tdate_start>0 %We are trimming beginning time
-            tmin=tdate_start;
-            tmp=datevec(tdate_start);
-            dn=1+floor(Fs*tmp(end));
-            x=x(dn:end,:);
-            t=t(dn:end);
-        else
-            tmin=tdate_start;
-        end
-        
-        if tlen*Fs<size(x,1)
-            x=x(1:floor(tlen*Fs),:);
-        end
-        t=(1:length(x))/Fs;
-        
-        tmax=tmin+datenum(0,0,0,0,0,max(t));
-        head.geom.rd=simulated.rd;
-        head.Nchan=size(x,2);
-        x=x';
-    case 'GSI'
-        if strcmp(Ichan,'all')
-            Ichan=1:3;
-        end
-        if max(Ichan)>3,
-            disp('Channel too high, restricting to 3');
-            Ichan=3;
-        end
-        [x,t,head]=readGSIfile([mydir '/' myfile],tdate_start,tlen,Ichan,'datenum','nocalibrate');
-        if isempty(keyword)
-            prompt = {'Enter a keyword for GSI calibration [DASARC]:'};
-            dlg_title = 'DASAR calibration';
-            num_lines = 1;
-            def = {'DASARC'};
-            answer = inputdlg(prompt,dlg_title,num_lines,def);
-            keyword=answer{1};
-        end
-        % keyword=input('Enter a keyword for GSI calibration [DASARC]:','s');
-        %             if isempty(keyword)
-        %                 keyword='DASARC';
-        %             end
-        %         end
-        x=calibrate_GSI_signal(x, keyword);
-        
-        Fs=head.Fs;
-        
-        tmin=datenum(1970,1,1,0,0,head.ctbc);
-        tmax=tmin+datenum(0,0,1,0,0,0);
-        head.Nchan=length(Ichan);
-    case 'MT'
-        %[x,t,Fs]=load_mt_mult(handles.mydir,tdate_start,tlen);
-        %head=read_mt_header([mydir filesep myfile]);
-        head=read_mt_header(fullfile(mydir, myfile));
-        
-        tmin=head.tstart;
-        tmax=head.tend;
-        Fs=head.Fs;
-        
-        if tdate_start>0
-            tdate_vec=datevec(tdate_start-tmin);
-            nsec=tdate_vec(6)+60*tdate_vec(5)+3600*tdate_vec(4);
-        else
-            %uiwait(msgbox('No start time requested'));
-            return
-        end
-        %Load accelerometer data as desired
-        %% Template: CB_Accel_X_2014_02100958.mt
-        if strfind(head.abbrev,'Accel')
-            mystr='XYZ';
-            Ispace=strfind(myfile,'_');
-            Ispace=Ispace(2)+1;
-            x=[];
-            for Iacc=1:3
-                myfile_temp=myfile;
-                myfile_temp(Ispace)=mystr(Iacc);
-                try
-                [x0,t]=load_mt([mydir filesep myfile_temp],nsec,tlen);
-                if isempty(x)
-                    x=zeros(length(x0),3);
-                end
-                x(:,Iacc)=x0;
-                catch
-                    fprintf('Channel %s of %s not available...\n',mystr(Iacc),myfile_temp);
-                    
-                end
-                
-            end
-            head.Nchan=3;
-            
-            %%Select channel requested...or rotate channels...
-            % Axis conventions assume 2011 definitons: X is long axis, Y
-            % and Z are normal.
-            
-            set(handles.edit_normal_rotation,'Vis','On');
-            set(handles.text_normal_rotation,'Vis','On');
-            normal_angle=(pi/180)*str2num(get(handles.edit_normal_rotation,'String'));
-            
-            if normal_angle~=0
-                xrot=x;
-                xrot(:,2)=x(:,2)*cos(normal_angle)+x(:,3)*sin(normal_angle);
-                xrot(:,3)=-x(:,2)*sin(normal_angle)+x(:,3)*cos(normal_angle);
-                x=xrot;
-                head.normal_rotation=(180/pi)*normal_angle;
-                head.transformation.description{1}=' Normal Rotation: %6.2f deg';
-                head.transformation.value{1}=head.normal_rotation;
-            else
-                head.transformation.description{1}=' No rotation';
-                head.transformation.value{1}=[];
-            end
-            
-            x=x(:,Ichan);
-            %myfile(Ispace)=mystr(Ichan);
-            
-            head.myfile=myfile;
-            
-            % guidata(handles.myfile);  %Saves new file name...
-            %guidata(hObject, handles);  %Saves new file name...
-            %guidata(hObject, handles);
-            %
-        else
-            if Ichan>1
-                disp('WARNING: load_data: MT can only have one channel');
-                Ichan=1;
-            end
-            if tdate_start>0
-                [x,t]=load_mt(fullfile(mydir , myfile),nsec,tlen);
-            end
-            head.Nchan=1;
-        end
-    case 'SIO'
-        %x,t,Fs,tmin,tmax,head
-        %load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)gff
-        %set(handles.text_channel,'String','Channel [-angle (deg)]');
-        sio_chc=get(handles.togglebutton_ChannelBeam,'String');
-        [~, head] = sioread(fullfile(mydir,myfile));
-        
-        %Extract start date and time
-        %if ~exist('tstart_min') || isempty(tstart_min) || tstart_min < 0
-        Idot=strfind(myfile,'.');
-        
-        if isfield(head,'date')
-            tmin=head.date;
-        else
-            success=0;
-            for II=1:(length(Idot)-1)
-                if success || Idot(II+1)-Idot(II)~= 12
-                    continue
-                end
-                template=myfile((Idot(II)+1):(Idot(II+1)-1));
-                try
-                    tmin=datenum(2000+str2num(template(1:2)),0,str2num(template(3:5)), ...
-                        str2num(template(6:7)),str2num(template(8:9)),str2num(template(10:11)));
-                    %tstart_min=tmin;
-                    success=1;
-                catch
-                    tmin= now;
-                end
-            end
-        end
-        %end
-        
-        if isfield(head,'Fs')
-            Fs=head.Fs;
-        else
-            Fs_default=25000;
-            if isempty(Fs_keep)
-                Fs=input('Enter a sampling frequency in Hz per channel [25000]:','s');
-                if isempty(Fs),Fs=Fs_default;end
-                head.Fs=Fs;
-                Fs_keep=Fs;
-            else
-                Fs=Fs_keep;
-            end
-        end
-        
-        %%	Data parameters needed
-        head.np		=	head.PperChan;
-        tmax =tmin+datenum(0,0,0,0,0,head.np/Fs);
-        head.Nchan	=	head.N_Chan;
-        
-        if ~exist('tdate_start') || isempty(tdate_start) || tdate_start < 0
-            x=[];
-            return
-        end
-        
-        
-        np_start=1+round((tdate_start-tmin)*24*3600*Fs);
-        if np_start>head.np
-            errordlg('load_data:  SIO start time exceeds points available!');
-            return
-        end
-        
-            
-        %%%If beamforming is desired for a look at a given direction...
-        beamform_data=0;
-        get_geometry=0;
-        if strcmpi(sio_chc,'angle')
-            beamform_data=1;
-            get_geometry=1;
-        elseif strcmpi(Ichan,'all')
-            Ichan=1:head.Nchan;
-            beamform_data=0;
-            get_geometry=1;
-        end
-        
-        if beamform_data==1
-            thta=-Ichan;
-            Ichan=1:head.Nchan;
-        end
-        
-        %If loading single channel, check that request is reasonable...
-        if beamform_data==0
-            if max(Ichan)>head.Nchan
-                errordlg(sprintf('load_data:  SIO channel request: %i, max channels: %i',max(Ichan),head.Nchan));
-                return
-            end
-            
-            if max(Ichan)<1
-                errordlg(sprintf('load_data:  SIO channel request: %i is less than 1',max(Ichan)));
-                return
-            end
-            
-        end
-        
-        npi=round(tlen*Fs);
-        if np_start+npi>head.np
-            errordlg('load_data:  SIO end time exceeds points available!');
-            return
-        end
-        
-       
-       
-       if get_geometry==1
-            if isempty(space)
-                prompt = {'Enter spacing[m] between elements for SIO file:'};
-                dlg_title = 'SIO file spacing';
-                num_lines = 1;
-                def = {'0.1'};
-                answer = inputdlg(prompt,dlg_title,num_lines,def);
-                space=eval(answer{1});
-                fprintf('Half-wavelength frequency: %6.2f Hz\n',1500/(2*space));
-            end
-            head.geom.rd=(0:(head.Nchan-1))*space;
-            
-            
-        end
-        
-        
-        [x,~]=sioread(fullfile(mydir,myfile),np_start,npi,Ichan);
-        %Data arranged so that time are rows, columns are channels
-        
-        %Flip data ....
-        
-        if size(x,2)>1
-            x=fliplr(x);
-        end
-        
-        if beamform_data==1
-            try
-                space=head.geom.rd(2)-head.geom.rd(1);
-                xtot=delaynsum(x,thta,space,Fs,Ichan);
-                x=xtot;
-                head.thta=thta;
-            catch
-                disp('load_data: sioread beamform failure');
-                keyboard
-            end
-         end
-        
-        
-        %-----------------------------------------------------------------------
-        % sioread.m
-        %
-        % This program runs under windows, unix, and macs.
-        %
-        % function x=sioread(filename,p1,npi,channels);
-        %
-        % Inputs:
-        % 	filename: Name of sio file to read
-        % 	p1:	Point to start reading ( 0 < p1 < np)
-        % 	npi: 	Number of points to read in
-        % 	channels: Single number or vector containing the channels to read
-        % 		(example-to read channels 4 thru 10 enter 4:10)
-    case 'DAT'
-        [x,tmin,tmax,fs]=read_dat_file(fullfile(mydir,myfile),[],-1,tlen,0);
-        
-        if isempty(fs)
-            fs=input('Enter sampling rate in Hz:');
-        end
-        Fs=fs;
-        [x,tmin,tmax]=read_dat_file([mydir '/' myfile],Fs,tdate_start,tlen,0); %output in uPa
-        %[x,tmin,tmax]=read_dat_file([mydir '/' myfile],Fs,tdate_start,tlen,1);  %Voltage output
-        t=(1:length(x))/fs;
-        
-        head.Nchan=1;
-        switch fs
-            case 50000
-                head.calcurv=[
-                    1.179288464673746e+06
-                    -3.417289147406752e+06
-                    3.972100408634462e+06
-                    -2.459193259685826e+06
-                    8.904700994689314e+05
-                    -1.924134277822444e+05
-                    2.476608484423531e+04
-                    -2.235739303825218e+03
-                    2.904887584919255e+02
-                    -5.381149759460806e+00
-                    7.841554559708414e-03
-                    ];
-            case 6250
-                head.calcurv=[
-                    -9.864342626384007e+06
-                    2.675183405132254e+07
-                    -3.072255757018830e+07
-                    1.946983114345214e+07
-                    -7.445224085881455e+06
-                    1.766054734429601e+06
-                    -2.570588847834060e+05
-                    2.188411119767746e+04
-                    -9.803725367146685e+02
-                    1.959124505642275e+01
-                    -2.811936435415921e-01];
-            case 12500
-                head.calcurv=[
-                    9.262441626302190e+07
-                    -2.151487191990283e+08
-                    2.069375942078056e+08
-                    -1.063702102525421e+08
-                    3.153159716612202e+07
-                    -5.458152352141772e+06
-                    5.382152297627985e+05
-                    -2.765563363629215e+04
-                    6.113088605208859e+02
-                    -1.301582987521525e+00
-                    -1.634557871607174e-01];
-        end
-        
-    case 'ADI'
-        [x,tmin,tmax,fs]=read_adi_file(mydir,myfile,[],0,tlen,0);
-        
-        if isempty(fs)
-            fs=input('Enter sampling rate in Hz:');
-        end
-        Fs=fs;
-        [x,tmin,tmax]=read_adi_file(mydir,myfile,Fs,tdate_start,tlen,0); %Output in uPa
-        %[x,tmin,tmax]=read_adi_file(mydir,myfile,Fs,tdate_start,tlen,1);  %Output in voltage
-        t=(1:length(x))/fs;
-        head.Nchan=1;
-        
-    case 'MDAT'
-        
-        
-        [x,head]=read_synchronized_mdat_files(fullfile(mydir,myfile),tdate_start,tlen);
-        Fs=head.fs;
-        t=(1:length(x))/Fs;
-        
-        tmin=head.tfs;
-        tmax=head.tfe;
-        head.Nchan=size(x,2);
-        if strcmp(Ichan,'all')
-            Ichan=1:head.Nchan;
-        end
-        if max(Ichan)>head.Nchan
-            disp(sprintf('Channel too high, max channel %i',head.Nchan));
-            Ichan=head.Nchan;
-        end
-        
-        try
-            x=x(:,Ichan);
-            for II=Ichan
-                fprintf('Logged depth of channel %i is %6.2f m\n',II,head.geom.rd(II));
-            end
-        end
-        
-        x=x';
-        head.calcurv=[
-            -3.826740371096994e+07
-            8.955964717194067e+07
-            -9.041409824956748e+07
-            5.195683344725087e+07
-            -1.873830725900567e+07
-            4.336813690670102e+06
-            -6.251710636164501e+05
-            5.339062841084976e+04
-            -2.452316303554637e+03
-            5.178423592184026e+01
-            -1.229223450332553e+00];
-        
-    case 'WAV'
-        Nsamples	=	wavread(fullfile(mydir,myfile),'size');
-        [~,Fs]		=	wavread(fullfile(mydir,myfile),1,'native');
-        Nsamples	=	Nsamples(1);
-        handles.Fs	=	Fs;
-        
-        %%Can we calibrate the data?
-        %%  load_wav often normalizes the data so the peak value is 1.
-        %sens0=157; %dB re 1 unit of wav entry
-        %sens=input('Enter sensitivity of entire system (flat-spectrum calibration) [180 dB re 1 unit]:');
-        %if isempty(sens)
-        %sens=sens0;
-        %end
-        %sens=10^(sens/20);
-        
-        %%Calibration for ADAT 24 attached to Sonotech hydrophone array
-        %//ADAT HD24 has 6.9 V Rms max input for 24 bit data
-        %//Factor of 2 from differential inputs...
-        %//Hydrophone gain set to Sonotech array -157 dB
-        %// Don't have cable attenuation  here...
-        sens=(6.9*sqrt(2)/16777215)*0.5*10^(157.0 / 20.0);
-        %freq_cal[i]=(1.0+2*Math.PI*f*(110e-9)*140.0);
-        
-        % Nov 15, 2011
-        %         Hi Aaron,
-        %
-        % I thumbed through my notes for a few minutes to refresh my memory on this project.  The attenuation problem can be hugely simplified by eliminating many of the parameters right away.  The preamp output impedance is ordinarily very small, and the cable insulation resistance and receiver input impedance will be very large.  All of the above parameters can generally be ignored.
-        %
-        % This really only leaves the cable resistance and capacitance and so becomes a fairly simple voltage divider problem.  From my notes, I measured the cable (the entire 800+ length) resistance to be ~70 ohms and the capacitance to be ~110 nF.  The model would look like a series resistance with a shunt capacitance, so:
-        %
-        % R = 140 ohms (round trip)
-        % X = 1/(2*pi*f*C)
-        %
-        % So, the 6 dB down frequency will be when R= X, so:
-        % f = 1/(2*pi*C*R) = ~10 kHz.
-        %
-        % And the attenuation at any frequency:
-        % X/(R + X)  or 1/(1+ 2*pi*f*C*R)
-        %
-        % The cable attenuation seen by the vector sensor will essentially look like a single pole low pass filter with Fc = 10 kHz:
-        % 5   kHz: -3 dB
-        % 10 kHz: -6 dB
-        % 20 kHz: -9 dB
-        %
-        % This is consistent with my notes where I measured the cable attenuation to roll off by 3 dB/octave starting at 4-5 kHz.  The above is for the case of the vector sensor driving the entire length of the array.  For the other hydrophones driving shorter lengths of cable, the calculations will be the same but you will need to use different R and C values in the equation 20 log (1/(1+ 2*pi*f*C*R)) to compute the new attenuation values vs frequency.
-        %
-        % Jeff
-        
-        head.cable_factor=2*pi*(110e-9)*140.0;  %Unit resistance 140 ohm, capacitance 110 nF
-        
-               
-        try
-            tmin	=	convert_date(myfile,'_');
-            if isempty(tmin)
-               tmin=datenum([1970 1 1 0 0 0]);
-            end
-            tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
-        catch
-            disp([myfile ': convert_date failure']);
-            try
-                tmin=datenum(get(handles.text_mintime,'String'));
-            catch
-                minn	=	input('Enter start date in format [yr mo day hr min sec] or hit return: ');
-                if isempty(minn)
-                    minn=[1970 1 1 0 0 0];
-                end
-                tmin	=	datenum(minn);
-            end
-            tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
-        end
-        tdate_vec	=	datevec(tdate_start - tmin);
-        nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);  %Ignores differences in days
-        N1			=	1 + round(nsec*handles.Fs);
-        N2			=	N1 + round(tlen*handles.Fs);
-        
-        try
-            [x,Fs]		=	wavread(fullfile(mydir,myfile),[N1 N2],'native');
-        catch
-            x=[];
-            Fs=[];
-            t=[];
-            head.Nchan=0;
-            return
-        end
-        
-        if ~strcmp(Ichan,'all')
-            x		=	x(:,Ichan);
-        end
-        
-        t	=	(1:length(x))/Fs;
-        
-        x			=	double(x)*sens;
-        head.Nchan	=	size(x,2);
-
-end
-
-if isempty(tmin) || isempty(tmax)
-    disp('load_data: Warning, tmin and tmax should never be empty when exiting..');
-end
-%%%Optional Teager-Kaiser filtering...
-if teager
-    %%Assume that x is in form [ channel time]
-    x=x(:,2:end-1).^2-x(:,1:end-2).*x(:,3:end);
-end
-
-
-end  %function load_data
-
-function [y,t,head]=readGSIfile(rawfile,cbegin,tlen,nchan,formatt,calibrate)
-%function [y,t,head]=readGSIfile(rawfile,cbegin,tlen,nchan,formatt,calibrate)
-% Input Parameters:
-% rawfile = Include extension;
-% cbegin = Start time;
-% tlen = Length of sample to load;
-% nchan = Index of desired channel, 1 for sound;
-% formatt = Describes time input, string 'ctime' or 'datenum';
-% calibrate = String 'calibrate' to convert Volts to microP;
-
-if strfind(rawfile,'.sio')
-    
-    [y,t,head]=readsiof(rawfile,cbegin,tlen,formatt);
-    y=y-0.5*(2^16);  %Remove DC bias in A/D converter
-    
-elseif strfind(rawfile,'.gsi')
-    [y,t,head]=readgsi(rawfile,cbegin,tlen,formatt);
-    if isempty(y)  %request time is befine file start
-        dt=cbegin-head.ctbc;
-        tlen=tlen+dt;
-        [y,t,head]=readgsi(rawfile,0,tlen,formatt);
-        
-    end
-    y=y(nchan,:);
-    if strcmp(calibrate,'calibrate'),
-        y=y-0.5*(2^16);  %Remove DC bias in A/D converter
-        
-        y=y*(2.5/65535)*(10^(150/20));
-    end
-    y=y.';
-    
-    if (abs(size(y,1)-floor(head.Fs*tlen))>2),
-        disp('End of file reached, setting y to empty');
-        y=[];
-    end
-end
-
-end
-
-function [thet,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles)
-%tsec: seconds into time series that data are selected...
-thet=-1;  %Start with failed result
-kappa=-1;
-tsec=-1;
-tdate_start=handles.tdate_start;
-tlen=handles.tlen;
-%yes_wav=get(handles.togglebutton_getwav,'value');
-
-mydir=pwd;
-
-%Ichan='all';  %Hardwire first channel
-%Ichan=str2double(get(handles.edit_chan,'String'));
-[x,t,Fs,tstart,tend,head]=load_data(handles.filetype,tdate_start,tlen,'all',handles);
-
-disp('Click on two extreme corners, click below axis twice to reject:');
-tmp=ginput(2);
-if (isempty(tmp)||any(tmp(:,2)<0))
-    return
-end
-tsec=min(tmp(:,1));
-n=round(Fs*sort(tmp(:,1)));
-
-freq=1000*sort(tmp(:,2));
-contents=get(handles.popupmenu_Nfft,'String');
-Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
-
-[thet0,kappa,sd]=extract_bearings(x(n(1):n(2),:),0.25,Nfft,Fs,freq(1),freq(2),50);
-
-if ~isempty(strfind('T2007',handles.myfile))
-    cal07flag=1;
-    handles.calibration_DASAR2007_dir='/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/RawData';
-    
-    brefa_table=calibrate_bearing_Shell2007(handles.calibration_DASAR2007_dir,handles.myfile);
-else
-    cal07flag=0;
-end
-
-if cal07flag==0
-    thet=bnorm(thet0+head.brefa);
-else
-    [junk,Icol]=calibrate_bearing_Shell2007(handles.calibration_DASAR2007_dir,handles.myfile,1);
-    thet= interp1(0:360,brefa_table(:,Icol),bnorm(thet0));
-end
-
-%handles.bearing=thet;
-%guidata(hObject, handles);
-%titlestr=get(handles.text_filename,'String');
-%Iend=strfind(titlestr,'.gsi')-1;
-set(handles.text_filename,'String',sprintf('%s/%s %6.2f degrees... ',handles.mydir,handles.myfile,thet));
-%keyboard;
-end
-
-function nhout=read_num(fid,N)
-nhout=str2double(char(fread(fid,N,'char')'));
-end
-
-function chout=read_char(fid,N)
-chout=char(fread(fid,N,'char')');
-end
-
-function tabs=parse_date(str)
-
-Istart=strfind(str,'=');
-year=str2double(str((end-4):end));
-tm=datenum(str((end-13):(end-5)),14)-datenum('00:00:00',14);
-day=str2double(str((end-15):(end-14)));
-month=(str((end-19):(end-16)));
-switch deblank(month),
-    case 'Jan'
-        mn=1;
-    case 'Feb'
-        mn=2;
-    case 'Mar'
-        mn=3;
-    case 'Apr'
-        mn=4;
-    case 'May'
-        mn=5;
-    case 'Jun'
-        mn=6;
-    case 'Jul'
-        mn=7;
-    case 'Aug'
-        mn=8;
-    case 'Sep'
-        mn=9;
-    case 'Oct'
-        mn=10;
-    case 'Nov'
-        mn=11;
-    case 'Dec'
-        mn=12;
-end
-
-tabs=tm+datenum(year,mn,day,0,0,0);
-
-end
-
-function  [a_eqC2, b_eqC2]=get_DASARA_filter(f_hp,plot_data)
-% DASAR_A_equalization.m
-
-%%
-Fs = 1000; % sample rate, Hz
-
-% equalizer rev C
-% used to equalize Sparton DIFAR sonobuoy head omni phone response
-% The raw sonobuoy response is like a differentiator, with a +19 to +20dB/dec slope.
-% This equalizer is mostly an integrator, with some shaping near Nyquist to get rid
-% of aliasing effects and a high-pass filter cascaded to reduce low frequency gain
-
-f1 = 100; % Hz
-a1 = 1; % gain @ f1 (ignoring high-pass), V/V
-
-% integrator
-a = [1 -1]; % gain of integrator is cos(w/2)/sin(w), w = [0,2*pi] around unit circle
-
-% hf zero
-k = (f1/Fs)*2*pi;
-b = a1 * sin(k)/cos(k/2) * [1 0.15]/1.15; % 0.15 eyeball adhoc
-%b=a1;
-% b = a1 * sin(k)/cos(k/2);
-
-% high-pass
-%f_hp = 10; % high-pass -3 dB break freq, Hz
-[bb,aa] = butter(2,f_hp/(Fs/2),'high');
-
-a_eqC2 = conv(a,aa);
-b_eqC2 = conv(b,bb);
-
-if plot_data==1,
-    ff = [logspace(-2,log10(500),1000)]';
-    [h_eqC2,w] = freqz(b_eqC2,a_eqC2,ff*pi*(2/Fs));
-    figure
-    semilogx(w/pi *(Fs/2),20*log10(abs(h_eqC2)),'k')
-    grid on
-    xlabel('Frequency, Hz')
-    ylabel('gain, dB V/V')
-end
-
-end
-
-function [numd,dend] = DASAR_Shell_2007_equalization(Fs,plot_on)
-% DASAR_Shell_2007_equalization
-%       numd=b; dend=a;
-%   Returns filter coefficients of a digital equalization filter to flatten
-%   the (very) low-frequency response of data recorded by the
-%   omnidirectional channel in the Shell 2007 DASAR.
-%
-%   The 2007 Shell DASAR was a 4-channel unit, with a PZT flexural disk
-%   hydrophone and three orthogonal geophones. The lower band edge of the
-%   hydrophone channel is controlled by two cascaded (and independent)
-%   high-pass filters, one formed by the shunt resistor across the PZT
-%   ceramic, the other by the preamp (a single non-inverting opamp stage)
-%
-%   This equalization is only needed if it is desired to reconstruct data
-%   below 5 (or 8 Hz): for the "usual" (10 Hz and above) analysis, this
-%   equalization to the recorded data is not necessary. The user is advised
-%   that attempting to equalize more than a decade below these frequencies
-%   (i.e., 0.5 Hz) should be attempted with caution, since ambient noise
-%   can be large (especially pressure fluctuations from surface waves in
-%   shallow water), and self-noise of the instrument can become visible.
-%
-%   Unlike the DASAR-A and DASAR-Cs, which employed modified sonobuoy heads
-%   having a differentiator-like response (rising ~6 dB/octave), the
-%   in-band response of all four channels of the Shell 2007 DASAR were
-%   flat, so no equalization is needed in the passband of 10 to 450 Hz
-
-% R Norman Mar 22, 2011
-
-%%
-if(Fs ~= 1000)
-    error('designed & tested for Fs = 1000 Hz only')
-end
-%plot_on=1;
-%% equalization filter for the high-pass filter formed by PZT ceramic and shunt resistor
-R1 = 2e6; % shunt resistance, Ohms
-C1 = 15e-9; % ceramic capacitance, F
-f1a = 1/(2*pi*R1*C1); % break frequency, Hz
-
-p1a = 2*pi*f1a; % zero location, rad/s
-
-% pole location, rad/s (here, arbitrarily placed one-decade below the zero)
-% Don't place this pole at a frequency any lower than necessary)
-c = 2.5;
-p1b = p1a/c; % pole location, rad/s
-
-nums1 = c * [1/p1a 1]; % s-plane numerator coefs
-dens1 = [1/p1b 1]; % s-plane denominator coefs
-
-[numd1,dend1] = bilinear(nums1,dens1,Fs);
-
-if(plot_on)
-    hFVT = fvtool(numd1,dend1);
-    set(hFVT,'NumberofPoints',8192,'FrequencyScale','Log')
-    set(hFVT,'NormalizedFrequency','off','Fs',Fs)
-    legend(hFVT,'First Equalization Filter')
-    pause
-end
-
-%% equalization filter for the high-pass filter formed by preamplifier (non-inverting gain stage)
-R2 = 200; % resistance, Ohms
-C2 = 100e-6; % capacitance, F
-f2a = 1/(2*pi*R2*C2);
-
-p2a = 2*pi*f2a; % zero location, rad/s
-
-% pole location, rad/s (here, arbitrarily placed one-decade below the zero)
-% Don't place this pole at a frequency any lower than necessary)
-p2b = p2a/c; % pole location, rad/s
-
-nums2 = c * [1/p2a 1];
-dens2 = [1/p2b 1];
-
-[numd2,dend2] = bilinear(nums2,dens2,Fs);
-
-if(plot_on)
-    hFVT = fvtool(numd2,dend2);
-    set(hFVT,'NumberofPoints',8192,'FrequencyScale','Log')
-    set(hFVT,'NormalizedFrequency','off','Fs',Fs)
-    legend(hFVT,'Second Equalization Filter')
-    pause
-end
-
-%% cascade the two filters
-numd = conv(numd1,numd2);
-dend = conv(dend1,dend2);
-
-% future fancier
-% H1 = dfilt.df2(numd1,dend1); % df2t for transposed
-% H2 = dfilt.df2(numd2,dend2); % df2t for transposed
-% Hcascade = dfilt.cascade(H1,H2)
-% [n1,d1] = tf(Hcascade)
-% fvtool(Hcascade)
-
-%%
-if(plot_on)
-    % freqress(nums,dens,logspace(-3,2,1000))
-    hFVT = fvtool(numd,dend);
-    set(hFVT,'NumberofPoints',8192,'FrequencyScale','Log')
-    set(hFVT,'NormalizedFrequency','off','Fs',Fs)
-    legend(hFVT,'Final (composite) Equalization Filter')
-    orient landscape
-    print -djpeg DASAR2007_equalization.jpg
-end
-
-end
-
-function [thet,kappa,sd]=extract_bearings(y,bufferTime,Nfft,Fs,fmin,fmax,Nsamples)
-%function [thet,kappa,sd]=extract_bearings(y,bufferTime,Nfft,Fs,fmin,fmax,Nsamples)
-% Input:
-%    y: time series, with channels arranged as columns
-%    bufferTime: how much time exists before and after signal proper.
-%           Needed because time-domain filtering requires a signal buffer.
-%    Nfft: FFT size to use if CSDM is to be estimated.
-%    Fs: Sampling frequency, Hz
-%    fmin,fmax: minimum and maximum frequency of signal, Hz.
-%    algchc:  String containing one of three possibilities:
-%           'spectrogram: make spectrogram, estimate bearing from each
-%                   time-frequency cell of contour, provide standard
-%                   deviation
-%           'sel_ratio':  time-domain method that takes rms value of
-%           bandpassed signals.
-%           'sel_ratio_FFT': takes the FFT of all signal components and
-%               computes active intensity in frequency domain.
-%           'CSDM':  With a small Nfft value, construct multiple shapshots
-%               of signal structure, yielding a CSDM that in turn gives
-%               and active intensity.  May also be modified to permit
-%               robust beamforming for weak signals.
-%    Nsamples:  number of bootstrap samples for estimating kappa and sd
-%  Output: thet: angle in degrees, increasing clockwise from true north...,
-%  sd standard deviation in degrees
-kappa=[];sd=[];thet=[];
-
-filter_chc='butter';
-
-if strcmp(filter_chc,'FIR')
-    transband=0.1*(fmax-fmin); %Hz
-    filter_min=max([0.5*transband 0.8*fmin]);
-    filter_max=min([500-0.5*transband 1.2*fmax]);
-    [n,fo,mo,w] = firpmord( [filter_min+0.5*transband*[-1 1] filter_max+0.5*transband*[-1 1]], [0 1 0], [0.01 0.1 0.01], Fs );
-    b = firpm(n,fo,mo,w);
-    
-    % design and apply filter to pass only between e1 and e2
-    
-    for I=1:3,
-        y(:,I)=y(:,I)-mean(y(:,I));
-        x(:,I)=filtfilt(b,1,y(:,I));
-    end
-    
-else
-    w1=max([0.01 fmin*2/Fs]);
-    w2=min( [fmax*2/Fs 0.99]);
-    
-    [B,A]=butter(2,[w1 w2]);
-    for I=1:3,
-        y(:,I)=y(:,I)-mean(y(:,I));
-        x(:,I)=filter(B,A,y(:,I));
-    end
-end
-if bufferTime>0,
-    x=x(ceil(1+bufferTime*Fs):(end-floor(bufferTime*Fs)),:);
-end
-
-vx=(x(:,1).*x(:,2));
-vy=(x(:,1).*x(:,3));
-%thet=atan2(sum(vx),sum(vy))*180/pi;
-
-
-[thet,kappa,sd]=get_vmests([vx vy],Nsamples);
-
-
-end
-
-function [mu,kappa,sd] = get_vmests(x,B)
-%GET_VMESTS Calculates bootstrap estimate of mean and standard error of bearings.
-%  [MU,KAPPA,SD] = GET_VMESTS(X,B) assumes that X is an n-by-2 matrix of x-y
-%  coordinate pairs and B is a scalar denoting the number of bootstrap iterations.
-%  MU is the mean bearing, KAPPA is an estimate of the standard error of the mean
-%  expressed as the von Mises concentration parameter, and SD is the standard error
-%  estimate in degrees expressed as for a linear (not a circular variable).
-%
-%  Note: B may be reduced for greater speed.
-
-n = size(x,1);
-flag = 0;           % Set to 1 to calculate estimates of kappa and Rbar for each
-%   bootstrap sample, 0 for mean vector only.
-mux_hat = zeros(B,2);
-options = optimset('Display','off');
-mux = vm_ests_uneq(x,options,flag);             % Get mean angle from the data.
-mu = 180/pi*atan2(mux(1),mux(2));
-%tic
-%for i = 1:B,
-%  U = ceil(n .* rand(n,1));          % The guts of UNIDRND.M without error checking.
-%  xb = x(U,:);
-%  mux_hat(i,:) = vm_ests_uneq(xb,options,flag); % Estimation accounting for lengths.
-%end
-
-U = ceil(n .* rand(n,B));          % The guts of UNIDRND.M without error checking.
-for i = 1:B,
-    %U = ceil(n .* rand(n,1));          % The guts of UNIDRND.M without error checking.
-    %xb = x(U,:);
-    mux_hat(i,:) = vm_ests_uneq(x(U(:,i),:),options,flag); % Estimation accounting for lengths.
-end
-
-[junk,kappa,sd] = vm_ests(mux_hat,options);     % Estimation ignoring lengths.
-%toc
-end
-
-function [mux,Rbar,kappa] = vm_ests_uneq(x,options,flag) %#ok<STOUT>
-%VM_ESTS_UNEQ Maximum likelihood estimates of Von Mises parameters from data.
-%  [MUX,RBAR,KAPPA] = VM_ESTS_UNEQ(X,OPTIONS,FLAG) estimates the mean vector (MUX),
-%  the length of the mean vector (RBAR), and the concentration parameter (KAPPA)
-%  of the Von Mises distribution.  X is assumed to be an n-by-2 matrix, where
-%  each row represents an x,y coordinate pair, which defines a bearing from
-%  origin (0,0).  OPTIONS is an argument for FMINBND, for instance as set by
-%  OPTIMSET.  FLAG is a boolean: 0 indicates that only MUX will be calculated;
-%  1 indicates that RBAR and KAPPA will also be calculated
-%
-%  Calculates mean vector length, and thus KAPPA, taking account of individual
-%  vector lengths.
-
-%n1 = size(x,1);
-
-lx = sqrt(sum(x.^2,2));                % Get length of each vector
-idx = find(lx>0);                        % Get rid of 0-length vectors
-%n = length(idx);
-%if n<n1,
-x = x(idx,:);
-%end
-r = sum(x);
-mux = r/sum(lx);                       % Mean x,y coordinate
-
-
-end
-
-function [mu,kappa,sd] = vm_ests(x,options)
-%VM_ESTS Maximum likelihood estimates of Von Mises parameters from data.
-%  [MU,KAPPA,RBAR,SD] = VM_ESTS(X,OPTIONS) estimates the angular mean (MU)
-%  and concentration parameter (KAPPA) of the Von Mises distribution, the
-%  mean vector length (RBAR), and the approximate standard deviation (SD)
-%  of the normal distribution from data X.  X is assumed to be an n-by-2
-%  matrix, where each row represents an x,y coordinate pair, which defines
-%  a bearing from origin (0,0).  OPTIONS is an argument for FMINBND, for
-%  instance as set by OPTIMSET.
-
-n1 = size(x,1);
-lx = sqrt(sum(x.^2,2));                % Get length of each vector
-idx = find(lx);                        % Get rid of 0-length vectors
-n = length(idx);
-if n<n1,
-    x = x(idx,:);
-end
-x = x./repmat(lx,1,2);                 % Make unit vectors
-r = sum(x);
-mux = r/n;                             % Mean x,y coordinate
-mu = 180/pi*atan2(mux(1),mux(2));      % Mean angle (use y/x for math convention)
-Rbar = norm(mux);                      % Length of mean vector
-sd = 180/pi*sqrt(2*(1-Rbar));          % Angular standard deviation
-
-kappa=0;
-% if Rbar<=(1/sqrt(n)),
-%     kappa = 0;
-% else
-%     kappa = fminbnd('diffkr',eps,5e5,options,Rbar,n);
-% end
-%     function d = diffkr(k,r,n)
-%         %DIFFKR Difference of a function of Von Mises kappa and R, mean vector length.
-%         %  D = DIFFKR(K,R) is used by Matlab function FMINBND to find the maximum
-%         %  likelihood estimate of kappa, the concentration parameter of the Von Mises
-%         %  distribution. The MLE of kappa is the value K such that |R - A(K)| is
-%         %  minimum, where R is the length of the mean vector, A(K) =  I1(K)/I0(K), and
-%         %  I1 and I0 are modified bessel functions of order 1 and 0, respectively.
-%         %
-%         %  A bias correction for small sample size (see Batschelet, 1981, p. 47) is
-%         %  included so that K is sought for min{|R - A(K)/A(KRN)|} , where N is the
-%         %  sample size.
-%         %
-%         %  Rather than call the Matlab function, BESSELI, faster polynomial
-%         %  approximations from Abramowitz and Stegun (1965, p. 378) are used.  Also,
-%         %  the approximations allow arguments > 700 (which cause overflow in BESSELI).
-%         %  In the code below, I0 and I1 represent functions of I0(X) and I1(X),
-%         %  respectively, depending on the value of the argument X.  For X>3.75, the
-%         %  leading factor,  cancels in the ratio allowing calculation of A(X) without
-%         %  numeric overflow.
-%
-%         %  Abramowitz, M. and I.A. Stegun. 1965.  Handbook of Mathematical Functions.
-%         %  Dover Publications, New York.
-%
-%         %  Batschelet, E. 1981. Circular Statistics in Biology. Academic Press, London.
-%
-%         krn = k*r*n;
-%         t = krn/3.75;
-%         if krn<=3.75,
-%             I0 = 1 + 3.5156229*t^2 + 3.0899424*t^4 + 1.2067492*t^6 + 0.2659732*t^8 + ...
-%                 0.0360768*t^10 + 0.0045813*t^12;
-%             I1 = krn * (0.5 + 0.87890594*t^2 + 0.51498869*t^4 + 0.15084934*t^6 + ...
-%                 0.02658733*t^8 + 0.00301532*t^10 + 0.00032411*t^12);
-%             Akrn = I1/I0;
-%         else
-%             I0 = 0.39894228 + 0.01328592/t + 0.00225391/t^2 - 0.00157565/t^3 + ...
-%                 0.00916281/t^4 - 0.02057706/t^5 + 0.02635537/t^6 - 0.01647633/t^7 + ...
-%                 0.00392377/t^8;
-%             I1 = 0.39894228 - 0.03988024/t - 0.00362018/t^2 + 0.00163801/t^3 - ...
-%                 0.01031555/t^4 + 0.02282967/t^5 - 0.02895312/t^6 + 0.01787654/t^7 - ...
-%                 0.00420059/t^8;
-%             Akrn = I1/I0;
-%         end
-%         t = k/3.75;
-%         if k<=3.75,
-%             I0 = 1 + 3.5156229*t^2 + 3.0899424*t^4 + 1.2067492*t^6 + 0.2659732*t^8 + ...
-%                 0.0360768*t^10 + 0.0045813*t^12;
-%             I1 = k * (0.5 + 0.87890594*t^2 + 0.51498869*t^4 + 0.15084934*t^6 + ...
-%                 0.02658733*t^8 + 0.00301532*t^10 + 0.00032411*t^12);
-%             A = I1/I0;
-%         else
-%             I0 = 0.39894228 + 0.01328592/t + 0.00225391/t^2 - 0.00157565/t^3 + ...
-%                 0.00916281/t^4 - 0.02057706/t^5 + 0.02635537/t^6 - 0.01647633/t^7 + ...
-%                 0.00392377/t^8;
-%             I1 = 0.39894228 - 0.03988024/t - 0.00362018/t^2 + 0.00163801/t^3 - ...
-%                 0.01031555/t^4 + 0.02282967/t^5 - 0.02895312/t^6 + 0.01787654/t^7 - ...
-%                 0.00420059/t^8;
-%             A = I1/I0;
-%         end
-%         d = abs(r - A./Akrn);
-%
-%     end
-
-
-end
-
-function bearings=bnorm(bearings)
-Ibig=find(bearings>=360);
-bearings(Ibig)=bearings(Ibig)-360;
-
-Ilow=find(bearings<0);
-bearings(Ilow)=bearings(Ilow)+360;
-
-end
-
-function [Ksout,Ns,EE_sort,VV]=extractKsbest_contour(x,ovlap,Nfft,chann, frange,fr,fbad,Fs,M,keep_zeros,nowin)
-%%%%%%%%%%%%%%%%%%%%%%%extractKsbest_contour.m%%%%%%%%%%%
-% [Ksout,Ns]=extractKsbest_contour(x,ovlap,Nfft,goodel,frange,fr,fbad,Fs,M,nowin);
-%  Aaron Thode
-%  April 2, 2004
-%  Generates averaged cross-spectral outputs
-%    from an FM contour
-% INPUT:
-%x=array of data, rows are time, columns are channels
-%  ovlap=overlap of time samples
-%  Nfft-number of points used in FFT
-%  chann-vector containing element indicies: referenced to *bottom* element
-%  frange-Vector of frequencies: first is initial start of contour,
-%   second is the start of second harmonic, etc.
-%  fr-Search space in terms of +-freq
-%  fbad-frequencies of constant interference, etc.
-% M time window
-% nowin-if exists, don't window the data before using fft.used for source signatureestimates
-% keep_zeros: if exists, keep frequency bins that have no samples.  Useful for plotting...
-% OUTPUT:
-%    Ksout: structure array containing
-%     Kstot CSDM size(Nel,Nel,Nfreq)
-%     freq: frequencies corresponding to Ks in third dimension
-%     fcontour: frequencies detected, (Is,If)--can use to make contours..
-%     fcount: Number of times each frequency has been averaged..
-%     fpower: Power in each bin
-%The replica must also be conjugated to work properly with Kraken.
-%	Don't know why.
-% Feb 9-remove bad elements before summing power
-% April 1, 2004-normalize by Fs*Nfft to put units as power spectral density
-EE_sort=[];VV=[];
-figure;
-if ~exist('nowin', 'var'),
-    nowin=0;
-elseif  nowin==1
-    nowin=1;
-else
-    nowin=0;
-end
-
-Nel=length(chann);
-if ~exist('M', 'var')||M<0, M=Nfft;end
-
-%Compute number of time snapshots
-Ns=floor(((size(x,1)/M)-ovlap)/(1-ovlap));
-disp(['Ns: ' int2str(Ns)]);
-%if Ns==0,Ns=1;end
-
-f=linspace(0,Fs,Nfft+1);
-df=diff(f);df=df(1);
-nbins=ceil(fr/df);
-bins=-nbins:nbins;
-
-fcount=zeros(size(f));
-fpower=fcount;
-Kstot=zeros(Nel,Nel,length(f));
-%Kstot=zeros(Nel,Nel,length(findex));
-
-%Select appropriate frequency bin
-for I=1:length(frange),
-    [junk,findex(I)]=min(abs(f-frange(I)));
-    frange(I)=f(findex(I));
-end
-
-for I=1:length(fbad)
-    [tmp,findexjunk(I)]=min(abs(f-fbad(I)));
-    fbad(I)=f(findexjunk(I));
-end
-
-if Ns<0,
-    disp('Signal too short for one shapnot, will center pad for FFT:');
-    %pause;
-    Ns=1;Nx=size(x,1);
-    x0=zeros(Nfft,size(x,2));
-    index=floor(Nfft/2-(Nx/2));
-    index=(index:(index+Nx-1));
-    x0(index,:)=x;
-    x=x0;
-    clear x0
-    M=size(x,1);
-end
-if nowin==0,
-    win=kaiser(M,2.5);
-else
-    win=ones(M,1);
-end
-
-%Determine the frequency with greatest average power near your bin!
-Pt=[];
-t=[];
-for I=0:(Ns-1),
-    index=round(I*M*(1-ovlap)+1);
-    t(I+1)=index(1)/Fs;
-    xindex=(index:(index+M-1));
-    xh=x(xindex,chann);
-    for Ic=1:size(xh,2),
-        xh(:,Ic)=xh(:,Ic)-mean(xh(:,Ic));
-        xh(:,Ic)=xh(:,Ic).*win;
-    end
-    Xh=fft(xh,Nfft);
-    Pwr=abs(Xh).^2;
-    Pt=sum(Pwr,2);
-    if ~isempty(fbad)
-        Pt(findexjunk)=0; %Remove bad freqencies.
-        Pt(findexjunk+1)=0;
-        Pt(findexjunk-1)=0;
-    end
-    %Pt=cat(2,Pt,Pwr);
-    %end
-    %Pt=sum(Pt,2);
-    for If=1:length(findex),
-        subplot(length(findex),1,If);
-        
-        %plot(f(findex(If)+bins),Pt(findex(If)+bins));
-        [junk,fi]=max(Pt(findex(If)+bins));
-        findex(If)=findex(If)+bins(fi);
-        fcount(findex(If))=fcount(findex(If))+1;
-        fcontour(I+1,If)=f(findex(If));
-        fpower(findex(If))=fpower(findex(If))+Pt(findex(If));
-        disp(f(findex(If)));
-        pgoal=Xh(findex(If),:);
-        %Make pgoal a vertical array
-        %pgoal=conj(pgoal);   %Test to see if conjugation is the problem
-        %   PREVIOUS STATEMENT COMMENTED OUT BY A THODE MARCH 15, 2004
-        %     HE ALSO CHANGED write_covmat.m to remove conjugation as well
-        
-        pgoal=pgoal.';        %Rotate so vector is vertical, like KRAKEN
-        Kstot(:,:,findex(If))=Kstot(:,:,findex(If))+pgoal*pgoal';
-        %Ksout.pgoal
-    end
-    %title(int2str(Ns));
-    %pause(0.25);
-    disp('');
-end
-
-%%Collapse Kstot to non-zero components if desired
-Igood=find(fcount>0);
-
-if exist('keep_zeros', 'var') %%Keep all frequency bins, even if no power...
-    %Igood=[min(Igood):max(Igood)];
-    Igood=1:length(fcount);
-end
-fcount=fcount(Igood);
-fpower=fpower(Igood);
-freq=f(Igood);
-Kstot=Kstot(:,:,Igood);
-
-%Normalize by sample size, if necessary
-Iavg=find(fcount>1);
-for I=1:length(Iavg),
-    Kstot(:,:,Iavg(I))=Kstot(:,:,Iavg(I))/fcount(Iavg(I));
-    fpower(Iavg(I))=fpower(Iavg(I))/fcount(Iavg(I));
-end
-
-%Normalize the |X(f)|^2 term to make units power spectral density (power
-%per Hz)
-Kstot=Kstot/(Fs*Nfft);
-%keyboard;
-
-if Ns>1
-    for J=1:length(freq)
-        Ks=squeeze(Kstot(:,:,J));
-        [V,D,FLAG]=eigs(Ks,4,'LM');
-        %keyboard;
-        D=real(diag(D));
-        %%sqrt(D(1)*V(:,1)) gives scaled eigenvector
-        %D_sort=sort(D);
-        %D=flipud(D_sort)
-        pgoal(:,J)=V(:,1)*sqrt(abs(D(1)));
-        SN(1,J)=10*log10(abs(D(1)/D(2)));
-        if fcount(J)>0
-            disp(['Est. S/N for ' num2str(freq(J)) ' is ' num2str(SN(1,J)) 'dB']);
-        end
-    end
-end
-
-Ksout.Kstot=Kstot;
-Ksout.freq=freq;
-Ksout.fcount=fcount;
-Ksout.fpower=fpower;
-Ksout.fcontour=fcontour;
-Ksout.tcontour=t;
-Ksout.pgoal=pgoal;
-Ksout.SN=SN;
-
-close;
-end
-
-function [Kstot,f,VV,EE_sort]=extractKsexact(x,ovlap,Nfft,chann,frange,Fs,Isnap,M,nowin,threshold,tiltdata)
-
-%%%%%%%%%%%%%%%%%%%%%%%extractKsexact.m%%%%%%%%%%%
-%function [Kstot,Ks_eig,Ns,f,power]=extractKsexact(x,ovlap,Nfft,chann,frange,Fs,Isnap,M,nowin);
-%[Kstot,pgoal,Ns,f,pwr_est,SNRest,pphase]=extractKsexact(x,ovlap,Nfft,chann,frange,Fs,Isnap,M,nowin);
-%  Aaron Thode
-%  July 3, 1996
-%  Generates averaged cross-spectral outputs
-%    from data input
-%  CRUCIAL:  There is a line that flips pgoal so that the first
-%		element represents the top phone.
-%x=array of data, rows are time, columns are channels
-%ovlap=overlap of time samples
-%Nfft-number of point desired taken
-%chann-vector containing element number to be used:
-%frange-pairs of frequencies that define desired ranges If odd, last
-%	element is bin spacing (i.e.) evaluate every other bin
-%Isnap %Select the Isnap window.  If negative, average
-%M amount of dataused for the fft snapshot
-% nowin-if exists, don't window the data before using fft.used for source signature estimates
-% threshold-dB threshold of power (sum of energy across all frequencies and channels) to reject a snapshot.
-%    Set to Inf to ensure all snapshots used.
-% tiltdata: tilt: estimated vertical tilt of array in degrees.
-%           rd: element depths in m
-% Output: Kstot-CSDM
-%          %V: eigenvectors of CSDM
-%          %ev: eigenvalues of CSDM
-%  April 1, 2004: normalize CSDM to have units of power spectral density:
-%  |X(f)|^2/(Fs*Nfft), Power/Hz
-VV=[];
-EE_sort=[];
-MAXF=Inf;
-if ~exist('threshold','var')
-    threshold = -Inf;
-end
-
-if ~exist('tilt','var')
-    tiltdata.tilt=0; %
-    tiltdata.rd=ones(length(chann),1);
-end
-if size(tiltdata.rd,2)>1
-    tiltdata.rd=tiltdata.rd';
-end
-sintilt=sin(tiltdata.tilt*pi/180);
-if ~exist('nowin','var')
-    nowin=0;
-    disp('The signal will be windowed');
-elseif nowin==1,
-    nowin=1;
-    disp('The signal will NOT be windowed');
-else
-    nowin=0;
-    disp('The signal will be windowed');
-end
-
-Nel=length(chann);
-Ns=floor(((size(x,1)/M)-ovlap)/(1-ovlap));
-disp(Ns);
-%pause;
-%Select appropriate frequency bin
-%[f,findex]=makefaxis(Nfft,Fs,frange);
-frange=round((Nfft/Fs)*frange);
-findex=max([1 frange(1)]):min([Nfft/2 frange(2)]);
-f=findex*(Fs/Nfft);
-
-if length(findex)<MAXF
-    Kstot=zeros(Nel,Nel,length(findex));
-else
-    disp('frange too long to make Kstot\n just making pgoal');
-end
-power=zeros(Ns,1);
-Nf=length(findex);
-if	~exist('Isnap', 'var')|| Isnap<0
-    Isnap=0:Ns-1; %average all
-end
-
-if Ns<=0,
-    disp('Signal too short for one shapnot, will center pad for FFT:');
-    %pause;
-    Ns=1;Isnap=0;Nx=size(x,1);
-    x0=zeros(Nfft,size(x,2));
-    index=floor(Nfft/2-(Nx/2));
-    index=(index:(index+Nx-1));
-    x0(index,:)=x;
-    x=x0;
-    clear x0
-    M=size(x,1);
-end
-if nowin==0,
-    win=kaiser(M,2.5);
-else
-    win=ones(M,1);
-end
-
-for I=Isnap
-    index=round(I*M*(1-ovlap)+1);
-    xindex=(index:(index+M-1));
-    xh=x(xindex,chann);
-    for Ic=1:length(chann)
-        xh(:,Ic)=xh(:,Ic)-mean(xh(:,Ic));
-        xh(:,Ic)=xh(:,Ic).*win;
-    end
-    Xh=fft(xh,Nfft);
-    pgoal=Xh(findex,:);
-    %Make pgoal a vertical array
-    %pgoal=pgoal(:,chann);   %Reject elements ;
-    %pgoal=conj(pgoal);   %Test to see if conjugation is the problem
-    pgoal=pgoal.';        %Columns are now single-frequency array snapshots
-    %pgoal=flipud(pgoal);  %Puts topmost element first, according to lewis
-    
-    
-    power(I+1)=(Fs/Nfft)*sum(sum(abs(pgoal).^2))/(Fs*Nfft);
-    
-    if length(findex)<MAXF&&threshold<=10*log10(abs(power(I+1)))
-        for J=1:Nf
-            %disp(f(J));
-            
-            tiltvec=exp(1i*2*pi*f(J)*sintilt*tiltdata.rd/1500);
-            ptemp=pgoal(:,J).*tiltvec;
-            Kstemp=ptemp*ptemp'; %Top LH cornertop element autocor
-            Kstot(:,:,J)=Kstot(:,:,J)+Kstemp;
-            
-        end
-    else
-        power(I+1)=NaN;
-    end
-end  %I=Isnap
-
-figure
-tt=Isnap*(1-ovlap)*Nfft/Fs;
-plot(tt,10*log10(abs(power)));
-grid on
-if ~isinf(threshold)
-    hold on
-    line([min(tt) max(tt)],threshold*[1 1]);
-end
-xlabel('Time (s)');ylabel('dB power');
-
-if length(findex)>MAXF,
-    Kstot=[];
-end
-
-%Normalize to have units of power spectral density...pwr per Hz
-Kstot=Kstot/(Fs*Nfft);
-
-%Compute eigenvalues of CSDM, and the ratio of the high-power to the
-%low-power sound be like SNR
-
-
-%SNR=zeros(1,Nf);
-if Ns>1
-    EE_sort=zeros(Nel,Nf);
-    VV=zeros(Nel,Nel,Nf);
-    for If=1:Nf
-        [VV0,EE]=eig(Kstot(:,:,If));
-        EE=diag(EE);
-        [EE_sort(:,If),Isort]=sort(EE,1,'descend');
-        VV(:,:,If)=VV0(:,Isort);
-        
-    end
-end
-
-% if Ns<=1
-%     SNRest=-SNRest;
-% end
-
-end
-
-function [B,wout]=conventional_beamforming(Ks,angles,freq,Lz,c,yesnorm)
-B=zeros(length(freq),length(angles));
-if size(Lz,2)>1
-    Lz=Lz.';
-end
-
-if nargout==2
-    wout=zeros(length(Lz),length(freq),length(angles));
-end
-winn=hanning(length(Lz));
-for If=1:length(freq)
-    for Iang=1:length(angles)
-        % lambda=1500/freq(If);
-        w=exp((-1i*2*pi*Lz*freq(If)/c)*sin(angles(Iang)*pi/180));
-        w=w.*winn;
-        
-        w=w/norm(w);
-        K=squeeze(Ks(:,:,If));
-        if exist('yesnorm', 'var')
-            K=K/norm(K);
-        end
-        B(If,Iang)=real(w'*K*w);
-        if nargout==2
-            wout(:,If,Iang)=w;
-        end
-    end
-    
-    
-end
-
-%plot(angles,10*log10(B(If,:)));
-end
-
-function B=MV_beamforming(Ks,angles,freq,Lz,c)
-B=zeros(length(freq),length(angles));
-if size(Lz,2)>1,
-    Lz=Lz.';
-end
-for If=1:length(freq),
-    for Iang=1:length(angles)
-        % lambda=1500/freq(If);
-        w=exp((1i*2*pi*Lz*freq(If)/c)*sin(angles(Iang)*pi/180));
-        
-        %B(If,Iang)=real(w'*Ks{If}*w)/(norm(Ks{If})*norm(w).^2);
-        w=w/norm(w);
-        B(If,Iang)=1./real(w'*(squeeze(Ks(:,:,If))\w));
-        
-    end
-    
-    
-end
-
-%plot(angles,10*log10(B(If,:)));
-end
-
-function R=derive_reflection_coefficient2(Kstot,angles,freq,rd,c)
-%function [B,wout]=conventional_beamforming(Ks,angles,freq,Lz,c,yesnorm)
-
-tilt=input('Enter tilt estimate in deg (0):');
-if isempty(tilt)
-    tilt=0;
-end
-
-% angles=angles0+tilt;
-%
-% Igood=find(angles<=90&angles>=-90);
-% angles=angles(Igood);
-%
-% Nup=Iang-1;
-% Ndown=length(Iang:length(angles));
-% if Ndown>=Nup
-%    angles=angles(1:(Iang+Nup));
-% else
-%     angles=angles((Nup-Ndown+2):end);
-%end
-Lz=rd-rd(1);
-
-B=conventional_beamforming(Kstot,angles,freq,Lz,c,'yesnorm');
-%B=MV_beamforming(Kstot,angles,freq,Lz,c,'yesnorm');
-B=real(B).';  % B now [angles freq]
-figure
-imagesc(freq,angles,10*log10(abs(B)))
-caxis([-20 0]);
-axis('xy')
-set(gca,'fontweight','bold','fontsize',14);
-xlabel('Frequency (Hz)');
-ylabel('Angle (positive is towards surface');
-grid on
-%title(sprintf('Theoretical conventional beamforming response, even spacing, source angle %6.2f',angle))
-colorbar('fontweight','bold','fontsize',14)
-
-
-for It=1:length(tilt)
-    [junk,Iang]=min(abs(angles-tilt(It)));
-    
-    %R is bottom/surface, or negative over positive
-    %upp=flipud(B(1:(Iang-1),:));  %Negative angles point towards bottom
-    %downn=B((Iang+1):end,:);
-    %Nmin=min([size(downn,1) size(upp,1)]);
-    %R=downn(1:Nmin,:)./upp(1:Nmin,:);
-    
-    downn=flipud(B(1:(Iang-1),:));  %Negative angles point towards bottom
-    upp=B((Iang+1):end,:); %Positive angles point towards surface
-    Nmin=min([size(downn,1) size(upp,1)]);
-    R=downn(1:Nmin,:)./upp(1:Nmin,:);
-    
-    %%Note that R is the power reflection coefficient (Harrison and Simmons, Eq. (2)), so 10*logR please..
-    R=-10*log10(abs(R))';
-    angle_graze=angles(Iang+(1:Nmin))-tilt(It);
-    figure
-    
-    subplot(3,1,1)
-    imagesc(10*log10(abs(upp')))
-    subplot(3,1,2)
-    imagesc(10*log10(abs(downn')))
-    subplot(3,1,3)
-    imagesc(angle_graze,freq,R);
-    caxis([0 15]);
-    set(gca,'fontweight','bold','fontsize',14);
-    grid on;colorbar;axis('xy')
-    xlabel('Grazing angle (deg)');
-    ylabel('Frequency (Hz)')
-    title(sprintf('reflection loss (dB), tilt %6.2f',tilt(It)))
-    
-end
-
-yes=input('Save?');
-if ~isempty(yes)
-    save(sprintf('Refl_%s.mat',num2str(mean(tilt))),'angle_graze','freq','R','tilt','rd','c','Kstot','angles','Lz');
-end
-% disp('Select a frequency:');
-% tmp=ginput(1);
-% [junk,Iwant]=min(abs(tmp(2)-freq));
-% figure
-% plot(angle_graze,R(Iwant,:));
-% keyboard
-end
-
-
-
-%% MFP
-function save_result=matched_field_processor(model_name,tilt_offset,ranges,depths,Kstot,freq,SNR,rd,SNRmin,data_name)
-conj_flag=1;  %If one, conjugate data...
-
-%%%%%Prepare data
-%SNRmin=15;keyboard
-%%%If SNRmin is a sclar, it is a dB SNR value threshold to select frequencies
-%       If SNRmin is a vector, it is a list of frequencies.
-if length(SNRmin)==1
-    Igood=find(SNR>=SNRmin);
-    freq=freq(Igood);
-    disp(sprintf('Frequencies to process at %i dB SNR: %s',SNRmin,mat2str(freq,4)));
-    
-else
-    
-    Igood=zeros(length(SNRmin),1);  %Iwant will be indicies in model frequencies that match FFT bins in index
-    
-    for If=1:length(SNRmin)
-        [junk,Igood(If)]=min(abs(SNRmin(If)-freq));
-    end
-    freq=freq(Igood);
-    disp(sprintf('Frequencies to process, hard wired: %s',mat2str(freq,4)));
-    if length(unique(Igood))~=length(Igood),disp('WARNING! Frequencies requested via SNRmin not available...');end
-end
-
-Kstot=Kstot(:,:,Igood);
-disp(sprintf('Loading model: %s',model_name));
-model=load(model_name);
-prompt={'Number of modes to model:'};
-name='Parameters for Matched Field Processing';
-numlines=1;
-defaultanswer={'all'};
-answer=inputdlg(prompt,name,numlines,defaultanswer);
-if strfind(answer{1},'all')
-    max_mode= size(model.kr{1},2);
-    
-else
-    max_mode=min([eval(answer{1}) size(model.kr{1},2)]);
-end
-model.U=model.U(:,:,1:max_mode);
-model.kr{1}=model.kr{1}(:,1:max_mode);
-%keyboard
-
-%%Extract model frequencies...
-
-Iwant=zeros(length(freq),1);  %Iwant will be indicies in model frequencies that match FFT bins in index
-for If=1:length(freq)
-    [junk,Iwant(If)]=min(abs(model.freq-freq(If)));
-end
-
-
-%%%%%Prepare model%%%%
-%keyboard
-%%Remove bad channels, if any
-Igood=zeros(1,length(rd));
-for I=1:length(rd)
-    [junk,Igood(I)]=min(abs(model.rd-rd(I)));
-end
-
-Igood_source=zeros(1,length(depths));
-for I=1:length(depths)
-    [junk,Igood_source(I)]=min(abs(model.rd-depths(I)));
-end
-
-model.sd=model.rd(Igood_source);
-model.Urd=model.U(Igood,:,:);
-
-model.U=model.U(Igood_source,:,:);
-model.rd=model.rd(Igood);
-
-kk=2*pi*model.freq(Iwant)./1495;
-
-%Mistake in linear tilt calculation
-%rd_cum=rd./cumsum(rd);
-
-rd_cum=-(rd-min(rd))./(max(rd)-min(rd));
-%%generate replicas
-% weight modes by mode excitation
-
-% Irtest=25;
-% Iztest=5;
-for Itilt=1:length(tilt_offset)
-    fprintf('tilt: %6.2f\n',tilt_offset(Itilt));
-    tilt_matrix=exp(-1i*tilt_offset(Itilt)*rd_cum'*kk); %[depths frequency]
-    
-    for If=1:length(freq)
-        ck=(model.kr{1}(Iwant(If),:).');
-        tiltt=tilt_matrix(:,If);
-        Ks=squeeze(Kstot(:,:,If));
-        Ks=Ks/trace(Ks);
-        if conj_flag==1
-            Ks=conj(Ks);  %Need to do this since MATLAB and SAGA definitions of Fourier Transform different than Comp. Ocean. Acoust.
-        end
-        for Iz=1:length(depths)
-            
-            [junk,isd]=min(abs(model.sd-depths(Iz)));
-            a = squeeze(model.U( isd, Iwant(If), : ));
-            phi = squeeze(model.Urd(:,Iwant(If),:)) * diag( a, 0 );	% scale modes by a
-            
-            % ******************************************************
-            % form pressure field
-            % ******************************************************
-            
-            phase = diag( 1.0 ./ sqrt( ck ) ) * exp( 1i * ck * ranges ) * diag( sqrt( 2 * pi ./ ranges ) );
-            
-            Ibad = isnan(real(phase));
-            phase(Ibad)=0;
-            
-            p0 = phi * phase;  % [rd Nm] x [Nm ranges] = [rd ranges]
-            
-            p=(tiltt*ones(1,length(ranges))).*p0;
-            %Add tilt correction here..
-            
-            %temp=squeeze(Kstot(:,:,If))*p;  % [rd rd] x [rd ranges] =[rd ranges]
-            for Ir=1:length(ranges)
-                replica=p(:,Ir)/norm(p(:,Ir));
-                amb(Iz,Ir,If)=real(replica'*Ks*replica);
-                
-                %             if Iztest==Iz&&Irtest==Ir
-                %                 testdata(:,:,If)=p(:,Ir)*p(:,Ir)';
-                %             end
-            end
-            
-        end
-    end
-    
-    max_corr=squeeze(max(max(amb)))';
-    amb_tot=sum(amb,3)/length(freq);
-    %Iamb=find(max_corr>0.7);amb_tot=sum(amb(:,:,Iamb),3)/length(Iamb);  %Trim poor results
-    figure
-    %     for I=1:length(freq)
-    %         imagesc(ranges,depths,squeeze(amb(:,:,I)));
-    %         colorbar;caxis([0 1]);
-    %         title(sprintf('Frequency: %6.2f',freq(I)));
-    %         pause
-    %     end
-    %imagesc(ranges,depths,amb_tot);caxis([0 1]);
-    contourf(ranges/1000,depths,amb_tot,0:0.1:1);
-    caxis([0.2 1]);
-    cmap=colormap;colormap(cmap(1:4:end,:));
-    set(gca,'fontweight','bold','fontsize',14);xlabel('range (km)');ylabel('depth (m)');grid on
-    colorbar('fontweight','bold','fontsize',14);
-    %title(sprintf('Frequencies: %s',mat2str(round(freq),4)));
-    axis('ij')
-    if length(SNRmin)>1
-        SNRmin=NaN;
-    end
-    if length(freq)<6
-        titlestr=sprintf('Tilt: %6.2f, Frequencies to process at %i dB SNR: %s',tilt_offset(Itilt),SNRmin,mat2str(freq,4));
-    else
-        titlestr=sprintf('Tilt: %6.2f, %i frequencies to process at %i dB SNR',tilt_offset(Itilt),length(freq),SNRmin);
-        
-    end
-    %     if conj_flag==1
-    %         titlestr=[titlestr ' Conjugated Kstot'];
-    %
-    %     end
-    title(titlestr);
-    tmp=[freq' squeeze(max(max(amb)))];
-    fprintf('Frequency: %6.2f, Correlations:  %6.2f\n',tmp');
-    fprintf('Total corr: %6.2f \n',max(max(amb_tot)));
-    
-    save_result=input('Enter any character to save images and write CSDM to file: ');
-    if ~isempty(save_result)
-        savename=sprintf('MFP_result_%s_tilt%4.2f_Nfreqs%i_SNRmin%i',data_name,tilt_offset(Itilt),length(freq),SNRmin);
-        disp(savename)
-        save([savename '.mat'], 'ranges','depths','amb','amb_tot','SNRmin','freq','data_name','model_name');
-        
-        figure(gcf)
-        orient landscape
-        
-        print(gcf,'-djpeg',[savename '.jpg']);
-    end
-end %tilt
-end %matched_field_processor
-
-%% Correlograms
-function [mean_corr,tindex,TT_plot,pwr,pwr_tot,yscale]= create_incoherent_correlogram(TT,FF,B,param,flo,fhi)
-%function [mean_corr,tindex,TT_plot,pwr,pwr_tot,yscale]= create_incoherent_correlogram(TT,FF,B,param,flo,fhi)
-
-ici_range=param.ici_range;  %Autocorrelation lag to examine
-time_sample=param.time_sample;  %sec,  amount of spectrogram time columns to process for autocorrelation..
-ovlap=param.ovlap;  %How much to shift the autocorrelation window between samples
-teager=param.teager;  %Apply teager-kaiser operation to spectrogram before processing...
-
-% A single event may thus persist for up to time_sample/dX times, 1/(1-ovlap) times
-
-
-
-%freq=flo:bandwidth:fhigh;
-B=10*log10(B+eps);
-if teager
-    B=B(:,2:end-1).^2-(B(:,1:end-2).*B(:,3:end));
-end
-dT= TT(2)- TT(1);
-dF= FF(2)- FF(1);
-Ncol=length(find( TT<=time_sample));  %Number of columns to process at a time:
-Iindex=1:floor((1-ovlap)*Ncol):length( TT);
-tindex=dT*Iindex;  %Time axis of absolute time
-dX=tindex(2)-tindex(1);  %X axis of new correlation image
-Ntime=length(Iindex)-1;
-yscale=dT*(0:(Ncol-1));
-
-Igood=find( FF>flo& FF<fhi);
-maxlag = Ncol - 1;  %maximum autocorrelation lag
-laggs=-maxlag:maxlag;
-I_range=find(laggs*dT>ici_range(1)&laggs*dT<ici_range(2));
-TT_plot=laggs(I_range)*dT;
-mean_corr=zeros(length(I_range),Ntime);
-pwr=zeros(Ntime,Ncol);
-pwr_tot=zeros(Ntime);
-xcovv=zeros(length(Igood),length(I_range));
-
-for I=1:Ntime
-    if rem(I,100)==0,disp(sprintf('%6.2f percent done',100*I/Ntime));end
-    
-    try
-        A= B(Igood,Iindex(I)+(0:(Ncol-1)));
-        
-        [N,M] = size(A);  %Autocorrelate columns
-        X=fft(A'-ones(M,1)*mean(A'), 2^nextpow2(2*M-1));
-        tmp=ifft(abs(X).^2);
-        
-        tmp1=[tmp(end-maxlag+1:end,:);tmp(1:maxlag+1,:)];
-        tmp=tmp1./(ones(size(tmp1,1),1)*tmp1(maxlag+1,:));
-        
-        xcovv=tmp(I_range,:);
-        %end
-        mean_corr(:,I)=median(xcovv')';
-        pwr(I,:)=sum(A)/length(Igood);
-        pwr_tot(I)=max(pwr(I,:));
-    catch
-        xcovv=[];
-        %mean_corr(I,:)=[];
-    end
-    %     figure(2);
-    %     subplot(2,1,1)
-    %     imagesc([], FF(Igood)/1000,A);
-    %     subplot(2,1,2)
-    %     imagesc(TT_plot, FF(Igood)/1000,xcovv{I});
-    %     caxis([0 1]);
-    %     colorbar
-    %     pause(0.25);
-    
-    
-end  %Ntime
-end %create_incoherent_correlogram
-
-function [XC_eq,XC,Trel,tt,pwrr]= create_coherent_correlogram(x,fs,param,flo,fhi)
-%function [XC_eq,XC,Trel,tt,pwr]= create_coherent_correlogram(x,fs,param,flo,fhi)
-% Trel: relative time
-% tt: lag times...
-
-ovlap=round(param.ovlap*param.Nfft);
-Nfft=param.Nfft;
-teager=param.teager;  %Apply teager-kaiser operation to spectrogram before processing...
-ici_range=param.ici_range;
-
-%noiseT=param.noiseT;
-%alpha=param.alpha;
-noiseT=0.01;
-alpha=0.01;
-
-frange=[0.8*flo flo fhi fhi+0.2*flo];
-[N,Fo,Ao,W] = firpmord(frange,[0 1 0],[0.05 0.01 0.05],fs);
-Bfilt = firpm(N,Fo,Ao,W);
-y=filtfilt(Bfilt,1,x-mean(x));
-%Adaptive filter option
-
-if teager==1
-    y=y(2:end-1).^2-(y(1:end-2).*y(3:end));
-    
-end
-
-index1=1:round((Nfft-ovlap)):length(y);
-index1=index1(index1<=length(y));
-Ncoll=length(index1)-1;
-XC=zeros(Nfft+1,Ncoll);
-pwrr=zeros(1,Ncoll);
-for I=1:Ncoll
-    try
-        Indexx=index1(I)+(0:(Nfft-1));
-        tmp=xcov((hilbert(hanning(length(Indexx)).*y(Indexx))),'coeff');  %Delphine, note that this should be windowed...
-        
-        XC(:,I)=tmp((Nfft-1):end);
-        pwrr(I)=tmp(Nfft-1);
-        %%Mulitpath can generate strong correlations.  Surface-reflected paths should have negative
-        %%correlations.  Therefore, only keep levels greater than zero.
-        %Iplus=find(XC(:,I)<=0);
-        %XC(Iplus,I)=0;
-    catch
-        disp('Problem');
-    end
-end
-XC=10*log10(abs(XC));
-
-tt=(0:Nfft)/fs;
-dT=ovlap/fs;
-%Tabs=twant(Itimes)+datenum(0,0,0,0,0,index1/fs);
-Trel=index1/fs;
-
-%%Adaptively equalize along y-axis
-Inoise=round(fs*noiseT);  %y-axis bins to estimate autocorrelation level
-XC_eq=zeros(size(XC));
-eq=mean(XC(2:Inoise,:));  %Original equalization estimate
-
-for I=1:size(XC,1)
-    eq=(1-alpha).*eq+alpha.*XC(I,:);
-    XC_eq(I,:)=XC(I,:)-eq;
-end
-
-%Trim away portions of autocorrelation that will not have creaks (ici_range)
-Iwant=find(tt>ici_range(1)&tt<ici_range(2));
-
-%Remove times not of interest, normalize zero lag to one.
-XC=XC(Iwant,:);
-XC_eq=XC_eq(Iwant,:);
-%XC0=XC0(Iwant,:);
-%signn=signn(Iwant,:);
-tt=tt(Iwant);
-%Quick click removal...
-
-
-
-
-
-end  %create_coherent_correlogram
-
-%% Ellipse
-function h=ellipse(ra,rb,ang,x0,y0,C,Nb)
-% Ellipse adds ellipses to the current plot
-%
-% ELLIPSE(ra,rb,ang,x0,y0) adds an ellipse with semimajor axis of ra,
-% a semimajor axis of radius rb, a semimajor axis of ang, centered at
-% the point x0,y0.
-%
-% The length of ra, rb, and ang should be the same.
-% If ra is a vector of length L and x0,y0 scalars, L ellipses
-% are added at point x0,y0.
-% If ra is a scalar and x0,y0 vectors of length M, M ellipse are with the same
-% radii are added at the points x0,y0.
-% If ra, x0, y0 are vectors of the same length L=M, M ellipses are added.
-% If ra is a vector of length L and x0, y0 are  vectors of length
-% M~=L, L*M ellipses are added, at each point x0,y0, L ellipses of radius ra.
-%
-% ELLIPSE(ra,rb,ang,x0,y0,C)
-% adds ellipses of color C. C may be a string ('r','b',...) or the RGB value.
-% If no color is specified, it makes automatic use of the colors specified by
-% the axes ColorOrder property. For several circles C may be a vector.
-%
-% ELLIPSE(ra,rb,ang,x0,y0,C,Nb), Nb specifies the number of points
-% used to draw the ellipse. The default value is 300. Nb may be used
-% for each ellipse individually.
-%
-% h=ELLIPSE(...) returns the handles to the ellipses.
-%
-% as a sample of how ellipse works, the following produces a red ellipse
-% tipped up at a 45 deg axis from the x axis
-% ellipse(1,2,pi/8,1,1,'r')
-%
-% note that if ra=rb, ELLIPSE plots a circle
-%
-
-% written by D.G. Long, Brigham Young University, based on the
-% CIRCLES.m original
-% written by Peter Blattner, Institute of Microtechnology, University of
-% Neuchatel, Switzerland, blattner@imt.unine.ch
-
-
-% Check the number of input arguments
-
-if nargin<1,
-    ra=[];
-end;
-if nargin<2,
-    rb=[];
-end;
-if nargin<3,
-    ang=[];
-end;
-
-%if nargin==1,
-%  error('Not enough arguments');
-%end;
-
-if nargin<5,
-    x0=[];
-    y0=[];
-end;
-
-if nargin<6,
-    C=[];
-end
-
-if nargin<7,
-    Nb=[];
-end
-
-% set up the default values
-
-if isempty(ra),ra=1;end;
-if isempty(rb),rb=1;end;
-if isempty(ang),ang=0;end;
-if isempty(x0),x0=0;end;
-if isempty(y0),y0=0;end;
-if isempty(Nb),Nb=300;end;
-if isempty(C),C=get(gca,'colororder');end;
-
-% work on the variable sizes
-
-x0=x0(:);
-y0=y0(:);
-ra=ra(:);
-rb=rb(:);
-ang=ang(:);
-Nb=Nb(:);
-
-if ischar(C),C=C(:);end;
-
-if length(ra)~=length(rb),
-    error('length(ra)~=length(rb)');
-end;
-if length(x0)~=length(y0),
-    error('length(x0)~=length(y0)');
-end;
-
-% how many inscribed elllipses are plotted
-
-if length(ra)~=length(x0)
-    maxk=length(ra)*length(x0);
-else
-    maxk=length(ra);
-end;
-
-% drawing loop
-
-for k=1:maxk
-    
-    if length(x0)==1
-        xpos=x0;
-        ypos=y0;
-        radm=ra(k);
-        radn=rb(k);
-        if length(ang)==1
-            an=ang;
-        else
-            an=ang(k);
-        end;
-    elseif length(ra)==1
-        xpos=x0(k);
-        ypos=y0(k);
-        radm=ra;
-        radn=rb;
-        an=ang;
-    elseif length(x0)==length(ra)
-        xpos=x0(k);
-        ypos=y0(k);
-        radm=ra(k);
-        radn=rb(k);
-        an=ang(k);
-    else
-        rada=ra(fix((k-1)/size(x0,1))+1);
-        radb=rb(fix((k-1)/size(x0,1))+1);
-        an=ang(fix((k-1)/size(x0,1))+1);
-        xpos=x0(rem(k-1,size(x0,1))+1);
-        ypos=y0(rem(k-1,size(y0,1))+1);
-    end;
-    
-    co=cos(an);
-    si=sin(an);
-    the=linspace(0,2*pi,Nb(rem(k-1,size(Nb,1))+1,:)+1);
-    %  x=radm*cos(the)*co-si*radn*sin(the)+xpos;
-    %  y=radm*cos(the)*si+co*radn*sin(the)+ypos;
-    h(k)=line(radm*cos(the)*co-si*radn*sin(the)+xpos,radm*cos(the)*si+co*radn*sin(the)+ypos);
-    set(h(k),'color',C(rem(k-1,size(C,1))+1,:));
-    
-end;
-
-end
-
-
-function c = cond2(A)
-%COND2   Condition number with respect to inversion.
-%   COND2(X) returns the 2-norm condition number (the ratio of the
-%   largest singular value of X to the smallest).  Large condition
-%   numbers indicate a nearly singular matrix.
-%
-%   Modified to handle only the 2-norm, eliminate some error checking,
-%   and other condition testing.
-%      Chris Nations  8/20/02
-
-s = svd(A);
-if any(s == 0)   % Handle singular matrix
-    c = Inf;
-else
-    c = max(s)./min(s);
-end
-end
-
-function [area,a,b,ang,angax] = ellipsparms(S,critval,MD,VM)
-%ELLIPSPARMS  Calculates parameters of bivariate normal ellipse from covariance.
-%   [AREA,A,B,ANG] = ELLIPSPARMS(S,CRITVAL,MD,VM) where
-% S is the covariance matrix,
-% CRITVAL is the critical value from the chi-squared distribution,
-% MD is the mean position of the DASAR array,
-% VM is the estimated location.
-% It returns
-%   AREA of the ellipse,
-%   A and B are lengths of major and minor full axes respectively, and
-% ANG is angle in radians ccw of  major semi-axis.
-%   The angle is referenced to an imaginary vector emanating from the center of the
-%   DASAR array and directed toward the estimated location.
-%   Note: index matrices using vec representation.
-% ANGAX is angle in radians of major axis measured ccw from +X axis
-%
-% The adjustments to ANG (last set of if/then statements) reflect the
-%   angle of the major axis 180 degrees about the ray directed from MD to
-%   VM (if necessary) so that the major axis is always directed away from
-%   MD.  The absolute orientation of the ellipse is unchanged; only its
-%   "direction" relative to the center of the DASAR array may be adjusted.
-
-dp = VM-MD;
-theta = atan2(dp(2),dp(1));     % 4-quadrant inverse tangent: angle from MD to VM
-detS = det(S);
-if isnan(S(1)) || (detS<=0) || min(diag(S))<0,
-    area = nan;  a = nan;  b = nan;  ang = nan;  angax = nan;
-else
-    area = pi*sqrt(detS)*critval;
-    [V,L] = eig(S);
-    d = 2*sqrt(critval*diag(L));  % Lengths of both axes.
-    [d,i] = sort(d);
-    a = d(2);  b = d(1);          % a & b: major & minor axis lengths, respectively.
-    v = V(:,i(2));                % dominant eigenvector
-    angax = atan(v(2)/v(1));      % Absolute orientation of ellipse major axis
-    if angax<0,                   % Returns an angle between 0 and pi following
-        angax = angax+pi;           %    math convention (0 radians = 90 degrees, East;
-    end                           %    pi radians = 270 degrees, West).
-    ang = angax;
-    if ((theta>-pi/2) && (theta<pi/2)  && (ang>(pi/2+theta))), % Adjust angle for
-        ang = ang-pi;                                          %   estimated position
-    elseif ((theta>=pi/2) && (ang<(theta-pi/2))),             %   relative to center
-        ang = ang+pi;                                          %   of DASAR array.
-    elseif ((theta<=-pi/2) && (ang<(3*pi/2+theta))),
-        ang = ang+pi;
-    end
-end
-end
-
-%% write_covmat
-
-function status=write_covmat(freqvec,Cov,depth,srcname,titlestr)
-% write_covmat(farray,Ks,depth,srcname,titlestr)
-%
-% Write Covariance Matrices to file cov_dpss.in
-%
-% farry = vector of frequencies in Hertz
-% Ks     = matrix of concatenated covariance matrices
-%           this must be of size [Nel Nel nfreq]
-% depth  = hydrophone depths.  First element is shallowest depth
-% srcname =file name
-% titlestr = title to write to top of input file.
-%[n]= size(Cov,1);
-%nf=size(Cov,3);
-%if(nf ~= length(freqvec))
-%   fprintf(1,'size(Cov) = [%d %d], length(freqvec)=%d\n', ...
-%           size(Cov),length(freqvec));
-%  error('sizes of Cov and freqvec are not compatible');
-%end
-
-[n,m,F]= size(Cov);
-if(m ~= n)
-    fprintf(1,'size(Cov) = [%d %d], length(freqvec)=%d\n', ...
-        size(Cov),length(freqvec));
-    error('sizes of Cov and freqvec are not compatible');
-end
-if(F ~=length(freqvec))
-    fprintf(1,'size(Cov) = [%d %d], length(freqvec)=%d\n', ...
-        size(Cov),length(freqvec));
-    error('sizes of 3Cov and freqvec are not compatible');
-end
-
-if(n ~= length(depth))
-    fprintf(1,'size(Cov) = [%d %d], length(freqvec)=%d\n', ...
-        size(Cov),length(freqvec));
-    error('sizes of Cov and depth are not compatible');
-end
-
-
-%depth=rd;
-%disp('WARNING! CONJUGATING COV to be used by SAGA!');
-%Cov=conj(Cov);
-
-fidout =  fopen(sprintf('%s.in',srcname),'w');
-
-for ifreq=1:length(freqvec)
-    fprintf(fidout,' %s\n',titlestr);
-    fprintf(fidout,' %f     0.000 dB\n',freqvec(ifreq));
-    fprintf(fidout,' %d\n',n);
-    fprintf(fidout,' %8.2f\n',depth);
-    %   cols = [ (ifreq-1)*n+1:ifreq*n ];
-    %   Cx = Cov(:,cols); % cut one cov-matrix out of the bunch
-    Cx=squeeze(Cov(:,:,ifreq));
-    for row=1:n
-        for col=1:n
-            fprintf(fidout,'%10d%10d (%E,%E) \n',row,col, ...
-                real(Cx(row,col)),imag(Cx(row,col)));
-        end
-    end
-end
-fprintf(fidout,'!  \n');
-status=fclose(fidout);
-unix('ls -l *.in');
-end %write_covmat
-
-%% Audio files
-function audio_stop(player, ~, handles)
-%	Set controls
-ispaused	=	(player.CurrentSample > 1) &&...
-    (player.CurrentSample < player.TotalSamples);
-if	~ispaused
-    set(handles.pushbutton_playsound, 'String', 'Play');
-    set(handles.pushbutton_pausesound, 'String', 'Pause');
-    set(handles.pushbutton_pausesound, 'Enable', 'off');
-end
-
-end %audio_stop
-
-
-function audio_timer(player, ~, handles)
-
-%	Get handle to marker line
-hline	=	handles.hline;
-
-% check if sound is playing, then only plot new marker
-if strcmp(player.Running, 'on')
-    % get the currently playing sample #
-    x	=	player.CurrentSample;
-    Fs	=	handles.audioFs;
-    
-    % change position of marker line
-    set(hline,'XData',x/Fs*[1 1]);
-    drawnow expose;
-end
-end %audio_timer
-
-%% ANNOTATIONS
-% load,edit, display, and save annotation files to Ulysses
+%% load,edit, display, and save annotation files to Ulysses
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%   ANNOTATIONS annotations %%%%%%%%%
@@ -8373,10 +5664,10 @@ if	~isempty(listing)
         end
     end
     
-end
+end  %if listing is not empty (i.e. an annotation file already exists)
 
 
-%	New file with default data template
+%%	New file with default data template
 [Defaults.Description, Defaults.Template, edit_fields]	=	load_default_annotation_template();
 Defaults.Events		=	Defaults.Template;
 GUI_params	=	[];
@@ -8460,7 +5751,7 @@ end
 
 
 
-%	enable relevant buttons
+%%	enable relevant buttons
 disable_notes_nav(handles,opt);
 set(handles.checkbox_notes_show, 'Value', handles.notes.show);
 set(handles.checkbox_notes_show, 'Enable', opt);
@@ -9423,6 +6714,2716 @@ catch
     
 end
 end %pushbutton_notes_stats_Callback
+
+
+%%%%%%%%%%%load_and_display_spectrogram%%%%
+function	handles	=	load_and_display_spectrogram(handles)
+
+cla;
+
+%tdate_start		=	handles.tdate_start;
+tlen	=	handles.tlen;
+if tlen<1e-2 %somehow window length is way too short
+    tlen=1;
+    set(handles.edit_winlen,'String',num2str(tlen));
+end
+if isempty(tlen)
+    tlen    =   str2double(get(handles.edit_winlen,'String'));
+    
+    handles.tlen=tlen;
+end
+mydir	=	pwd;
+Ichan	=	eval(get(handles.edit_chan,'String'));  
+
+try
+   % [x,t,Fs,tmin,tmax,head]	=	...
+    %load_data(filetype,tdate_start,tlen,Ichan,handles)
+    [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype, ...
+        handles.tdate_start,tlen,Ichan,handles);
+    
+    %%Change file display if a transformation of a basic file has
+    %%  occurred...
+    if isfield(hdr,'myfile')  %file has been processed (e.g. an accelerometer file)
+        handles.myfile=hdr.myfile;
+        additional_text=sprintf(hdr.transformation.description{1},hdr.transformation.value{1});
+    else
+        additional_text=[];
+    end
+    set(handles.text_filename,'String',[fullfile(handles.mydir, handles.myfile) ' ' additional_text]);
+    
+catch
+    uiwait(errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge'));
+    return
+end
+
+%%Imagesc PSD file
+
+if strcmpi(handles.filetype,'psd')
+    FF=(0:hdr.Nmax)*hdr.Fs/hdr.Nfft;
+    set(handles.edit_maxfreq,'String',num2str(hdr.Fs/2));
+    set(handles.edit_fmax,'String',num2str(hdr.Fs/2000));
+    
+    contents=get(handles.popupmenu_Nfft,'String');
+    Value=find(strcmp(contents,int2str(hdr.Nfft))>0);
+    set(handles.popupmenu_Nfft,'Value',Value);
+    
+    ovlap=100*(1-hdr.dn/hdr.Nfft);
+    Nfft=hdr.Nfft;
+    contents=get(handles.popupmenu_ovlap,'String');
+    Value=find(strcmp(contents,int2str(ovlap))>0);
+    set(handles.popupmenu_ovlap,'Value',Value);
+    
+    set(handles.edit_chan,'String','1');
+    
+else
+    
+    if isempty(x)
+        errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge');
+        return
+    end
+    if max(t)<=tlen
+        tlen	=	max(t);
+        handles.tlen	=	max(t);
+        set(handles.edit_winlen,'String',num2str(tlen));
+    end
+    
+    if size(x,2)>1
+        x=x';
+    end
+    
+    Fs=round(Fs);
+    
+    mymaxfreq=str2double(get(handles.edit_maxfreq,'String'));
+    
+    if mymaxfreq==0||mymaxfreq>Fs/2
+        handles.filter.f_max	=	Fs/2;
+        set(handles.edit_maxfreq,'String',num2str(Fs/2));
+    end
+    %disp(sprintf('Fs=%i',Fs));
+    contents=get(handles.popupmenu_Nfft,'String');
+    Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
+    
+    contents=get(handles.popupmenu_ovlap,'String');
+    ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
+    ovlap=min([1-1/Nfft ovlap]);
+    
+    
+end  %if PSD
+
+handles.old_display_view=[];
+if isfield(handles,'display_view')
+    handles.old_display_view=handles.display_view;
+end
+    
+handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
+
+if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New Fig')
+    
+    if strcmp(handles.display_view,'Spectrogram')
+        axes(handles.axes1);
+    else
+        figure;
+    end
+    
+    if length(x(:,1))<Nfft/2
+        return
+    end
+    if ~(strcmp(handles.filetype,'PSD'))
+        [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
+        %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
+        %     For real signals, variable 'B'
+        %     returns the one-sided modified periodogram estimate of the PSD of each
+        %     segment; for complex signals and in the case when a vector of
+        %     frequencies is specified, it returns the two-sided PSD.
+        handles.sgram.T		=	TT;
+        handles.sgram.F		=	FF;
+        handles.sgram.B		=	B;
+        handles.sgram.Nfft	=	Nfft;
+        handles.sgram.ovlap	=	ovlap;
+        handles.sgram.Fs	=	Fs;
+        
+        
+        
+        %%Add spectral calibration curve, if present
+        if isfield(hdr,'calcurv')
+            Xp_cal_fin=polyval(hdr.calcurv,FF/Fs);
+            
+            imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
+            %elseif isfield(hdr,'cable_factor')
+            %    Xp_cal_fin=20*log10(1+hdr.cable_factor*FF);  %Unit resistance 140 ohm, capacitance 110 nF
+            %    imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
+        else
+            
+            imagesc(TT,FF/1000,10*log10(B));%
+        end
+    else
+        
+        ppsd=10*log10(x);
+        imagesc(t,FF/1000,ppsd);
+        handles.sgram.T		=	t;
+        handles.sgram.F		=	FF;
+        handles.sgram.B		=	ppsd;
+        handles.sgram.Nfft	=	hdr.Nfft;
+        handles.sgram.ovlap	=	ovlap;
+        handles.sgram.Fs	=	Fs;
+    end
+    grid on
+    axis('xy')
+    fmax=str2double(get(handles.edit_fmax,'String'));
+    fmin=str2double(get(handles.edit_fmin,'String'));
+    if fmax==0,
+        ylim([0 Fs/2000]);
+        set(handles.edit_fmax,'String',num2str(Fs/2000));
+    else
+        ylim([fmin fmax]);
+    end
+    %ylim([0 1]);axis('xy')
+    climm(1)=str2double(get(handles.edit_mindB,'String'));
+    climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
+    %%If switching from correlogram, reset to suggested values
+    if climm(1)==0&&climm(2)<1
+        climm=[40 70];
+        set(handles.edit_mindB,'String',num2str(climm(1)));
+        set(handles.edit_dBspread,'String',num2str(climm(2)));
+        climm(2)=sum(climm);
+    end
+    
+    caxis(climm);
+    if get(handles.checkbox_grayscale,'Value')==1,
+        colormap(flipud(gray));
+    else
+        colormap(jet);
+    end
+    colorbar;
+    % set(gcf,'pos',[30   322  1229   426])
+    set(gca,'fontweight','bold','fontsize',14);
+    xlabel('Time (sec)');ylabel('Frequency (kHz)');
+    if ~strcmp(handles.display_view,'Spectrogram')
+        title(get(handles.text_filename,'String'));
+    end
+elseif strcmp(handles.display_view,'Time Series') %%Time series
+    
+       
+    %%Check that we are looking at acoustic data and are in spectrogram
+    %%mode
+    if isempty(strfind(handles.myfile,'Press'))
+       % msgbox('Enter min and max frequency, or hit return to skip filtering:','modal');
+       if strcmp(handles.old_display_view,'Spectrogram')
+           ButtonName = questdlg('Filter? (If yes, click on two frequency values in spectrogram)');
+       else
+           ButtonName='No';
+       end
+       
+       %if ~isempty(tmp)&&size(tmp,1)==2
+        %%Check that are on current spectrogram view
+        if strcmp(ButtonName,'Yes')
+            tmp=ginput(2);
+        
+            freq=sort(tmp(:,2))*1000;
+            minfreq=freq(1);maxfreq=freq(2);
+            %y=quick_filter(x(:,1),Fs,freq(1),freq(2))
+            frange=[0.8*minfreq minfreq maxfreq maxfreq+0.2*minfreq];
+            [N,Fo,Ao,W] = firpmord(frange,[0 1 0],[0.05 0.01 0.1],Fs);
+            B = firpm(N,Fo,Ao,W);
+            
+            y=filter(B,1,x(:,1)-mean(x(:,1)));
+        else
+            y=x(:,1)-mean(x(:,1));
+        end
+    else
+        y=x(:,1)/1000; %Pressure conversion
+    end
+    
+    t=(1:length(x(:,1)))/Fs;
+    xlabel('Time (sec)');
+    if strfind(hdr.calunits,'mPa')
+        plot(handles.axes1,t,1000*y);grid on;
+        ylabel('uPa');
+    else
+        plot(handles.axes1,t,y);grid on;
+        ylabel('Amplitude');
+    end
+elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
+    fmax=1000*str2double(get(handles.edit_fmax,'String'));
+    fmin=1000*str2double(get(handles.edit_fmin,'String'));
+    param.ovlap=ovlap;
+    param.Nfft=Nfft;
+    prompt1={'ICI range (s)','Correlation sample time (s)','Teager-Kaiser treatment?','Incoherent=1, Coherent=0 ?'};
+    dlgTitle1='Parameters for correlogram...';
+    def1={'[0.01 .25]', '0.25','0','1'};
+    answer=inputdlg(prompt1,dlgTitle1,1,def1);
+    param.ici_range=eval(answer{1});
+    param.time_sample=str2double(answer{2});
+    param.teager=str2double(answer{3});
+    alg_chc=str2double(answer{4});
+    
+    if alg_chc==1
+        [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
+        [mean_corr_org,tindex,TT_plot,pwr,pwr_tot,yscale]= create_incoherent_correlogram(TT,FF,B,param,fmin,fmax);
+        
+        
+    else
+        param.Nfft=round(param.time_sample*Fs);
+        [mean_corr_eq,mean_corr_org,tindex,TT_plot,pwr]= create_coherent_correlogram(x(:,1),Fs,param,fmin,fmax);
+        
+        %
+        
+    end
+    
+    dX=tindex(2)-tindex(1);  %X axis of new correlation image
+    Ntime=length(tindex)-1;
+    imagesc(tindex(1:(end-1)),TT_plot,mean_corr_org);caxis([0 0.3]);
+    
+    %colorbar('east','ycolor','w');
+    axis('xy')
+    % title(sprintf('mean correlation value extracted between %6.2f and %6.2f Hz, %6.2f overlap',freq(Ifreq),freq(Ifreq+1),param.ovlap));
+    climm(1)=str2double(get(handles.edit_mindB,'String'));
+    climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
+    
+    if climm(1)>1
+        climm(1)=0;
+        set(handles.edit_mindB,'String','0');
+    end
+    if climm(2)>1
+        climm(2)=1;
+        set(handles.edit_dBspread,'String','1');
+    end
+    caxis(climm);
+    
+    if alg_chc==0  %coherent Correlogram
+        caxis([-20 0]);
+        set(handles.edit_mindB,'String','-20');
+        set(handles.edit_dBspread,'String','20');
+    end
+    
+    if get(handles.checkbox_grayscale,'Value')==1,
+        colormap(flipud(gray));
+    else
+        colormap(jet);
+    end
+    colorbar;
+    % set(gcf,'pos',[30   322  1229   426])
+    set(gca,'fontweight','bold','fontsize',14);
+    xlabel('Time (sec)');ylabel('Correlation lag (sec)');
+end  %Spectrogram, new fig
+
+handles.x	=	x;
+handles.Fs	=	Fs;
+%tmp=ginput(2)
+
+if strcmpi(handles.filetype,'gsi')
+    set(handles.pushbutton_GSIbearing,'vis','on');
+    set(handles.pushbutton_GSI_localization,'vis','on');
+else
+    set(handles.pushbutton_GSIbearing,'vis','off');
+    set(handles.pushbutton_GSI_localization,'vis','off');
+end
+
+if strcmpi(handles.filetype,'mdat')||strcmpi(handles.filetype,'wav')||strcmpi(handles.filetype,'mat')
+    set(handles.pushbutton_CSDM,'vis','on');
+    set(handles.pushbutton_Mode,'vis','on');
+    set(handles.pushbutton_tilt,'vis','on');
+    set(handles.pushbutton_modalfiltering,'vis','on');
+else
+    set(handles.pushbutton_CSDM,'vis','off');
+    set(handles.pushbutton_Mode,'vis','off');
+    set(handles.pushbutton_modalfiltering,'vis','off');
+    set(handles.pushbutton_tilt,'vis','off');
+    
+end
+
+if strcmpi(handles.filetype,'sio')
+    set(handles.pushbutton_CSDM,'vis','on');
+end
+
+if strcmpi(handles.filetype,'psd')
+    set(handles.pushbutton_binary,'vis','off');
+    set(handles.pushbutton_pausesound,'vis','off');
+    set(handles.pushbutton_playsound,'vis','off');
+    set(handles.pushbutton_save,'vis','off');
+    set(handles.radiobutton_correlogram,'vis','off');
+    set(handles.radiobutton_timeseries,'vis','off');
+    
+else
+    set(handles.pushbutton_binary,'vis','on');
+    set(handles.pushbutton_pausesound,'vis','on');
+    set(handles.pushbutton_playsound,'vis','on');
+    set(handles.pushbutton_save,'vis','on');
+    set(handles.radiobutton_correlogram,'vis','on');
+    set(handles.radiobutton_timeseries,'vis','on');
+    
+end
+end %function load_and_display_spectrogram
+
+function [handles,errorflag]	=	set_slider_controls(handles,filetype)
+%%Set min, max and other times associated with slider controls
+mydir			=	pwd;
+errorflag		=	0;
+handles.tdate_min=	-1;
+handles.tdate_max=	-1;
+%
+% if isempty(handles.mydir)
+%     handles.mydir=pwd;
+% end
+%cd(handles.mydir);
+
+try
+    [x,t,Fs,tmin,tmax]=load_data(filetype,-1,10,1,handles);
+catch %no file selected
+    %errordlg(sprintf('No %s file selected',filetype));
+    errorflag=1;
+    cd(mydir);
+    return
+end
+
+
+set(handles.slider_datestr,'Min',0);
+set(handles.slider_datestr,'Max',1);
+
+%	5sec and 10% increments
+T_len		=	(tmax-tmin)*24*60*60;
+small_step	=	5/T_len;				% 5s
+big_step	=	0.1;					% 10%
+set(handles.slider_datestr,'sliderstep',[small_step big_step]);
+
+set(handles.slider_datestr,'Value',0.5);
+handles.tdate_start		=	0.5*(tmin+tmax);
+set(handles.edit_datestr,'String',datestr(handles.tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'));
+
+set(handles.text_mintime,'String',datestr(tmin,0));
+set(handles.text_maxtime,'String',datestr(tmax,0));
+handles.tdate_min	=	tmin;
+handles.tdate_max	=	tmax;
+
+set(handles.edit_fmax,'String',Fs/2000);
+set(handles.edit_fmin,'String',0);
+%slider_step(1) = datenum(0,0,0,0,0,handles.tlen)/(maxx-minn);
+%slider_step(2) = min([datenum(0,0,0,0,5,0) 0.1*(maxx-minn)])/(maxx-minn);
+%set(handles.slider_datestr,'sliderstep',slider_step)
+% keyboard
+cd(mydir);
+
+end
+
+function [startup_info]=gui_startup_information
+
+%%%%Directory where GSI_specgram_viewer.m and function_handles files will be
+%%%%stored....
+[s,local_machine]=unix('hostname');
+local_machine=deblank(local_machine);
+startup_info.calibration_DASAR2007_dir=[];
+
+if strcmp(local_machine,'macmussel.ucsd.edu')
+    
+    startup_info.base_directory='/Users/Shared/MATLAB/AllFile_specgram_viewer';
+    
+    
+    startup_info.default_directory='/Volumes/';
+    startup_info.default_inputfiledir='/Users/thode/Projects/Insta-array/Alaska_Sperm';
+    
+    %%Default annotation file
+    startup_info.annotation_file='annotated.txt';
+    startup_info.function_handles_filename='mt_specgram_handles.mat';
+    
+    %%Name of default multipath storage file
+    startup_info.multipath_filename='gui_multipath_selections.mat';
+    startup_info.calibration_DASAR2007_dir='';
+elseif strfind(local_machine,'Jan-Straleys')
+    
+    startup_info.base_directory='/Users/janstraley/SEASWAP_2011';
+    
+    
+    startup_info.default_directory='/Users/janstraley/SEASWAP_2011';
+    startup_info.default_inputfiledir='/Users/janstraley/SEASWAP_2011';
+    
+    %%Default annotation file
+    startup_info.annotation_file='annotated.txt';
+    startup_info.function_handles_filename='mt_specgram_handles.mat';
+    
+    %%Name of default multipath storage file
+    startup_info.multipath_filename='gui_multipath_selections.mat';
+    startup_info.calibration_DASAR2007_dir='';
+elseif strfind(local_machine,'Janice')
+    
+    startup_info.base_directory='~/Desktop/MATLAB/AllFile_specgram_viewer';
+    
+    
+    startup_info.default_directory='~/Desktop';
+    startup_info.default_inputfiledir='/Users/thode/Projects/Insta-array/Alaska_Sperm';
+    
+    %%Default annotation file
+    startup_info.annotation_file='annotated.txt';
+    startup_info.function_handles_filename='mt_specgram_handles.mat';
+    
+    %%Name of default multipath storage file
+    startup_info.multipath_filename='gui_multipath_selections.mat';
+    startup_info.calibration_DASAR2007_dir='';
+    
+elseif strcmp(local_machine,'KatsMacPro.local')  %KatMacGSI
+    startup_info.base_directory='/Users/thode/MATLAB/AllFile_specgram_viewer';
+    
+    
+    startup_info.default_directory='/Volumes';
+    startup_info.default_inputfiledir='/Volumes';
+    
+    startup_info.annotation_file='annotated.txt';
+    startup_info.function_handles_filename='mt_specgram_handles.mat';
+    
+    %%Name of default multipath storage file
+    startup_info.multipath_filename='gui_multipath_selections.mat';
+    
+    
+elseif ~isempty(strfind('dgrebner',local_machine))
+    
+    startup_info.base_directory='/Users/dgrebner/Desktop/';
+    startup_info.default_directory=startup_info.base_directory;
+    startup_info.default_inputfiledir='/Users/thode/Projects/Insta-array/Alaska_Sperm';
+    startup_info.annotation_file='annotated.txt';
+    startup_info.calibration_DASAR2007_dir='';
+    
+    startup_info.function_handles_filename='mt_specgram_handles.mat';
+    
+    %%Name of default multipath storage file
+    startup_info.multipath_filename='gui_multipath_selections.mat';
+elseif ~isempty(strfind('thode',local_machine))
+    
+    startup_info.base_directory='/Users/thode/Projects/Arctic_2010/Data/Bottom_Unit';
+    startup_info.default_directory=startup_info.base_directory;
+    startup_info.default_inputfiledir='/Users/thode/Projects/Insta-array/Alaska_Sperm';
+    startup_info.annotation_file='annotated.txt';
+    
+    startup_info.function_handles_filename='mt_specgram_handles.mat';
+    startup_info.calibration_DASAR2007_dir='/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/RawData';
+    
+    %%Name of default multipath storage file
+    startup_info.multipath_filename='gui_multipath_selections.mat';
+else
+    startup_info.base_directory='~/Desktop/MATLAB';
+    startup_info.default_directory='~/Desktop';
+    startup_info.default_inputfiledir='~/Desktop';
+    startup_info.annotation_file='annotated.txt';
+    
+    startup_info.function_handles_filename='mt_specgram_handles.mat';
+    
+    %%Name of default multipath storage file
+    startup_info.multipath_filename='gui_multipath_selections.mat';
+    
+end
+
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% function load_data.m%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function [x,t,Fs,tmin,tmax,head]	=	...
+    load_data(filetype,tdate_start,tlen,Ichan,handles)
+%%% tmin,tmax, t are datenumbers
+%   x rows are samples, columns are channels
+%   head.geom.rd:  If multiple channels are present, this gives spacing
+persistent  Fs_keep keyword space
+
+mydir=handles.mydir;
+myfile=handles.myfile;
+teager=get(handles.checkbox_teager,'Value');
+set(handles.edit_normal_rotation,'Vis','Off');  %Set off for the moment
+set(handles.text_normal_rotation,'Vis','Off');  %Set off for the moment
+
+Fs=[];
+x=[];
+t=[];
+tmin=[];
+tmax=[];
+head=[];
+filetype	=	upper(filetype);
+
+switch filetype
+    case 'PSD'
+        [x,F,t,Tabs,params]=read_Java_PSD(fullfile(mydir,myfile),tdate_start,tlen);
+        if ~isempty(t)&&length(t)>1
+            Fs=1./(t(2)-t(1));
+            t=t-t(1);
+        else
+            Fs=1;
+        end
+        head=params;
+        
+        tmin=head.tstart_file;
+        tmax=head.tend_file;
+    case 'MAT'
+        
+        simulated=load(fullfile(mydir,myfile));
+        Fs=simulated.fs;
+        
+        x=simulated.x_sweep';
+        if strcmp(Ichan,'all')
+            Ichan=1:size(x,2);
+        end
+        if max(Ichan)>max(size(x,2)),
+            disp(['Channel too high, restricting to ' int2str(max(size(x,2)))]);
+            Ichan=max(size(x,2));
+        end
+        
+        x=x(:,Ichan);
+        
+        
+        if tdate_start==-1
+            tmin=datenum(0);
+        elseif tdate_start>0 %We are trimming beginning time
+            tmin=tdate_start;
+            tmp=datevec(tdate_start);
+            dn=1+floor(Fs*tmp(end));
+            x=x(dn:end,:);
+            t=t(dn:end);
+        else
+            tmin=tdate_start;
+        end
+        
+        if tlen*Fs<size(x,1)
+            x=x(1:floor(tlen*Fs),:);
+        end
+        t=(1:length(x))/Fs;
+        
+        tmax=tmin+datenum(0,0,0,0,0,max(t));
+        head.geom.rd=simulated.rd;
+        head.Nchan=size(x,2);
+        x=x';
+    case 'GSI'
+        if strcmp(Ichan,'all')
+            Ichan=1:3;
+        end
+        if max(Ichan)>3,
+            disp('Channel too high, restricting to 3');
+            Ichan=3;
+        end
+        [x,t,head]=readGSIfile([mydir '/' myfile],tdate_start,tlen,Ichan,'datenum','nocalibrate');
+        if isempty(keyword)
+            prompt = {'Enter a keyword for GSI calibration [DASARC]:'};
+            dlg_title = 'DASAR calibration';
+            num_lines = 1;
+            def = {'DASARC'};
+            answer = inputdlg(prompt,dlg_title,num_lines,def);
+            keyword=answer{1};
+        end
+        % keyword=input('Enter a keyword for GSI calibration [DASARC]:','s');
+        %             if isempty(keyword)
+        %                 keyword='DASARC';
+        %             end
+        %         end
+        x=calibrate_GSI_signal(x, keyword);
+        
+        Fs=head.Fs;
+        
+        tmin=datenum(1970,1,1,0,0,head.ctbc);
+        tmax=tmin+datenum(0,0,1,0,0,0);
+        head.Nchan=length(Ichan);
+    case 'MT'
+        %[x,t,Fs]=load_mt_mult(handles.mydir,tdate_start,tlen);
+        %head=read_mt_header([mydir filesep myfile]);
+        head=read_mt_header(fullfile(mydir, myfile));
+        
+        tmin=head.tstart;
+        tmax=head.tend;
+        Fs=head.Fs;
+        
+        if tdate_start>0
+            tdate_vec=datevec(tdate_start-tmin);
+            nsec=tdate_vec(6)+60*tdate_vec(5)+3600*tdate_vec(4);
+        else
+            %uiwait(msgbox('No start time requested'));
+            return
+        end
+        %Load accelerometer data as desired
+        %% Template: CB_Accel_X_2014_02100958.mt
+        if strfind(head.abbrev,'Accel')
+            mystr='XYZ';
+            Ispace=strfind(myfile,'_');
+            Ispace=Ispace(2)+1;
+            x=[];
+            for Iacc=1:3
+                myfile_temp=myfile;
+                myfile_temp(Ispace)=mystr(Iacc);
+                try
+                [x0,t]=load_mt([mydir filesep myfile_temp],nsec,tlen);
+                if isempty(x)
+                    x=zeros(length(x0),3);
+                end
+                x(:,Iacc)=x0;
+                catch
+                    fprintf('Channel %s of %s not available...\n',mystr(Iacc),myfile_temp);
+                    
+                end
+                
+            end
+            head.Nchan=3;
+            
+            %%Select channel requested...or rotate channels...
+            % Axis conventions assume 2011 definitons: X is long axis, Y
+            % and Z are normal.
+            
+            set(handles.edit_normal_rotation,'Vis','On');
+            set(handles.text_normal_rotation,'Vis','On');
+            normal_angle=(pi/180)*str2num(get(handles.edit_normal_rotation,'String'));
+            
+            if normal_angle~=0
+                xrot=x;
+                xrot(:,2)=x(:,2)*cos(normal_angle)+x(:,3)*sin(normal_angle);
+                xrot(:,3)=-x(:,2)*sin(normal_angle)+x(:,3)*cos(normal_angle);
+                x=xrot;
+                head.normal_rotation=(180/pi)*normal_angle;
+                head.transformation.description{1}=' Normal Rotation: %6.2f deg';
+                head.transformation.value{1}=head.normal_rotation;
+            else
+                head.transformation.description{1}=' No rotation';
+                head.transformation.value{1}=[];
+            end
+            
+            x=x(:,Ichan);
+            %myfile(Ispace)=mystr(Ichan);
+            
+            head.myfile=myfile;
+            
+            % guidata(handles.myfile);  %Saves new file name...
+            %guidata(hObject, handles);  %Saves new file name...
+            %guidata(hObject, handles);
+            %
+        else
+            if Ichan>1
+                disp('WARNING: load_data: MT can only have one channel');
+                Ichan=1;
+            end
+            if tdate_start>0
+                [x,t]=load_mt(fullfile(mydir , myfile),nsec,tlen);
+            end
+            head.Nchan=1;
+        end
+    case 'SIO'
+        %x,t,Fs,tmin,tmax,head
+        %load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)gff
+        %set(handles.text_channel,'String','Channel [-angle (deg)]');
+        sio_chc=get(handles.togglebutton_ChannelBeam,'String');
+        [~, head] = sioread(fullfile(mydir,myfile));
+        
+        %Extract start date and time
+        %if ~exist('tstart_min') || isempty(tstart_min) || tstart_min < 0
+        Idot=strfind(myfile,'.');
+        
+        if isfield(head,'date')
+            tmin=head.date;
+        else
+            success=0;
+            for II=1:(length(Idot)-1)
+                if success || Idot(II+1)-Idot(II)~= 12
+                    continue
+                end
+                template=myfile((Idot(II)+1):(Idot(II+1)-1));
+                try
+                    tmin=datenum(2000+str2num(template(1:2)),0,str2num(template(3:5)), ...
+                        str2num(template(6:7)),str2num(template(8:9)),str2num(template(10:11)));
+                    %tstart_min=tmin;
+                    success=1;
+                catch
+                    tmin= now;
+                end
+            end
+        end
+        %end
+        
+        if isfield(head,'Fs')
+            Fs=head.Fs;
+        else
+            Fs_default=25000;
+            if isempty(Fs_keep)
+                Fs=input('Enter a sampling frequency in Hz per channel [25000]:','s');
+                if isempty(Fs),Fs=Fs_default;end
+                head.Fs=Fs;
+                Fs_keep=Fs;
+            else
+                Fs=Fs_keep;
+            end
+        end
+        
+        %%	Data parameters needed
+        head.np		=	head.PperChan;
+        tmax =tmin+datenum(0,0,0,0,0,head.np/Fs);
+        head.Nchan	=	head.N_Chan;
+        
+        if ~exist('tdate_start') || isempty(tdate_start) || tdate_start < 0
+            x=[];
+            return
+        end
+        
+        
+        np_start=1+round((tdate_start-tmin)*24*3600*Fs);
+        if np_start>head.np
+            errordlg('load_data:  SIO start time exceeds points available!');
+            return
+        end
+        
+            
+        %%%If beamforming is desired for a look at a given direction...
+        beamform_data=0;
+        get_geometry=0;
+        if strcmpi(sio_chc,'angle')
+            beamform_data=1;
+            get_geometry=1;
+        elseif strcmpi(Ichan,'all')
+            Ichan=1:head.Nchan;
+            beamform_data=0;
+            get_geometry=1;
+        end
+        
+        if beamform_data==1
+            thta=-Ichan;
+            Ichan=1:head.Nchan;
+        end
+        
+        %If loading single channel, check that request is reasonable...
+        if beamform_data==0
+            if max(Ichan)>head.Nchan
+                errordlg(sprintf('load_data:  SIO channel request: %i, max channels: %i',max(Ichan),head.Nchan));
+                return
+            end
+            
+            if max(Ichan)<1
+                errordlg(sprintf('load_data:  SIO channel request: %i is less than 1',max(Ichan)));
+                return
+            end
+            
+        end
+        
+        npi=round(tlen*Fs);
+        if np_start+npi>head.np
+            errordlg('load_data:  SIO end time exceeds points available!');
+            return
+        end
+        
+       
+       
+       if get_geometry==1
+            if isempty(space)
+                prompt = {'Enter spacing[m] between elements for SIO file:'};
+                dlg_title = 'SIO file spacing';
+                num_lines = 1;
+                def = {'0.1'};
+                answer = inputdlg(prompt,dlg_title,num_lines,def);
+                space=eval(answer{1});
+                fprintf('Half-wavelength frequency: %6.2f Hz\n',1500/(2*space));
+            end
+            head.geom.rd=(0:(head.Nchan-1))*space;
+            
+            
+        end
+        
+        
+        [x,~]=sioread(fullfile(mydir,myfile),np_start,npi,Ichan);
+        %Data arranged so that time are rows, columns are channels
+        
+        %Flip data ....
+        
+        if size(x,2)>1
+            x=fliplr(x);
+        end
+        
+        if beamform_data==1
+            try
+                space=head.geom.rd(2)-head.geom.rd(1);
+                xtot=delaynsum(x,thta,space,Fs,Ichan);
+                x=xtot;
+                head.thta=thta;
+            catch
+                disp('load_data: sioread beamform failure');
+                keyboard
+            end
+         end
+        
+        
+        %-----------------------------------------------------------------------
+        % sioread.m
+        %
+        % This program runs under windows, unix, and macs.
+        %
+        % function x=sioread(filename,p1,npi,channels);
+        %
+        % Inputs:
+        % 	filename: Name of sio file to read
+        % 	p1:	Point to start reading ( 0 < p1 < np)
+        % 	npi: 	Number of points to read in
+        % 	channels: Single number or vector containing the channels to read
+        % 		(example-to read channels 4 thru 10 enter 4:10)
+    case 'DAT'
+        [x,tmin,tmax,fs]=read_dat_file(fullfile(mydir,myfile),[],-1,tlen,0);
+        
+        if isempty(fs)
+            fs=input('Enter sampling rate in Hz:');
+        end
+        Fs=fs;
+        [x,tmin,tmax]=read_dat_file([mydir '/' myfile],Fs,tdate_start,tlen,0); %output in uPa
+        %[x,tmin,tmax]=read_dat_file([mydir '/' myfile],Fs,tdate_start,tlen,1);  %Voltage output
+        t=(1:length(x))/fs;
+        
+        head.Nchan=1;
+        switch fs
+            case 50000
+                head.calcurv=[
+                    1.179288464673746e+06
+                    -3.417289147406752e+06
+                    3.972100408634462e+06
+                    -2.459193259685826e+06
+                    8.904700994689314e+05
+                    -1.924134277822444e+05
+                    2.476608484423531e+04
+                    -2.235739303825218e+03
+                    2.904887584919255e+02
+                    -5.381149759460806e+00
+                    7.841554559708414e-03
+                    ];
+            case 6250
+                head.calcurv=[
+                    -9.864342626384007e+06
+                    2.675183405132254e+07
+                    -3.072255757018830e+07
+                    1.946983114345214e+07
+                    -7.445224085881455e+06
+                    1.766054734429601e+06
+                    -2.570588847834060e+05
+                    2.188411119767746e+04
+                    -9.803725367146685e+02
+                    1.959124505642275e+01
+                    -2.811936435415921e-01];
+            case 12500
+                head.calcurv=[
+                    9.262441626302190e+07
+                    -2.151487191990283e+08
+                    2.069375942078056e+08
+                    -1.063702102525421e+08
+                    3.153159716612202e+07
+                    -5.458152352141772e+06
+                    5.382152297627985e+05
+                    -2.765563363629215e+04
+                    6.113088605208859e+02
+                    -1.301582987521525e+00
+                    -1.634557871607174e-01];
+        end
+        
+    case 'ADI'
+        [x,tmin,tmax,fs]=read_adi_file(mydir,myfile,[],0,tlen,0);
+        
+        if isempty(fs)
+            fs=input('Enter sampling rate in Hz:');
+        end
+        Fs=fs;
+        [x,tmin,tmax]=read_adi_file(mydir,myfile,Fs,tdate_start,tlen,0); %Output in uPa
+        %[x,tmin,tmax]=read_adi_file(mydir,myfile,Fs,tdate_start,tlen,1);  %Output in voltage
+        t=(1:length(x))/fs;
+        head.Nchan=1;
+        
+    case 'MDAT'
+        
+        
+        [x,head]=read_synchronized_mdat_files(fullfile(mydir,myfile),tdate_start,tlen);
+        Fs=head.fs;
+        t=(1:length(x))/Fs;
+        
+        tmin=head.tfs;
+        tmax=head.tfe;
+        head.Nchan=size(x,2);
+        if strcmp(Ichan,'all')
+            Ichan=1:head.Nchan;
+        end
+        if max(Ichan)>head.Nchan
+            disp(sprintf('Channel too high, max channel %i',head.Nchan));
+            Ichan=head.Nchan;
+        end
+        
+        try
+            x=x(:,Ichan);
+            for II=Ichan
+                fprintf('Logged depth of channel %i is %6.2f m\n',II,head.geom.rd(II));
+            end
+        end
+        
+        x=x';
+        head.calcurv=[
+            -3.826740371096994e+07
+            8.955964717194067e+07
+            -9.041409824956748e+07
+            5.195683344725087e+07
+            -1.873830725900567e+07
+            4.336813690670102e+06
+            -6.251710636164501e+05
+            5.339062841084976e+04
+            -2.452316303554637e+03
+            5.178423592184026e+01
+            -1.229223450332553e+00];
+        
+    case 'WAV'
+        Nsamples	=	wavread(fullfile(mydir,myfile),'size');
+        [~,Fs]		=	wavread(fullfile(mydir,myfile),1,'native');
+        Nsamples	=	Nsamples(1);
+        handles.Fs	=	Fs;
+        
+        %%Can we calibrate the data?
+        %%  load_wav often normalizes the data so the peak value is 1.
+        %sens0=157; %dB re 1 unit of wav entry
+        %sens=input('Enter sensitivity of entire system (flat-spectrum calibration) [180 dB re 1 unit]:');
+        %if isempty(sens)
+        %sens=sens0;
+        %end
+        %sens=10^(sens/20);
+        
+        %%Calibration for ADAT 24 attached to Sonotech hydrophone array
+        %//ADAT HD24 has 6.9 V Rms max input for 24 bit data
+        %//Factor of 2 from differential inputs...
+        %//Hydrophone gain set to Sonotech array -157 dB
+        %// Don't have cable attenuation  here...
+        sens=(6.9*sqrt(2)/16777215)*0.5*10^(157.0 / 20.0);
+        %freq_cal[i]=(1.0+2*Math.PI*f*(110e-9)*140.0);
+        
+        % Nov 15, 2011
+        %         Hi Aaron,
+        %
+        % I thumbed through my notes for a few minutes to refresh my memory on this project.  The attenuation problem can be hugely simplified by eliminating many of the parameters right away.  The preamp output impedance is ordinarily very small, and the cable insulation resistance and receiver input impedance will be very large.  All of the above parameters can generally be ignored.
+        %
+        % This really only leaves the cable resistance and capacitance and so becomes a fairly simple voltage divider problem.  From my notes, I measured the cable (the entire 800+ length) resistance to be ~70 ohms and the capacitance to be ~110 nF.  The model would look like a series resistance with a shunt capacitance, so:
+        %
+        % R = 140 ohms (round trip)
+        % X = 1/(2*pi*f*C)
+        %
+        % So, the 6 dB down frequency will be when R= X, so:
+        % f = 1/(2*pi*C*R) = ~10 kHz.
+        %
+        % And the attenuation at any frequency:
+        % X/(R + X)  or 1/(1+ 2*pi*f*C*R)
+        %
+        % The cable attenuation seen by the vector sensor will essentially look like a single pole low pass filter with Fc = 10 kHz:
+        % 5   kHz: -3 dB
+        % 10 kHz: -6 dB
+        % 20 kHz: -9 dB
+        %
+        % This is consistent with my notes where I measured the cable attenuation to roll off by 3 dB/octave starting at 4-5 kHz.  The above is for the case of the vector sensor driving the entire length of the array.  For the other hydrophones driving shorter lengths of cable, the calculations will be the same but you will need to use different R and C values in the equation 20 log (1/(1+ 2*pi*f*C*R)) to compute the new attenuation values vs frequency.
+        %
+        % Jeff
+        
+        head.cable_factor=2*pi*(110e-9)*140.0;  %Unit resistance 140 ohm, capacitance 110 nF
+        
+               
+        try
+            tmin	=	convert_date(myfile,'_');
+            if isempty(tmin)
+               tmin=datenum([1970 1 1 0 0 0]);
+            end
+            tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
+        catch
+            disp([myfile ': convert_date failure']);
+            try
+                tmin=datenum(get(handles.text_mintime,'String'));
+            catch
+                minn	=	input('Enter start date in format [yr mo day hr min sec] or hit return: ');
+                if isempty(minn)
+                    minn=[1970 1 1 0 0 0];
+                end
+                tmin	=	datenum(minn);
+            end
+            tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
+        end
+        tdate_vec	=	datevec(tdate_start - tmin);
+        nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);  %Ignores differences in days
+        N1			=	1 + round(nsec*handles.Fs);
+        N2			=	N1 + round(tlen*handles.Fs);
+        
+        try
+            [x,Fs]		=	wavread(fullfile(mydir,myfile),[N1 N2],'native');
+        catch
+            x=[];
+            Fs=[];
+            t=[];
+            head.Nchan=0;
+            return
+        end
+        
+        if ~strcmp(Ichan,'all')
+            x		=	x(:,Ichan);
+        end
+        
+        t	=	(1:length(x))/Fs;
+        
+        x			=	double(x)*sens;
+        head.Nchan	=	size(x,2);
+
+end
+
+if isempty(tmin) || isempty(tmax)
+    disp('load_data: Warning, tmin and tmax should never be empty when exiting..');
+end
+%%%Optional Teager-Kaiser filtering...
+if teager
+    %%Assume that x is in form [ channel time]
+    x=x(:,2:end-1).^2-x(:,1:end-2).*x(:,3:end);
+end
+
+
+end  %function load_data
+
+function [y,t,head]=readGSIfile(rawfile,cbegin,tlen,nchan,formatt,calibrate)
+%function [y,t,head]=readGSIfile(rawfile,cbegin,tlen,nchan,formatt,calibrate)
+% Input Parameters:
+% rawfile = Include extension;
+% cbegin = Start time;
+% tlen = Length of sample to load;
+% nchan = Index of desired channel, 1 for sound;
+% formatt = Describes time input, string 'ctime' or 'datenum';
+% calibrate = String 'calibrate' to convert Volts to microP;
+
+if strfind(rawfile,'.sio')
+    
+    [y,t,head]=readsiof(rawfile,cbegin,tlen,formatt);
+    y=y-0.5*(2^16);  %Remove DC bias in A/D converter
+    
+elseif strfind(rawfile,'.gsi')
+    [y,t,head]=readgsi(rawfile,cbegin,tlen,formatt);
+    if isempty(y)  %request time is befine file start
+        dt=cbegin-head.ctbc;
+        tlen=tlen+dt;
+        [y,t,head]=readgsi(rawfile,0,tlen,formatt);
+        
+    end
+    y=y(nchan,:);
+    if strcmp(calibrate,'calibrate'),
+        y=y-0.5*(2^16);  %Remove DC bias in A/D converter
+        
+        y=y*(2.5/65535)*(10^(150/20));
+    end
+    y=y.';
+    
+    if (abs(size(y,1)-floor(head.Fs*tlen))>2),
+        disp('End of file reached, setting y to empty');
+        y=[];
+    end
+end
+
+end  %function readGSIfile
+
+function [thet,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles)
+%tsec: seconds into time series that data are selected...
+thet=-1;  %Start with failed result
+kappa=-1;
+tsec=-1;
+tdate_start=handles.tdate_start;
+tlen=handles.tlen;
+%yes_wav=get(handles.togglebutton_getwav,'value');
+
+mydir=pwd;
+
+%Ichan='all';  %Hardwire first channel
+%Ichan=str2double(get(handles.edit_chan,'String'));
+[x,t,Fs,tstart,tend,head]=load_data(handles.filetype,tdate_start,tlen,'all',handles);
+
+disp('Click on two extreme corners, click below axis twice to reject:');
+tmp=ginput(2);
+if (isempty(tmp)||any(tmp(:,2)<0))
+    return
+end
+tsec=min(tmp(:,1));
+n=round(Fs*sort(tmp(:,1)));
+
+freq=1000*sort(tmp(:,2));
+contents=get(handles.popupmenu_Nfft,'String');
+Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
+
+[thet0,kappa,sd]=extract_bearings(x(n(1):n(2),:),0.25,Nfft,Fs,freq(1),freq(2),50);
+
+if ~isempty(strfind('T2007',handles.myfile))
+    cal07flag=1;
+    handles.calibration_DASAR2007_dir='/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/RawData';
+    
+    brefa_table=calibrate_bearing_Shell2007(handles.calibration_DASAR2007_dir,handles.myfile);
+else
+    cal07flag=0;
+end
+
+if cal07flag==0
+    thet=bnorm(thet0+head.brefa);
+else
+    [junk,Icol]=calibrate_bearing_Shell2007(handles.calibration_DASAR2007_dir,handles.myfile,1);
+    thet= interp1(0:360,brefa_table(:,Icol),bnorm(thet0));
+end
+
+%handles.bearing=thet;
+%guidata(hObject, handles);
+%titlestr=get(handles.text_filename,'String');
+%Iend=strfind(titlestr,'.gsi')-1;
+set(handles.text_filename,'String',sprintf('%s/%s %6.2f degrees... ',handles.mydir,handles.myfile,thet));
+%keyboard;
+end %function get_GSI_bearing
+
+function nhout=read_num(fid,N)
+nhout=str2double(char(fread(fid,N,'char')'));
+end
+
+function chout=read_char(fid,N)
+chout=char(fread(fid,N,'char')');
+end
+
+function tabs=parse_date(str)
+
+Istart=strfind(str,'=');
+year=str2double(str((end-4):end));
+tm=datenum(str((end-13):(end-5)),14)-datenum('00:00:00',14);
+day=str2double(str((end-15):(end-14)));
+month=(str((end-19):(end-16)));
+switch deblank(month),
+    case 'Jan'
+        mn=1;
+    case 'Feb'
+        mn=2;
+    case 'Mar'
+        mn=3;
+    case 'Apr'
+        mn=4;
+    case 'May'
+        mn=5;
+    case 'Jun'
+        mn=6;
+    case 'Jul'
+        mn=7;
+    case 'Aug'
+        mn=8;
+    case 'Sep'
+        mn=9;
+    case 'Oct'
+        mn=10;
+    case 'Nov'
+        mn=11;
+    case 'Dec'
+        mn=12;
+end
+
+tabs=tm+datenum(year,mn,day,0,0,0);
+
+end
+
+function  [a_eqC2, b_eqC2]=get_DASARA_filter(f_hp,plot_data)
+% DASAR_A_equalization.m
+
+%%
+Fs = 1000; % sample rate, Hz
+
+% equalizer rev C
+% used to equalize Sparton DIFAR sonobuoy head omni phone response
+% The raw sonobuoy response is like a differentiator, with a +19 to +20dB/dec slope.
+% This equalizer is mostly an integrator, with some shaping near Nyquist to get rid
+% of aliasing effects and a high-pass filter cascaded to reduce low frequency gain
+
+f1 = 100; % Hz
+a1 = 1; % gain @ f1 (ignoring high-pass), V/V
+
+% integrator
+a = [1 -1]; % gain of integrator is cos(w/2)/sin(w), w = [0,2*pi] around unit circle
+
+% hf zero
+k = (f1/Fs)*2*pi;
+b = a1 * sin(k)/cos(k/2) * [1 0.15]/1.15; % 0.15 eyeball adhoc
+%b=a1;
+% b = a1 * sin(k)/cos(k/2);
+
+% high-pass
+%f_hp = 10; % high-pass -3 dB break freq, Hz
+[bb,aa] = butter(2,f_hp/(Fs/2),'high');
+
+a_eqC2 = conv(a,aa);
+b_eqC2 = conv(b,bb);
+
+if plot_data==1,
+    ff = [logspace(-2,log10(500),1000)]';
+    [h_eqC2,w] = freqz(b_eqC2,a_eqC2,ff*pi*(2/Fs));
+    figure
+    semilogx(w/pi *(Fs/2),20*log10(abs(h_eqC2)),'k')
+    grid on
+    xlabel('Frequency, Hz')
+    ylabel('gain, dB V/V')
+end
+
+end
+
+function [numd,dend] = DASAR_Shell_2007_equalization(Fs,plot_on)
+% DASAR_Shell_2007_equalization
+%       numd=b; dend=a;
+%   Returns filter coefficients of a digital equalization filter to flatten
+%   the (very) low-frequency response of data recorded by the
+%   omnidirectional channel in the Shell 2007 DASAR.
+%
+%   The 2007 Shell DASAR was a 4-channel unit, with a PZT flexural disk
+%   hydrophone and three orthogonal geophones. The lower band edge of the
+%   hydrophone channel is controlled by two cascaded (and independent)
+%   high-pass filters, one formed by the shunt resistor across the PZT
+%   ceramic, the other by the preamp (a single non-inverting opamp stage)
+%
+%   This equalization is only needed if it is desired to reconstruct data
+%   below 5 (or 8 Hz): for the "usual" (10 Hz and above) analysis, this
+%   equalization to the recorded data is not necessary. The user is advised
+%   that attempting to equalize more than a decade below these frequencies
+%   (i.e., 0.5 Hz) should be attempted with caution, since ambient noise
+%   can be large (especially pressure fluctuations from surface waves in
+%   shallow water), and self-noise of the instrument can become visible.
+%
+%   Unlike the DASAR-A and DASAR-Cs, which employed modified sonobuoy heads
+%   having a differentiator-like response (rising ~6 dB/octave), the
+%   in-band response of all four channels of the Shell 2007 DASAR were
+%   flat, so no equalization is needed in the passband of 10 to 450 Hz
+
+% R Norman Mar 22, 2011
+
+%%
+if(Fs ~= 1000)
+    error('designed & tested for Fs = 1000 Hz only')
+end
+%plot_on=1;
+%% equalization filter for the high-pass filter formed by PZT ceramic and shunt resistor
+R1 = 2e6; % shunt resistance, Ohms
+C1 = 15e-9; % ceramic capacitance, F
+f1a = 1/(2*pi*R1*C1); % break frequency, Hz
+
+p1a = 2*pi*f1a; % zero location, rad/s
+
+% pole location, rad/s (here, arbitrarily placed one-decade below the zero)
+% Don't place this pole at a frequency any lower than necessary)
+c = 2.5;
+p1b = p1a/c; % pole location, rad/s
+
+nums1 = c * [1/p1a 1]; % s-plane numerator coefs
+dens1 = [1/p1b 1]; % s-plane denominator coefs
+
+[numd1,dend1] = bilinear(nums1,dens1,Fs);
+
+if(plot_on)
+    hFVT = fvtool(numd1,dend1);
+    set(hFVT,'NumberofPoints',8192,'FrequencyScale','Log')
+    set(hFVT,'NormalizedFrequency','off','Fs',Fs)
+    legend(hFVT,'First Equalization Filter')
+    pause
+end
+
+%% equalization filter for the high-pass filter formed by preamplifier (non-inverting gain stage)
+R2 = 200; % resistance, Ohms
+C2 = 100e-6; % capacitance, F
+f2a = 1/(2*pi*R2*C2);
+
+p2a = 2*pi*f2a; % zero location, rad/s
+
+% pole location, rad/s (here, arbitrarily placed one-decade below the zero)
+% Don't place this pole at a frequency any lower than necessary)
+p2b = p2a/c; % pole location, rad/s
+
+nums2 = c * [1/p2a 1];
+dens2 = [1/p2b 1];
+
+[numd2,dend2] = bilinear(nums2,dens2,Fs);
+
+if(plot_on)
+    hFVT = fvtool(numd2,dend2);
+    set(hFVT,'NumberofPoints',8192,'FrequencyScale','Log')
+    set(hFVT,'NormalizedFrequency','off','Fs',Fs)
+    legend(hFVT,'Second Equalization Filter')
+    pause
+end
+
+%% cascade the two filters
+numd = conv(numd1,numd2);
+dend = conv(dend1,dend2);
+
+% future fancier
+% H1 = dfilt.df2(numd1,dend1); % df2t for transposed
+% H2 = dfilt.df2(numd2,dend2); % df2t for transposed
+% Hcascade = dfilt.cascade(H1,H2)
+% [n1,d1] = tf(Hcascade)
+% fvtool(Hcascade)
+
+%%
+if(plot_on)
+    % freqress(nums,dens,logspace(-3,2,1000))
+    hFVT = fvtool(numd,dend);
+    set(hFVT,'NumberofPoints',8192,'FrequencyScale','Log')
+    set(hFVT,'NormalizedFrequency','off','Fs',Fs)
+    legend(hFVT,'Final (composite) Equalization Filter')
+    orient landscape
+    print -djpeg DASAR2007_equalization.jpg
+end
+
+end
+
+function [thet,kappa,sd]=extract_bearings(y,bufferTime,Nfft,Fs,fmin,fmax,Nsamples)
+%function [thet,kappa,sd]=extract_bearings(y,bufferTime,Nfft,Fs,fmin,fmax,Nsamples)
+% Input:
+%    y: time series, with channels arranged as columns
+%    bufferTime: how much time exists before and after signal proper.
+%           Needed because time-domain filtering requires a signal buffer.
+%    Nfft: FFT size to use if CSDM is to be estimated.
+%    Fs: Sampling frequency, Hz
+%    fmin,fmax: minimum and maximum frequency of signal, Hz.
+%    algchc:  String containing one of three possibilities:
+%           'spectrogram: make spectrogram, estimate bearing from each
+%                   time-frequency cell of contour, provide standard
+%                   deviation
+%           'sel_ratio':  time-domain method that takes rms value of
+%           bandpassed signals.
+%           'sel_ratio_FFT': takes the FFT of all signal components and
+%               computes active intensity in frequency domain.
+%           'CSDM':  With a small Nfft value, construct multiple shapshots
+%               of signal structure, yielding a CSDM that in turn gives
+%               and active intensity.  May also be modified to permit
+%               robust beamforming for weak signals.
+%    Nsamples:  number of bootstrap samples for estimating kappa and sd
+%  Output: thet: angle in degrees, increasing clockwise from true north...,
+%  sd standard deviation in degrees
+kappa=[];sd=[];thet=[];
+
+filter_chc='butter';
+
+if strcmp(filter_chc,'FIR')
+    transband=0.1*(fmax-fmin); %Hz
+    filter_min=max([0.5*transband 0.8*fmin]);
+    filter_max=min([500-0.5*transband 1.2*fmax]);
+    [n,fo,mo,w] = firpmord( [filter_min+0.5*transband*[-1 1] filter_max+0.5*transband*[-1 1]], [0 1 0], [0.01 0.1 0.01], Fs );
+    b = firpm(n,fo,mo,w);
+    
+    % design and apply filter to pass only between e1 and e2
+    
+    for I=1:3,
+        y(:,I)=y(:,I)-mean(y(:,I));
+        x(:,I)=filtfilt(b,1,y(:,I));
+    end
+    
+else
+    w1=max([0.01 fmin*2/Fs]);
+    w2=min( [fmax*2/Fs 0.99]);
+    
+    [B,A]=butter(2,[w1 w2]);
+    for I=1:3,
+        y(:,I)=y(:,I)-mean(y(:,I));
+        x(:,I)=filter(B,A,y(:,I));
+    end
+end
+if bufferTime>0,
+    x=x(ceil(1+bufferTime*Fs):(end-floor(bufferTime*Fs)),:);
+end
+
+vx=(x(:,1).*x(:,2));
+vy=(x(:,1).*x(:,3));
+%thet=atan2(sum(vx),sum(vy))*180/pi;
+
+
+[thet,kappa,sd]=get_vmests([vx vy],Nsamples);
+
+
+end
+
+function [mu,kappa,sd] = get_vmests(x,B)
+%GET_VMESTS Calculates bootstrap estimate of mean and standard error of bearings.
+%  [MU,KAPPA,SD] = GET_VMESTS(X,B) assumes that X is an n-by-2 matrix of x-y
+%  coordinate pairs and B is a scalar denoting the number of bootstrap iterations.
+%  MU is the mean bearing, KAPPA is an estimate of the standard error of the mean
+%  expressed as the von Mises concentration parameter, and SD is the standard error
+%  estimate in degrees expressed as for a linear (not a circular variable).
+%
+%  Note: B may be reduced for greater speed.
+
+n = size(x,1);
+flag = 0;           % Set to 1 to calculate estimates of kappa and Rbar for each
+%   bootstrap sample, 0 for mean vector only.
+mux_hat = zeros(B,2);
+options = optimset('Display','off');
+mux = vm_ests_uneq(x,options,flag);             % Get mean angle from the data.
+mu = 180/pi*atan2(mux(1),mux(2));
+%tic
+%for i = 1:B,
+%  U = ceil(n .* rand(n,1));          % The guts of UNIDRND.M without error checking.
+%  xb = x(U,:);
+%  mux_hat(i,:) = vm_ests_uneq(xb,options,flag); % Estimation accounting for lengths.
+%end
+
+U = ceil(n .* rand(n,B));          % The guts of UNIDRND.M without error checking.
+for i = 1:B,
+    %U = ceil(n .* rand(n,1));          % The guts of UNIDRND.M without error checking.
+    %xb = x(U,:);
+    mux_hat(i,:) = vm_ests_uneq(x(U(:,i),:),options,flag); % Estimation accounting for lengths.
+end
+
+[junk,kappa,sd] = vm_ests(mux_hat,options);     % Estimation ignoring lengths.
+%toc
+end
+
+function [mux,Rbar,kappa] = vm_ests_uneq(x,options,flag) %#ok<STOUT>
+%VM_ESTS_UNEQ Maximum likelihood estimates of Von Mises parameters from data.
+%  [MUX,RBAR,KAPPA] = VM_ESTS_UNEQ(X,OPTIONS,FLAG) estimates the mean vector (MUX),
+%  the length of the mean vector (RBAR), and the concentration parameter (KAPPA)
+%  of the Von Mises distribution.  X is assumed to be an n-by-2 matrix, where
+%  each row represents an x,y coordinate pair, which defines a bearing from
+%  origin (0,0).  OPTIONS is an argument for FMINBND, for instance as set by
+%  OPTIMSET.  FLAG is a boolean: 0 indicates that only MUX will be calculated;
+%  1 indicates that RBAR and KAPPA will also be calculated
+%
+%  Calculates mean vector length, and thus KAPPA, taking account of individual
+%  vector lengths.
+
+%n1 = size(x,1);
+
+lx = sqrt(sum(x.^2,2));                % Get length of each vector
+idx = find(lx>0);                        % Get rid of 0-length vectors
+%n = length(idx);
+%if n<n1,
+x = x(idx,:);
+%end
+r = sum(x);
+mux = r/sum(lx);                       % Mean x,y coordinate
+
+
+end
+
+function [mu,kappa,sd] = vm_ests(x,options)
+%VM_ESTS Maximum likelihood estimates of Von Mises parameters from data.
+%  [MU,KAPPA,RBAR,SD] = VM_ESTS(X,OPTIONS) estimates the angular mean (MU)
+%  and concentration parameter (KAPPA) of the Von Mises distribution, the
+%  mean vector length (RBAR), and the approximate standard deviation (SD)
+%  of the normal distribution from data X.  X is assumed to be an n-by-2
+%  matrix, where each row represents an x,y coordinate pair, which defines
+%  a bearing from origin (0,0).  OPTIONS is an argument for FMINBND, for
+%  instance as set by OPTIMSET.
+
+n1 = size(x,1);
+lx = sqrt(sum(x.^2,2));                % Get length of each vector
+idx = find(lx);                        % Get rid of 0-length vectors
+n = length(idx);
+if n<n1,
+    x = x(idx,:);
+end
+x = x./repmat(lx,1,2);                 % Make unit vectors
+r = sum(x);
+mux = r/n;                             % Mean x,y coordinate
+mu = 180/pi*atan2(mux(1),mux(2));      % Mean angle (use y/x for math convention)
+Rbar = norm(mux);                      % Length of mean vector
+sd = 180/pi*sqrt(2*(1-Rbar));          % Angular standard deviation
+
+kappa=0;
+% if Rbar<=(1/sqrt(n)),
+%     kappa = 0;
+% else
+%     kappa = fminbnd('diffkr',eps,5e5,options,Rbar,n);
+% end
+%     function d = diffkr(k,r,n)
+%         %DIFFKR Difference of a function of Von Mises kappa and R, mean vector length.
+%         %  D = DIFFKR(K,R) is used by Matlab function FMINBND to find the maximum
+%         %  likelihood estimate of kappa, the concentration parameter of the Von Mises
+%         %  distribution. The MLE of kappa is the value K such that |R - A(K)| is
+%         %  minimum, where R is the length of the mean vector, A(K) =  I1(K)/I0(K), and
+%         %  I1 and I0 are modified bessel functions of order 1 and 0, respectively.
+%         %
+%         %  A bias correction for small sample size (see Batschelet, 1981, p. 47) is
+%         %  included so that K is sought for min{|R - A(K)/A(KRN)|} , where N is the
+%         %  sample size.
+%         %
+%         %  Rather than call the Matlab function, BESSELI, faster polynomial
+%         %  approximations from Abramowitz and Stegun (1965, p. 378) are used.  Also,
+%         %  the approximations allow arguments > 700 (which cause overflow in BESSELI).
+%         %  In the code below, I0 and I1 represent functions of I0(X) and I1(X),
+%         %  respectively, depending on the value of the argument X.  For X>3.75, the
+%         %  leading factor,  cancels in the ratio allowing calculation of A(X) without
+%         %  numeric overflow.
+%
+%         %  Abramowitz, M. and I.A. Stegun. 1965.  Handbook of Mathematical Functions.
+%         %  Dover Publications, New York.
+%
+%         %  Batschelet, E. 1981. Circular Statistics in Biology. Academic Press, London.
+%
+%         krn = k*r*n;
+%         t = krn/3.75;
+%         if krn<=3.75,
+%             I0 = 1 + 3.5156229*t^2 + 3.0899424*t^4 + 1.2067492*t^6 + 0.2659732*t^8 + ...
+%                 0.0360768*t^10 + 0.0045813*t^12;
+%             I1 = krn * (0.5 + 0.87890594*t^2 + 0.51498869*t^4 + 0.15084934*t^6 + ...
+%                 0.02658733*t^8 + 0.00301532*t^10 + 0.00032411*t^12);
+%             Akrn = I1/I0;
+%         else
+%             I0 = 0.39894228 + 0.01328592/t + 0.00225391/t^2 - 0.00157565/t^3 + ...
+%                 0.00916281/t^4 - 0.02057706/t^5 + 0.02635537/t^6 - 0.01647633/t^7 + ...
+%                 0.00392377/t^8;
+%             I1 = 0.39894228 - 0.03988024/t - 0.00362018/t^2 + 0.00163801/t^3 - ...
+%                 0.01031555/t^4 + 0.02282967/t^5 - 0.02895312/t^6 + 0.01787654/t^7 - ...
+%                 0.00420059/t^8;
+%             Akrn = I1/I0;
+%         end
+%         t = k/3.75;
+%         if k<=3.75,
+%             I0 = 1 + 3.5156229*t^2 + 3.0899424*t^4 + 1.2067492*t^6 + 0.2659732*t^8 + ...
+%                 0.0360768*t^10 + 0.0045813*t^12;
+%             I1 = k * (0.5 + 0.87890594*t^2 + 0.51498869*t^4 + 0.15084934*t^6 + ...
+%                 0.02658733*t^8 + 0.00301532*t^10 + 0.00032411*t^12);
+%             A = I1/I0;
+%         else
+%             I0 = 0.39894228 + 0.01328592/t + 0.00225391/t^2 - 0.00157565/t^3 + ...
+%                 0.00916281/t^4 - 0.02057706/t^5 + 0.02635537/t^6 - 0.01647633/t^7 + ...
+%                 0.00392377/t^8;
+%             I1 = 0.39894228 - 0.03988024/t - 0.00362018/t^2 + 0.00163801/t^3 - ...
+%                 0.01031555/t^4 + 0.02282967/t^5 - 0.02895312/t^6 + 0.01787654/t^7 - ...
+%                 0.00420059/t^8;
+%             A = I1/I0;
+%         end
+%         d = abs(r - A./Akrn);
+%
+%     end
+
+
+end
+
+function bearings=bnorm(bearings)
+Ibig=find(bearings>=360);
+bearings(Ibig)=bearings(Ibig)-360;
+
+Ilow=find(bearings<0);
+bearings(Ilow)=bearings(Ilow)+360;
+
+end
+
+function [Ksout,Ns,EE_sort,VV]=extractKsbest_contour(x,ovlap,Nfft,chann, frange,fr,fbad,Fs,M,keep_zeros,nowin)
+%%%%%%%%%%%%%%%%%%%%%%%extractKsbest_contour.m%%%%%%%%%%%
+% [Ksout,Ns]=extractKsbest_contour(x,ovlap,Nfft,goodel,frange,fr,fbad,Fs,M,nowin);
+%  Aaron Thode
+%  April 2, 2004
+%  Generates averaged cross-spectral outputs
+%    from an FM contour
+% INPUT:
+%x=array of data, rows are time, columns are channels
+%  ovlap=overlap of time samples
+%  Nfft-number of points used in FFT
+%  chann-vector containing element indicies: referenced to *bottom* element
+%  frange-Vector of frequencies: first is initial start of contour,
+%   second is the start of second harmonic, etc.
+%  fr-Search space in terms of +-freq
+%  fbad-frequencies of constant interference, etc.
+% M time window
+% nowin-if exists, don't window the data before using fft.used for source signatureestimates
+% keep_zeros: if exists, keep frequency bins that have no samples.  Useful for plotting...
+% OUTPUT:
+%    Ksout: structure array containing
+%     Kstot CSDM size(Nel,Nel,Nfreq)
+%     freq: frequencies corresponding to Ks in third dimension
+%     fcontour: frequencies detected, (Is,If)--can use to make contours..
+%     fcount: Number of times each frequency has been averaged..
+%     fpower: Power in each bin
+%The replica must also be conjugated to work properly with Kraken.
+%	Don't know why.
+% Feb 9-remove bad elements before summing power
+% April 1, 2004-normalize by Fs*Nfft to put units as power spectral density
+EE_sort=[];VV=[];
+figure;
+if ~exist('nowin', 'var'),
+    nowin=0;
+elseif  nowin==1
+    nowin=1;
+else
+    nowin=0;
+end
+
+Nel=length(chann);
+if ~exist('M', 'var')||M<0, M=Nfft;end
+
+%Compute number of time snapshots
+Ns=floor(((size(x,1)/M)-ovlap)/(1-ovlap));
+disp(['Ns: ' int2str(Ns)]);
+%if Ns==0,Ns=1;end
+
+f=linspace(0,Fs,Nfft+1);
+df=diff(f);df=df(1);
+nbins=ceil(fr/df);
+bins=-nbins:nbins;
+
+fcount=zeros(size(f));
+fpower=fcount;
+Kstot=zeros(Nel,Nel,length(f));
+%Kstot=zeros(Nel,Nel,length(findex));
+
+%Select appropriate frequency bin
+for I=1:length(frange),
+    [junk,findex(I)]=min(abs(f-frange(I)));
+    frange(I)=f(findex(I));
+end
+
+for I=1:length(fbad)
+    [tmp,findexjunk(I)]=min(abs(f-fbad(I)));
+    fbad(I)=f(findexjunk(I));
+end
+
+if Ns<0,
+    disp('Signal too short for one shapnot, will center pad for FFT:');
+    %pause;
+    Ns=1;Nx=size(x,1);
+    x0=zeros(Nfft,size(x,2));
+    index=floor(Nfft/2-(Nx/2));
+    index=(index:(index+Nx-1));
+    x0(index,:)=x;
+    x=x0;
+    clear x0
+    M=size(x,1);
+end
+if nowin==0,
+    win=kaiser(M,2.5);
+else
+    win=ones(M,1);
+end
+
+%Determine the frequency with greatest average power near your bin!
+Pt=[];
+t=[];
+for I=0:(Ns-1),
+    index=round(I*M*(1-ovlap)+1);
+    t(I+1)=index(1)/Fs;
+    xindex=(index:(index+M-1));
+    xh=x(xindex,chann);
+    for Ic=1:size(xh,2),
+        xh(:,Ic)=xh(:,Ic)-mean(xh(:,Ic));
+        xh(:,Ic)=xh(:,Ic).*win;
+    end
+    Xh=fft(xh,Nfft);
+    Pwr=abs(Xh).^2;
+    Pt=sum(Pwr,2);
+    if ~isempty(fbad)
+        Pt(findexjunk)=0; %Remove bad freqencies.
+        Pt(findexjunk+1)=0;
+        Pt(findexjunk-1)=0;
+    end
+    %Pt=cat(2,Pt,Pwr);
+    %end
+    %Pt=sum(Pt,2);
+    for If=1:length(findex),
+        subplot(length(findex),1,If);
+        
+        %plot(f(findex(If)+bins),Pt(findex(If)+bins));
+        [junk,fi]=max(Pt(findex(If)+bins));
+        findex(If)=findex(If)+bins(fi);
+        fcount(findex(If))=fcount(findex(If))+1;
+        fcontour(I+1,If)=f(findex(If));
+        fpower(findex(If))=fpower(findex(If))+Pt(findex(If));
+        disp(f(findex(If)));
+        pgoal=Xh(findex(If),:);
+        %Make pgoal a vertical array
+        %pgoal=conj(pgoal);   %Test to see if conjugation is the problem
+        %   PREVIOUS STATEMENT COMMENTED OUT BY A THODE MARCH 15, 2004
+        %     HE ALSO CHANGED write_covmat.m to remove conjugation as well
+        
+        pgoal=pgoal.';        %Rotate so vector is vertical, like KRAKEN
+        Kstot(:,:,findex(If))=Kstot(:,:,findex(If))+pgoal*pgoal';
+        %Ksout.pgoal
+    end
+    %title(int2str(Ns));
+    %pause(0.25);
+    disp('');
+end
+
+%%Collapse Kstot to non-zero components if desired
+Igood=find(fcount>0);
+
+if exist('keep_zeros', 'var') %%Keep all frequency bins, even if no power...
+    %Igood=[min(Igood):max(Igood)];
+    Igood=1:length(fcount);
+end
+fcount=fcount(Igood);
+fpower=fpower(Igood);
+freq=f(Igood);
+Kstot=Kstot(:,:,Igood);
+
+%Normalize by sample size, if necessary
+Iavg=find(fcount>1);
+for I=1:length(Iavg),
+    Kstot(:,:,Iavg(I))=Kstot(:,:,Iavg(I))/fcount(Iavg(I));
+    fpower(Iavg(I))=fpower(Iavg(I))/fcount(Iavg(I));
+end
+
+%Normalize the |X(f)|^2 term to make units power spectral density (power
+%per Hz)
+Kstot=Kstot/(Fs*Nfft);
+%keyboard;
+
+if Ns>1
+    for J=1:length(freq)
+        Ks=squeeze(Kstot(:,:,J));
+        [V,D,FLAG]=eigs(Ks,4,'LM');
+        %keyboard;
+        D=real(diag(D));
+        %%sqrt(D(1)*V(:,1)) gives scaled eigenvector
+        %D_sort=sort(D);
+        %D=flipud(D_sort)
+        pgoal(:,J)=V(:,1)*sqrt(abs(D(1)));
+        SN(1,J)=10*log10(abs(D(1)/D(2)));
+        if fcount(J)>0
+            disp(['Est. S/N for ' num2str(freq(J)) ' is ' num2str(SN(1,J)) 'dB']);
+        end
+    end
+end
+
+Ksout.Kstot=Kstot;
+Ksout.freq=freq;
+Ksout.fcount=fcount;
+Ksout.fpower=fpower;
+Ksout.fcontour=fcontour;
+Ksout.tcontour=t;
+Ksout.pgoal=pgoal;
+Ksout.SN=SN;
+
+close;
+end
+
+function [Kstot,f,VV,EE_sort]=extractKsexact(x,ovlap,Nfft,chann,frange,Fs,Isnap,M,nowin,threshold,tiltdata)
+
+%%%%%%%%%%%%%%%%%%%%%%%extractKsexact.m%%%%%%%%%%%
+%function [Kstot,Ks_eig,Ns,f,power]=extractKsexact(x,ovlap,Nfft,chann,frange,Fs,Isnap,M,nowin);
+%[Kstot,pgoal,Ns,f,pwr_est,SNRest,pphase]=extractKsexact(x,ovlap,Nfft,chann,frange,Fs,Isnap,M,nowin);
+%  Aaron Thode
+%  July 3, 1996
+%  Generates averaged cross-spectral outputs
+%    from data input
+%  CRUCIAL:  There is a line that flips pgoal so that the first
+%		element represents the top phone.
+%x=array of data, rows are time, columns are channels
+%ovlap=overlap of time samples
+%Nfft-number of point desired taken
+%chann-vector containing element number to be used:
+%frange-pairs of frequencies that define desired ranges If odd, last
+%	element is bin spacing (i.e.) evaluate every other bin
+%Isnap %Select the Isnap window.  If negative, average
+%M amount of dataused for the fft snapshot
+% nowin-if exists, don't window the data before using fft.used for source signature estimates
+% threshold-dB threshold of power (sum of energy across all frequencies and channels) to reject a snapshot.
+%    Set to Inf to ensure all snapshots used.
+% tiltdata: tilt: estimated vertical tilt of array in degrees.
+%           rd: element depths in m
+% Output: Kstot-CSDM
+%          %V: eigenvectors of CSDM
+%          %ev: eigenvalues of CSDM
+%  April 1, 2004: normalize CSDM to have units of power spectral density:
+%  |X(f)|^2/(Fs*Nfft), Power/Hz
+VV=[];
+EE_sort=[];
+MAXF=Inf;
+if ~exist('threshold','var')
+    threshold = -Inf;
+end
+
+if ~exist('tilt','var')
+    tiltdata.tilt=0; %
+    tiltdata.rd=ones(length(chann),1);
+end
+if size(tiltdata.rd,2)>1
+    tiltdata.rd=tiltdata.rd';
+end
+sintilt=sin(tiltdata.tilt*pi/180);
+if ~exist('nowin','var')
+    nowin=0;
+    disp('The signal will be windowed');
+elseif nowin==1,
+    nowin=1;
+    disp('The signal will NOT be windowed');
+else
+    nowin=0;
+    disp('The signal will be windowed');
+end
+
+Nel=length(chann);
+Ns=floor(((size(x,1)/M)-ovlap)/(1-ovlap));
+disp(Ns);
+%pause;
+%Select appropriate frequency bin
+%[f,findex]=makefaxis(Nfft,Fs,frange);
+frange=round((Nfft/Fs)*frange);
+findex=max([1 frange(1)]):min([Nfft/2 frange(2)]);
+f=findex*(Fs/Nfft);
+
+if length(findex)<MAXF
+    Kstot=zeros(Nel,Nel,length(findex));
+else
+    disp('frange too long to make Kstot\n just making pgoal');
+end
+power=zeros(Ns,1);
+Nf=length(findex);
+if	~exist('Isnap', 'var')|| Isnap<0
+    Isnap=0:Ns-1; %average all
+end
+
+if Ns<=0,
+    disp('Signal too short for one shapnot, will center pad for FFT:');
+    %pause;
+    Ns=1;Isnap=0;Nx=size(x,1);
+    x0=zeros(Nfft,size(x,2));
+    index=floor(Nfft/2-(Nx/2));
+    index=(index:(index+Nx-1));
+    x0(index,:)=x;
+    x=x0;
+    clear x0
+    M=size(x,1);
+end
+if nowin==0,
+    win=kaiser(M,2.5);
+else
+    win=ones(M,1);
+end
+
+for I=Isnap
+    index=round(I*M*(1-ovlap)+1);
+    xindex=(index:(index+M-1));
+    xh=x(xindex,chann);
+    for Ic=1:length(chann)
+        xh(:,Ic)=xh(:,Ic)-mean(xh(:,Ic));
+        xh(:,Ic)=xh(:,Ic).*win;
+    end
+    Xh=fft(xh,Nfft);
+    pgoal=Xh(findex,:);
+    %Make pgoal a vertical array
+    %pgoal=pgoal(:,chann);   %Reject elements ;
+    %pgoal=conj(pgoal);   %Test to see if conjugation is the problem
+    pgoal=pgoal.';        %Columns are now single-frequency array snapshots
+    %pgoal=flipud(pgoal);  %Puts topmost element first, according to lewis
+    
+    
+    power(I+1)=(Fs/Nfft)*sum(sum(abs(pgoal).^2))/(Fs*Nfft);
+    
+    if length(findex)<MAXF&&threshold<=10*log10(abs(power(I+1)))
+        for J=1:Nf
+            %disp(f(J));
+            
+            tiltvec=exp(1i*2*pi*f(J)*sintilt*tiltdata.rd/1500);
+            ptemp=pgoal(:,J).*tiltvec;
+            Kstemp=ptemp*ptemp'; %Top LH cornertop element autocor
+            Kstot(:,:,J)=Kstot(:,:,J)+Kstemp;
+            
+        end
+    else
+        power(I+1)=NaN;
+    end
+end  %I=Isnap
+
+figure
+tt=Isnap*(1-ovlap)*Nfft/Fs;
+plot(tt,10*log10(abs(power)));
+grid on
+if ~isinf(threshold)
+    hold on
+    line([min(tt) max(tt)],threshold*[1 1]);
+end
+xlabel('Time (s)');ylabel('dB power');
+
+if length(findex)>MAXF,
+    Kstot=[];
+end
+
+%Normalize to have units of power spectral density...pwr per Hz
+Kstot=Kstot/(Fs*Nfft);
+
+%Compute eigenvalues of CSDM, and the ratio of the high-power to the
+%low-power sound be like SNR
+
+
+%SNR=zeros(1,Nf);
+if Ns>1
+    EE_sort=zeros(Nel,Nf);
+    VV=zeros(Nel,Nel,Nf);
+    for If=1:Nf
+        [VV0,EE]=eig(Kstot(:,:,If));
+        EE=diag(EE);
+        [EE_sort(:,If),Isort]=sort(EE,1,'descend');
+        VV(:,:,If)=VV0(:,Isort);
+        
+    end
+end
+
+% if Ns<=1
+%     SNRest=-SNRest;
+% end
+
+end
+
+function [B,wout]=conventional_beamforming(Ks,angles,freq,Lz,c,yesnorm)
+B=zeros(length(freq),length(angles));
+if size(Lz,2)>1
+    Lz=Lz.';
+end
+
+if nargout==2
+    wout=zeros(length(Lz),length(freq),length(angles));
+end
+winn=hanning(length(Lz));
+for If=1:length(freq)
+    for Iang=1:length(angles)
+        % lambda=1500/freq(If);
+        w=exp((-1i*2*pi*Lz*freq(If)/c)*sin(angles(Iang)*pi/180));
+        w=w.*winn;
+        
+        w=w/norm(w);
+        K=squeeze(Ks(:,:,If));
+        if exist('yesnorm', 'var')
+            K=K/norm(K);
+        end
+        B(If,Iang)=real(w'*K*w);
+        if nargout==2
+            wout(:,If,Iang)=w;
+        end
+    end
+    
+    
+end
+
+%plot(angles,10*log10(B(If,:)));
+end
+
+function B=MV_beamforming(Ks,angles,freq,Lz,c)
+B=zeros(length(freq),length(angles));
+if size(Lz,2)>1,
+    Lz=Lz.';
+end
+for If=1:length(freq),
+    for Iang=1:length(angles)
+        % lambda=1500/freq(If);
+        w=exp((1i*2*pi*Lz*freq(If)/c)*sin(angles(Iang)*pi/180));
+        
+        %B(If,Iang)=real(w'*Ks{If}*w)/(norm(Ks{If})*norm(w).^2);
+        w=w/norm(w);
+        B(If,Iang)=1./real(w'*(squeeze(Ks(:,:,If))\w));
+        
+    end
+    
+    
+end
+
+%plot(angles,10*log10(B(If,:)));
+end
+
+function R=derive_reflection_coefficient2(Kstot,angles,freq,rd,c)
+%function [B,wout]=conventional_beamforming(Ks,angles,freq,Lz,c,yesnorm)
+
+tilt=input('Enter tilt estimate in deg (0):');
+if isempty(tilt)
+    tilt=0;
+end
+
+% angles=angles0+tilt;
+%
+% Igood=find(angles<=90&angles>=-90);
+% angles=angles(Igood);
+%
+% Nup=Iang-1;
+% Ndown=length(Iang:length(angles));
+% if Ndown>=Nup
+%    angles=angles(1:(Iang+Nup));
+% else
+%     angles=angles((Nup-Ndown+2):end);
+%end
+Lz=rd-rd(1);
+
+B=conventional_beamforming(Kstot,angles,freq,Lz,c,'yesnorm');
+%B=MV_beamforming(Kstot,angles,freq,Lz,c,'yesnorm');
+B=real(B).';  % B now [angles freq]
+figure
+imagesc(freq,angles,10*log10(abs(B)))
+caxis([-20 0]);
+axis('xy')
+set(gca,'fontweight','bold','fontsize',14);
+xlabel('Frequency (Hz)');
+ylabel('Angle (positive is towards surface');
+grid on
+%title(sprintf('Theoretical conventional beamforming response, even spacing, source angle %6.2f',angle))
+colorbar('fontweight','bold','fontsize',14)
+
+
+for It=1:length(tilt)
+    [junk,Iang]=min(abs(angles-tilt(It)));
+    
+    %R is bottom/surface, or negative over positive
+    %upp=flipud(B(1:(Iang-1),:));  %Negative angles point towards bottom
+    %downn=B((Iang+1):end,:);
+    %Nmin=min([size(downn,1) size(upp,1)]);
+    %R=downn(1:Nmin,:)./upp(1:Nmin,:);
+    
+    downn=flipud(B(1:(Iang-1),:));  %Negative angles point towards bottom
+    upp=B((Iang+1):end,:); %Positive angles point towards surface
+    Nmin=min([size(downn,1) size(upp,1)]);
+    R=downn(1:Nmin,:)./upp(1:Nmin,:);
+    
+    %%Note that R is the power reflection coefficient (Harrison and Simmons, Eq. (2)), so 10*logR please..
+    R=-10*log10(abs(R))';
+    angle_graze=angles(Iang+(1:Nmin))-tilt(It);
+    figure
+    
+    subplot(3,1,1)
+    imagesc(10*log10(abs(upp')))
+    subplot(3,1,2)
+    imagesc(10*log10(abs(downn')))
+    subplot(3,1,3)
+    imagesc(angle_graze,freq,R);
+    caxis([0 15]);
+    set(gca,'fontweight','bold','fontsize',14);
+    grid on;colorbar;axis('xy')
+    xlabel('Grazing angle (deg)');
+    ylabel('Frequency (Hz)')
+    title(sprintf('reflection loss (dB), tilt %6.2f',tilt(It)))
+    
+end
+
+yes=input('Save?');
+if ~isempty(yes)
+    save(sprintf('Refl_%s.mat',num2str(mean(tilt))),'angle_graze','freq','R','tilt','rd','c','Kstot','angles','Lz');
+end
+% disp('Select a frequency:');
+% tmp=ginput(1);
+% [junk,Iwant]=min(abs(tmp(2)-freq));
+% figure
+% plot(angle_graze,R(Iwant,:));
+% keyboard
+end
+
+
+%% MFP
+function save_result=matched_field_processor(model_name,tilt_offset,ranges,depths,Kstot,freq,SNR,rd,SNRmin,data_name)
+conj_flag=1;  %If one, conjugate data...
+
+%%%%%Prepare data
+%SNRmin=15;keyboard
+%%%If SNRmin is a sclar, it is a dB SNR value threshold to select frequencies
+%       If SNRmin is a vector, it is a list of frequencies.
+if length(SNRmin)==1
+    Igood=find(SNR>=SNRmin);
+    freq=freq(Igood);
+    disp(sprintf('Frequencies to process at %i dB SNR: %s',SNRmin,mat2str(freq,4)));
+    
+else
+    
+    Igood=zeros(length(SNRmin),1);  %Iwant will be indicies in model frequencies that match FFT bins in index
+    
+    for If=1:length(SNRmin)
+        [junk,Igood(If)]=min(abs(SNRmin(If)-freq));
+    end
+    freq=freq(Igood);
+    disp(sprintf('Frequencies to process, hard wired: %s',mat2str(freq,4)));
+    if length(unique(Igood))~=length(Igood),disp('WARNING! Frequencies requested via SNRmin not available...');end
+end
+
+Kstot=Kstot(:,:,Igood);
+disp(sprintf('Loading model: %s',model_name));
+model=load(model_name);
+prompt={'Number of modes to model:'};
+name='Parameters for Matched Field Processing';
+numlines=1;
+defaultanswer={'all'};
+answer=inputdlg(prompt,name,numlines,defaultanswer);
+if strfind(answer{1},'all')
+    max_mode= size(model.kr{1},2);
+    
+else
+    max_mode=min([eval(answer{1}) size(model.kr{1},2)]);
+end
+model.U=model.U(:,:,1:max_mode);
+model.kr{1}=model.kr{1}(:,1:max_mode);
+%keyboard
+
+%%Extract model frequencies...
+
+Iwant=zeros(length(freq),1);  %Iwant will be indicies in model frequencies that match FFT bins in index
+for If=1:length(freq)
+    [junk,Iwant(If)]=min(abs(model.freq-freq(If)));
+end
+
+
+%%%%%Prepare model%%%%
+%keyboard
+%%Remove bad channels, if any
+Igood=zeros(1,length(rd));
+for I=1:length(rd)
+    [junk,Igood(I)]=min(abs(model.rd-rd(I)));
+end
+
+Igood_source=zeros(1,length(depths));
+for I=1:length(depths)
+    [junk,Igood_source(I)]=min(abs(model.rd-depths(I)));
+end
+
+model.sd=model.rd(Igood_source);
+model.Urd=model.U(Igood,:,:);
+
+model.U=model.U(Igood_source,:,:);
+model.rd=model.rd(Igood);
+
+kk=2*pi*model.freq(Iwant)./1495;
+
+%Mistake in linear tilt calculation
+%rd_cum=rd./cumsum(rd);
+
+rd_cum=-(rd-min(rd))./(max(rd)-min(rd));
+%%generate replicas
+% weight modes by mode excitation
+
+% Irtest=25;
+% Iztest=5;
+for Itilt=1:length(tilt_offset)
+    fprintf('tilt: %6.2f\n',tilt_offset(Itilt));
+    tilt_matrix=exp(-1i*tilt_offset(Itilt)*rd_cum'*kk); %[depths frequency]
+    
+    for If=1:length(freq)
+        ck=(model.kr{1}(Iwant(If),:).');
+        tiltt=tilt_matrix(:,If);
+        Ks=squeeze(Kstot(:,:,If));
+        Ks=Ks/trace(Ks);
+        if conj_flag==1
+            Ks=conj(Ks);  %Need to do this since MATLAB and SAGA definitions of Fourier Transform different than Comp. Ocean. Acoust.
+        end
+        for Iz=1:length(depths)
+            
+            [junk,isd]=min(abs(model.sd-depths(Iz)));
+            a = squeeze(model.U( isd, Iwant(If), : ));
+            phi = squeeze(model.Urd(:,Iwant(If),:)) * diag( a, 0 );	% scale modes by a
+            
+            % ******************************************************
+            % form pressure field
+            % ******************************************************
+            
+            phase = diag( 1.0 ./ sqrt( ck ) ) * exp( 1i * ck * ranges ) * diag( sqrt( 2 * pi ./ ranges ) );
+            
+            Ibad = isnan(real(phase));
+            phase(Ibad)=0;
+            
+            p0 = phi * phase;  % [rd Nm] x [Nm ranges] = [rd ranges]
+            
+            p=(tiltt*ones(1,length(ranges))).*p0;
+            %Add tilt correction here..
+            
+            %temp=squeeze(Kstot(:,:,If))*p;  % [rd rd] x [rd ranges] =[rd ranges]
+            for Ir=1:length(ranges)
+                replica=p(:,Ir)/norm(p(:,Ir));
+                amb(Iz,Ir,If)=real(replica'*Ks*replica);
+                
+                %             if Iztest==Iz&&Irtest==Ir
+                %                 testdata(:,:,If)=p(:,Ir)*p(:,Ir)';
+                %             end
+            end
+            
+        end
+    end
+    
+    max_corr=squeeze(max(max(amb)))';
+    amb_tot=sum(amb,3)/length(freq);
+    %Iamb=find(max_corr>0.7);amb_tot=sum(amb(:,:,Iamb),3)/length(Iamb);  %Trim poor results
+    figure
+    %     for I=1:length(freq)
+    %         imagesc(ranges,depths,squeeze(amb(:,:,I)));
+    %         colorbar;caxis([0 1]);
+    %         title(sprintf('Frequency: %6.2f',freq(I)));
+    %         pause
+    %     end
+    %imagesc(ranges,depths,amb_tot);caxis([0 1]);
+    contourf(ranges/1000,depths,amb_tot,0:0.1:1);
+    caxis([0.2 1]);
+    cmap=colormap;colormap(cmap(1:4:end,:));
+    set(gca,'fontweight','bold','fontsize',14);xlabel('range (km)');ylabel('depth (m)');grid on
+    colorbar('fontweight','bold','fontsize',14);
+    %title(sprintf('Frequencies: %s',mat2str(round(freq),4)));
+    axis('ij')
+    if length(SNRmin)>1
+        SNRmin=NaN;
+    end
+    if length(freq)<6
+        titlestr=sprintf('Tilt: %6.2f, Frequencies to process at %i dB SNR: %s',tilt_offset(Itilt),SNRmin,mat2str(freq,4));
+    else
+        titlestr=sprintf('Tilt: %6.2f, %i frequencies to process at %i dB SNR',tilt_offset(Itilt),length(freq),SNRmin);
+        
+    end
+    %     if conj_flag==1
+    %         titlestr=[titlestr ' Conjugated Kstot'];
+    %
+    %     end
+    title(titlestr);
+    tmp=[freq' squeeze(max(max(amb)))];
+    fprintf('Frequency: %6.2f, Correlations:  %6.2f\n',tmp');
+    fprintf('Total corr: %6.2f \n',max(max(amb_tot)));
+    
+    save_result=input('Enter any character to save images and write CSDM to file: ');
+    if ~isempty(save_result)
+        savename=sprintf('MFP_result_%s_tilt%4.2f_Nfreqs%i_SNRmin%i',data_name,tilt_offset(Itilt),length(freq),SNRmin);
+        disp(savename)
+        save([savename '.mat'], 'ranges','depths','amb','amb_tot','SNRmin','freq','data_name','model_name');
+        
+        figure(gcf)
+        orient landscape
+        
+        print(gcf,'-djpeg',[savename '.jpg']);
+    end
+end %tilt
+end %matched_field_processor
+
+%% Correlograms
+function [mean_corr,tindex,TT_plot,pwr,pwr_tot,yscale]= create_incoherent_correlogram(TT,FF,B,param,flo,fhi)
+%function [mean_corr,tindex,TT_plot,pwr,pwr_tot,yscale]= create_incoherent_correlogram(TT,FF,B,param,flo,fhi)
+
+ici_range=param.ici_range;  %Autocorrelation lag to examine
+time_sample=param.time_sample;  %sec,  amount of spectrogram time columns to process for autocorrelation..
+ovlap=param.ovlap;  %How much to shift the autocorrelation window between samples
+teager=param.teager;  %Apply teager-kaiser operation to spectrogram before processing...
+
+% A single event may thus persist for up to time_sample/dX times, 1/(1-ovlap) times
+
+
+
+%freq=flo:bandwidth:fhigh;
+B=10*log10(B+eps);
+if teager
+    B=B(:,2:end-1).^2-(B(:,1:end-2).*B(:,3:end));
+end
+dT= TT(2)- TT(1);
+dF= FF(2)- FF(1);
+Ncol=length(find( TT<=time_sample));  %Number of columns to process at a time:
+Iindex=1:floor((1-ovlap)*Ncol):length( TT);
+tindex=dT*Iindex;  %Time axis of absolute time
+dX=tindex(2)-tindex(1);  %X axis of new correlation image
+Ntime=length(Iindex)-1;
+yscale=dT*(0:(Ncol-1));
+
+Igood=find( FF>flo& FF<fhi);
+maxlag = Ncol - 1;  %maximum autocorrelation lag
+laggs=-maxlag:maxlag;
+I_range=find(laggs*dT>ici_range(1)&laggs*dT<ici_range(2));
+TT_plot=laggs(I_range)*dT;
+mean_corr=zeros(length(I_range),Ntime);
+pwr=zeros(Ntime,Ncol);
+pwr_tot=zeros(Ntime);
+xcovv=zeros(length(Igood),length(I_range));
+
+for I=1:Ntime
+    if rem(I,100)==0,disp(sprintf('%6.2f percent done',100*I/Ntime));end
+    
+    try
+        A= B(Igood,Iindex(I)+(0:(Ncol-1)));
+        
+        [N,M] = size(A);  %Autocorrelate columns
+        X=fft(A'-ones(M,1)*mean(A'), 2^nextpow2(2*M-1));
+        tmp=ifft(abs(X).^2);
+        
+        tmp1=[tmp(end-maxlag+1:end,:);tmp(1:maxlag+1,:)];
+        tmp=tmp1./(ones(size(tmp1,1),1)*tmp1(maxlag+1,:));
+        
+        xcovv=tmp(I_range,:);
+        %end
+        mean_corr(:,I)=median(xcovv')';
+        pwr(I,:)=sum(A)/length(Igood);
+        pwr_tot(I)=max(pwr(I,:));
+    catch
+        xcovv=[];
+        %mean_corr(I,:)=[];
+    end
+    %     figure(2);
+    %     subplot(2,1,1)
+    %     imagesc([], FF(Igood)/1000,A);
+    %     subplot(2,1,2)
+    %     imagesc(TT_plot, FF(Igood)/1000,xcovv{I});
+    %     caxis([0 1]);
+    %     colorbar
+    %     pause(0.25);
+    
+    
+end  %Ntime
+end %create_incoherent_correlogram
+
+function [XC_eq,XC,Trel,tt,pwrr]= create_coherent_correlogram(x,fs,param,flo,fhi)
+%function [XC_eq,XC,Trel,tt,pwr]= create_coherent_correlogram(x,fs,param,flo,fhi)
+% Trel: relative time
+% tt: lag times...
+
+ovlap=round(param.ovlap*param.Nfft);
+Nfft=param.Nfft;
+teager=param.teager;  %Apply teager-kaiser operation to spectrogram before processing...
+ici_range=param.ici_range;
+
+%noiseT=param.noiseT;
+%alpha=param.alpha;
+noiseT=0.01;
+alpha=0.01;
+
+frange=[0.8*flo flo fhi fhi+0.2*flo];
+[N,Fo,Ao,W] = firpmord(frange,[0 1 0],[0.05 0.01 0.05],fs);
+Bfilt = firpm(N,Fo,Ao,W);
+y=filtfilt(Bfilt,1,x-mean(x));
+%Adaptive filter option
+
+if teager==1
+    y=y(2:end-1).^2-(y(1:end-2).*y(3:end));
+    
+end
+
+index1=1:round((Nfft-ovlap)):length(y);
+index1=index1(index1<=length(y));
+Ncoll=length(index1)-1;
+XC=zeros(Nfft+1,Ncoll);
+pwrr=zeros(1,Ncoll);
+for I=1:Ncoll
+    try
+        Indexx=index1(I)+(0:(Nfft-1));
+        tmp=xcov((hilbert(hanning(length(Indexx)).*y(Indexx))),'coeff');  %Delphine, note that this should be windowed...
+        
+        XC(:,I)=tmp((Nfft-1):end);
+        pwrr(I)=tmp(Nfft-1);
+        %%Mulitpath can generate strong correlations.  Surface-reflected paths should have negative
+        %%correlations.  Therefore, only keep levels greater than zero.
+        %Iplus=find(XC(:,I)<=0);
+        %XC(Iplus,I)=0;
+    catch
+        disp('Problem');
+    end
+end
+XC=10*log10(abs(XC));
+
+tt=(0:Nfft)/fs;
+dT=ovlap/fs;
+%Tabs=twant(Itimes)+datenum(0,0,0,0,0,index1/fs);
+Trel=index1/fs;
+
+%%Adaptively equalize along y-axis
+Inoise=round(fs*noiseT);  %y-axis bins to estimate autocorrelation level
+XC_eq=zeros(size(XC));
+eq=mean(XC(2:Inoise,:));  %Original equalization estimate
+
+for I=1:size(XC,1)
+    eq=(1-alpha).*eq+alpha.*XC(I,:);
+    XC_eq(I,:)=XC(I,:)-eq;
+end
+
+%Trim away portions of autocorrelation that will not have creaks (ici_range)
+Iwant=find(tt>ici_range(1)&tt<ici_range(2));
+
+%Remove times not of interest, normalize zero lag to one.
+XC=XC(Iwant,:);
+XC_eq=XC_eq(Iwant,:);
+%XC0=XC0(Iwant,:);
+%signn=signn(Iwant,:);
+tt=tt(Iwant);
+%Quick click removal...
+
+
+
+
+
+end  %create_coherent_correlogram
+
+%% Ellipse
+function h=ellipse(ra,rb,ang,x0,y0,C,Nb)
+% Ellipse adds ellipses to the current plot
+%
+% ELLIPSE(ra,rb,ang,x0,y0) adds an ellipse with semimajor axis of ra,
+% a semimajor axis of radius rb, a semimajor axis of ang, centered at
+% the point x0,y0.
+%
+% The length of ra, rb, and ang should be the same.
+% If ra is a vector of length L and x0,y0 scalars, L ellipses
+% are added at point x0,y0.
+% If ra is a scalar and x0,y0 vectors of length M, M ellipse are with the same
+% radii are added at the points x0,y0.
+% If ra, x0, y0 are vectors of the same length L=M, M ellipses are added.
+% If ra is a vector of length L and x0, y0 are  vectors of length
+% M~=L, L*M ellipses are added, at each point x0,y0, L ellipses of radius ra.
+%
+% ELLIPSE(ra,rb,ang,x0,y0,C)
+% adds ellipses of color C. C may be a string ('r','b',...) or the RGB value.
+% If no color is specified, it makes automatic use of the colors specified by
+% the axes ColorOrder property. For several circles C may be a vector.
+%
+% ELLIPSE(ra,rb,ang,x0,y0,C,Nb), Nb specifies the number of points
+% used to draw the ellipse. The default value is 300. Nb may be used
+% for each ellipse individually.
+%
+% h=ELLIPSE(...) returns the handles to the ellipses.
+%
+% as a sample of how ellipse works, the following produces a red ellipse
+% tipped up at a 45 deg axis from the x axis
+% ellipse(1,2,pi/8,1,1,'r')
+%
+% note that if ra=rb, ELLIPSE plots a circle
+%
+
+% written by D.G. Long, Brigham Young University, based on the
+% CIRCLES.m original
+% written by Peter Blattner, Institute of Microtechnology, University of
+% Neuchatel, Switzerland, blattner@imt.unine.ch
+
+
+% Check the number of input arguments
+
+if nargin<1,
+    ra=[];
+end;
+if nargin<2,
+    rb=[];
+end;
+if nargin<3,
+    ang=[];
+end;
+
+%if nargin==1,
+%  error('Not enough arguments');
+%end;
+
+if nargin<5,
+    x0=[];
+    y0=[];
+end;
+
+if nargin<6,
+    C=[];
+end
+
+if nargin<7,
+    Nb=[];
+end
+
+% set up the default values
+
+if isempty(ra),ra=1;end;
+if isempty(rb),rb=1;end;
+if isempty(ang),ang=0;end;
+if isempty(x0),x0=0;end;
+if isempty(y0),y0=0;end;
+if isempty(Nb),Nb=300;end;
+if isempty(C),C=get(gca,'colororder');end;
+
+% work on the variable sizes
+
+x0=x0(:);
+y0=y0(:);
+ra=ra(:);
+rb=rb(:);
+ang=ang(:);
+Nb=Nb(:);
+
+if ischar(C),C=C(:);end;
+
+if length(ra)~=length(rb),
+    error('length(ra)~=length(rb)');
+end;
+if length(x0)~=length(y0),
+    error('length(x0)~=length(y0)');
+end;
+
+% how many inscribed elllipses are plotted
+
+if length(ra)~=length(x0)
+    maxk=length(ra)*length(x0);
+else
+    maxk=length(ra);
+end;
+
+% drawing loop
+
+for k=1:maxk
+    
+    if length(x0)==1
+        xpos=x0;
+        ypos=y0;
+        radm=ra(k);
+        radn=rb(k);
+        if length(ang)==1
+            an=ang;
+        else
+            an=ang(k);
+        end;
+    elseif length(ra)==1
+        xpos=x0(k);
+        ypos=y0(k);
+        radm=ra;
+        radn=rb;
+        an=ang;
+    elseif length(x0)==length(ra)
+        xpos=x0(k);
+        ypos=y0(k);
+        radm=ra(k);
+        radn=rb(k);
+        an=ang(k);
+    else
+        rada=ra(fix((k-1)/size(x0,1))+1);
+        radb=rb(fix((k-1)/size(x0,1))+1);
+        an=ang(fix((k-1)/size(x0,1))+1);
+        xpos=x0(rem(k-1,size(x0,1))+1);
+        ypos=y0(rem(k-1,size(y0,1))+1);
+    end;
+    
+    co=cos(an);
+    si=sin(an);
+    the=linspace(0,2*pi,Nb(rem(k-1,size(Nb,1))+1,:)+1);
+    %  x=radm*cos(the)*co-si*radn*sin(the)+xpos;
+    %  y=radm*cos(the)*si+co*radn*sin(the)+ypos;
+    h(k)=line(radm*cos(the)*co-si*radn*sin(the)+xpos,radm*cos(the)*si+co*radn*sin(the)+ypos);
+    set(h(k),'color',C(rem(k-1,size(C,1))+1,:));
+    
+end;
+
+end
+
+
+function c = cond2(A)
+%COND2   Condition number with respect to inversion.
+%   COND2(X) returns the 2-norm condition number (the ratio of the
+%   largest singular value of X to the smallest).  Large condition
+%   numbers indicate a nearly singular matrix.
+%
+%   Modified to handle only the 2-norm, eliminate some error checking,
+%   and other condition testing.
+%      Chris Nations  8/20/02
+
+s = svd(A);
+if any(s == 0)   % Handle singular matrix
+    c = Inf;
+else
+    c = max(s)./min(s);
+end
+end
+
+function [area,a,b,ang,angax] = ellipsparms(S,critval,MD,VM)
+%ELLIPSPARMS  Calculates parameters of bivariate normal ellipse from covariance.
+%   [AREA,A,B,ANG] = ELLIPSPARMS(S,CRITVAL,MD,VM) where
+% S is the covariance matrix,
+% CRITVAL is the critical value from the chi-squared distribution,
+% MD is the mean position of the DASAR array,
+% VM is the estimated location.
+% It returns
+%   AREA of the ellipse,
+%   A and B are lengths of major and minor full axes respectively, and
+% ANG is angle in radians ccw of  major semi-axis.
+%   The angle is referenced to an imaginary vector emanating from the center of the
+%   DASAR array and directed toward the estimated location.
+%   Note: index matrices using vec representation.
+% ANGAX is angle in radians of major axis measured ccw from +X axis
+%
+% The adjustments to ANG (last set of if/then statements) reflect the
+%   angle of the major axis 180 degrees about the ray directed from MD to
+%   VM (if necessary) so that the major axis is always directed away from
+%   MD.  The absolute orientation of the ellipse is unchanged; only its
+%   "direction" relative to the center of the DASAR array may be adjusted.
+
+dp = VM-MD;
+theta = atan2(dp(2),dp(1));     % 4-quadrant inverse tangent: angle from MD to VM
+detS = det(S);
+if isnan(S(1)) || (detS<=0) || min(diag(S))<0,
+    area = nan;  a = nan;  b = nan;  ang = nan;  angax = nan;
+else
+    area = pi*sqrt(detS)*critval;
+    [V,L] = eig(S);
+    d = 2*sqrt(critval*diag(L));  % Lengths of both axes.
+    [d,i] = sort(d);
+    a = d(2);  b = d(1);          % a & b: major & minor axis lengths, respectively.
+    v = V(:,i(2));                % dominant eigenvector
+    angax = atan(v(2)/v(1));      % Absolute orientation of ellipse major axis
+    if angax<0,                   % Returns an angle between 0 and pi following
+        angax = angax+pi;           %    math convention (0 radians = 90 degrees, East;
+    end                           %    pi radians = 270 degrees, West).
+    ang = angax;
+    if ((theta>-pi/2) && (theta<pi/2)  && (ang>(pi/2+theta))), % Adjust angle for
+        ang = ang-pi;                                          %   estimated position
+    elseif ((theta>=pi/2) && (ang<(theta-pi/2))),             %   relative to center
+        ang = ang+pi;                                          %   of DASAR array.
+    elseif ((theta<=-pi/2) && (ang<(3*pi/2+theta))),
+        ang = ang+pi;
+    end
+end
+end
+
+%% write_covmat
+
+function status=write_covmat(freqvec,Cov,depth,srcname,titlestr)
+% write_covmat(farray,Ks,depth,srcname,titlestr)
+%
+% Write Covariance Matrices to file cov_dpss.in
+%
+% farry = vector of frequencies in Hertz
+% Ks     = matrix of concatenated covariance matrices
+%           this must be of size [Nel Nel nfreq]
+% depth  = hydrophone depths.  First element is shallowest depth
+% srcname =file name
+% titlestr = title to write to top of input file.
+%[n]= size(Cov,1);
+%nf=size(Cov,3);
+%if(nf ~= length(freqvec))
+%   fprintf(1,'size(Cov) = [%d %d], length(freqvec)=%d\n', ...
+%           size(Cov),length(freqvec));
+%  error('sizes of Cov and freqvec are not compatible');
+%end
+
+[n,m,F]= size(Cov);
+if(m ~= n)
+    fprintf(1,'size(Cov) = [%d %d], length(freqvec)=%d\n', ...
+        size(Cov),length(freqvec));
+    error('sizes of Cov and freqvec are not compatible');
+end
+if(F ~=length(freqvec))
+    fprintf(1,'size(Cov) = [%d %d], length(freqvec)=%d\n', ...
+        size(Cov),length(freqvec));
+    error('sizes of 3Cov and freqvec are not compatible');
+end
+
+if(n ~= length(depth))
+    fprintf(1,'size(Cov) = [%d %d], length(freqvec)=%d\n', ...
+        size(Cov),length(freqvec));
+    error('sizes of Cov and depth are not compatible');
+end
+
+
+%depth=rd;
+%disp('WARNING! CONJUGATING COV to be used by SAGA!');
+%Cov=conj(Cov);
+
+fidout =  fopen(sprintf('%s.in',srcname),'w');
+
+for ifreq=1:length(freqvec)
+    fprintf(fidout,' %s\n',titlestr);
+    fprintf(fidout,' %f     0.000 dB\n',freqvec(ifreq));
+    fprintf(fidout,' %d\n',n);
+    fprintf(fidout,' %8.2f\n',depth);
+    %   cols = [ (ifreq-1)*n+1:ifreq*n ];
+    %   Cx = Cov(:,cols); % cut one cov-matrix out of the bunch
+    Cx=squeeze(Cov(:,:,ifreq));
+    for row=1:n
+        for col=1:n
+            fprintf(fidout,'%10d%10d (%E,%E) \n',row,col, ...
+                real(Cx(row,col)),imag(Cx(row,col)));
+        end
+    end
+end
+fprintf(fidout,'!  \n');
+status=fclose(fidout);
+unix('ls -l *.in');
+end %write_covmat
+
+%% Audio files
+function audio_stop(player, ~, handles)
+%	Set controls
+ispaused	=	(player.CurrentSample > 1) &&...
+    (player.CurrentSample < player.TotalSamples);
+if	~ispaused
+    set(handles.pushbutton_playsound, 'String', 'Play');
+    set(handles.pushbutton_pausesound, 'String', 'Pause');
+    set(handles.pushbutton_pausesound, 'Enable', 'off');
+end
+
+end %audio_stop
+
+
+function audio_timer(player, ~, handles)
+
+%	Get handle to marker line
+hline	=	handles.hline;
+
+% check if sound is playing, then only plot new marker
+if strcmp(player.Running, 'on')
+    % get the currently playing sample #
+    x	=	player.CurrentSample;
+    Fs	=	handles.audioFs;
+    
+    % change position of marker line
+    set(hline,'XData',x/Fs*[1 1]);
+    drawnow expose;
+end
+end %audio_timer
+
 % --------------------------------------------------------------------
 
 %% 
@@ -9840,9 +9841,16 @@ function bowhead_detector_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Convert bowhead whale files into annotation files....
+
+%Load list of file names to be converted, along with criteria for filtering
+% the results into annotation (e.g. geographic restrictions...)
 [list_names,filter_params]=load_bowhead_detector_params(handles.outputdir);
 
-keyboard;
+for I=1:length(list_names)
+   success_flag=convert_automated_bowhead_into_annotations(list_names{I},filter_params); 
+    
+end
+
 
 end
 
