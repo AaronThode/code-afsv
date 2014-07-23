@@ -27,8 +27,8 @@ Description	=	{'Start Time',...
     'Modulation (Hz)',...
     'Confidence (1-5)',...
     'Comments', ...
-    'Link Names', ...
-    'Link HashTags'};
+    'Link Names (if you want to link this annotation to other annotation files)', ...
+    'Link HashTags (hashtags of linked annotations)'};
 
 %	Default values
 Template.start_time			=	0;
@@ -59,7 +59,7 @@ Template.modulation			=	0;
 Template.confidence			=	3;
 Template.comments			=	'';
 Template.link_names         =   '';
-Template.link_HashTags      =   '';
+Template.link_hashtags      =   '';
 
 edit_fields			=	fieldnames(Template);
 edit_fields(5:14)	=	[];

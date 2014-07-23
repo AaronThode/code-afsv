@@ -63,6 +63,7 @@ Site5_northing=[
     0
     7816110];
 
+%Save data to station_locations output variable
 station_locations.northing=Site5_northing;
 station_locations.easting=Site5_easting;
 
