@@ -38,9 +38,9 @@ try
     GUI_params	=	[];
     
     Ns=length(data.goodName);
-    
+    keyword=filter_params.keyword;
     for J=1:Ns
-        annotation_names{J}	=	[data.goodName{J} '-notes-BowheadAutomated.mat'];
+        annotation_names{J}	=	sprintf('%s-notes-BowheadAutomated-%s.mat',data.goodName{J},keyword);
         Data_all{J}				=	Defaults;
         
     end
@@ -111,6 +111,7 @@ try
         for J=1:Ns
             if isPresent(J)
                 Data_all{J}.Events(Icount(J)-1).link_hashtags=hashtags;
+                Data_all{J}.Events(Icount(J)-1).localization.station_position=station_position;
             end
             
         end
@@ -122,6 +123,7 @@ try
     
     for J=1:Ns
         Data=Data_all{J};
+        %Data.localization.station_position=station_position; %Store DASAR location data in annotation for future plotting.
         save(annotation_names{J},'Data','GUI_params');
         
     end
@@ -178,6 +180,7 @@ for Iname=1:length(names)
                    (station_position.northing(Istation)-location.position.location(2)).^2);
                newEvent.range=newEvent.localization.range/1000; %km
                newEvent.bearing=location.bearing(Istation);
+               newEvent.localization.bearings_all=location.bearing;  %Store all bearings for plotting..
            catch
               fprintf('convert_automated_bowhead_into_annotations: You cannot assign a range to this event: no position associated with this detection.\n'); 
            end

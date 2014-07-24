@@ -1,4 +1,3 @@
-%%This is a silly test for Time Warp
 
 function varargout = AllFile_specgram_viewer(varargin)
 %Edited considerably by Jit Sarkar
@@ -6470,15 +6469,15 @@ end %plot_events
 %	Pops up new window with event details
 function	hdlg	=	show_event_info(Event, Description, hdlg)
 
-if nargin < 3 || isempty(hdlg) || ~ishandle(hdlg)
-    hdlg	=	dialog('Windowstyle', 'normal');
-    pos		=	get(hdlg, 'Position');
+if nargin < 3 || isempty(hdlg) || ~all(ishandle(hdlg))
+    hdlg(1)	=	dialog('Windowstyle', 'normal');
+    pos		=	get(hdlg(1), 'Position');
     pos(3)	=	pos(3)*.75;
     pos(4)=pos(4)*1.5;
-    set(hdlg,'Position',pos);
+    set(hdlg(1),'Position',pos);
 else
-    figure(hdlg);
-    clf(hdlg);
+    figure(hdlg(1));
+    clf(hdlg(1));
 end
 
 %	Fetch details
@@ -6518,8 +6517,8 @@ Message{2,1}	=	datestr(Event.(names{1}), 'yyyy-mm-dd HH:MM:SS.FFF');
 Message=Message(:,Igood);
 
 %	Put details in window
-set(hdlg, 'Name', Title);
-htxt	=	uicontrol(hdlg, 'Style', 'edit',...
+set(hdlg(1), 'Name', Title);
+htxt	=	uicontrol(hdlg(1), 'Style', 'edit',...
     'Enable', 'on',...
     'Units', 'normalized',...;
     'Position', [0 0 1 1],...
@@ -6527,6 +6526,31 @@ htxt	=	uicontrol(hdlg, 'Style', 'edit',...
     'HorizontalAlignment','left',...
     'String', Message(:));
 
+% If localization info exists, plot it!
+if isfield(Event,'localization')
+     
+    if nargin < 3 || isempty(hdlg) || ~all(ishandle(hdlg))||length(hdlg)<2
+        hdlg(2)	=	dialog('Windowstyle', 'normal');
+        pos		=	get(hdlg(2), 'Position');
+        pos		=	get(hdlg(2), 'Position');
+        pos(1)=pos(1)/2;
+        set(hdlg(2),'Position',pos);
+        
+    else
+        figure(hdlg(2));
+        clf(hdlg(2));
+    end
+   
+   
+    DASAR_coords=[Event.localization.station_position.easting Event.localization.station_position.northing];
+    bearings=Event.localization.bearings_all;
+    Igood=find(~isnan(bearings));
+    VM=Event.localization.location;
+    A=Event.localization.major;
+    B=Event.localization.minor;
+    ANG=Event.localization.ellipse_ang;
+    [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,35);
+end
 
 end %show_event_info
 % --------------------------------------------------------------------

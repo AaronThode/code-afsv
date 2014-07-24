@@ -90,16 +90,9 @@ switch(answer{2})
         filter_params.easting=filter_params.easting-(2*xbuffer+dl);
     case 'East'
         filter_params.easting=filter_params.easting+(2*xbuffer+dl);
+    otherwise
+        return
+        
 end
+filter_params.keyword=answer{2};
 
-%Debug plotting
-%  figure(1)
-%  plot(Site5_easting,Site5_northing,'o');axis('equal');grid on
-%  hold on
-%  line([1 1]*filter_params.easting(1),filter_params.northing);
-%  line([1 1]*filter_params.easting(2),filter_params.northing);
-%  line(filter_params.easting,filter_params.northing(1)*[1 1]);
-%  line(filter_params.easting,filter_params.northing(2)*[1 1]);
-%
-
-% end debug
