@@ -31,7 +31,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 22-Jul-2014 11:45:56
+% Last Modified by GUIDE v2.5 25-Jul-2014 09:23:34
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -3445,8 +3445,15 @@ NDasar=7;
 theta=-2*ones(1,NDasar);
 kappa=theta;
 strr=upper('abcdefghijklm');
+
+if ~strcmp(handles.mydir(end-6),'S')
+    fprintf('Directory %s does not have form S***** \n',handles.mydir);
+    return
+end
 for Idasar=1:NDasar
     %%Assume final directoryname containing files is of the form 'S510G0/'
+    
+    
     handles.mydir(end-2)=strr(Idasar);
     %%S510G0T20100831T000000.gsi form
     handles.myfile(5)=strr(Idasar);
@@ -3486,11 +3493,12 @@ figure
 Ikeep=find(~isnan(theta(Igood))&theta(Igood)>0);
 [~,xg,yg]=plot_location(DASAR_coords(Igood,:),theta(Igood),Ikeep,VM,A,B,ANG);
 hold on
-VA_cords=str2double(answer{3})/1000;
+VA_cords=str2num(answer{3})/1000;
 tmp=(VA_cords-[xg yg]);
 plot(tmp(1),tmp(2),'o');
 range=sqrt(sum((VA_cords-VM/1000).^2));
 title(sprintf('Range of source from chosen location: %6.2f +/- %3.2f km, minor axis %3.2f km',range,A/1000,B/1000));
+fprintf('Position of location (can copy for annotation): %s\n',mat2str(VM,10));
 yes=menu('Print and Save?','Yes','No');
 if yes==1
     orient landscape
@@ -5509,6 +5517,13 @@ guidata(hObject, handles);
 
 end
 
+% --- Executes on button press in pushbutton_next_linked_annotation.
+function pushbutton_next_linked_annotation_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_next_linked_annotation (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+end %pushbutton_next_linked_annotation_Callback
 
 %	Supporting functions, i.e. not auto-generated callbacks
 function	status	=	dependency_check()
@@ -5541,7 +5556,7 @@ set(handles.pushbutton_notes_screen, 'Enable', opt);
 end  %disable_notes_nav
 
 
-function	handles		=	load_notes_file(handles, new_folder)
+function	handles		=	load_notes_file(handles, new_folder,annotation_file_name)
 
 
 %%	First check that current notes are saved before proceeding
@@ -5644,54 +5659,63 @@ else
     manual_flag	=	file_flag{choice};
 end
 
+%Check to see if a specific annotation file has already been requested...
 
-sel_names	=	[];
-
-if	~isempty(listing)
-    %	Ask user which file(s) to load
-    N_files		=	length(listing);
-    list_files	=	cell(N_files,1);
-    for	ii	=	1:N_files
-        list_names{ii}	=	listing(ii).name;
-    end
-    
-    %AARON note: example of listdlg
-    [Sel, OK]	=	listdlg('ListString', list_names,...
-        'Name', 'Available notes',...
-        'PromptString', 'Select file(s) to load:',...
-        'OKString', 'Load',...
-        'CancelString', 'New');
-    if	(OK == 0) || isempty(Sel)
-        sel_names	=	[];
+if nargin>2 && ~isempty(annotation_file_name)  %if annotation_file_name has been fed in...
+    if exist(annotation_file_name,'file')==2
+        file_name	=	annotation_file_name;
+        sel_names{1}=file_name;
+        Sel=1;
     else
-        sel_names	=	list_names(Sel);
+        fprintf('Requested annotation file %s does not exist!\n',annotation_file_name);
+    end
+else  %have user select annotation file interactively
+    sel_names	=	[];
+    if	~isempty(listing)
+        %	Ask user which file(s) to load
+        N_files		=	length(listing);
+        list_files	=	cell(N_files,1);
+        for	ii	=	1:N_files
+            list_names{ii}	=	listing(ii).name;
+        end
         
-        %	If just one file, then make it the target of future saves
-        if	length(Sel) == 1 && manual_flag
+        %AARON note: example of listdlg
+        [Sel, OK]	=	listdlg('ListString', list_names,...
+            'Name', 'Available notes',...
+            'PromptString', 'Select file(s) to load:',...
+            'OKString', 'Load',...
+            'CancelString', 'New');
+        if	(OK == 0) || isempty(Sel)
+            sel_names	=	[];
+        else
+            sel_names	=	list_names(Sel);
             
-            file_name	=	sel_names{1};
-        elseif length(Sel) == 1 && ~manual_flag
-            %%keep file name
-            
-            
-        elseif	length(Sel) > 1
-            %	Otherwise new merged file
-            user_name	=	'merged';
-            file_name	=	[fname(Istart:end) '-' user_name '.mat'];
+            %	If just one file, then make it the target of future saves
+            if	length(Sel) == 1 && manual_flag
+                
+                file_name	=	sel_names{1};
+            elseif length(Sel) == 1 && ~manual_flag
+                %%keep file name
+                
+                
+            elseif	length(Sel) > 1
+                %	Otherwise new merged file
+                user_name	=	'merged';
+                file_name	=	[fname(Istart:end) '-' user_name '.mat'];
+            end
         end
-    end
-    
-    %	Make sure file name for new files is unique
-    if	length(Sel) ~= 1	%i.e. we're not working with a specific file
-        ii	=	0;
-        while	any(strcmp(file_name, list_names))
-            ii	=	ii + 1;
-            file_name	=	[fname(Istart:end) '-' user_name '-' num2str(ii) '.mat'];
+        
+        %	Make sure file name for new files is unique
+        if	length(Sel) ~= 1	%i.e. we're not working with a specific file
+            ii	=	0;
+            while	any(strcmp(file_name, list_names))
+                ii	=	ii + 1;
+                file_name	=	[fname(Istart:end) '-' user_name '-' num2str(ii) '.mat'];
+            end
         end
-    end
-    
-end  %if listing is not empty (i.e. an annotation file already exists)
-
+        
+    end  %if listing is not empty (i.e. an annotation file already exists)
+end  %annotation_file_name
 
 %%	New file with default data template
 [Defaults.Description, Defaults.Template, edit_fields]	=	load_default_annotation_template();
@@ -5762,7 +5786,7 @@ else
     Data.Events(1)	=	[];
     
     
-    if	length(Sel) > 1 & manual_flag
+    if	length(Sel) > 1 && manual_flag
         %	Since this is a new merged file, turn save on, and read_only off
         handles.notes.saved	=	false;
         set(handles.checkbox_notes_readonly, 'Value', 0);
@@ -6843,6 +6867,11 @@ Ichan	=	eval(get(handles.edit_chan,'String'));
 try
    % [x,t,Fs,tmin,tmax,head]	=	...
     %load_data(filetype,tdate_start,tlen,Ichan,handles)
+    
+    if ~exist(fullfile(handles.mydir,handles.myfile),'file')
+        fprintf('%s does not exist! \n',fullfile(handles.mydir,handles.myfile));
+        return
+    end
     [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype, ...
         handles.tdate_start,tlen,Ichan,handles);
     
@@ -9968,6 +9997,5 @@ uiwait(msgbox(sprintf('Conversion finished')));
 
 
 end
-
 
 
