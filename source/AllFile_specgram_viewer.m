@@ -5348,32 +5348,6 @@ switch sig_type
         warning('Signal type not recognized for defaults');
 end
 
-%if GSI file, get bearing of annotation
-switch handles.filetype
-    case 'GSI'
-        if isfield(Event,'bearing')
-            [Event.bearing,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,[Times Freq]);
-            
-            if isfield(Event,'localization')
-                station_position=Event.localization.station_position;
-                DASAR_coords=[station_position.easting station_position.northing];
-                Istation=str2num(Event.Istation);
-                Event.localization.bearings_all(Istation)=Event.bearing;
-                theta=Event.localization.bearings_all;
-                kappa=Event.localization.kappa;
-                Ikeep=find(~isnan(theta));
-                [Event.localization.location,Event.localization.Qhat,~,Event.localization.outcome] = vmmle_r(theta(Ikeep),DASAR_coords(Ikeep,:),'h',kappa(Ikeep));
-                Event.position=num2str(Event.localization.location);
-                Event.localization.range=sqrt((station_position.easting(Istation)-Event.localization.location(1)).^2+ ...
-                   (station_position.northing(Istation)-Event.localization.location(2)).^2);
-                Event.range=num2str(Event.localization.range/1000);
-                Event.localization.Nused=length(Ikeep);
-            end
-            
-        end
-        
-end
-    
 %Finally, determine hash tag...
 %Check that hash tag makes sense--if our selection is too far ahead or
 %behind in time, selct a new one...
@@ -5388,6 +5362,30 @@ ButtonName = questdlg('What is this annonation status?', ...
 if strcmp(ButtonName,'Completely New')||~isfield(Event,'hash_tag')||isempty(Event.hash_tag)
     Event.hash_tag      =   2*datenum(1970,1,1,0,0,0)-now;  %manual hashtags go back into past, automated hashtags into future.
 end
+
+
+%if GSI file, get bearing of annotation
+switch handles.filetype
+    case 'GSI'
+        
+        %If this is a brand new creation with empty link file...
+        if isempty(Event.link_names)
+            Event.link_names=handles.notes.file_name;
+            Event.link_hashtags=num2str(Event.hash_tag);
+            Event.Istation=num2str(1);
+        end
+        
+   
+        if isfield(Event,'bearing')
+            [bearing,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,[Times Freq]);
+            %Event.bearing=num2str(bearing);
+            if isfield(Event,'localization')&&strcmp(ButtonName,'Replacing')
+                 Event=update_GSI_localization(Event,str2num(Event.Istation),bearing,kappa);
+                
+            end
+        end
+end
+
 
 
 
@@ -5414,6 +5412,14 @@ if	~isempty(Event)
 end
 end
 
+
+            
+function update_annotation_linkages(tempEvent,Istation)
+   
+
+end
+
+
 % --- Executes on button press in pushbutton_notes_edit.
 function pushbutton_notes_edit_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_notes_edit (see GCBO)
@@ -5435,6 +5441,15 @@ end
 %	Delete entry if enabled
 delete_on	=	get(handles.checkbox_notes_delete, 'Value');
 if	delete_on
+    
+    %Before delete, check for linked annotation.
+    if isfield(handles.notes.Data.Events(i_sel),'localization')
+%         tempEvent=handles.notes.Data.Events(i_sel);
+%         Istation=tempEvent.Istation;
+%         tempEvent.link_hashtags(Istation)=-1;
+%         tempEvent=update_localization(handles.notes.Data.Events(i_sel),NaN);
+%         update_annotation_linkages(tempEvent,Istation);
+    end
     handles.notes.Data.Events(i_sel)	=	[];
     N	=	length(handles.notes.Data.Events);
     if	N == 0
@@ -5656,22 +5671,20 @@ switch handles.filetype
         
         %Check that localization information has not changed.  If it has,
         %it means the position has been recalculated...
-        if ~strcmp(newEvent.position,currentEvent.position)
+        handles.notes.saved=1;
+        if sum(round(str2num(currentEvent.position))-round(str2num(newEvent.position)))~=0
             %newEvent.bearing=currentEvent.bearing;
             %newEvent.range=currentEvent.range;
-            newEvent.range=sqrt((newEvent.localization.station_position.easting(Iarray)-currentEvent.localization.location(1)).^2+ ...
-                   (newEvent.localization.station_position.northing(Iarray)-currentEvent.localization.location(2)).^2);
-               
-            newEvent.position=currentEvent.position;
+            
             newEvent.localization=currentEvent.localization;
-            newEvent.localization.range=newEvent.range;
-            newEvent.range=num2str(newEvent.range/1000);
-            %newEvent.localization.bearings_all(Iarray_org)=currentEvent.localization.bearings_all(Iarray_org);
+            newEvent=update_GSI_localization(newEvent,Iarray_org,str2num(currentEvent.bearing));
+          
             handles.notes.Data.Events(handles.notes.i_sel)=newEvent;
+            handles.notes.saved=0;  %position now changed
         
         end
         handles.notes.i_show=handles.notes.i_sel;
-        handles.notes.saved=1;
+        
         handles	=	plot_events(handles);
         
         guidata(hObject, handles);
@@ -8133,7 +8146,7 @@ freq=1000*sort(tmp(:,2));
 contents=get(handles.popupmenu_Nfft,'String');
 Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
 
-[thet0,kappa,sd]=extract_bearings(x(n(1):n(2),:),0.25,Nfft,Fs,freq(1),freq(2),50);
+[thet0,kappa,sd]=extract_bearings(x(n(1):n(2),:),0.25,Nfft,Fs,freq(1),freq(2),200);
 
 if ~isempty(strfind('T2007',handles.myfile))
     cal07flag=1;
