@@ -22,15 +22,19 @@ try
     Defaults.Description{Nd+2}='Localization parameters';
     Defaults.Description{Nd+3}='Bearing (deg)';
     Defaults.Description{Nd+4}='Range (km)';
+    Defaults.Description{Nd+5}='Position [easting northing] (m)';
+    
     
     Ne=length(edit_fields);
     edit_fields{Ne+1}='bearing';
     edit_fields{Ne+2}='range';
+    edit_fields{Ne+3}='position';
     
     Defaults.Template.automated=[];
     Defaults.Template.localization=[];
     Defaults.Template.bearing=0;
     Defaults.Template.range=0;
+    Defaults.Template.position=[0 0];
     
     Defaults.Events		=	Defaults.Template;
     Defaults.edit_fields=edit_fields;
@@ -39,6 +43,8 @@ try
     
     Ns=length(data.goodName);
     keyword=filter_params.keyword;
+    
+    %Create linked annotation names
     for J=1:Ns
         annotation_names{J}	=	sprintf('%s-notes-BowheadAutomated-%s.mat',data.goodName{J},keyword);
         Data_all{J}				=	Defaults;
@@ -134,6 +140,7 @@ end
 end
 
 function newEvent=createEvent(location,Ihash,Istation,Template,annotation_names,station_position)
+%%Turn a location object into an annotation event object
 
 %start_time	=	handles.tdate_start...
 %    +	datenum(0,0,0,0,0,min(Times));
@@ -179,8 +186,11 @@ for Iname=1:length(names)
                newEvent.localization.range=sqrt((station_position.easting(Istation)-location.position.location(1)).^2+ ...
                    (station_position.northing(Istation)-location.position.location(2)).^2);
                newEvent.range=newEvent.localization.range/1000; %km
-               newEvent.bearing=location.bearing(Istation);
                newEvent.localization.bearings_all=location.bearing;  %Store all bearings for plotting..
+               newEvent.bearing=location.bearing(Istation);
+               newEvent.position=location.position.location;  %This is an editable field
+              
+               
            catch
               fprintf('convert_automated_bowhead_into_annotations: You cannot assign a range to this event: no position associated with this detection.\n'); 
            end

@@ -5748,9 +5748,9 @@ else
         end
         
         %AARON:  if annotation contants own edit field matrix, use it
-        if	isfield(LSfile, 'edit_fields')
-            if isempty(LSfile.edit_fields)
-                handles.notes.edit_fields	=	LSfile.edit_fields;
+        if	isfield(LSfile.Data, 'edit_fields')
+            if ~isempty(LSfile.Data.edit_fields)
+                handles.notes.edit_fields	=	LSfile.Data.edit_fields;
             end
         end
         
@@ -9958,9 +9958,13 @@ for I=1:length(list_names)
    success_flag=convert_automated_bowhead_into_annotations(list_names{I},filter_params,station_position); 
    if success_flag==0
       uiwait(msgbox(sprintf('%s failed to process',list_names{I}),'Failed!','modal'));
+   else
+       disp(sprintf('%s failed to process',list_names{I}));
    end
     
 end
+
+uiwait(msgbox(sprintf('Conversion finished')));
 
 
 end
