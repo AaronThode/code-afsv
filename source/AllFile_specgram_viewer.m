@@ -119,6 +119,7 @@ handles.filetype	=	'mt';
 [handles,errorflag] =	set_slider_controls(handles,handles.filetype); %#ok<*NASGU>
 %Make GSIbearing button, CSDM, and accelerometer buttons invisible
 set(handles.pushbutton_GSIbearing,'Vis','off');
+set(pushbutton_next_linked_annotation_Callback,'Vis','off');
 set(handles.pushbutton_GSI_localization,'Vis','off');
 set(handles.pushbutton_CSDM,'Vis','off');
 set(handles.pushbutton_Mode,'Vis','off');
@@ -5319,15 +5320,7 @@ Event.min_freq		=	min_freq;
 Event.max_freq		=	max_freq;
 Event.duration		=	duration;
 
-%Check that hash tag makes sense--if our selection is too far ahead or
-%behind in time, selct a new one...
 
-tmp=(abs(start_time-previous_start_time));
-yes_independent_selection=tmp>datenum(0,0,0,0,0,2);
-
-if yes_independent_selection||~isfield(Event,'hash_tag')||isempty(Event.hash_tag)
-    Event.hash_tag      =   2*datenum(1970,1,1,0,0,0)-now;  %manual hashtags go back into past, automated hashtags into future.
-end
 
 Event.noise_se_dB		=	params_extract.noise_se_dB;
 Event.noise_rms_dB		=	params_extract.noise_rms_dB;
@@ -5352,6 +5345,48 @@ switch sig_type
     otherwise
         warning('Signal type not recognized for defaults');
 end
+
+%if GSI file, get bearing of annotation
+switch handles.filetype
+    case 'GSI'
+        if isfield(Event,'bearing')
+            [Event.bearing,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,[Times Freq]);
+            
+            if isfield(Event,'localization')
+                station_position=Event.localization.station_position;
+                DASAR_coords=[station_position.easting station_position.northing];
+                Istation=str2num(Event.Istation);
+                Event.localization.bearings_all(Istation)=Event.bearing;
+                theta=Event.localization.bearings_all;
+                kappa=Event.localization.kappa;
+                Ikeep=find(~isnan(theta));
+                [Event.localization.location,Event.localization.Qhat,~,Event.localization.outcome] = vmmle_r(theta(Ikeep),DASAR_coords(Ikeep,:),'h',kappa(Ikeep));
+                Event.position=num2str(Event.localization.location);
+                Event.localization.range=sqrt((station_position.easting(Istation)-Event.localization.location(1)).^2+ ...
+                   (station_position.northing(Istation)-Event.localization.location(2)).^2);
+                Event.range=num2str(Event.localization.range/1000);
+                Event.localization.Nused=length(Ikeep);
+            end
+            
+        end
+        
+end
+    
+%Finally, determine hash tag...
+%Check that hash tag makes sense--if our selection is too far ahead or
+%behind in time, selct a new one...
+
+tmp=(abs(start_time-previous_start_time));
+yes_independent_selection=tmp>datenum(0,0,0,0,0,2);
+
+ButtonName = questdlg('What is this annonation status?', ...
+    'Annotation status', ...
+    'Completely New', 'Adding harmonic', 'Replacing','Completely New');
+
+if strcmp(ButtonName,'Completely New')||~isfield(Event,'hash_tag')||isempty(Event.hash_tag)
+    Event.hash_tag      =   2*datenum(1970,1,1,0,0,0)-now;  %manual hashtags go back into past, automated hashtags into future.
+end
+
 
 
 %	JIT: Unnecssary, removed recomputation, it's done above.
@@ -5523,6 +5558,102 @@ function pushbutton_next_linked_annotation_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+%persistent currentEvent 
+switch handles.filetype
+    case 'GSI'
+        
+        %Determine next DASAR to load, keep skipping until a hashtag is
+        %  discovered...
+        if ~isfield(handles,'notes')||isempty(handles.notes)
+            return
+        end
+        
+        i_sel=handles.notes.i_sel;
+        currentEvent=handles.notes.Data.Events(i_sel);
+        current_letter=handles.notes.file_name(5);
+        DASAR_letters=currentEvent.link_names(:,5);
+        NDASAR=length(DASAR_letters);
+        Iarray_org=strmatch(current_letter,DASAR_letters);  %Position of current annotationfile in link_names;
+        Iarray=Iarray_org+1;
+        if Iarray>NDASAR
+            Iarray=1; %Return to letter 'A'
+        end
+        
+        next_link_tag=str2num(currentEvent.link_hashtags(Iarray,:));
+        while(next_link_tag<0)
+            Iarray=Iarray+1;
+            if Iarray>NDASAR
+                Iarray=1; %Return to letter 'A'
+            end
+            next_link_tag=str2num(currentEvent.link_hashtags(Iarray,:));
+        end
+        next_letter=DASAR_letters(Iarray);
+       
+             
+        %Load new data file
+        if ~strcmp(handles.mydir(end-6),'S')
+            fprintf('Directory %s does not have form S***** \n',handles.mydir);
+            return
+        end
+        handles.mydir(end-2)=next_letter;
+        %  Assume S510G0T20100831T000000.gsi form
+        handles.myfile(5)=next_letter;
+        fprintf('Directory %s contains %s\n',handles.mydir,handles.myfile);
+        try
+            handles		=	load_and_display_spectrogram(handles);
+        catch
+            disp(sprintf('Could not load %s',fullfile(handles.mydir,handles.myfile)));
+        end
+            
+        %load next annotation file
+        
+        %Check that everything makes sense
+        if ~strcmp(handles.notes.file_name,currentEvent.link_names(Iarray_org,:))
+           fprintf('%s in notes files does not match %s in link file names \n', handles.notes.file_name,currentEvent.link_names(Iarray,:));
+            
+        end
+        new_annotation_file_name=currentEvent.link_names(Iarray,:); 
+        
+        
+        %hash_tag_org=str2num(currentEvent.hash_tag);     
+        handles=load_notes_file(handles, [],new_annotation_file_name);
+        
+        hashtag=-1*ones(length(handles.notes.Data.Events),1);
+        for I=1:length(handles.notes.Data.Events)
+           hashtag(I)=str2num(handles.notes.Data.Events(I).hash_tag);
+        end
+        
+        handles.notes.i_sel=find(next_link_tag==hashtag, 1 );
+        if isempty(handles.notes.i_sel) %The data in link_hashtags is out of date!  Annotation has been deleted
+            keyboard
+        end
+        newEvent=handles.notes.Data.Events(handles.notes.i_sel);
+        
+        %Check that localization information has not changed.  If it has,
+        %it means the position has been recalculated...
+        if ~strcmp(newEvent.position,currentEvent.position)
+            %newEvent.bearing=currentEvent.bearing;
+            %newEvent.range=currentEvent.range;
+            newEvent.range=sqrt((newEvent.localization.station_position.easting(Iarray)-currentEvent.localization.location(1)).^2+ ...
+                   (newEvent.localization.station_position.northing(Iarray)-currentEvent.localization.location(2)).^2);
+               
+            newEvent.position=currentEvent.position;
+            newEvent.localization=currentEvent.localization;
+            newEvent.localization.range=newEvent.range;
+            newEvent.range=num2str(newEvent.range/1000);
+            %newEvent.localization.bearings_all(Iarray_org)=currentEvent.localization.bearings_all(Iarray_org);
+            handles.notes.Data.Events(handles.notes.i_sel)=newEvent;
+        
+        end
+        handles.notes.i_show=handles.notes.i_sel;
+        handles.notes.saved=1;
+        handles	=	plot_events(handles);
+        
+        guidata(hObject, handles);
+    otherwise
+        return
+end
+
 end %pushbutton_next_linked_annotation_Callback
 
 %	Supporting functions, i.e. not auto-generated callbacks
@@ -5557,7 +5688,7 @@ end  %disable_notes_nav
 
 
 function	handles		=	load_notes_file(handles, new_folder,annotation_file_name)
-
+%new_folder can be empty if want to use annotation_file_name
 
 %%	First check that current notes are saved before proceeding
 if	~handles.notes.saved && ~handles.notes.readonly
@@ -5844,8 +5975,9 @@ if isfield(handles,'tdate_start')&~isempty(handles.tdate_start)
     end
 end
 %	Load previous window settings, if present
-handles		=	load_gui_params(handles, GUI_params);
-
+if ~exist('annotation_file_name','var')  %don't load if I am skipping across files
+    handles		=	load_gui_params(handles, GUI_params);
+end
 %	Set folder text box to selected directory + file_name
 set(handles.edit_folder, 'String', handles.notes.file_path);
 
@@ -6438,10 +6570,11 @@ Start_Times	=	cell2mat({Events.start_time});
 i_show	=	find((Times(1) <= Start_Times) & (Start_Times <= Times(2)));
 
 %	Plot rectangles for visible events
-h_show	=	[];
+h_show	=	zeros(1,length(i_show));
 sel_vis	=	false;
-axes(h_axes);
+%axes(h_axes);
 for	ii	=	1:length(i_show)
+    axes(h_axes); %axes must be called inside loop for all annotations to be visible.
     ie		=	i_show(ii);
     event	=	Events(ie);
     x		=	event.start_time - Times(1);	x	=	x*24*60*60;
@@ -6565,6 +6698,9 @@ if isfield(Event,'localization')
         clf(hdlg(2));
     end
    
+    %Identify which station we are...
+    
+    Istation=str2num(Event.Istation);
    
     DASAR_coords=[Event.localization.station_position.easting Event.localization.station_position.northing];
     bearings=Event.localization.bearings_all;
@@ -6573,7 +6709,7 @@ if isfield(Event,'localization')
     A=Event.localization.major;
     B=Event.localization.minor;
     ANG=Event.localization.ellipse_ang;
-    [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,35);
+    [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,35,Istation);
 end
 
 end %show_event_info
@@ -7148,9 +7284,11 @@ handles.Fs	=	Fs;
 if strcmpi(handles.filetype,'gsi')
     set(handles.pushbutton_GSIbearing,'vis','on');
     set(handles.pushbutton_GSI_localization,'vis','on');
+    set(handles.pushbutton_next_linked_annotation,'vis','on');
 else
     set(handles.pushbutton_GSIbearing,'vis','off');
     set(handles.pushbutton_GSI_localization,'vis','off');
+    set(handles.pushbutton_next_linked_annotation,'vis','on');
 end
 
 if strcmpi(handles.filetype,'mdat')||strcmpi(handles.filetype,'wav')||strcmpi(handles.filetype,'mat')
@@ -7938,8 +8076,9 @@ end
 
 end  %function readGSIfile
 
-function [thet,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles)
+function [thet,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,tmp)
 %tsec: seconds into time series that data are selected...
+% tmp is previous ginput
 thet=-1;  %Start with failed result
 kappa=-1;
 tsec=-1;
@@ -7954,7 +8093,9 @@ mydir=pwd;
 [x,t,Fs,tstart,tend,head]=load_data(handles.filetype,tdate_start,tlen,'all',handles);
 
 disp('Click on two extreme corners, click below axis twice to reject:');
-tmp=ginput(2);
+if ~exist('tmp','var')
+    tmp=ginput(2);
+end
 if (isempty(tmp)||any(tmp(:,2)<0))
     return
 end
@@ -9987,8 +10128,10 @@ for I=1:length(list_names)
    success_flag=convert_automated_bowhead_into_annotations(list_names{I},filter_params,station_position); 
    if success_flag==0
       uiwait(msgbox(sprintf('%s failed to process',list_names{I}),'Failed!','modal'));
+      return
    else
-       disp(sprintf('%s failed to process',list_names{I}));
+       disp(sprintf('%s procesed',list_names{I}));
+       
    end
     
 end

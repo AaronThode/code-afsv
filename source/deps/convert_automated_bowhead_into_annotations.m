@@ -21,9 +21,10 @@ try
     Defaults.Description{Nd+1}='Bowhead Automated Fields';
     Defaults.Description{Nd+2}='Localization parameters';
     Defaults.Description{Nd+3}='Bearing (deg)';
+    %Defaults.Description{Nd+4}='Kappa';
     Defaults.Description{Nd+4}='Range (km)';
     Defaults.Description{Nd+5}='Position [easting northing] (m)';
-    
+    Defaults.Description{Nd+6}='Index of array position';
     
     Ne=length(edit_fields);
     edit_fields{Ne+1}='bearing';
@@ -33,8 +34,10 @@ try
     Defaults.Template.automated=[];
     Defaults.Template.localization=[];
     Defaults.Template.bearing=0;
+    %Defaults.Template.kappa=0;
     Defaults.Template.range=0;
     Defaults.Template.position=[0 0];
+    Defaults.Template.Istation=1;
     
     Defaults.Events		=	Defaults.Template;
     Defaults.edit_fields=edit_fields;
@@ -187,9 +190,11 @@ for Iname=1:length(names)
                    (station_position.northing(Istation)-location.position.location(2)).^2);
                newEvent.range=newEvent.localization.range/1000; %km
                newEvent.localization.bearings_all=location.bearing;  %Store all bearings for plotting..
+               newEvent.localization.kappa=location.kappa;  %Store all bearings for plotting..
+               
                newEvent.bearing=location.bearing(Istation);
                newEvent.position=location.position.location;  %This is an editable field
-              
+               newEvent.Istation=Istation; %Useful to identify where in bearings_all we are.
                
            catch
               fprintf('convert_automated_bowhead_into_annotations: You cannot assign a range to this event: no position associated with this detection.\n'); 
