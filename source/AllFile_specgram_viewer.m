@@ -119,7 +119,9 @@ handles.filetype	=	'mt';
 [handles,errorflag] =	set_slider_controls(handles,handles.filetype); %#ok<*NASGU>
 %Make GSIbearing button, CSDM, and accelerometer buttons invisible
 set(handles.pushbutton_GSIbearing,'Vis','off');
-set(pushbutton_next_linked_annotation_Callback,'Vis','off');
+set(handles.pushbutton_next_linked_annotation,'Vis','off');
+set(handles.pushbutton_previous_linked_annotation,'Vis','off');
+
 set(handles.pushbutton_GSI_localization,'Vis','off');
 set(handles.pushbutton_CSDM,'Vis','off');
 set(handles.pushbutton_Mode,'Vis','off');
@@ -5552,12 +5554,19 @@ guidata(hObject, handles);
 
 end
 
+function pushbutton_previous_linked_annotation_Callback(hObject, eventdata, handles)
+    shift_linked_annotation(hObject,eventdata,handles,-1);
+end
 % --- Executes on button press in pushbutton_next_linked_annotation.
 function pushbutton_next_linked_annotation_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_next_linked_annotation (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+  shift_linked_annotation(hObject,eventdata,handles,1);
 
+end
+
+function shift_linked_annotation(hObject,eventdata,handles,stepp)
 %persistent currentEvent 
 switch handles.filetype
     case 'GSI'
@@ -5574,21 +5583,37 @@ switch handles.filetype
         DASAR_letters=currentEvent.link_names(:,5);
         NDASAR=length(DASAR_letters);
         Iarray_org=strmatch(current_letter,DASAR_letters);  %Position of current annotationfile in link_names;
-        Iarray=Iarray_org+1;
-        if Iarray>NDASAR
-            Iarray=1; %Return to letter 'A'
-        end
         
-        next_link_tag=str2num(currentEvent.link_hashtags(Iarray,:));
-        while(next_link_tag<0)
-            Iarray=Iarray+1;
+        if stepp==1
+            Iarray=Iarray_org+1;
             if Iarray>NDASAR
                 Iarray=1; %Return to letter 'A'
+            end
+        else
+            Iarray=Iarray_org-1;
+            if Iarray==0
+                Iarray=NDASAR; %Return to letter 'A'
+            end
+            
+        end
+        next_link_tag=str2num(currentEvent.link_hashtags(Iarray,:));
+        while(next_link_tag<0)
+            if stepp==1
+                Iarray=Iarray+1;
+                if Iarray>NDASAR
+                    Iarray=1; %Return to letter 'A'
+                end
+            else
+                Iarray=Iarray-1;
+                if Iarray==0
+                    Iarray=NDASAR; %Return to letter 'A'
+                end
+                
             end
             next_link_tag=str2num(currentEvent.link_hashtags(Iarray,:));
         end
         next_letter=DASAR_letters(Iarray);
-       
+        
              
         %Load new data file
         if ~strcmp(handles.mydir(end-6),'S')
@@ -7285,10 +7310,12 @@ if strcmpi(handles.filetype,'gsi')
     set(handles.pushbutton_GSIbearing,'vis','on');
     set(handles.pushbutton_GSI_localization,'vis','on');
     set(handles.pushbutton_next_linked_annotation,'vis','on');
+    set(handles.pushbutton_previous_linked_annotation,'vis','on');
 else
     set(handles.pushbutton_GSIbearing,'vis','off');
     set(handles.pushbutton_GSI_localization,'vis','off');
-    set(handles.pushbutton_next_linked_annotation,'vis','on');
+    set(handles.pushbutton_next_linked_annotation,'vis','off');
+    set(handles.pushbutton_previous_linked_annotation,'vis','off');
 end
 
 if strcmpi(handles.filetype,'mdat')||strcmpi(handles.filetype,'wav')||strcmpi(handles.filetype,'mat')
