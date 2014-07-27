@@ -119,7 +119,9 @@ handles.filetype	=	'mt';
 [handles,errorflag] =	set_slider_controls(handles,handles.filetype); %#ok<*NASGU>
 %Make GSIbearing button, CSDM, and accelerometer buttons invisible
 set(handles.pushbutton_GSIbearing,'Vis','off');
-set(pushbutton_next_linked_annotation_Callback,'Vis','off');
+set(handles.pushbutton_next_linked_annotation,'Vis','off');
+set(handles.pushbutton_previous_linked_annotation,'Vis','off');
+
 set(handles.pushbutton_GSI_localization,'Vis','off');
 set(handles.pushbutton_CSDM,'Vis','off');
 set(handles.pushbutton_Mode,'Vis','off');
@@ -177,8 +179,6 @@ varargout{1} = handles.output;
 
 
 end
-
-
 
 %%	GUI menu item callbacks
 
@@ -2718,7 +2718,6 @@ handles.filter.f_max	=	str2double(get(hObject,'String'));
 handles.filter.changed	=	true;
 guidata(hObject, handles);
 end
-
 % --- Executes on button press in checkbox_filter.
 function checkbox_filter_Callback(hObject, eventdata, handles)
 % hObject    handle to checkbox_filter (see GCBO)
@@ -2729,8 +2728,6 @@ function checkbox_filter_Callback(hObject, eventdata, handles)
 handles.audio_stale		=	true;
 guidata(hObject,handles);
 end
-
-
 % --- Executes on selection change in popupmenu_scalesound.
 function popupmenu_scalesound_Callback(hObject, eventdata, handles)
 % hObject    handle to popupmenu_scalesound (see GCBO)
@@ -5346,32 +5343,6 @@ switch sig_type
         warning('Signal type not recognized for defaults');
 end
 
-%if GSI file, get bearing of annotation
-switch handles.filetype
-    case 'GSI'
-        if isfield(Event,'bearing')
-            [Event.bearing,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,[Times Freq]);
-            
-            if isfield(Event,'localization')
-                station_position=Event.localization.station_position;
-                DASAR_coords=[station_position.easting station_position.northing];
-                Istation=str2num(Event.Istation);
-                Event.localization.bearings_all(Istation)=Event.bearing;
-                theta=Event.localization.bearings_all;
-                kappa=Event.localization.kappa;
-                Ikeep=find(~isnan(theta));
-                [Event.localization.location,Event.localization.Qhat,~,Event.localization.outcome] = vmmle_r(theta(Ikeep),DASAR_coords(Ikeep,:),'h',kappa(Ikeep));
-                Event.position=num2str(Event.localization.location);
-                Event.localization.range=sqrt((station_position.easting(Istation)-Event.localization.location(1)).^2+ ...
-                   (station_position.northing(Istation)-Event.localization.location(2)).^2);
-                Event.range=num2str(Event.localization.range/1000);
-                Event.localization.Nused=length(Ikeep);
-            end
-            
-        end
-        
-end
-    
 %Finally, determine hash tag...
 %Check that hash tag makes sense--if our selection is too far ahead or
 %behind in time, selct a new one...
@@ -5387,6 +5358,28 @@ if strcmp(ButtonName,'Completely New')||~isfield(Event,'hash_tag')||isempty(Even
     Event.hash_tag      =   2*datenum(1970,1,1,0,0,0)-now;  %manual hashtags go back into past, automated hashtags into future.
 end
 
+
+%if GSI file, get bearing of annotation
+switch handles.filetype
+    case 'GSI'
+        
+        %If this is a brand new creation with empty link file...
+        if isempty(Event.link_names)
+            Event.link_names=handles.notes.file_name;
+            Event.link_hashtags=num2str(Event.hash_tag);
+            Event.Istation=num2str(1);
+        end
+        
+   
+        if isfield(Event,'bearing')
+            [bearing,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,[Times Freq]);
+            %Event.bearing=num2str(bearing);
+            if isfield(Event,'localization')&&strcmp(ButtonName,'Replacing')
+                 Event=update_GSI_localization(Event,str2num(Event.Istation),bearing,kappa);
+                
+            end
+        end
+end
 
 
 %	JIT: Unnecssary, removed recomputation, it's done above.
@@ -5433,12 +5426,13 @@ end
 %	Delete entry if enabled
 delete_on	=	get(handles.checkbox_notes_delete, 'Value');
 if	delete_on
+
     handles.notes.Data.Events(i_sel)	=	[];
     N	=	length(handles.notes.Data.Events);
     if	N == 0
         i_sel	=	[];
     elseif	i_sel > N
-        i_sel	=	1;
+        i_sel	=	N;
     end
     handles.notes.i_sel	=	i_sel;
     
@@ -5484,6 +5478,201 @@ handles		=	plot_events(handles);
 guidata(hObject,handles);
 
 end
+
+function handles=shift_linked_annotation(hObject,eventdata,handles,stepp)
+%persistent currentEvent 
+switch handles.filetype
+    case 'GSI'
+        
+        %Determine next DASAR to load, keep skipping until a hashtag is
+        %  discovered...
+        if ~isfield(handles,'notes')||isempty(handles.notes)
+            return
+        end
+        
+        i_sel=handles.notes.i_sel;
+        currentEvent=handles.notes.Data.Events(i_sel);
+        
+        current_letter=handles.notes.file_name(5);
+        DASAR_letters=currentEvent.link_names(:,5);
+        NDASAR=length(DASAR_letters);
+        Iarray_org=strmatch(current_letter,DASAR_letters);  %Position of current annotationfile in link_names;
+        
+        %Check that station number matches Iarray_org (derived from
+        %strings)
+        if str2num(currentEvent.Istation)~=Iarray_org
+           disp('Warning!! Events.Istation not equal to Iarray_org'); 
+        end
+        
+        if stepp==1
+            Iarray=Iarray_org+1;
+            if Iarray>NDASAR
+                Iarray=1; %Return to letter 'A'
+            end
+        else
+            Iarray=Iarray_org-1;
+            if Iarray==0
+                Iarray=NDASAR; %Return to letter 'A'
+            end
+            
+        end
+        next_link_tag=str2num(currentEvent.link_hashtags(Iarray,:));
+        while(next_link_tag<0)
+            if stepp==1
+                Iarray=Iarray+1;
+                if Iarray>NDASAR
+                    Iarray=1; %Return to letter 'A'
+                end
+            else
+                Iarray=Iarray-1;
+                if Iarray==0
+                    Iarray=NDASAR; %Return to letter 'A'
+                end
+                
+            end
+            next_link_tag=str2num(currentEvent.link_hashtags(Iarray,:));
+        end
+        next_letter=DASAR_letters(Iarray);
+        
+             
+        %Load new data file
+        if ~strcmp(handles.mydir(end-6),'S')
+            fprintf('Directory %s does not have form S***** \n',handles.mydir);
+            return
+        end
+        handles.mydir(end-2)=next_letter;
+        %  Assume S510G0T20100831T000000.gsi form
+        handles.myfile(5)=next_letter;
+        fprintf('Directory %s contains %s\n',handles.mydir,handles.myfile);
+        try
+            handles		=	load_and_display_spectrogram(handles);
+        catch
+            disp(sprintf('Could not load %s',fullfile(handles.mydir,handles.myfile)));
+        end
+            
+        %load next annotation file
+        
+        %Check that everything makes sense
+        if ~strcmp(handles.notes.file_name,currentEvent.link_names(Iarray_org,:))
+           fprintf('%s in notes files does not match %s in link file names \n', handles.notes.file_name,currentEvent.link_names(Iarray,:));
+            
+        end
+        new_annotation_file_name=currentEvent.link_names(Iarray,:); 
+        
+        %%Now that event has been copied, delete annotation if desired
+        delete_on	=	get(handles.checkbox_notes_delete, 'Value');
+        if delete_on
+            %Double check
+            ButtonName = questdlg('Delete annoation before changing link?', ...
+                'The Delete checkbox is checked!', ...
+                'Yes','No', 'No');
+            switch ButtonName
+                case 'Yes'
+                    %Remove existance of annotation from CurrentEvent
+                    %hashtables
+                    
+                    currentEvent=update_GSI_localization(currentEvent,Iarray_org, NaN,-1);
+                    
+                    %Delete original annotation
+                    handles.notes.Data.Events(i_sel)	=	[];
+                    N	=	length(handles.notes.Data.Events);
+                    %Keep same index, unless at end
+                    if	N == 0
+                        i_sel	=	[];
+                    elseif	i_sel > N
+                        i_sel	=	N;
+                    end
+                    handles.notes.i_sel	=	i_sel;
+                    
+                    %Explicitly turn off delete checkbox to eliminate
+                    %inadvertant deletions.
+                    set(handles.checkbox_notes_delete,'Value',false)
+                    checkbox_notes_delete_Callback(handles.checkbox_notes_delete, eventdata, handles);
+                    
+            end % switch
+        end %delete_on
+        
+        % Load and replace current notes with new file
+        fprintf('I am file %s, station %i just before load_notes_file\n',handles.notes.file_name,str2num(handles.notes.Data.Events(handles.notes.i_sel).Istation));
+        pushbutton_notes_save_Callback(handles.pushbutton_notes_save, eventdata, handles);  %Force a save
+        handles.notes.saved=true;
+        
+        handles=load_notes_file(handles, [],new_annotation_file_name);
+        handles.notes.saved=true;
+        
+        hashtag=-1*ones(length(handles.notes.Data.Events),1);
+        for I=1:length(handles.notes.Data.Events)
+           hashtag(I)=str2num(handles.notes.Data.Events(I).hash_tag);
+        end
+        
+        handles.notes.i_sel=find(next_link_tag==hashtag, 1 );
+        
+        
+        if isempty(handles.notes.i_sel) %The data in link_hashtags is out of date!  Annotation has been deleted
+            keyboard
+        end
+        
+        newEvent=handles.notes.Data.Events(handles.notes.i_sel);
+        
+        fprintf('I am file %s, station %i\n',handles.notes.file_name,str2num(newEvent.Istation));
+        
+        %Check that localization information has not changed.  If it has,
+        %it means the position has been recalculated...
+        handles.notes.saved=true;
+        
+        % position not reliable, because NaNs possible.
+        %check bearings instead.
+        bearings1=currentEvent.localization.bearings_all;
+        bearings2=newEvent.localization.bearings_all;
+        
+        Inan1=find(isnan(bearings1));
+        Inan2=find(isnan(bearings2));
+        if length(Inan1)~=length(Inan2)
+            test_change1=true;
+            test_change2=true;
+        else
+            test_change1=~all(Inan1==Inan2);
+            Inan1=find(~isnan(bearings1));
+            Inan2=find(~isnan(bearings2));
+            test_change2=~all(bearings1(Inan1)==bearings2(Inan2));
+       
+        end
+        
+       
+        %test=sum(round(str2num(currentEvent.position))-round(str2num(newEvent.position)));
+        %If bearings have changed, copy localization object to newEvent and
+        %update related fields
+        if test_change2||test_change1
+            %fprintf('Test is %8.6f\n',test);
+            %pause;
+            %newEvent.bearing=currentEvent.bearing;
+            %newEvent.range=currentEvent.range;
+            
+            %Copy over link_names and link_hashtags
+            newEvent.link_names=currentEvent.link_names;
+            newEvent.link_hashtags=currentEvent.link_hashtags;
+            
+            %copy localization fields
+            newEvent.localization=currentEvent.localization;
+            
+            %Update range, bearing, and position fields
+            newEvent=update_localization_fields(newEvent);  %Do this to recalculate range from this station
+            %,Iarray_org, str2num(currentEvent.bearing),currentEvent.localization.kappa(Iarray_org));
+          
+            handles.notes.Data.Events(handles.notes.i_sel)=newEvent;
+            handles.notes.saved=false;  %position now changed
+        
+        end
+        handles.notes.i_show=handles.notes.i_sel;
+        
+        handles	=	plot_events(handles);
+        
+        guidata(hObject, handles);
+    otherwise
+        return
+end
+
+end %pushbutton_next_linked_annotation_Callback
 
 % --- Executes on button press in checkbox_notes_delete.
 function checkbox_notes_delete_Callback(hObject, eventdata, handles)
@@ -5552,109 +5741,18 @@ guidata(hObject, handles);
 
 end
 
+function pushbutton_previous_linked_annotation_Callback(hObject, eventdata, handles)
+    shift_linked_annotation(hObject,eventdata,handles,-1);
+end
 % --- Executes on button press in pushbutton_next_linked_annotation.
 function pushbutton_next_linked_annotation_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_next_linked_annotation (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+  shift_linked_annotation(hObject,eventdata,handles,1);
 
-%persistent currentEvent 
-switch handles.filetype
-    case 'GSI'
-        
-        %Determine next DASAR to load, keep skipping until a hashtag is
-        %  discovered...
-        if ~isfield(handles,'notes')||isempty(handles.notes)
-            return
-        end
-        
-        i_sel=handles.notes.i_sel;
-        currentEvent=handles.notes.Data.Events(i_sel);
-        current_letter=handles.notes.file_name(5);
-        DASAR_letters=currentEvent.link_names(:,5);
-        NDASAR=length(DASAR_letters);
-        Iarray_org=strmatch(current_letter,DASAR_letters);  %Position of current annotationfile in link_names;
-        Iarray=Iarray_org+1;
-        if Iarray>NDASAR
-            Iarray=1; %Return to letter 'A'
-        end
-        
-        next_link_tag=str2num(currentEvent.link_hashtags(Iarray,:));
-        while(next_link_tag<0)
-            Iarray=Iarray+1;
-            if Iarray>NDASAR
-                Iarray=1; %Return to letter 'A'
-            end
-            next_link_tag=str2num(currentEvent.link_hashtags(Iarray,:));
-        end
-        next_letter=DASAR_letters(Iarray);
-       
-             
-        %Load new data file
-        if ~strcmp(handles.mydir(end-6),'S')
-            fprintf('Directory %s does not have form S***** \n',handles.mydir);
-            return
-        end
-        handles.mydir(end-2)=next_letter;
-        %  Assume S510G0T20100831T000000.gsi form
-        handles.myfile(5)=next_letter;
-        fprintf('Directory %s contains %s\n',handles.mydir,handles.myfile);
-        try
-            handles		=	load_and_display_spectrogram(handles);
-        catch
-            disp(sprintf('Could not load %s',fullfile(handles.mydir,handles.myfile)));
-        end
-            
-        %load next annotation file
-        
-        %Check that everything makes sense
-        if ~strcmp(handles.notes.file_name,currentEvent.link_names(Iarray_org,:))
-           fprintf('%s in notes files does not match %s in link file names \n', handles.notes.file_name,currentEvent.link_names(Iarray,:));
-            
-        end
-        new_annotation_file_name=currentEvent.link_names(Iarray,:); 
-        
-        
-        %hash_tag_org=str2num(currentEvent.hash_tag);     
-        handles=load_notes_file(handles, [],new_annotation_file_name);
-        
-        hashtag=-1*ones(length(handles.notes.Data.Events),1);
-        for I=1:length(handles.notes.Data.Events)
-           hashtag(I)=str2num(handles.notes.Data.Events(I).hash_tag);
-        end
-        
-        handles.notes.i_sel=find(next_link_tag==hashtag, 1 );
-        if isempty(handles.notes.i_sel) %The data in link_hashtags is out of date!  Annotation has been deleted
-            keyboard
-        end
-        newEvent=handles.notes.Data.Events(handles.notes.i_sel);
-        
-        %Check that localization information has not changed.  If it has,
-        %it means the position has been recalculated...
-        if ~strcmp(newEvent.position,currentEvent.position)
-            %newEvent.bearing=currentEvent.bearing;
-            %newEvent.range=currentEvent.range;
-            newEvent.range=sqrt((newEvent.localization.station_position.easting(Iarray)-currentEvent.localization.location(1)).^2+ ...
-                   (newEvent.localization.station_position.northing(Iarray)-currentEvent.localization.location(2)).^2);
-               
-            newEvent.position=currentEvent.position;
-            newEvent.localization=currentEvent.localization;
-            newEvent.localization.range=newEvent.range;
-            newEvent.range=num2str(newEvent.range/1000);
-            %newEvent.localization.bearings_all(Iarray_org)=currentEvent.localization.bearings_all(Iarray_org);
-            handles.notes.Data.Events(handles.notes.i_sel)=newEvent;
-        
-        end
-        handles.notes.i_show=handles.notes.i_sel;
-        handles.notes.saved=1;
-        handles	=	plot_events(handles);
-        
-        guidata(hObject, handles);
-    otherwise
-        return
 end
 
-end %pushbutton_next_linked_annotation_Callback
 
 %	Supporting functions, i.e. not auto-generated callbacks
 function	status	=	dependency_check()
@@ -5683,6 +5781,10 @@ set(handles.pushbutton_notes_last, 'Enable', opt);
 set(handles.pushbutton_notes_next, 'Enable', opt);
 set(handles.pushbutton_notes_prev, 'Enable', opt);
 set(handles.pushbutton_notes_screen, 'Enable', opt);
+if strcmpi(handles.filetype,'gsi')
+    set(handles.pushbutton_next_linked_annotation, 'Enable', opt);
+    set(handles.pushbutton_previous_linked_annotation, 'Enable', opt);
+end
 
 end  %disable_notes_nav
 
@@ -5721,7 +5823,10 @@ set(handles.pushbutton_notes_save, 'Enable', opt);
 set(handles.pushbutton_notes_edit, 'Enable', opt);
 set(handles.checkbox_notes_show, 'Enable', opt);
 set(handles.checkbox_notes_delete, 'Enable', opt);
-
+if strcmpi(handles.filetype,'gsi')
+    set(handles.pushbutton_next_linked_annotation, 'Enable', opt);
+    set(handles.pushbutton_previous_linked_annotation, 'Enable', opt);
+end
 
 %%	Switch to new folder and check for existing files
 if	exist('new_folder','var') && ~isempty(new_folder)
@@ -7281,14 +7386,18 @@ handles.x	=	x;
 handles.Fs	=	Fs;
 %tmp=ginput(2)
 
-if strcmpi(handles.filetype,'gsi')
+if strcmpi(lower(handles.filetype),'gsi')
     set(handles.pushbutton_GSIbearing,'vis','on');
     set(handles.pushbutton_GSI_localization,'vis','on');
     set(handles.pushbutton_next_linked_annotation,'vis','on');
+    set(handles.pushbutton_previous_linked_annotation,'vis','on');
+    set(handles.pushbutton_next_linked_annotation,'enable','on');
+    set(handles.pushbutton_previous_linked_annotation,'enable','on');
 else
     set(handles.pushbutton_GSIbearing,'vis','off');
     set(handles.pushbutton_GSI_localization,'vis','off');
-    set(handles.pushbutton_next_linked_annotation,'vis','on');
+    set(handles.pushbutton_next_linked_annotation,'vis','off');
+    set(handles.pushbutton_previous_linked_annotation,'vis','off');
 end
 
 if strcmpi(handles.filetype,'mdat')||strcmpi(handles.filetype,'wav')||strcmpi(handles.filetype,'mat')
@@ -8106,7 +8215,7 @@ freq=1000*sort(tmp(:,2));
 contents=get(handles.popupmenu_Nfft,'String');
 Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
 
-[thet0,kappa,sd]=extract_bearings(x(n(1):n(2),:),0.25,Nfft,Fs,freq(1),freq(2),50);
+[thet0,kappa,sd]=extract_bearings(x(n(1):n(2),:),0.25,Nfft,Fs,freq(1),freq(2),200);
 
 if ~isempty(strfind('T2007',handles.myfile))
     cal07flag=1;
@@ -8418,7 +8527,7 @@ mu = 180/pi*atan2(mux(1),mux(2));
 %end
 
 U = ceil(n .* rand(n,B));          % The guts of UNIDRND.M without error checking.
-for i = 1:B,
+for i = 1:B
     %U = ceil(n .* rand(n,1));          % The guts of UNIDRND.M without error checking.
     %xb = x(U,:);
     mux_hat(i,:) = vm_ests_uneq(x(U(:,i),:),options,flag); % Estimation accounting for lengths.
@@ -8451,101 +8560,6 @@ x = x(idx,:);
 %end
 r = sum(x);
 mux = r/sum(lx);                       % Mean x,y coordinate
-
-
-end
-
-function [mu,kappa,sd] = vm_ests(x,options)
-%VM_ESTS Maximum likelihood estimates of Von Mises parameters from data.
-%  [MU,KAPPA,RBAR,SD] = VM_ESTS(X,OPTIONS) estimates the angular mean (MU)
-%  and concentration parameter (KAPPA) of the Von Mises distribution, the
-%  mean vector length (RBAR), and the approximate standard deviation (SD)
-%  of the normal distribution from data X.  X is assumed to be an n-by-2
-%  matrix, where each row represents an x,y coordinate pair, which defines
-%  a bearing from origin (0,0).  OPTIONS is an argument for FMINBND, for
-%  instance as set by OPTIMSET.
-
-n1 = size(x,1);
-lx = sqrt(sum(x.^2,2));                % Get length of each vector
-idx = find(lx);                        % Get rid of 0-length vectors
-n = length(idx);
-if n<n1,
-    x = x(idx,:);
-end
-x = x./repmat(lx,1,2);                 % Make unit vectors
-r = sum(x);
-mux = r/n;                             % Mean x,y coordinate
-mu = 180/pi*atan2(mux(1),mux(2));      % Mean angle (use y/x for math convention)
-Rbar = norm(mux);                      % Length of mean vector
-sd = 180/pi*sqrt(2*(1-Rbar));          % Angular standard deviation
-
-kappa=0;
-% if Rbar<=(1/sqrt(n)),
-%     kappa = 0;
-% else
-%     kappa = fminbnd('diffkr',eps,5e5,options,Rbar,n);
-% end
-%     function d = diffkr(k,r,n)
-%         %DIFFKR Difference of a function of Von Mises kappa and R, mean vector length.
-%         %  D = DIFFKR(K,R) is used by Matlab function FMINBND to find the maximum
-%         %  likelihood estimate of kappa, the concentration parameter of the Von Mises
-%         %  distribution. The MLE of kappa is the value K such that |R - A(K)| is
-%         %  minimum, where R is the length of the mean vector, A(K) =  I1(K)/I0(K), and
-%         %  I1 and I0 are modified bessel functions of order 1 and 0, respectively.
-%         %
-%         %  A bias correction for small sample size (see Batschelet, 1981, p. 47) is
-%         %  included so that K is sought for min{|R - A(K)/A(KRN)|} , where N is the
-%         %  sample size.
-%         %
-%         %  Rather than call the Matlab function, BESSELI, faster polynomial
-%         %  approximations from Abramowitz and Stegun (1965, p. 378) are used.  Also,
-%         %  the approximations allow arguments > 700 (which cause overflow in BESSELI).
-%         %  In the code below, I0 and I1 represent functions of I0(X) and I1(X),
-%         %  respectively, depending on the value of the argument X.  For X>3.75, the
-%         %  leading factor,  cancels in the ratio allowing calculation of A(X) without
-%         %  numeric overflow.
-%
-%         %  Abramowitz, M. and I.A. Stegun. 1965.  Handbook of Mathematical Functions.
-%         %  Dover Publications, New York.
-%
-%         %  Batschelet, E. 1981. Circular Statistics in Biology. Academic Press, London.
-%
-%         krn = k*r*n;
-%         t = krn/3.75;
-%         if krn<=3.75,
-%             I0 = 1 + 3.5156229*t^2 + 3.0899424*t^4 + 1.2067492*t^6 + 0.2659732*t^8 + ...
-%                 0.0360768*t^10 + 0.0045813*t^12;
-%             I1 = krn * (0.5 + 0.87890594*t^2 + 0.51498869*t^4 + 0.15084934*t^6 + ...
-%                 0.02658733*t^8 + 0.00301532*t^10 + 0.00032411*t^12);
-%             Akrn = I1/I0;
-%         else
-%             I0 = 0.39894228 + 0.01328592/t + 0.00225391/t^2 - 0.00157565/t^3 + ...
-%                 0.00916281/t^4 - 0.02057706/t^5 + 0.02635537/t^6 - 0.01647633/t^7 + ...
-%                 0.00392377/t^8;
-%             I1 = 0.39894228 - 0.03988024/t - 0.00362018/t^2 + 0.00163801/t^3 - ...
-%                 0.01031555/t^4 + 0.02282967/t^5 - 0.02895312/t^6 + 0.01787654/t^7 - ...
-%                 0.00420059/t^8;
-%             Akrn = I1/I0;
-%         end
-%         t = k/3.75;
-%         if k<=3.75,
-%             I0 = 1 + 3.5156229*t^2 + 3.0899424*t^4 + 1.2067492*t^6 + 0.2659732*t^8 + ...
-%                 0.0360768*t^10 + 0.0045813*t^12;
-%             I1 = k * (0.5 + 0.87890594*t^2 + 0.51498869*t^4 + 0.15084934*t^6 + ...
-%                 0.02658733*t^8 + 0.00301532*t^10 + 0.00032411*t^12);
-%             A = I1/I0;
-%         else
-%             I0 = 0.39894228 + 0.01328592/t + 0.00225391/t^2 - 0.00157565/t^3 + ...
-%                 0.00916281/t^4 - 0.02057706/t^5 + 0.02635537/t^6 - 0.01647633/t^7 + ...
-%                 0.00392377/t^8;
-%             I1 = 0.39894228 - 0.03988024/t - 0.00362018/t^2 + 0.00163801/t^3 - ...
-%                 0.01031555/t^4 + 0.02282967/t^5 - 0.02895312/t^6 + 0.01787654/t^7 - ...
-%                 0.00420059/t^8;
-%             A = I1/I0;
-%         end
-%         d = abs(r - A./Akrn);
-%
-%     end
 
 
 end
