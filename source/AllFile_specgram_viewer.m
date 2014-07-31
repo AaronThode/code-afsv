@@ -125,11 +125,11 @@ handles.buttongroup.linked(1)=handles.pushbutton_next_linked_annotation;
 handles.buttongroup.linked(2)=handles.pushbutton_previous_linked_annotation;
 
 handles.buttongroup.array(1)=handles.pushbutton_CSDM;
-handles.buttongroup.array(2)=handles.handles.pushbutton_Mode;
-handles.buttongroup.array(3)=handles.handles.pushbutton_tilt;
-handles.buttongroup.array(4)=handles.handles.pushbutton_modalfiltering;
-handles.buttongroup.array(5)=handles.handles.togglebutton_ChannelBeam;
-handles.buttongroup.array(6)=handles.handles.edit_chan;
+handles.buttongroup.array(2)=handles.pushbutton_Mode;
+handles.buttongroup.array(3)=handles.pushbutton_tilt;
+handles.buttongroup.array(4)=handles.pushbutton_modalfiltering;
+handles.buttongroup.array(5)=handles.togglebutton_ChannelBeam;
+handles.buttongroup.array(6)=handles.edit_chan;
 
 handles.buttongroup.GSI(1)=handles.pushbutton_GSIbearing;
 handles.buttongroup.GSI(2)=handles.pushbutton_GSI_localization;
@@ -5406,25 +5406,43 @@ switch sig_type
 end
 
 %Finally, determine hash tag...
-%Check that hash tag makes sense--if our selection is too far ahead or
-%behind in time, selct a new one...
-
-tmp=(abs(start_time-previous_start_time));
-yes_independent_selection=tmp>datenum(0,0,0,0,0,2);
-
-ButtonName = questdlg('What is this annonation status?', ...
-    'Annotation status', ...
-    'Completely New', 'Adding harmonic', 'Replacing','Completely New');
-
-if strcmp(ButtonName,'Completely New')||~isfield(Event,'hash_tag')||isempty(Event.hash_tag)
-    Event.hash_tag      =   2*datenum(1970,1,1,0,0,0)-now;  %manual hashtags go back into past, automated hashtags into future.
-end
 
 
-%if GSI file, get bearing of annotation
-switch handles.filetype
-    case 'GSI'
+%if linked file, offer additional capabilities bearing of annotation
+linked_file=isfield(handles.file_flags,'linked')&&handles.file_flags.linked;
+
+%switch handles.filetype
+%case 'GSI'
+if ~linked_file
+    
+    %If event is within 2 sec of previously-selected annotation, offer a chance to use
+    %  same hashtags (useful for harmonics)
+    tmp=(abs(start_time-previous_start_time));
+    yes_independent_selection=tmp>datenum(0,0,0,0,0,2);
+    if ~yes_independent_selection
+        ButtonName = questdlg('You are close to previously-selected annotation!', ...
+            'Annotation status', ...
+            'Completely New', 'Adding harmonic to previous', 'Completely New');
+    else
+        ButtonName='Completely New';
+    end
+    if strcmp(ButtonName,'Completely New')||~isfield(Event,'hash_tag')||isempty(Event.hash_tag)
         
+        Event.hash_tag      =   2*datenum(1970,1,1,0,0,0)-now;  %manual hashtags go back into past, automated hashtags into future.
+    else
+        disp('copying hashtag...');
+        %Keep current event hashtag...
+    end
+else
+    
+    ButtonName = questdlg('What is this annonation status?', ...
+        'Annotation status', ...
+        'Completely New', 'Adding harmonic', 'Replacing','Completely New');
+    
+    if strcmp(ButtonName,'Completely New')||~isfield(Event,'hash_tag')||isempty(Event.hash_tag)
+        Event.hash_tag      =   2*datenum(1970,1,1,0,0,0)-now;  %manual hashtags go back into past, automated hashtags into future.
+    end
+          
         %If this is a brand new creation with empty link file...
         if isempty(Event.link_names)
             Event.link_names=handles.notes.file_name;
@@ -5434,11 +5452,15 @@ switch handles.filetype
         
    
         if isfield(Event,'bearing')
-            [bearing,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,[Times Freq]);
-            %Event.bearing=num2str(bearing);
-            if isfield(Event,'localization')&&strcmp(ButtonName,'Replacing')
-                 Event=update_GSI_localization(Event,str2num(Event.Istation),bearing,kappa);
-                
+            
+            switch handles.filetype
+                case 'GSI'
+                [bearing,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,[Times Freq]);
+                %Event.bearing=num2str(bearing);
+                if isfield(Event,'localization')&&strcmp(ButtonName,'Replacing')
+                    Event=update_GSI_localization(Event,str2num(Event.Istation),bearing,kappa);
+                    
+                end
             end
         end
 end
@@ -7177,7 +7199,8 @@ try
     end
     [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype, ...
         handles.tdate_start,tlen,Ichan,handles);
-    handles.multichannel=hdr.multichannel;
+    handles.file_flags.multichannel=hdr.multichannel;
+    handles.file_flags.linked=hdr.linked;
     
     %%Change file display if a transformation of a basic file has
     %%  occurred...
@@ -7475,7 +7498,7 @@ end
 %set(handles.pushbutton_next_linked_annotation,'enable','on');
 %set(handles.pushbutton_previous_linked_annotation,'enable','on');
 
-if handles.multichannel
+if handles.file_flags.multichannel
     for II=length(handles.buttongroup.array)
         set(handles.buttongroup.array(II),'vis',status);
         set(handles.buttongroup.array(II),'enable',status);
@@ -7698,7 +7721,8 @@ t=[];
 tmin=[];
 tmax=[];
 head=[];
-head.mulitchannel=false;
+head.multichannel=false;
+head.linked=false;
 
 filetype	=	upper(filetype);
 
@@ -7782,6 +7806,8 @@ switch filetype
         tmin=datenum(1970,1,1,0,0,head.ctbc);
         tmax=tmin+datenum(0,0,1,0,0,0);
         head.Nchan=length(Ichan);
+        head.linked=true;
+        
     case 'MT'
         %[x,t,Fs]=load_mt_mult(handles.mydir,tdate_start,tlen);
         %head=read_mt_header([mydir filesep myfile]);
@@ -10184,7 +10210,7 @@ function togglebutton_ChannelBeam_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of togglebutton_ChannelBeam
 
 %First, check that multichannel data exist
-if ~isfield(handles,'multichannel')||~handles.multichannel
+if ~isfield(handles,'file_flags')||~handles.file_flags.multichannel
     set(hObject,'Value',0)
     set(hObject,'String','Channel')
     return
