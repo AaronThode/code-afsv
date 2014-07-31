@@ -117,23 +117,57 @@ try
 end
 handles.filetype	=	'mt';
 [handles,errorflag] =	set_slider_controls(handles,handles.filetype); %#ok<*NASGU>
-%Make GSIbearing button, CSDM, and accelerometer buttons invisible
-set(handles.pushbutton_GSIbearing,'Vis','off');
-set(handles.pushbutton_next_linked_annotation,'Vis','off');
-set(handles.pushbutton_previous_linked_annotation,'Vis','off');
 
-set(handles.pushbutton_GSI_localization,'Vis','off');
-set(handles.pushbutton_CSDM,'Vis','off');
-set(handles.pushbutton_Mode,'Vis','off');
-set(handles.pushbutton_tilt,'Vis','off');
-set(handles.pushbutton_modalfiltering,'Vis','off');
-set(handles.edit_normal_rotation,'Vis','off');
-set(handles.text_normal_rotation,'Vis','off');
+%Group controls into multielement (arrays) and linked (distributed array)
+%categories, for easier times in hiding or disabling buttons
+
+handles.buttongroup.linked(1)=handles.pushbutton_next_linked_annotation;
+handles.buttongroup.linked(2)=handles.pushbutton_previous_linked_annotation;
+
+handles.buttongroup.array(1)=handles.pushbutton_CSDM;
+handles.buttongroup.array(2)=handles.handles.pushbutton_Mode;
+handles.buttongroup.array(3)=handles.handles.pushbutton_tilt;
+handles.buttongroup.array(4)=handles.handles.pushbutton_modalfiltering;
+handles.buttongroup.array(5)=handles.handles.togglebutton_ChannelBeam;
+handles.buttongroup.array(6)=handles.handles.edit_chan;
+
+handles.buttongroup.GSI(1)=handles.pushbutton_GSIbearing;
+handles.buttongroup.GSI(2)=handles.pushbutton_GSI_localization;
+
+handles.buttongroup.accelerometer(1)=handles.edit_normal_rotation;
+handles.buttongroup.accelerometer(2)=handles.text_normal_rotation;
+
+%Make GSIbearing button, CSDM, and accelerometer buttons invisible
+for I=1:length(handles.buttongroup.linked)
+    set(handles.buttongroup.linked(I),'Vis','off');
+end
+%set(handles.pushbutton_next_linked_annotation,'Vis','off');
+%set(handles.pushbutton_previous_linked_annotation,'Vis','off');
+
+for I=1:length(handles.buttongroup.GSI)
+    set(handles.buttongroup.GSI(I),'Vis','off');
+end
+%set(handles.pushbutton_GSIbearing,'Vis','off');
+%set(handles.pushbutton_GSI_localization,'Vis','off');
+
+for I=1:length(handles.buttongroup.array)
+    set(handles.buttongroup.array(I),'Vis','off');
+end
+%set(handles.pushbutton_CSDM,'Vis','off');
+%set(handles.pushbutton_Mode,'Vis','off');
+%set(handles.pushbutton_tilt,'Vis','off');
+%set(handles.pushbutton_modalfiltering,'Vis','off');
+
+for I=1:length(handles.buttongroup.accelerometer)
+    set(handles.buttongroup.accelerometer(I),'Vis','off');
+end
+
+%set(handles.edit_normal_rotation,'Vis','off');
+%set(handles.text_normal_rotation,'Vis','off');
 
 %	Set prev/next buttons inactive initially
 set(handles.pushbutton_next,'Enable','off');
 set(handles.pushbutton_prev,'Enable','off');
-
 
 set(handles.edit_maxfreq,'String','0');
 set(handles.edit_minfreq,'String','0');
@@ -3521,6 +3555,12 @@ mydir=pwd;
 Ichan='all';  %Hardwire first channel
 set(handles.togglebutton_ChannelBeam,'String','Channel');
 [x,~,Fs,~,~,head]=load_data(handles.filetype, tdate_start,tlen,Ichan,handles);
+
+%If not multichannel data, return
+if isempty(x)||~head.multichannel
+    uiwait(msgbox('CSDM requires multichannel data or non-zero x value'));
+    return
+end
 %Will need to have columns be channels, rows time
 if floor(tlen*Fs)~=size(x,1)
     x=x.';
@@ -3878,9 +3918,17 @@ tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 %for Ichan=1:8
 [x,~,Fs,tstart,junk,head]=load_data(handles.filetype, tdate_start,tlen,'all',handles); %#ok<*ASGLU>
-if size(x,2)>1
-    x=x';
+
+%If not multichannel data, return
+if isempty(x)||~head.multichannel
+    uiwait(msgbox('Mode filtering requires multichannel data or non-zero x value'));
+    return
 end
+%AARON: removed lines below because multichannel data will always get
+%flipped
+%if size(x,2)>1
+%    x=x';
+%end
 %xall{Ichan}=x;
 %end
 
@@ -3996,10 +4044,19 @@ tlen=handles.tlen;
 %for Ichan=1:8
 [x,t,Fs,tstart,junk,head]=load_data(handles.filetype,tdate_start,tlen,'all',handles);
 
+%If not multichannel data, return
+if isempty(x)||~head.multichannel
+    uiwait(msgbox('Tilt estimate requires multichannel data or non-zero x value'));
+    return
+end
 %x(1) is shallowest element...
-if size(x,2)>1
+
+%AARON: make sure channels are columns
+if size(x,2)~=head.Nchan
+%if size(x,2)>1
     x=x';
 end
+
 %xall{Ichan}=x;
 %end
 
@@ -4106,6 +4163,11 @@ tlen=handles.tlen;
 %for Ichan=1:8
 [data.x,t,Fs,tstart,junk,head]=load_data(handles.filetype, tdate_start,tlen,'all',handles);
 
+%If not multichannel data, return
+if isempty(x)||~head.multichannel
+    uiwait(msgbox('Modal filtering requires multichannel data or non-zero x value'));
+    return
+end
 %xall{Ichan}=x;
 %end
 
@@ -7115,6 +7177,7 @@ try
     end
     [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype, ...
         handles.tdate_start,tlen,Ichan,handles);
+    handles.multichannel=hdr.multichannel;
     
     %%Change file display if a transformation of a basic file has
     %%  occurred...
@@ -7386,36 +7449,55 @@ handles.x	=	x;
 handles.Fs	=	Fs;
 %tmp=ginput(2)
 
+
+%Update all control buttons, depending on loaded data
 if strcmpi(lower(handles.filetype),'gsi')
-    set(handles.pushbutton_GSIbearing,'vis','on');
-    set(handles.pushbutton_GSI_localization,'vis','on');
-    set(handles.pushbutton_next_linked_annotation,'vis','on');
-    set(handles.pushbutton_previous_linked_annotation,'vis','on');
-    set(handles.pushbutton_next_linked_annotation,'enable','on');
-    set(handles.pushbutton_previous_linked_annotation,'enable','on');
+    status='on';
 else
-    set(handles.pushbutton_GSIbearing,'vis','off');
-    set(handles.pushbutton_GSI_localization,'vis','off');
-    set(handles.pushbutton_next_linked_annotation,'vis','off');
-    set(handles.pushbutton_previous_linked_annotation,'vis','off');
+    status='off';
 end
 
-if strcmpi(handles.filetype,'mdat')||strcmpi(handles.filetype,'wav')||strcmpi(handles.filetype,'mat')
-    set(handles.pushbutton_CSDM,'vis','on');
-    set(handles.pushbutton_Mode,'vis','on');
-    set(handles.pushbutton_tilt,'vis','on');
-    set(handles.pushbutton_modalfiltering,'vis','on');
-else
-    set(handles.pushbutton_CSDM,'vis','off');
-    set(handles.pushbutton_Mode,'vis','off');
-    set(handles.pushbutton_modalfiltering,'vis','off');
-    set(handles.pushbutton_tilt,'vis','off');
+for II=length(handles.buttongroup.GSI)
+    set(handles.buttongroup.GSI(II),'vis',status);
+    set(handles.buttongroup.GSI(II),'enable',status);
+end
+
+
+for II=length(handles.buttongroup.linked)
+    set(handles.buttongroup.linked(II),'vis',status);
+    set(handles.buttongroup.linked(II),'enable',status);
+end
+
+%set(handles.pushbutton_GSIbearing,'vis','on');
+%set(handles.pushbutton_GSI_localization,'vis','on');
+%set(handles.pushbutton_next_linked_annotation,'vis','on');
+%set(handles.pushbutton_previous_linked_annotation,'vis','on');
+%set(handles.pushbutton_next_linked_annotation,'enable','on');
+%set(handles.pushbutton_previous_linked_annotation,'enable','on');
+
+if handles.multichannel
+    for II=length(handles.buttongroup.array)
+        set(handles.buttongroup.array(II),'vis',status);
+        set(handles.buttongroup.array(II),'enable',status);
+    end
+end
     
-end
+% if strcmpi(handles.filetype,'mdat')||strcmpi(handles.filetype,'wav')||strcmpi(handles.filetype,'mat')
+%     set(handles.pushbutton_CSDM,'vis','on');
+%     set(handles.pushbutton_Mode,'vis','on');
+%     set(handles.pushbutton_tilt,'vis','on');
+%     set(handles.pushbutton_modalfiltering,'vis','on');
+% else
+%     set(handles.pushbutton_CSDM,'vis','off');
+%     set(handles.pushbutton_Mode,'vis','off');
+%     set(handles.pushbutton_modalfiltering,'vis','off');
+%     set(handles.pushbutton_tilt,'vis','off');
+%     
+% end
 
-if strcmpi(handles.filetype,'sio')
-    set(handles.pushbutton_CSDM,'vis','on');
-end
+%if strcmpi(handles.filetype,'sio')
+%    set(handles.pushbutton_CSDM,'vis','on');
+%end
 
 if strcmpi(handles.filetype,'psd')
     set(handles.pushbutton_binary,'vis','off');
@@ -7616,6 +7698,8 @@ t=[];
 tmin=[];
 tmax=[];
 head=[];
+head.mulitchannel=false;
+
 filetype	=	upper(filetype);
 
 switch filetype
@@ -7919,19 +8003,6 @@ switch filetype
          end
         
         
-        %-----------------------------------------------------------------------
-        % sioread.m
-        %
-        % This program runs under windows, unix, and macs.
-        %
-        % function x=sioread(filename,p1,npi,channels);
-        %
-        % Inputs:
-        % 	filename: Name of sio file to read
-        % 	p1:	Point to start reading ( 0 < p1 < np)
-        % 	npi: 	Number of points to read in
-        % 	channels: Single number or vector containing the channels to read
-        % 		(example-to read channels 4 thru 10 enter 4:10)
     case 'DAT'
         [x,tmin,tmax,fs]=read_dat_file(fullfile(mydir,myfile),[],-1,tlen,0);
         
@@ -8137,6 +8208,15 @@ end
 if isempty(tmin) || isempty(tmax)
     disp('load_data: Warning, tmin and tmax should never be empty when exiting..');
 end
+
+
+%%Store whether multichannel data, regardless of original file format.
+if min(size(x))>1
+    head.multichannel=true;
+end
+
+
+
 %%%Optional Teager-Kaiser filtering...
 if teager
     %%Assume that x is in form [ channel time]
@@ -10102,6 +10182,14 @@ function togglebutton_ChannelBeam_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of togglebutton_ChannelBeam
+
+%First, check that multichannel data exist
+if ~isfield(handles,'multichannel')||~handles.multichannel
+    set(hObject,'Value',0)
+    set(hObject,'String','Channel')
+    return
+end
+
 onn=get(hObject,'Value');
 if onn
     
