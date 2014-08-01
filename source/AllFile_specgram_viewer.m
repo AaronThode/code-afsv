@@ -7480,13 +7480,13 @@ else
     status='off';
 end
 
-for II=length(handles.buttongroup.GSI)
+for II=1:length(handles.buttongroup.GSI)
     set(handles.buttongroup.GSI(II),'vis',status);
     set(handles.buttongroup.GSI(II),'enable',status);
 end
 
 
-for II=length(handles.buttongroup.linked)
+for II=1:length(handles.buttongroup.linked)
     set(handles.buttongroup.linked(II),'vis',status);
     set(handles.buttongroup.linked(II),'enable',status);
 end
@@ -7499,7 +7499,7 @@ end
 %set(handles.pushbutton_previous_linked_annotation,'enable','on');
 
 if handles.file_flags.multichannel
-    for II=length(handles.buttongroup.array)
+    for II=1:length(handles.buttongroup.array)
         set(handles.buttongroup.array(II),'vis',status);
         set(handles.buttongroup.array(II),'enable',status);
     end
@@ -7786,6 +7786,8 @@ switch filetype
             Ichan=3;
         end
         [x,t,head]=readGSIfile([mydir '/' myfile],tdate_start,tlen,Ichan,'datenum','nocalibrate');
+        head.multichannel=false;
+        
         if isempty(keyword)
             prompt = {'Enter a keyword for GSI calibration [DASARC]:'};
             dlg_title = 'DASAR calibration';
@@ -7894,6 +7896,7 @@ switch filetype
         %set(handles.text_channel,'String','Channel [-angle (deg)]');
         sio_chc=get(handles.togglebutton_ChannelBeam,'String');
         [~, head] = sioread(fullfile(mydir,myfile));
+        head.multichannel=true;
         
         %Extract start date and time
         %if ~exist('tstart_min') || isempty(tstart_min) || tstart_min < 0
