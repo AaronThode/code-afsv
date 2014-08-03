@@ -48,7 +48,7 @@
     <param.net.tsa.namespace>AllFile_specgram_viewer_Mac</param.net.tsa.namespace>
     <param.net.tsa.superclass />
     <param.net.tsa.metadata />
-    <param.net.tsa.metadata.assembly>/Users/thode/Documents/MATLAB</param.net.tsa.metadata.assembly>
+    <param.net.tsa.metadata.assembly>/</param.net.tsa.metadata.assembly>
     <param.create.log>true</param.create.log>
     <param.log.file>test</param.log.file>
     <unset>

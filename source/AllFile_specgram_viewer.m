@@ -31,7 +31,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 25-Jul-2014 09:23:34
+% Last Modified by GUIDE v2.5 03-Aug-2014 08:49:52
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -5511,12 +5511,16 @@ end
 delete_on	=	get(handles.checkbox_notes_delete, 'Value');
 if	delete_on
 
+    current_time=handles.notes.Data.Events(i_sel).start_time;
     handles.notes.Data.Events(i_sel)	=	[];
     N	=	length(handles.notes.Data.Events);
+    start_times=[handles.notes.Data.Events.start_time];
     if	N == 0
         i_sel	=	[];
     elseif	i_sel > N
-        i_sel	=	N;
+        i_sel	=	N;  %Closest by default
+    else
+        [~,i_sel]=min(abs(current_time-start_times));
     end
     handles.notes.i_sel	=	i_sel;
     
@@ -5647,7 +5651,7 @@ switch handles.filetype
         delete_on	=	get(handles.checkbox_notes_delete, 'Value');
         if delete_on
             %Double check
-            ButtonName = questdlg('Delete annoation before changing link?', ...
+            ButtonName = questdlg('Delete annotation before changing link?', ...
                 'The Delete checkbox is checked!', ...
                 'Yes','No', 'No');
             switch ButtonName
@@ -5907,10 +5911,10 @@ set(handles.pushbutton_notes_save, 'Enable', opt);
 set(handles.pushbutton_notes_edit, 'Enable', opt);
 set(handles.checkbox_notes_show, 'Enable', opt);
 set(handles.checkbox_notes_delete, 'Enable', opt);
-if strcmpi(handles.filetype,'gsi')
-    set(handles.pushbutton_next_linked_annotation, 'Enable', opt);
-    set(handles.pushbutton_previous_linked_annotation, 'Enable', opt);
-end
+
+set(handles.pushbutton_next_linked_annotation, 'Enable', opt);
+set(handles.pushbutton_previous_linked_annotation, 'Enable', opt);
+
 
 %%	Switch to new folder and check for existing files
 if	exist('new_folder','var') && ~isempty(new_folder)
@@ -5982,12 +5986,14 @@ end
 %Check to see if a specific annotation file has already been requested...
 
 if nargin>2 && ~isempty(annotation_file_name)  %if annotation_file_name has been fed in...
+    cd(handles.outputdir)  %Should already be here, but just in case
     if exist(annotation_file_name,'file')==2
         file_name	=	annotation_file_name;
         sel_names{1}=file_name;
         Sel=1;
     else
         fprintf('Requested annotation file %s does not exist!\n',annotation_file_name);
+        sel_names=[];
     end
 else  %have user select annotation file interactively
     sel_names	=	[];
@@ -10240,6 +10246,38 @@ function Annotation_Utilities_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 end
 
+
+
+% --------------------------------------------------------------------
+function airgun_detector_Callback(hObject, eventdata, handles)
+% hObject    handle to airgun_detector (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Convert bowhead whale files into annotation files....
+
+%Load list of file names to be converted, along with criteria for filtering
+% the results into annotation (e.g. geographic restrictions...)
+[list_names,filter_params]=load_airgun_detector_params(handles.outputdir);
+if isempty(list_names)
+    return
+end
+
+for I=1:length(list_names)
+   success_flag=convert_automated_airgun_into_annotations(list_names{I},filter_params); 
+   if success_flag==0
+      uiwait(msgbox(sprintf('%s failed to process',list_names{I}),'Failed!','modal'));
+      return
+   else
+       disp(sprintf('%s procesed',list_names{I}));
+       
+   end
+    
+end
+
+uiwait(msgbox(sprintf('Conversion finished')));
+end
+
 % --------------------------------------------------------------------
 function bowhead_detector_Callback(hObject, eventdata, handles)
 % hObject    handle to bowhead_detector (see GCBO)
@@ -10271,5 +10309,6 @@ uiwait(msgbox(sprintf('Conversion finished')));
 
 
 end
+
 
 

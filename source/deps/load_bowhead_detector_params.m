@@ -37,6 +37,12 @@ for I=1:length(fnames)
     list_names{I}=fnames(I).name;
 end
 
+if isempty(fnames)
+    uiwait(msgbox('No files found!','modal'));
+    return
+end
+
+
 [Sel, OK]	=	listdlg('ListString', list_names,...
     'Name', 'Available files',...
     'PromptString', 'Select file(s) to load:',...
