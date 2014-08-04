@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="AllFile_specgram_viewer_Mac" location="/Users/thode/repos/code-afsv" file="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.app" build-checksum="1009982276" preferred-package-location="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution">
+  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="AllFile_specgram_viewer_Mac" location="/Users/thode/repos/code-afsv" file="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.app" build-checksum="857263078" preferred-package-location="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution">
     <param.appname>AllFile_specgram_viewer_Mac</param.appname>
     <param.authnamewatermark>Aaron Thode</param.authnamewatermark>
     <param.email>athode@ucsd.edu</param.email>
@@ -48,7 +48,7 @@
     <param.net.tsa.namespace>AllFile_specgram_viewer_Mac</param.net.tsa.namespace>
     <param.net.tsa.superclass />
     <param.net.tsa.metadata />
-    <param.net.tsa.metadata.assembly>/</param.net.tsa.metadata.assembly>
+    <param.net.tsa.metadata.assembly>/Users/thode/Documents/MATLAB</param.net.tsa.metadata.assembly>
     <param.create.log>true</param.create.log>
     <param.log.file>test</param.log.file>
     <unset>
@@ -89,6 +89,11 @@
       <file>${PROJECT_ROOT}/source/AllFile_specgram_viewer.m</file>
     </fileset.main>
     <fileset.resources>
+      <file>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/Automated_Arctic_Software/BulkProcessingScripts2009/cond2.m</file>
+      <file>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/Automated_Arctic_Software/BulkProcessingScripts2009/ellipse.m</file>
+      <file>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/Automated_Arctic_Software/BulkProcessingScripts2009/expand_date_range.m</file>
+      <file>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/Automated_Arctic_Software/BulkProcessingScripts2009/interval.m</file>
+      <file>/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/Automated_Arctic_Software/ComputerSpecificScripts.dir/find_DASAR_dates.m</file>
       <file>${PROJECT_ROOT}/source/104703.JPG</file>
       <file>${PROJECT_ROOT}/source/AllFile_specgram_viewer.fig</file>
       <file>${PROJECT_ROOT}/source/AllFile_specgram_viewer.m</file>
@@ -103,13 +108,18 @@
       <file>${PROJECT_ROOT}/source/deps/brickwall_bpf.m</file>
       <file>${PROJECT_ROOT}/source/deps/brickwall_hpf.m</file>
       <file>${PROJECT_ROOT}/source/deps/brickwall_lpf.m</file>
+      <file>${PROJECT_ROOT}/source/deps/calibrate_GSI_signal.m</file>
+      <file>${PROJECT_ROOT}/source/deps/calibrate_bearing_Shell2007.m</file>
       <file>${PROJECT_ROOT}/source/deps/close_all_figures.m</file>
       <file>${PROJECT_ROOT}/source/deps/compare_files.m</file>
+      <file>${PROJECT_ROOT}/source/deps/convert_automated_airgun_into_annotations.m</file>
+      <file>${PROJECT_ROOT}/source/deps/convert_automated_bowhead_into_annotations.m</file>
       <file>${PROJECT_ROOT}/source/deps/convert_date.m</file>
       <file>${PROJECT_ROOT}/source/deps/create_percentile_distributions.m</file>
       <file>${PROJECT_ROOT}/source/deps/crude_decimate_uneven.m</file>
       <file>${PROJECT_ROOT}/source/deps/ctime2str.m</file>
       <file>${PROJECT_ROOT}/source/deps/delaynsum.m</file>
+      <file>${PROJECT_ROOT}/source/deps/diffkr.m</file>
       <file>${PROJECT_ROOT}/source/deps/example_splash.png</file>
       <file>${PROJECT_ROOT}/source/deps/extract_SEL_n_PSD.m</file>
       <file>${PROJECT_ROOT}/source/deps/extract_image_features.m</file>
@@ -120,6 +130,10 @@
       <file>${PROJECT_ROOT}/source/deps/get_level_metrics_simple.m</file>
       <file>${PROJECT_ROOT}/source/deps/hist2D.m</file>
       <file>${PROJECT_ROOT}/source/deps/kurtosis.m</file>
+      <file>${PROJECT_ROOT}/source/deps/load_MFP_scenario.m</file>
+      <file>${PROJECT_ROOT}/source/deps/load_airgun_detector_params.m</file>
+      <file>${PROJECT_ROOT}/source/deps/load_bowhead_detector_params.m</file>
+      <file>${PROJECT_ROOT}/source/deps/load_default_annotation_template.m</file>
       <file>${PROJECT_ROOT}/source/deps/load_mt.m</file>
       <file>${PROJECT_ROOT}/source/deps/load_program_location.m</file>
       <file>${PROJECT_ROOT}/source/deps/merge_structure.m</file>
@@ -127,6 +141,7 @@
       <file>${PROJECT_ROOT}/source/deps/plot_data_boxplot.m</file>
       <file>${PROJECT_ROOT}/source/deps/plot_data_boxplot_percentile.m</file>
       <file>${PROJECT_ROOT}/source/deps/plot_letter_label.m</file>
+      <file>${PROJECT_ROOT}/source/deps/plot_location.m</file>
       <file>${PROJECT_ROOT}/source/deps/readEnergySnips.m</file>
       <file>${PROJECT_ROOT}/source/deps/readEnergySummary.m</file>
       <file>${PROJECT_ROOT}/source/deps/readEnergy_header.m</file>
@@ -146,6 +161,10 @@
       <file>${PROJECT_ROOT}/source/deps/simulate_FMsweep_with_noise.m</file>
       <file>${PROJECT_ROOT}/source/deps/sioread.m</file>
       <file>${PROJECT_ROOT}/source/deps/tftb_window.m</file>
+      <file>${PROJECT_ROOT}/source/deps/update_GSI_localization.m</file>
+      <file>${PROJECT_ROOT}/source/deps/update_localization_fields.m</file>
+      <file>${PROJECT_ROOT}/source/deps/vm_ests.m</file>
+      <file>${PROJECT_ROOT}/source/deps/vmmle_r.m</file>
       <file>${PROJECT_ROOT}/source/deps/writeEnergyDetectorCshell.m</file>
       <file>${PROJECT_ROOT}/source/deps/write_Java_script.m</file>
     </fileset.resources>
