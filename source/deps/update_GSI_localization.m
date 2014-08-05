@@ -27,6 +27,13 @@ if exist('Istation','var')
         Event.link_hashtags(Istation,:)=blanks(nblanks);
         Event.link_hashtags(Istation,(end-1):end)='-1';
     end
+    
+    %If hashtags are NaN, then kill bearings
+    hashtags=str2num(Event.link_hashtags);
+    Inan=find(hashtags<0);
+    Event.localization.bearings_all(Inan)=NaN;
+    Event.localization,kappa(Inan)=NaN;
+    
 else
     Istation=str2num(Event.Istation);  %Use this to recompute range using my own information.
 end

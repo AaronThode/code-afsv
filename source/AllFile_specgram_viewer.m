@@ -5429,6 +5429,9 @@ if ~linked_file
     if strcmp(ButtonName,'Completely New')||~isfield(Event,'hash_tag')||isempty(Event.hash_tag)
         
         Event.hash_tag      =   2*datenum(1970,1,1,0,0,0)-now;  %manual hashtags go back into past, automated hashtags into future.
+        %If this is a brand new creation with empty link file, zero out
+        %hashtags and position
+       
     else
         disp('copying hashtag...');
         %Keep current event hashtag...
@@ -5441,28 +5444,26 @@ else
     
     if strcmp(ButtonName,'Completely New')||~isfield(Event,'hash_tag')||isempty(Event.hash_tag)
         Event.hash_tag      =   2*datenum(1970,1,1,0,0,0)-now;  %manual hashtags go back into past, automated hashtags into future.
+        Event.link_hashtags=-1*ones(size(Event.link_hashtags,1),1);
+        Istation=str2num(Event.Istation);
+        Event.link_hashtags(Istation)=Event.hash_tag;
+        Event.link_hashtags=num2str(Event.link_hashtags);
     end
-          
-        %If this is a brand new creation with empty link file...
-        if isempty(Event.link_names)
-            Event.link_names=handles.notes.file_name;
-            Event.link_hashtags=num2str(Event.hash_tag);
-            Event.Istation=num2str(1);
-        end
+    
+    
+    if isfield(Event,'bearing')
         
-   
-        if isfield(Event,'bearing')
-            
-            switch handles.filetype
-                case 'GSI'
+        switch handles.filetype
+            case 'GSI'
                 [bearing,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,[Times Freq]);
                 %Event.bearing=num2str(bearing);
-                if isfield(Event,'localization')&&strcmp(ButtonName,'Replacing')
+                %if isfield(Event,'localization')&&strcmp(ButtonName,'Replacing')
+                if isfield(Event,'localization')
                     Event=update_GSI_localization(Event,str2num(Event.Istation),bearing,kappa);
                     
                 end
-            end
         end
+    end
 end
 
 
@@ -5524,6 +5525,9 @@ if	delete_on
     end
     handles.notes.i_sel	=	i_sel;
     
+    %Remove delete as a safety...
+    set(handles.checkbox_notes_delete, 'Value',0);
+    set(handles.pushbutton_notes_edit,'String','Edit');
     %	Otherwise open edit window with existing values
 else
     Event	=	handles.notes.Data.Events(i_sel);
