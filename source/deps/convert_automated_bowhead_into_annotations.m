@@ -66,8 +66,14 @@ try
     %%'northing' and 'easting' restrictions.
     if filter_position
         poss=zeros(length(data.locations),2);
-        
+        h=waitbar(0,'Filtering positions.. wait');
+     
         for I=1:length(data.locations)
+            
+            if rem(I,500)==0
+                waitbar(I/length(data.locations),h);
+                
+            end
             if ~strcmp(data.locations{I}.position.outcome,'successful')
                 continue
             end
@@ -85,6 +91,7 @@ try
         %plot(poss(Igood,1),poss(Igood,2),'ro');hold on;grid on; axis('equal');
         
     end
+    close(h)
     
     %%Finish filtering locations
     data.locations=data.locations(Igood);
@@ -95,10 +102,17 @@ try
     %We cycle through each station at each location to make hashtag processing
     %easier.
     Icount=ones(Ns,1);
+     h=waitbar(0,'Please wait');
+       
     for I=1:length(data.locations)
         hashtags=-1*ones(Ns,1);
         isPresent=false(Ns,1);
         %First create each raw event, including assigning a hashtag
+        
+        if rem(I,100)==0
+            waitbar(I/length(data.locations),h);
+            
+        end
         for J=1:Ns
             
             newEvent=createEvent(data.locations{I},I,J,Defaults.Template,annotation_names,station_position);
@@ -126,7 +140,7 @@ try
         end
      
     end  % I
-    
+    close(h)
     %Now write events to output file.  Check where folder location is...
     
     

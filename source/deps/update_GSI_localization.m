@@ -46,10 +46,10 @@ Ikeep=find(~isnan(theta));
 station_position=Event.localization.station_position;
 DASAR_coords=[station_position.easting station_position.northing];
 
-[Event.localization.location,Event.localization.Qhat,~,Event.localization.outcome] = vmmle_r(theta(Ikeep),DASAR_coords(Ikeep,:),'h',kappa(Ikeep));
-%if ~strcmpi(Event.localization.outcome,'Successful')
-%    keyboard
-%end
+%Version that uses kappa
+%[Event.localization.location,Event.localization.Qhat,~,Event.localization.outcome] = vmmle_r(theta(Ikeep),DASAR_coords(Ikeep,:),'h',kappa(Ikeep));
+[Event.localization.location,Event.localization.Qhat,~,Event.localization.outcome] = vmmle_r(theta(Ikeep),DASAR_coords(Ikeep,:),'h');
+
     
 
 Event.localization.Nused=length(Ikeep);

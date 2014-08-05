@@ -3517,7 +3517,10 @@ Igood=find(~isnan(theta)&theta>-2);  %Remove absent DASARS (used to compute cent
 %Note that the Site contains all DASAR locations,
 %  whether they collected data or not
 DASAR_coords=[locs.Site{Isite}.easting locs.Site{Isite}.northing];
-[VM,Qhat,~,outcome] = vmmle_r(theta(Ikeep)',DASAR_coords(Ikeep,:),'h',kappa(Ikeep)');
+
+%Using kappa gives too precise an estimate
+%[VM,Qhat,~,outcome] = vmmle_r(theta(Ikeep)',DASAR_coords(Ikeep,:),'h',kappa(Ikeep)');
+[VM,Qhat,~,outcome] = vmmle_r(theta(Ikeep)',DASAR_coords(Ikeep,:),'h');
 mean_coords=mean(DASAR_coords(Igood,:));
 CRITVAL=4.60517; %chi2inv(0.90,2);
 
@@ -5303,7 +5306,7 @@ guidata(hObject, handles);
 end
 
 % --- Executes on button press in pushbutton_notes_new.
-function pushbutton_notes_new_Callback(hObject, eventdata, handles)
+function handles=pushbutton_notes_new_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_notes_new (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -5558,6 +5561,22 @@ else
     end
     
     Event	=	edit_event(Event, handles.notes.Data.Description, handles.notes.edit_fields);
+    
+    %Check if need to relocalize...
+    if isfield(Event,'bearing')
+        
+        switch handles.filetype
+            case 'GSI'
+                [bearing,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,[Times' Freq']);
+                %Event.bearing=num2str(bearing);
+                %if isfield(Event,'localization')&&strcmp(ButtonName,'Replacing')
+                if isfield(Event,'localization')
+                    Event=update_GSI_localization(Event,str2num(Event.Istation),bearing,kappa);
+                    
+                end
+        end
+    end
+    
     if	isempty(Event)
         return;
     else
@@ -5613,7 +5632,7 @@ end
 end
 
 % --- Executes on button press in pushbutton_notes_screen.
-function pushbutton_notes_screen_Callback(hObject, eventdata, handles)
+function i_show=pushbutton_notes_screen_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_notes_screen (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -5669,13 +5688,21 @@ shift_linked_annotation(hObject,eventdata,handles,'prevstation');
 end
 
 function [newdir,newfile,new_annotation_file_name,Iarray,Iarray_org]=get_new_filename(current_file_name, ...
-    link_names,link_hashtags,mydir, myfile,filetype,stepp_type,stepp)
+    mydir, myfile,filetype,stepp_type,link_names,link_hashtags)
 
 % Returns a new filename, new directory filename, and new annotation file name to load when a link pushbutton is pressed
 newdir=[];
 newfile=[];
 Iarray=[];
 Iarray_org=[];
+
+if ~exist('link_names')
+    link_names=[];
+end
+
+if ~exist('link_hashtags')
+    link_hashtags=[];
+end
 
 if ~isempty(strfind(stepp_type,'prev'))
     stepp=-1;
@@ -5756,14 +5783,14 @@ switch filetype
             
         end
         
-        new_annotation_file_name=currentEvent.link_names(Iarray,:); 
+        new_annotation_file_name=link_names(Iarray,:); 
 end
 end
         
 function handles=shift_linked_annotation(hObject,eventdata,handles,stepp_type)
 %persistent currentEvent 
 
-
+annotation_exists=true;
 switch handles.filetype
     case 'GSI'
         
@@ -5774,11 +5801,19 @@ switch handles.filetype
         end
         
         i_sel=handles.notes.i_sel;
+        if isempty(i_sel) %We have no annotation
+           annotation_exists=false;
+           i_sel=1;
+           handles.notes.i_sel=1;
+           stepp_type=[stepp_type(1:4) 'station'];  %Can't link if no current annotation
+        end
         currentEvent=handles.notes.Data.Events(i_sel);
         
+        % If no annotation selected, get link_names through other means.
+        
         [mydir,myfile,new_annotation_file_name,Iarray,Iarray_org]=get_new_filename(handles.notes.file_name, ...
-            currentEvent.link_names,currentEvent.link_hashtags, ...
-            handles.mydir, handles.myfile, handles.filetype,stepp_type);
+            handles.mydir, handles.myfile, handles.filetype,stepp_type, ...
+            currentEvent.link_names,currentEvent.link_hashtags);
         
         if isempty(mydir)||isempty(myfile)
             return
@@ -5800,7 +5835,7 @@ switch handles.filetype
         
         %%Now that event has been copied, delete annotation if desired
         delete_on	=	get(handles.checkbox_notes_delete, 'Value');
-        if delete_on
+        if delete_on & annotation_exists
             %Double check
             ButtonName = questdlg('Delete annotation before changing link?', ...
                 'The Delete checkbox is checked!', ...
@@ -5834,8 +5869,11 @@ switch handles.filetype
         % Load and replace current notes with new file
         fprintf('I am file %s, station %i just before load_notes_file\n',handles.notes.file_name,str2num(handles.notes.Data.Events(handles.notes.i_sel).Istation));
         
-        pushbutton_notes_save_Callback(handles.pushbutton_notes_save, eventdata, handles);  %Force a save
-        handles.notes.saved=true;
+        if annotation_exists
+            pushbutton_notes_save_Callback(handles.pushbutton_notes_save, eventdata, handles);  %Force a save
+            handles.notes.saved=true;
+        end
+        
         handles=load_notes_file(handles, [],new_annotation_file_name);
         handles.notes.saved=true;
         
@@ -5849,12 +5887,19 @@ switch handles.filetype
         %Determine whether a linked annotation already exists in this
         %station
         
-        next_link_tag=str2num(handles.link_hashtags(Iarray,:));
-        handles.notes.i_sel=find(next_link_tag==hashtag, 1 );
+        if annotation_exists
+            next_link_tag=str2num(currentEvent.link_hashtags(Iarray,:));
+            handles.notes.i_sel=find(next_link_tag==hashtag, 1 );
             
-        handles	=	plot_events(handles);
+            handles	=	plot_events(handles);
+        else % We are at a station with no annotation
+            handles	=	plot_events(handles);
+            handles.notes.i_sel=min(handles.notes.i_show);
+            guidata(hObject, handles);
+            return                
+        end
         
-        
+        flag_fix_event=false;
         if ~isempty(findstr(stepp_type,'link'))
             
             if isempty(handles.notes.i_sel) %The data in link_hashtags is out of date!  Annotation has been deleted
@@ -5866,12 +5911,15 @@ switch handles.filetype
             ButtonName = questdlg('What Next?', ...
                     'Linking choice', ...
                     'Do Nothing', 'Add link', 'Replace','Do Nothing');
-                
+                axes(handles.axes1)
+                       
                 switch ButtonName
                     case 'Do Nothing'
                         %If no linked annotation exists in this station,
                         %return
                         if isempty(handles.notes.i_sel)
+                           % i_sel=pushbutton_notes_screen_Callback(handles.pushbutton_notes_screen,eventdata,handles);
+                           % handles.notes.i_sel=i_sel;
                             guidata(hObject, handles);
                             return
                         end
@@ -5879,8 +5927,8 @@ switch handles.filetype
                         %Otherwise, continue as if next_link button has
                         %been pressed
                     case 'Add link'
-                        pushbutton_notes_new_Callback(handles.pushbutton_notes_new, eventdata, handles);
-                        keyboard
+                         handles=pushbutton_notes_new_Callback(handles.pushbutton_notes_new, eventdata, handles);
+                        
                         % handles.notes.i_sel should be updated
                         % automatically
                     case 'Replace'
@@ -5888,7 +5936,11 @@ switch handles.filetype
                         tmp=ginput(1);
                         [~,ichc]=min(abs(tmp(1)-handles.notes.x_show));
                         handles.notes.i_sel=handles.notes.i_show(ichc);
+                        handles	=	plot_events(handles);
+         
                 end
+                
+                flag_fix_event=strcmp(ButtonName,'Add link')|strcmp(ButtonName,'Replace');
            
             
         end
@@ -5915,18 +5967,40 @@ switch handles.filetype
             newEvent.link_hashtags=currentEvent.link_hashtags;
             
             %Add current hashtag to link_hashtags
-            newEvent.link_hashtags(Iarray,:)=newEvent.hashtag;
+            if isnumeric(newEvent.hash_tag)
+                newEvent.hash_tag=num2str(newEvent.hash_tag);
+            end
+            Nchar=min([length(newEvent.hash_tag) size(newEvent.link_hashtags,2)]);
+            newEvent.link_hashtags(Iarray,:)=blanks(size(newEvent.link_hashtags,2));
+            newEvent.link_hashtags(Iarray,1:Nchar)=newEvent.hash_tag(1:Nchar);
             
-            %copy localization fields
-            newEvent.localization=currentEvent.localization;
+            %copy localization fields, this ensures that new bearings
+            %  propagated
             
-            %Update range, bearing, and position fields
-            newEvent=update_localization_fields(newEvent);  %Do this to recalculate range from this station
+            if flag_fix_event
+                bearing=newEvent.localization.bearings_all(Iarray);
+                kappa=newEvent.localization.kappa(Iarray);
+                
+                newEvent.localization=currentEvent.localization;
+            
+                newEvent.localization.bearings_all(Iarray)=bearing;
+                newEvent.localization.kappa(Iarray)=kappa;
+                newEvent=update_GSI_localization(newEvent);
+                
+            else
+                newEvent.localization=currentEvent.localization;
+                %Update range, bearing, and position fields
+                newEvent=update_GSI_localization(newEvent);
+                
+                %newEvent=update_localization_fields(newEvent);  %Do this to recalculate range from this station
+                
+            
+            end
             %,Iarray_org, str2num(currentEvent.bearing),currentEvent.localization.kappa(Iarray_org));
           
             handles.notes.Data.Events(handles.notes.i_sel)=newEvent;
             handles.notes.saved=false;  %position now changed
-        
+            handles=plot_events(handles);
         end
         %handles.notes.i_show=handles.notes.i_sel;
         
@@ -5936,7 +6010,7 @@ switch handles.filetype
         return
 end
 
-end %pushbutton_next_linked_annotation_Callback
+end 
 
 function flag_positions_changed=compare_localizations(currentEvent,newEvent)
         %check bearings instead.
@@ -8422,6 +8496,7 @@ end
 end  %function readGSIfile
 
 function [thet,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,tmp)
+% Freq or temp in kiloHz
 %tsec: seconds into time series that data are selected...
 % tmp is previous ginput
 thet=-1;  %Start with failed result
@@ -10390,7 +10465,7 @@ for I=1:length(list_names)
       uiwait(msgbox(sprintf('%s failed to process',list_names{I}),'Failed!','modal'));
       return
    else
-       disp(sprintf('%s procesed',list_names{I}));
+       disp(sprintf('%s processed',list_names{I}));
        
    end
     
