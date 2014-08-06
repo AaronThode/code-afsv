@@ -27,6 +27,13 @@ if exist('Istation','var')
         Event.link_hashtags(Istation,:)=blanks(nblanks);
         Event.link_hashtags(Istation,(end-1):end)='-1';
     end
+    
+    %If hashtags are NaN, then kill bearings
+    hashtags=str2num(Event.link_hashtags);
+    Inan=find(hashtags<0);
+    Event.localization.bearings_all(Inan)=NaN;
+    Event.localization,kappa(Inan)=NaN;
+    
 else
     Istation=str2num(Event.Istation);  %Use this to recompute range using my own information.
 end
@@ -39,10 +46,10 @@ Ikeep=find(~isnan(theta));
 station_position=Event.localization.station_position;
 DASAR_coords=[station_position.easting station_position.northing];
 
-[Event.localization.location,Event.localization.Qhat,~,Event.localization.outcome] = vmmle_r(theta(Ikeep),DASAR_coords(Ikeep,:),'h',kappa(Ikeep));
-%if ~strcmpi(Event.localization.outcome,'Successful')
-%    keyboard
-%end
+%Version that uses kappa
+%[Event.localization.location,Event.localization.Qhat,~,Event.localization.outcome] = vmmle_r(theta(Ikeep),DASAR_coords(Ikeep,:),'h',kappa(Ikeep));
+[Event.localization.location,Event.localization.Qhat,~,Event.localization.outcome] = vmmle_r(theta(Ikeep),DASAR_coords(Ikeep,:),'h');
+
     
 
 Event.localization.Nused=length(Ikeep);

@@ -31,7 +31,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 25-Jul-2014 09:23:34
+% Last Modified by GUIDE v2.5 04-Aug-2014 21:30:12
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -117,23 +117,59 @@ try
 end
 handles.filetype	=	'mt';
 [handles,errorflag] =	set_slider_controls(handles,handles.filetype); %#ok<*NASGU>
-%Make GSIbearing button, CSDM, and accelerometer buttons invisible
-set(handles.pushbutton_GSIbearing,'Vis','off');
-set(handles.pushbutton_next_linked_annotation,'Vis','off');
-set(handles.pushbutton_previous_linked_annotation,'Vis','off');
 
-set(handles.pushbutton_GSI_localization,'Vis','off');
-set(handles.pushbutton_CSDM,'Vis','off');
-set(handles.pushbutton_Mode,'Vis','off');
-set(handles.pushbutton_tilt,'Vis','off');
-set(handles.pushbutton_modalfiltering,'Vis','off');
-set(handles.edit_normal_rotation,'Vis','off');
-set(handles.text_normal_rotation,'Vis','off');
+%Group controls into multielement (arrays) and linked (distributed array)
+%categories, for easier times in hiding or disabling buttons
+
+handles.buttongroup.linked(1)=handles.pushbutton_next_linked_annotation;
+handles.buttongroup.linked(2)=handles.pushbutton_previous_linked_annotation;
+handles.buttongroup.linked(3)=handles.pushbutton_next_station;
+handles.buttongroup.linked(4)=handles.pushbutton_prev_station;
+
+handles.buttongroup.array(1)=handles.pushbutton_CSDM;
+handles.buttongroup.array(2)=handles.pushbutton_Mode;
+handles.buttongroup.array(3)=handles.pushbutton_tilt;
+handles.buttongroup.array(4)=handles.pushbutton_modalfiltering;
+handles.buttongroup.array(5)=handles.togglebutton_ChannelBeam;
+handles.buttongroup.array(6)=handles.edit_chan;
+
+handles.buttongroup.GSI(1)=handles.pushbutton_GSIbearing;
+handles.buttongroup.GSI(2)=handles.pushbutton_GSI_localization;
+
+handles.buttongroup.accelerometer(1)=handles.edit_normal_rotation;
+handles.buttongroup.accelerometer(2)=handles.text_normal_rotation;
+
+%Make GSIbearing button, CSDM, and accelerometer buttons invisible
+for I=1:length(handles.buttongroup.linked)
+    set(handles.buttongroup.linked(I),'Vis','off');
+end
+%set(handles.pushbutton_next_linked_annotation,'Vis','off');
+%set(handles.pushbutton_previous_linked_annotation,'Vis','off');
+
+for I=1:length(handles.buttongroup.GSI)
+    set(handles.buttongroup.GSI(I),'Vis','off');
+end
+%set(handles.pushbutton_GSIbearing,'Vis','off');
+%set(handles.pushbutton_GSI_localization,'Vis','off');
+
+for I=1:length(handles.buttongroup.array)
+    set(handles.buttongroup.array(I),'Vis','off');
+end
+%set(handles.pushbutton_CSDM,'Vis','off');
+%set(handles.pushbutton_Mode,'Vis','off');
+%set(handles.pushbutton_tilt,'Vis','off');
+%set(handles.pushbutton_modalfiltering,'Vis','off');
+
+for I=1:length(handles.buttongroup.accelerometer)
+    set(handles.buttongroup.accelerometer(I),'Vis','off');
+end
+
+%set(handles.edit_normal_rotation,'Vis','off');
+%set(handles.text_normal_rotation,'Vis','off');
 
 %	Set prev/next buttons inactive initially
 set(handles.pushbutton_next,'Enable','off');
 set(handles.pushbutton_prev,'Enable','off');
-
 
 set(handles.edit_maxfreq,'String','0');
 set(handles.edit_minfreq,'String','0');
@@ -3481,7 +3517,10 @@ Igood=find(~isnan(theta)&theta>-2);  %Remove absent DASARS (used to compute cent
 %Note that the Site contains all DASAR locations,
 %  whether they collected data or not
 DASAR_coords=[locs.Site{Isite}.easting locs.Site{Isite}.northing];
-[VM,Qhat,~,outcome] = vmmle_r(theta(Ikeep)',DASAR_coords(Ikeep,:),'h',kappa(Ikeep)');
+
+%Using kappa gives too precise an estimate
+%[VM,Qhat,~,outcome] = vmmle_r(theta(Ikeep)',DASAR_coords(Ikeep,:),'h',kappa(Ikeep)');
+[VM,Qhat,~,outcome] = vmmle_r(theta(Ikeep)',DASAR_coords(Ikeep,:),'h');
 mean_coords=mean(DASAR_coords(Igood,:));
 CRITVAL=4.60517; %chi2inv(0.90,2);
 
@@ -3521,6 +3560,12 @@ mydir=pwd;
 Ichan='all';  %Hardwire first channel
 set(handles.togglebutton_ChannelBeam,'String','Channel');
 [x,~,Fs,~,~,head]=load_data(handles.filetype, tdate_start,tlen,Ichan,handles);
+
+%If not multichannel data, return
+if isempty(x)||~head.multichannel
+    uiwait(msgbox('CSDM requires multichannel data or non-zero x value'));
+    return
+end
 %Will need to have columns be channels, rows time
 if floor(tlen*Fs)~=size(x,1)
     x=x.';
@@ -3878,9 +3923,17 @@ tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 %for Ichan=1:8
 [x,~,Fs,tstart,junk,head]=load_data(handles.filetype, tdate_start,tlen,'all',handles); %#ok<*ASGLU>
-if size(x,2)>1
-    x=x';
+
+%If not multichannel data, return
+if isempty(x)||~head.multichannel
+    uiwait(msgbox('Mode filtering requires multichannel data or non-zero x value'));
+    return
 end
+%AARON: removed lines below because multichannel data will always get
+%flipped
+%if size(x,2)>1
+%    x=x';
+%end
 %xall{Ichan}=x;
 %end
 
@@ -3996,10 +4049,19 @@ tlen=handles.tlen;
 %for Ichan=1:8
 [x,t,Fs,tstart,junk,head]=load_data(handles.filetype,tdate_start,tlen,'all',handles);
 
+%If not multichannel data, return
+if isempty(x)||~head.multichannel
+    uiwait(msgbox('Tilt estimate requires multichannel data or non-zero x value'));
+    return
+end
 %x(1) is shallowest element...
-if size(x,2)>1
+
+%AARON: make sure channels are columns
+if size(x,2)~=head.Nchan
+%if size(x,2)>1
     x=x';
 end
+
 %xall{Ichan}=x;
 %end
 
@@ -4106,6 +4168,11 @@ tlen=handles.tlen;
 %for Ichan=1:8
 [data.x,t,Fs,tstart,junk,head]=load_data(handles.filetype, tdate_start,tlen,'all',handles);
 
+%If not multichannel data, return
+if isempty(x)||~head.multichannel
+    uiwait(msgbox('Modal filtering requires multichannel data or non-zero x value'));
+    return
+end
 %xall{Ichan}=x;
 %end
 
@@ -5239,7 +5306,7 @@ guidata(hObject, handles);
 end
 
 % --- Executes on button press in pushbutton_notes_new.
-function pushbutton_notes_new_Callback(hObject, eventdata, handles)
+function handles=pushbutton_notes_new_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_notes_new (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -5344,41 +5411,64 @@ switch sig_type
 end
 
 %Finally, determine hash tag...
-%Check that hash tag makes sense--if our selection is too far ahead or
-%behind in time, selct a new one...
-
-tmp=(abs(start_time-previous_start_time));
-yes_independent_selection=tmp>datenum(0,0,0,0,0,2);
-
-ButtonName = questdlg('What is this annonation status?', ...
-    'Annotation status', ...
-    'Completely New', 'Adding harmonic', 'Replacing','Completely New');
-
-if strcmp(ButtonName,'Completely New')||~isfield(Event,'hash_tag')||isempty(Event.hash_tag)
-    Event.hash_tag      =   2*datenum(1970,1,1,0,0,0)-now;  %manual hashtags go back into past, automated hashtags into future.
-end
 
 
-%if GSI file, get bearing of annotation
-switch handles.filetype
-    case 'GSI'
+%if linked file, offer additional capabilities bearing of annotation
+linked_file=isfield(handles.file_flags,'linked')&&handles.file_flags.linked&&isfield('Event','Istation');
+
+%switch handles.filetype
+%case 'GSI'
+if ~linked_file
+    
+    %If event is within 2 sec of previously-selected annotation, offer a chance to use
+    %  same hashtags (useful for harmonics)
+    tmp=(abs(start_time-previous_start_time));
+    yes_independent_selection=tmp>datenum(0,0,0,0,0,2);
+    if ~yes_independent_selection
+        ButtonName = questdlg('You are close to previously-selected annotation!', ...
+            'Annotation status', ...
+            'Completely New', 'Adding harmonic to previous', 'Completely New');
+    else
+        ButtonName='Completely New';
+    end
+    if strcmp(ButtonName,'Completely New')||~isfield(Event,'hash_tag')||isempty(Event.hash_tag)
         
-        %If this is a brand new creation with empty link file...
-        if isempty(Event.link_names)
-            Event.link_names=handles.notes.file_name;
-            Event.link_hashtags=num2str(Event.hash_tag);
-            Event.Istation=num2str(1);
-        end
+        Event.hash_tag      =   2*datenum(1970,1,1,0,0,0)-now;  %manual hashtags go back into past, automated hashtags into future.
+        %If this is a brand new creation with empty link file, zero out
+        %hashtags and position
+       
+    else
+        disp('copying hashtag...');
+        %Keep current event hashtag...
+    end
+else
+    
+    ButtonName = questdlg('What is this annonation status?', ...
+        'Annotation status', ...
+        'Completely New', 'Adding harmonic', 'Replacing','Completely New');
+    
+    if strcmp(ButtonName,'Completely New')||~isfield(Event,'hash_tag')||isempty(Event.hash_tag)
+        Event.hash_tag      =   2*datenum(1970,1,1,0,0,0)-now;  %manual hashtags go back into past, automated hashtags into future.
+        Event.link_hashtags=-1*ones(size(Event.link_hashtags,1),1);
+        Istation=str2num(Event.Istation);
+        Event.link_hashtags(Istation)=Event.hash_tag;
+        Event.link_hashtags=num2str(Event.link_hashtags);
+    end
+    
+    
+    if isfield(Event,'bearing')
         
-   
-        if isfield(Event,'bearing')
-            [bearing,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,[Times Freq]);
-            %Event.bearing=num2str(bearing);
-            if isfield(Event,'localization')&&strcmp(ButtonName,'Replacing')
-                 Event=update_GSI_localization(Event,str2num(Event.Istation),bearing,kappa);
-                
-            end
+        switch handles.filetype
+            case 'GSI'
+                [bearing,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,[Times Freq]);
+                %Event.bearing=num2str(bearing);
+                %if isfield(Event,'localization')&&strcmp(ButtonName,'Replacing')
+                if isfield(Event,'localization')
+                    Event=update_GSI_localization(Event,str2num(Event.Istation),bearing,kappa);
+                    
+                end
         end
+    end
 end
 
 
@@ -5427,15 +5517,22 @@ end
 delete_on	=	get(handles.checkbox_notes_delete, 'Value');
 if	delete_on
 
+    current_time=handles.notes.Data.Events(i_sel).start_time;
     handles.notes.Data.Events(i_sel)	=	[];
     N	=	length(handles.notes.Data.Events);
+    start_times=[handles.notes.Data.Events.start_time];
     if	N == 0
         i_sel	=	[];
     elseif	i_sel > N
-        i_sel	=	N;
+        i_sel	=	N;  %Closest by default
+    else
+        [~,i_sel]=min(abs(current_time-start_times));
     end
     handles.notes.i_sel	=	i_sel;
     
+    %Remove delete as a safety...
+    set(handles.checkbox_notes_delete, 'Value',0);
+    set(handles.pushbutton_notes_edit,'String','Edit');
     %	Otherwise open edit window with existing values
 else
     Event	=	handles.notes.Data.Events(i_sel);
@@ -5464,6 +5561,22 @@ else
     end
     
     Event	=	edit_event(Event, handles.notes.Data.Description, handles.notes.edit_fields);
+    
+    %Check if need to relocalize...
+    if isfield(Event,'bearing')
+        
+        switch handles.filetype
+            case 'GSI'
+                [bearing,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,[Times' Freq']);
+                %Event.bearing=num2str(bearing);
+                %if isfield(Event,'localization')&&strcmp(ButtonName,'Replacing')
+                if isfield(Event,'localization')
+                    Event=update_GSI_localization(Event,str2num(Event.Istation),bearing,kappa);
+                    
+                end
+        end
+    end
+    
     if	isempty(Event)
         return;
     else
@@ -5478,201 +5591,6 @@ handles		=	plot_events(handles);
 guidata(hObject,handles);
 
 end
-
-function handles=shift_linked_annotation(hObject,eventdata,handles,stepp)
-%persistent currentEvent 
-switch handles.filetype
-    case 'GSI'
-        
-        %Determine next DASAR to load, keep skipping until a hashtag is
-        %  discovered...
-        if ~isfield(handles,'notes')||isempty(handles.notes)
-            return
-        end
-        
-        i_sel=handles.notes.i_sel;
-        currentEvent=handles.notes.Data.Events(i_sel);
-        
-        current_letter=handles.notes.file_name(5);
-        DASAR_letters=currentEvent.link_names(:,5);
-        NDASAR=length(DASAR_letters);
-        Iarray_org=strmatch(current_letter,DASAR_letters);  %Position of current annotationfile in link_names;
-        
-        %Check that station number matches Iarray_org (derived from
-        %strings)
-        if str2num(currentEvent.Istation)~=Iarray_org
-           disp('Warning!! Events.Istation not equal to Iarray_org'); 
-        end
-        
-        if stepp==1
-            Iarray=Iarray_org+1;
-            if Iarray>NDASAR
-                Iarray=1; %Return to letter 'A'
-            end
-        else
-            Iarray=Iarray_org-1;
-            if Iarray==0
-                Iarray=NDASAR; %Return to letter 'A'
-            end
-            
-        end
-        next_link_tag=str2num(currentEvent.link_hashtags(Iarray,:));
-        while(next_link_tag<0)
-            if stepp==1
-                Iarray=Iarray+1;
-                if Iarray>NDASAR
-                    Iarray=1; %Return to letter 'A'
-                end
-            else
-                Iarray=Iarray-1;
-                if Iarray==0
-                    Iarray=NDASAR; %Return to letter 'A'
-                end
-                
-            end
-            next_link_tag=str2num(currentEvent.link_hashtags(Iarray,:));
-        end
-        next_letter=DASAR_letters(Iarray);
-        
-             
-        %Load new data file
-        if ~strcmp(handles.mydir(end-6),'S')
-            fprintf('Directory %s does not have form S***** \n',handles.mydir);
-            return
-        end
-        handles.mydir(end-2)=next_letter;
-        %  Assume S510G0T20100831T000000.gsi form
-        handles.myfile(5)=next_letter;
-        fprintf('Directory %s contains %s\n',handles.mydir,handles.myfile);
-        try
-            handles		=	load_and_display_spectrogram(handles);
-        catch
-            disp(sprintf('Could not load %s',fullfile(handles.mydir,handles.myfile)));
-        end
-            
-        %load next annotation file
-        
-        %Check that everything makes sense
-        if ~strcmp(handles.notes.file_name,currentEvent.link_names(Iarray_org,:))
-           fprintf('%s in notes files does not match %s in link file names \n', handles.notes.file_name,currentEvent.link_names(Iarray,:));
-            
-        end
-        new_annotation_file_name=currentEvent.link_names(Iarray,:); 
-        
-        %%Now that event has been copied, delete annotation if desired
-        delete_on	=	get(handles.checkbox_notes_delete, 'Value');
-        if delete_on
-            %Double check
-            ButtonName = questdlg('Delete annoation before changing link?', ...
-                'The Delete checkbox is checked!', ...
-                'Yes','No', 'No');
-            switch ButtonName
-                case 'Yes'
-                    %Remove existance of annotation from CurrentEvent
-                    %hashtables
-                    
-                    currentEvent=update_GSI_localization(currentEvent,Iarray_org, NaN,-1);
-                    
-                    %Delete original annotation
-                    handles.notes.Data.Events(i_sel)	=	[];
-                    N	=	length(handles.notes.Data.Events);
-                    %Keep same index, unless at end
-                    if	N == 0
-                        i_sel	=	[];
-                    elseif	i_sel > N
-                        i_sel	=	N;
-                    end
-                    handles.notes.i_sel	=	i_sel;
-                    
-                    %Explicitly turn off delete checkbox to eliminate
-                    %inadvertant deletions.
-                    set(handles.checkbox_notes_delete,'Value',false)
-                    checkbox_notes_delete_Callback(handles.checkbox_notes_delete, eventdata, handles);
-                    
-            end % switch
-        end %delete_on
-        
-        % Load and replace current notes with new file
-        fprintf('I am file %s, station %i just before load_notes_file\n',handles.notes.file_name,str2num(handles.notes.Data.Events(handles.notes.i_sel).Istation));
-        pushbutton_notes_save_Callback(handles.pushbutton_notes_save, eventdata, handles);  %Force a save
-        handles.notes.saved=true;
-        
-        handles=load_notes_file(handles, [],new_annotation_file_name);
-        handles.notes.saved=true;
-        
-        hashtag=-1*ones(length(handles.notes.Data.Events),1);
-        for I=1:length(handles.notes.Data.Events)
-           hashtag(I)=str2num(handles.notes.Data.Events(I).hash_tag);
-        end
-        
-        handles.notes.i_sel=find(next_link_tag==hashtag, 1 );
-        
-        
-        if isempty(handles.notes.i_sel) %The data in link_hashtags is out of date!  Annotation has been deleted
-            keyboard
-        end
-        
-        newEvent=handles.notes.Data.Events(handles.notes.i_sel);
-        
-        fprintf('I am file %s, station %i\n',handles.notes.file_name,str2num(newEvent.Istation));
-        
-        %Check that localization information has not changed.  If it has,
-        %it means the position has been recalculated...
-        handles.notes.saved=true;
-        
-        % position not reliable, because NaNs possible.
-        %check bearings instead.
-        bearings1=currentEvent.localization.bearings_all;
-        bearings2=newEvent.localization.bearings_all;
-        
-        Inan1=find(isnan(bearings1));
-        Inan2=find(isnan(bearings2));
-        if length(Inan1)~=length(Inan2)
-            test_change1=true;
-            test_change2=true;
-        else
-            test_change1=~all(Inan1==Inan2);
-            Inan1=find(~isnan(bearings1));
-            Inan2=find(~isnan(bearings2));
-            test_change2=~all(bearings1(Inan1)==bearings2(Inan2));
-       
-        end
-        
-       
-        %test=sum(round(str2num(currentEvent.position))-round(str2num(newEvent.position)));
-        %If bearings have changed, copy localization object to newEvent and
-        %update related fields
-        if test_change2||test_change1
-            %fprintf('Test is %8.6f\n',test);
-            %pause;
-            %newEvent.bearing=currentEvent.bearing;
-            %newEvent.range=currentEvent.range;
-            
-            %Copy over link_names and link_hashtags
-            newEvent.link_names=currentEvent.link_names;
-            newEvent.link_hashtags=currentEvent.link_hashtags;
-            
-            %copy localization fields
-            newEvent.localization=currentEvent.localization;
-            
-            %Update range, bearing, and position fields
-            newEvent=update_localization_fields(newEvent);  %Do this to recalculate range from this station
-            %,Iarray_org, str2num(currentEvent.bearing),currentEvent.localization.kappa(Iarray_org));
-          
-            handles.notes.Data.Events(handles.notes.i_sel)=newEvent;
-            handles.notes.saved=false;  %position now changed
-        
-        end
-        handles.notes.i_show=handles.notes.i_sel;
-        
-        handles	=	plot_events(handles);
-        
-        guidata(hObject, handles);
-    otherwise
-        return
-end
-
-end %pushbutton_next_linked_annotation_Callback
 
 % --- Executes on button press in checkbox_notes_delete.
 function checkbox_notes_delete_Callback(hObject, eventdata, handles)
@@ -5714,7 +5632,7 @@ end
 end
 
 % --- Executes on button press in pushbutton_notes_screen.
-function pushbutton_notes_screen_Callback(hObject, eventdata, handles)
+function i_show=pushbutton_notes_screen_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_notes_screen (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -5742,18 +5660,380 @@ guidata(hObject, handles);
 end
 
 function pushbutton_previous_linked_annotation_Callback(hObject, eventdata, handles)
-    shift_linked_annotation(hObject,eventdata,handles,-1);
+    shift_linked_annotation(hObject,eventdata,handles,'prevlink');
 end
 % --- Executes on button press in pushbutton_next_linked_annotation.
 function pushbutton_next_linked_annotation_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_next_linked_annotation (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-  shift_linked_annotation(hObject,eventdata,handles,1);
+  shift_linked_annotation(hObject,eventdata,handles,'nextlink');
 
 end
 
+% --- Executes on button press in pushbutton_next_station.
+function pushbutton_next_station_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_next_station (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+shift_linked_annotation(hObject,eventdata,handles,'nextstation');
+end
 
+% --- Executes on button press in pushbutton_prev_station.
+function pushbutton_prev_station_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_prev_station (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+shift_linked_annotation(hObject,eventdata,handles,'prevstation');
+end
+
+function [newdir,newfile,new_annotation_file_name,Iarray,Iarray_org]=get_new_filename(current_file_name, ...
+    mydir, myfile,filetype,stepp_type,link_names,link_hashtags)
+
+% Returns a new filename, new directory filename, and new annotation file name to load when a link pushbutton is pressed
+newdir=[];
+newfile=[];
+Iarray=[];
+Iarray_org=[];
+
+if ~exist('link_names')
+    link_names=[];
+end
+
+if ~exist('link_hashtags')
+    link_hashtags=[];
+end
+
+if ~isempty(strfind(stepp_type,'prev'))
+    stepp=-1;
+else
+    stepp=1;
+end
+
+if ~isempty(strfind(stepp_type,'link'))
+    yes_nextlink_only=true;
+else
+    yes_nextlink_only=false;
+end
+
+switch filetype
+    case 'GSI'
+        current_letter=current_file_name(5);
+        DASAR_letters=link_names(:,5);
+        NDASAR=length(DASAR_letters);
+        Iarray_org=strmatch(current_letter,DASAR_letters);  %Position of current annotationfile in link_names;
+        
+        %Check that station number matches Iarray_org (derived from
+        %strings)
+        
+        
+        if stepp==1
+            Iarray=Iarray_org+1;
+            if Iarray>NDASAR
+                Iarray=1; %Return to letter 'A'
+            end
+        else
+            Iarray=Iarray_org-1;
+            if Iarray==0
+                Iarray=NDASAR; %Return to letter 'A'
+            end
+            
+        end
+        
+        %Keep going until a linked annotation is found
+        if yes_nextlink_only&~isempty(link_names)&~isempty(link_hashtags)
+            next_link_tag=str2num(link_hashtags(Iarray,:));
+            while(next_link_tag<0)
+                if stepp==1
+                    Iarray=Iarray+1;
+                    if Iarray>NDASAR
+                        Iarray=1; %Return to letter 'A'
+                    end
+                else
+                    Iarray=Iarray-1;
+                    if Iarray==0
+                        Iarray=NDASAR; %Return to letter 'A'
+                    end
+                    
+                end
+                next_link_tag=str2num(link_hashtags(Iarray,:));
+            end
+            
+            
+        end
+        next_letter=DASAR_letters(Iarray);
+        
+        if ~strcmp(mydir(end-6),'S')
+            fprintf('Directory %s does not have form S***** \n',mydir);
+            return
+        end
+        mydir(end-2)=next_letter;
+        %  Assume S510G0T20100831T000000.gsi form
+        myfile(5)=next_letter;
+        fprintf('Directory %s contains %s\n',mydir,myfile);
+        
+        newdir=mydir;
+        newfile=myfile;
+        
+        %get annotation file name
+        
+        %Check that everything makes sense
+        if ~strcmp(current_file_name,link_names(Iarray_org,:))
+           fprintf('%s in notes files does not match %s in link file names \n', file_name,link_names(Iarray_org,:));
+            
+        end
+        
+        new_annotation_file_name=link_names(Iarray,:); 
+end
+end
+        
+function handles=shift_linked_annotation(hObject,eventdata,handles,stepp_type)
+%persistent currentEvent 
+
+annotation_exists=true;
+switch handles.filetype
+    case 'GSI'
+        
+        %Determine next DASAR to load, keep skipping until a hashtag is
+        %  discovered...
+        if ~isfield(handles,'notes')||isempty(handles.notes)
+            return
+        end
+        
+        i_sel=handles.notes.i_sel;
+        if isempty(i_sel) %We have no annotation
+           annotation_exists=false;
+           i_sel=1;
+           handles.notes.i_sel=1;
+           stepp_type=[stepp_type(1:4) 'station'];  %Can't link if no current annotation
+        end
+        currentEvent=handles.notes.Data.Events(i_sel);
+        
+        % If no annotation selected, get link_names through other means.
+        
+        [mydir,myfile,new_annotation_file_name,Iarray,Iarray_org]=get_new_filename(handles.notes.file_name, ...
+            handles.mydir, handles.myfile, handles.filetype,stepp_type, ...
+            currentEvent.link_names,currentEvent.link_hashtags);
+        
+        if isempty(mydir)||isempty(myfile)
+            return
+        end
+        
+        handles.mydir=mydir;
+        handles.myfile=myfile;
+        
+        if str2num(currentEvent.Istation)~=Iarray_org
+            disp('Warning!! Events.Istation not equal to Iarray_org');
+        end
+       
+        try
+            handles		=	load_and_display_spectrogram(handles);
+        catch
+            disp(sprintf('Could not load %s',fullfile(handles.mydir,handles.myfile)));
+        end
+        
+        
+        %%Now that event has been copied, delete annotation if desired
+        delete_on	=	get(handles.checkbox_notes_delete, 'Value');
+        if delete_on & annotation_exists
+            %Double check
+            ButtonName = questdlg('Delete annotation before changing link?', ...
+                'The Delete checkbox is checked!', ...
+                'Yes','No', 'No');
+            switch ButtonName
+                case 'Yes'
+                    %Remove existance of annotation from CurrentEvent
+                    %hashtables
+                    
+                    currentEvent=update_GSI_localization(currentEvent,Iarray_org, NaN,-1);
+                    
+                    %Delete original annotation
+                    handles.notes.Data.Events(i_sel)	=	[];
+                    N	=	length(handles.notes.Data.Events);
+                    %Keep same index, unless at end
+                    if	N == 0
+                        i_sel	=	[];
+                    elseif	i_sel > N
+                        i_sel	=	N;
+                    end
+                    handles.notes.i_sel	=	i_sel;
+                    
+                    %Explicitly turn off delete checkbox to eliminate
+                    %inadvertant deletions.
+                    set(handles.checkbox_notes_delete,'Value',false)
+                    checkbox_notes_delete_Callback(handles.checkbox_notes_delete, eventdata, handles);
+                    
+            end % switch
+        end %delete_on
+        
+        % Load and replace current notes with new file
+        fprintf('I am file %s, station %i just before load_notes_file\n',handles.notes.file_name,str2num(handles.notes.Data.Events(handles.notes.i_sel).Istation));
+        
+        if annotation_exists
+            pushbutton_notes_save_Callback(handles.pushbutton_notes_save, eventdata, handles);  %Force a save
+            handles.notes.saved=true;
+        end
+        
+        handles=load_notes_file(handles, [],new_annotation_file_name);
+        handles.notes.saved=true;
+        
+        %Create hashtag array
+        hashtag=-1*ones(length(handles.notes.Data.Events),1);
+        for I=1:length(handles.notes.Data.Events)
+           hashtag(I)=str2num(handles.notes.Data.Events(I).hash_tag);
+        end
+        
+        
+        %Determine whether a linked annotation already exists in this
+        %station
+        
+        if annotation_exists
+            next_link_tag=str2num(currentEvent.link_hashtags(Iarray,:));
+            handles.notes.i_sel=find(next_link_tag==hashtag, 1 );
+            
+            handles	=	plot_events(handles);
+        else % We are at a station with no annotation
+            handles	=	plot_events(handles);
+            handles.notes.i_sel=min(handles.notes.i_show);
+            guidata(hObject, handles);
+            return                
+        end
+        
+        flag_fix_event=false;
+        if ~isempty(findstr(stepp_type,'link'))
+            
+            if isempty(handles.notes.i_sel) %The data in link_hashtags is out of date!  Annotation has been deleted
+                keyboard
+            end
+            
+        else  %If I'm switching channel
+            
+            ButtonName = questdlg('What Next?', ...
+                    'Linking choice', ...
+                    'Do Nothing', 'Add link', 'Replace','Do Nothing');
+                axes(handles.axes1)
+                       
+                switch ButtonName
+                    case 'Do Nothing'
+                        %If no linked annotation exists in this station,
+                        %return
+                        if isempty(handles.notes.i_sel)
+                           % i_sel=pushbutton_notes_screen_Callback(handles.pushbutton_notes_screen,eventdata,handles);
+                           % handles.notes.i_sel=i_sel;
+                            guidata(hObject, handles);
+                            return
+                        end
+                        
+                        %Otherwise, continue as if next_link button has
+                        %been pressed
+                    case 'Add link'
+                         handles=pushbutton_notes_new_Callback(handles.pushbutton_notes_new, eventdata, handles);
+                        
+                        % handles.notes.i_sel should be updated
+                        % automatically
+                    case 'Replace'
+                        uiwait(msgbox('After hitting OK, please click on left side of annotation you wish to link'));
+                        tmp=ginput(1);
+                        [~,ichc]=min(abs(tmp(1)-handles.notes.x_show));
+                        handles.notes.i_sel=handles.notes.i_show(ichc);
+                        handles	=	plot_events(handles);
+         
+                end
+                
+                flag_fix_event=strcmp(ButtonName,'Add link')|strcmp(ButtonName,'Replace');
+           
+            
+        end
+        
+        newEvent=handles.notes.Data.Events(handles.notes.i_sel);
+        
+        fprintf('I am file %s, station %i\n',handles.notes.file_name,str2num(newEvent.Istation));
+        
+        %Check that localization information has not changed.  If it has,
+        %it means the position has been recalculated...
+        
+        % position not reliable, because NaNs possible.
+        flag_positions_changed=compare_localizations(currentEvent,newEvent);
+        
+       
+        %If bearings have changed, copy localization object to newEvent and
+        %update related fields
+        handles.notes.saved=true;
+       
+        if flag_positions_changed
+             
+            %Copy over link_names and link_hashtags
+            newEvent.link_names=currentEvent.link_names;
+            newEvent.link_hashtags=currentEvent.link_hashtags;
+            
+            %Add current hashtag to link_hashtags
+            if isnumeric(newEvent.hash_tag)
+                newEvent.hash_tag=num2str(newEvent.hash_tag);
+            end
+            Nchar=min([length(newEvent.hash_tag) size(newEvent.link_hashtags,2)]);
+            newEvent.link_hashtags(Iarray,:)=blanks(size(newEvent.link_hashtags,2));
+            newEvent.link_hashtags(Iarray,1:Nchar)=newEvent.hash_tag(1:Nchar);
+            
+            %copy localization fields, this ensures that new bearings
+            %  propagated
+            
+            if flag_fix_event
+                bearing=newEvent.localization.bearings_all(Iarray);
+                kappa=newEvent.localization.kappa(Iarray);
+                
+                newEvent.localization=currentEvent.localization;
+            
+                newEvent.localization.bearings_all(Iarray)=bearing;
+                newEvent.localization.kappa(Iarray)=kappa;
+                newEvent=update_GSI_localization(newEvent);
+                
+            else
+                newEvent.localization=currentEvent.localization;
+                %Update range, bearing, and position fields
+                newEvent=update_GSI_localization(newEvent);
+                
+                %newEvent=update_localization_fields(newEvent);  %Do this to recalculate range from this station
+                
+            
+            end
+            %,Iarray_org, str2num(currentEvent.bearing),currentEvent.localization.kappa(Iarray_org));
+          
+            handles.notes.Data.Events(handles.notes.i_sel)=newEvent;
+            handles.notes.saved=false;  %position now changed
+            handles=plot_events(handles);
+        end
+        %handles.notes.i_show=handles.notes.i_sel;
+        
+        
+        guidata(hObject, handles);
+    otherwise
+        return
+end
+
+end 
+
+function flag_positions_changed=compare_localizations(currentEvent,newEvent)
+        %check bearings instead.
+        bearings1=currentEvent.localization.bearings_all;
+        bearings2=newEvent.localization.bearings_all;
+        
+        Inan1=find(isnan(bearings1));
+        Inan2=find(isnan(bearings2));
+        if length(Inan1)~=length(Inan2)
+            test_change1=true;
+            test_change2=true;
+        else
+            test_change1=~all(Inan1==Inan2);
+            Inan1=find(~isnan(bearings1));
+            Inan2=find(~isnan(bearings2));
+            test_change2=~all(bearings1(Inan1)==bearings2(Inan2));
+       
+        end
+        
+        flag_positions_changed=test_change2||test_change1;
+        
+end
+        
 %	Supporting functions, i.e. not auto-generated callbacks
 function	status	=	dependency_check()
 
@@ -5823,10 +6103,10 @@ set(handles.pushbutton_notes_save, 'Enable', opt);
 set(handles.pushbutton_notes_edit, 'Enable', opt);
 set(handles.checkbox_notes_show, 'Enable', opt);
 set(handles.checkbox_notes_delete, 'Enable', opt);
-if strcmpi(handles.filetype,'gsi')
-    set(handles.pushbutton_next_linked_annotation, 'Enable', opt);
-    set(handles.pushbutton_previous_linked_annotation, 'Enable', opt);
-end
+
+set(handles.pushbutton_next_linked_annotation, 'Enable', opt);
+set(handles.pushbutton_previous_linked_annotation, 'Enable', opt);
+
 
 %%	Switch to new folder and check for existing files
 if	exist('new_folder','var') && ~isempty(new_folder)
@@ -5898,12 +6178,14 @@ end
 %Check to see if a specific annotation file has already been requested...
 
 if nargin>2 && ~isempty(annotation_file_name)  %if annotation_file_name has been fed in...
+    cd(handles.outputdir)  %Should already be here, but just in case
     if exist(annotation_file_name,'file')==2
         file_name	=	annotation_file_name;
         sel_names{1}=file_name;
         Sel=1;
     else
         fprintf('Requested annotation file %s does not exist!\n',annotation_file_name);
+        sel_names=[];
     end
 else  %have user select annotation file interactively
     sel_names	=	[];
@@ -6214,6 +6496,12 @@ end
 options.Resize	=	'on';
 answer		=	inputdlg(Description, dlgTitle, num_lines, defaults, options);
 
+%formats(1).size = -1; % auto-expand width and auto-set height
+% options.Resize='on';
+ options.WindowStyle='normal';
+ options.Interpreter='tex';
+%
+ %answer = inputsdlg(Description,dlgTitle,num_lines,defaults,options);
 
 if	isempty(answer)
     NewEvent	=	[];
@@ -6676,6 +6964,7 @@ i_show	=	find((Times(1) <= Start_Times) & (Start_Times <= Times(2)));
 
 %	Plot rectangles for visible events
 h_show	=	zeros(1,length(i_show));
+x_show =h_show;
 sel_vis	=	false;
 %axes(h_axes);
 for	ii	=	1:length(i_show)
@@ -6683,6 +6972,7 @@ for	ii	=	1:length(i_show)
     ie		=	i_show(ii);
     event	=	Events(ie);
     x		=	event.start_time - Times(1);	x	=	x*24*60*60;
+    x_show(ii)=x;
     y		=	str2double(num2str(event.min_freq))/1000;
     width	=	str2double(num2str(event.duration));
     height	=	(str2double(num2str(event.max_freq))...
@@ -6707,7 +6997,8 @@ end
 
 handles.notes.i_show	=	i_show;
 handles.notes.h_show	=	h_show;
-guidata(h_axes, handles);
+handles.notes.x_show	=	x_show;
+%guidata(h_axes, handles);
 
 %	Enable prev/next buttons
 if	length(Events) >= 1
@@ -7115,6 +7406,8 @@ try
     end
     [x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype, ...
         handles.tdate_start,tlen,Ichan,handles);
+    handles.file_flags.multichannel=hdr.multichannel;
+    handles.file_flags.linked=hdr.linked;
     
     %%Change file display if a transformation of a basic file has
     %%  occurred...
@@ -7386,36 +7679,55 @@ handles.x	=	x;
 handles.Fs	=	Fs;
 %tmp=ginput(2)
 
+
+%Update all control buttons, depending on loaded data
 if strcmpi(lower(handles.filetype),'gsi')
-    set(handles.pushbutton_GSIbearing,'vis','on');
-    set(handles.pushbutton_GSI_localization,'vis','on');
-    set(handles.pushbutton_next_linked_annotation,'vis','on');
-    set(handles.pushbutton_previous_linked_annotation,'vis','on');
-    set(handles.pushbutton_next_linked_annotation,'enable','on');
-    set(handles.pushbutton_previous_linked_annotation,'enable','on');
+    status='on';
 else
-    set(handles.pushbutton_GSIbearing,'vis','off');
-    set(handles.pushbutton_GSI_localization,'vis','off');
-    set(handles.pushbutton_next_linked_annotation,'vis','off');
-    set(handles.pushbutton_previous_linked_annotation,'vis','off');
+    status='off';
 end
 
-if strcmpi(handles.filetype,'mdat')||strcmpi(handles.filetype,'wav')||strcmpi(handles.filetype,'mat')
-    set(handles.pushbutton_CSDM,'vis','on');
-    set(handles.pushbutton_Mode,'vis','on');
-    set(handles.pushbutton_tilt,'vis','on');
-    set(handles.pushbutton_modalfiltering,'vis','on');
-else
-    set(handles.pushbutton_CSDM,'vis','off');
-    set(handles.pushbutton_Mode,'vis','off');
-    set(handles.pushbutton_modalfiltering,'vis','off');
-    set(handles.pushbutton_tilt,'vis','off');
+for II=1:length(handles.buttongroup.GSI)
+    set(handles.buttongroup.GSI(II),'vis',status);
+    set(handles.buttongroup.GSI(II),'enable',status);
+end
+
+
+for II=1:length(handles.buttongroup.linked)
+    set(handles.buttongroup.linked(II),'vis',status);
+    set(handles.buttongroup.linked(II),'enable',status);
+end
+
+%set(handles.pushbutton_GSIbearing,'vis','on');
+%set(handles.pushbutton_GSI_localization,'vis','on');
+%set(handles.pushbutton_next_linked_annotation,'vis','on');
+%set(handles.pushbutton_previous_linked_annotation,'vis','on');
+%set(handles.pushbutton_next_linked_annotation,'enable','on');
+%set(handles.pushbutton_previous_linked_annotation,'enable','on');
+
+if handles.file_flags.multichannel
+    for II=1:length(handles.buttongroup.array)
+        set(handles.buttongroup.array(II),'vis',status);
+        set(handles.buttongroup.array(II),'enable',status);
+    end
+end
     
-end
+% if strcmpi(handles.filetype,'mdat')||strcmpi(handles.filetype,'wav')||strcmpi(handles.filetype,'mat')
+%     set(handles.pushbutton_CSDM,'vis','on');
+%     set(handles.pushbutton_Mode,'vis','on');
+%     set(handles.pushbutton_tilt,'vis','on');
+%     set(handles.pushbutton_modalfiltering,'vis','on');
+% else
+%     set(handles.pushbutton_CSDM,'vis','off');
+%     set(handles.pushbutton_Mode,'vis','off');
+%     set(handles.pushbutton_modalfiltering,'vis','off');
+%     set(handles.pushbutton_tilt,'vis','off');
+%     
+% end
 
-if strcmpi(handles.filetype,'sio')
-    set(handles.pushbutton_CSDM,'vis','on');
-end
+%if strcmpi(handles.filetype,'sio')
+%    set(handles.pushbutton_CSDM,'vis','on');
+%end
 
 if strcmpi(handles.filetype,'psd')
     set(handles.pushbutton_binary,'vis','off');
@@ -7616,6 +7928,9 @@ t=[];
 tmin=[];
 tmax=[];
 head=[];
+head.multichannel=false;
+head.linked=false;
+
 filetype	=	upper(filetype);
 
 switch filetype
@@ -7678,6 +7993,8 @@ switch filetype
             Ichan=3;
         end
         [x,t,head]=readGSIfile([mydir '/' myfile],tdate_start,tlen,Ichan,'datenum','nocalibrate');
+        head.multichannel=false;
+        
         if isempty(keyword)
             prompt = {'Enter a keyword for GSI calibration [DASARC]:'};
             dlg_title = 'DASAR calibration';
@@ -7698,6 +8015,8 @@ switch filetype
         tmin=datenum(1970,1,1,0,0,head.ctbc);
         tmax=tmin+datenum(0,0,1,0,0,0);
         head.Nchan=length(Ichan);
+        head.linked=true;
+        
     case 'MT'
         %[x,t,Fs]=load_mt_mult(handles.mydir,tdate_start,tlen);
         %head=read_mt_header([mydir filesep myfile]);
@@ -7784,6 +8103,7 @@ switch filetype
         %set(handles.text_channel,'String','Channel [-angle (deg)]');
         sio_chc=get(handles.togglebutton_ChannelBeam,'String');
         [~, head] = sioread(fullfile(mydir,myfile));
+        head.multichannel=true;
         
         %Extract start date and time
         %if ~exist('tstart_min') || isempty(tstart_min) || tstart_min < 0
@@ -7919,19 +8239,6 @@ switch filetype
          end
         
         
-        %-----------------------------------------------------------------------
-        % sioread.m
-        %
-        % This program runs under windows, unix, and macs.
-        %
-        % function x=sioread(filename,p1,npi,channels);
-        %
-        % Inputs:
-        % 	filename: Name of sio file to read
-        % 	p1:	Point to start reading ( 0 < p1 < np)
-        % 	npi: 	Number of points to read in
-        % 	channels: Single number or vector containing the channels to read
-        % 		(example-to read channels 4 thru 10 enter 4:10)
     case 'DAT'
         [x,tmin,tmax,fs]=read_dat_file(fullfile(mydir,myfile),[],-1,tlen,0);
         
@@ -8137,6 +8444,15 @@ end
 if isempty(tmin) || isempty(tmax)
     disp('load_data: Warning, tmin and tmax should never be empty when exiting..');
 end
+
+
+%%Store whether multichannel data, regardless of original file format.
+if min(size(x))>1
+    head.multichannel=true;
+end
+
+
+
 %%%Optional Teager-Kaiser filtering...
 if teager
     %%Assume that x is in form [ channel time]
@@ -8186,6 +8502,7 @@ end
 end  %function readGSIfile
 
 function [thet,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,tmp)
+% Freq or temp in kiloHz
 %tsec: seconds into time series that data are selected...
 % tmp is previous ginput
 thet=-1;  %Start with failed result
@@ -10102,6 +10419,14 @@ function togglebutton_ChannelBeam_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of togglebutton_ChannelBeam
+
+%First, check that multichannel data exist
+if ~isfield(handles,'file_flags')||~handles.file_flags.multichannel
+    set(hObject,'Value',0)
+    set(hObject,'String','Channel')
+    return
+end
+
 onn=get(hObject,'Value');
 if onn
     
@@ -10121,6 +10446,38 @@ function Annotation_Utilities_Callback(hObject, eventdata, handles)
 % hObject    handle to Annotation_Utilities (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+end
+
+
+
+% --------------------------------------------------------------------
+function airgun_detector_Callback(hObject, eventdata, handles)
+% hObject    handle to airgun_detector (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Convert bowhead whale files into annotation files....
+
+%Load list of file names to be converted, along with criteria for filtering
+% the results into annotation (e.g. geographic restrictions...)
+[list_names,filter_params]=load_airgun_detector_params(handles.outputdir);
+if isempty(list_names)
+    return
+end
+
+for I=1:length(list_names)
+   success_flag=convert_automated_airgun_into_annotations(list_names{I},filter_params); 
+   if success_flag==0
+      uiwait(msgbox(sprintf('%s failed to process',list_names{I}),'Failed!','modal'));
+      return
+   else
+       disp(sprintf('%s processed',list_names{I}));
+       
+   end
+    
+end
+
+uiwait(msgbox(sprintf('Conversion finished')));
 end
 
 % --------------------------------------------------------------------
@@ -10877,6 +11234,8 @@ end
 
 
 end
+
+
 
 
 
