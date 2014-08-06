@@ -5414,7 +5414,7 @@ end
 
 
 %if linked file, offer additional capabilities bearing of annotation
-linked_file=isfield(handles.file_flags,'linked')&&handles.file_flags.linked;
+linked_file=isfield(handles.file_flags,'linked')&&handles.file_flags.linked&&isfield('Event','Istation');
 
 %switch handles.filetype
 %case 'GSI'
@@ -6496,6 +6496,12 @@ end
 options.Resize	=	'on';
 answer		=	inputdlg(Description, dlgTitle, num_lines, defaults, options);
 
+%formats(1).size = -1; % auto-expand width and auto-set height
+% options.Resize='on';
+ options.WindowStyle='normal';
+ options.Interpreter='tex';
+%
+ %answer = inputsdlg(Description,dlgTitle,num_lines,defaults,options);
 
 if	isempty(answer)
     NewEvent	=	[];

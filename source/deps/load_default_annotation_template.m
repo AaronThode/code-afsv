@@ -34,6 +34,7 @@ Description	=	{'Start Time',...
 Template.start_time			=	0;
 Template.author				=	'Your name';
 Template.hash_tag           =   now;
+Template.Istation='1';
 Template.sig_type			=	'NA';
 Template.call_type			=	'S1';
 Template.min_freq			=	0;
@@ -62,9 +63,9 @@ Template.link_names         =   '';
 Template.link_hashtags      =   '';
 
 edit_fields			=	fieldnames(Template);
-edit_fields(10:17)	=	[];
+edit_fields(11:18)	=	[];
 
-edit_fields(3)=[];
+edit_fields(3:4)=[];
 
 % params_extract.noise_se_dB		=	noise_se_dB;
 % params_extract.noise_rms_dB		=	noise_rms_dB; %not 20 log because actually mean sqaure
