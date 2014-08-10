@@ -8031,6 +8031,9 @@ switch filetype
             nsec=tdate_vec(6)+60*tdate_vec(5)+3600*tdate_vec(4);
         else
             %uiwait(msgbox('No start time requested'));
+            head.multichannel=false;
+            head.linked=false;
+
             return
         end
         %Load accelerometer data as desired
@@ -8451,7 +8454,13 @@ if min(size(x))>1
     head.multichannel=true;
 end
 
+if ~isfield(head,'linked')
+    head.linked=false;
+end
 
+if ~isfield(head,'multichannel')
+    head.multichannel=false;
+end
 
 %%%Optional Teager-Kaiser filtering...
 if teager
