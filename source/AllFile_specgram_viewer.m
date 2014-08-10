@@ -5414,7 +5414,7 @@ end
 
 
 %if linked file, offer additional capabilities bearing of annotation
-linked_file=isfield(handles.file_flags,'linked')&&handles.file_flags.linked&&isfield('Event','Istation');
+linked_file=isfield(handles.file_flags,'linked')&&handles.file_flags.linked&&isfield(Event,'Istation');
 
 %switch handles.filetype
 %case 'GSI'
