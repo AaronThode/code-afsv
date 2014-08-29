@@ -29,7 +29,7 @@
         ylim(ylimits);
         
       function make_boxplot(data_fin,tbin,x_inc_boxplot,xlabel_inc,label_style)
-            boxPlot(data_fin)
+            boxplot(data_fin)
             set(gca,'fontweight','bold','fontsize',14);
             
             Ibin=get(gca,'xtick');

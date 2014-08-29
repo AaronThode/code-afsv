@@ -34,7 +34,7 @@
         ylim(ylimits);
         
       function make_boxplot(data_fin,tbin,x_inc_boxplot,xlabel_inc,percentiles,label_style)
-            boxPlot_percentile(data_fin,percentiles)
+            boxplot_percentile(data_fin,percentiles)
             set(gca,'fontweight','bold','fontsize',14);
             
             Ibin=get(gca,'xtick');

@@ -84,7 +84,7 @@ try
         'ProgressPosition', 5, ...
         'ProgressRatio', 0.4 );
     s.addText( 30, 50, 'Ulysses/Ribbit', 'FontSize', 30, 'Color', [0 0 0.6] )
-    s.addText( 30, 80, 'v1.0, March 3, 2014', 'FontSize', 20, 'Color', [0.2 0.2 0.5] )
+    s.addText( 30, 80, 'v1.1, August 26, 2014', 'FontSize', 20, 'Color', [0.2 0.2 0.5] )
     s.addText( 30, 110, 'Aaron Thode and Jit Sarkar', 'FontSize', 20, 'Color', [0.2 0.2 0.5] )
     s.addText( 30, 150, 'Adventure through Analysis', 'FontSize', 20, 'Color', [0.2 0.2 0.5] ,'Fontangle','Italic')
     
@@ -5414,7 +5414,7 @@ end
 
 
 %if linked file, offer additional capabilities bearing of annotation
-linked_file=isfield(handles.file_flags,'linked')&&handles.file_flags.linked&&isfield('Event','Istation');
+linked_file=isfield(handles.file_flags,'linked')&&handles.file_flags.linked&&isfield(Event,'Istation');
 
 %switch handles.filetype
 %case 'GSI'
@@ -8031,6 +8031,9 @@ switch filetype
             nsec=tdate_vec(6)+60*tdate_vec(5)+3600*tdate_vec(4);
         else
             %uiwait(msgbox('No start time requested'));
+            head.multichannel=false;
+            head.linked=false;
+
             return
         end
         %Load accelerometer data as desired
@@ -8345,12 +8348,100 @@ switch filetype
             5.178423592184026e+01
             -1.229223450332553e+00];
         
-    case 'WAV'
+    case 'WAV' %% Includes SUDAR data
         Nsamples	=	wavread(fullfile(mydir,myfile),'size');
         [~,Fs]		=	wavread(fullfile(mydir,myfile),1,'native');
         Nsamples	=	Nsamples(1);
         handles.Fs	=	Fs;
         
+        [head.cable_factor,sens]=get_ADAT24_cable_factor;
+        
+         
+        
+        try
+            [SUDAR_true,tmin,tmax,Fs]=get_SUDAR_time(mydir,myfile); %Check whether a sUDAR file exists
+            if SUDAR_true
+              sens=(10^(186/20))/(2^15);
+              
+            end
+            if ~SUDAR_true
+                tmin	=	convert_date(myfile,'_');
+                if isempty(tmin)
+                    tmin=datenum([1970 1 1 0 0 0]);
+                end
+                tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
+            end
+        catch
+            disp([myfile ': convert_date failure']);
+            try
+                tmin=datenum(get(handles.text_mintime,'String'));
+            catch
+                minn	=	input('Enter start date in format [yr mo day hr min sec] or hit return: ');
+                if isempty(minn)
+                    minn=[1970 1 1 0 0 0];
+                end
+                tmin	=	datenum(minn);
+            end
+            tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
+        end
+        
+        
+        tdate_vec	=	datevec(tdate_start - tmin);
+        nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);  %Ignores differences in days
+        N1			=	1 + round(nsec*handles.Fs);
+        N2			=	N1 + round(tlen*handles.Fs);
+        
+        try
+            [x,Fs]		=	wavread(fullfile(mydir,myfile),[N1 N2],'native');
+              
+            
+        catch
+            x=[];
+           
+            t=[];
+            head.Nchan=0;
+            return
+        end
+        
+        if ~strcmp(Ichan,'all')
+            x		=	x(:,Ichan);
+        end
+        
+        t	=	(1:length(x))/Fs;
+        
+        x			=	double(x)*sens;
+        head.Nchan	=	size(x,2);
+
+end
+
+if isempty(tmin) || isempty(tmax)
+    disp('load_data: Warning, tmin and tmax should never be empty when exiting..');
+end
+
+
+%%Store whether multichannel data, regardless of original file format.
+if min(size(x))>1
+    head.multichannel=true;
+end
+
+if ~isfield(head,'linked')
+    head.linked=false;
+end
+
+if ~isfield(head,'multichannel')
+    head.multichannel=false;
+end
+
+%%%Optional Teager-Kaiser filtering...
+if teager
+    %%Assume that x is in form [ channel time]
+    x=x(:,2:end-1).^2-x(:,1:end-2).*x(:,3:end);
+end
+
+
+end  %function load_data
+
+function [cable_factor,sens]=get_ADAT24_cable_factor
         %%Can we calibrate the data?
         %%  load_wav often normalizes the data so the peak value is 1.
         %sens0=157; %dB re 1 unit of wav entry
@@ -8393,75 +8484,9 @@ switch filetype
         %
         % Jeff
         
-        head.cable_factor=2*pi*(110e-9)*140.0;  %Unit resistance 140 ohm, capacitance 110 nF
-        
-               
-        try
-            tmin	=	convert_date(myfile,'_');
-            if isempty(tmin)
-               tmin=datenum([1970 1 1 0 0 0]);
-            end
-            tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
-        catch
-            disp([myfile ': convert_date failure']);
-            try
-                tmin=datenum(get(handles.text_mintime,'String'));
-            catch
-                minn	=	input('Enter start date in format [yr mo day hr min sec] or hit return: ');
-                if isempty(minn)
-                    minn=[1970 1 1 0 0 0];
-                end
-                tmin	=	datenum(minn);
-            end
-            tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
+        cable_factor=2*pi*(110e-9)*140.0;  %Unit resistance 140 ohm, capacitance 110 nF
         end
-        tdate_vec	=	datevec(tdate_start - tmin);
-        nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);  %Ignores differences in days
-        N1			=	1 + round(nsec*handles.Fs);
-        N2			=	N1 + round(tlen*handles.Fs);
-        
-        try
-            [x,Fs]		=	wavread(fullfile(mydir,myfile),[N1 N2],'native');
-        catch
-            x=[];
-            Fs=[];
-            t=[];
-            head.Nchan=0;
-            return
-        end
-        
-        if ~strcmp(Ichan,'all')
-            x		=	x(:,Ichan);
-        end
-        
-        t	=	(1:length(x))/Fs;
-        
-        x			=	double(x)*sens;
-        head.Nchan	=	size(x,2);
-
-end
-
-if isempty(tmin) || isempty(tmax)
-    disp('load_data: Warning, tmin and tmax should never be empty when exiting..');
-end
-
-
-%%Store whether multichannel data, regardless of original file format.
-if min(size(x))>1
-    head.multichannel=true;
-end
-
-
-
-%%%Optional Teager-Kaiser filtering...
-if teager
-    %%Assume that x is in form [ channel time]
-    x=x(:,2:end-1).^2-x(:,1:end-2).*x(:,3:end);
-end
-
-
-end  %function load_data
-
+              
 function [y,t,head]=readGSIfile(rawfile,cbegin,tlen,nchan,formatt,calibrate)
 %function [y,t,head]=readGSIfile(rawfile,cbegin,tlen,nchan,formatt,calibrate)
 % Input Parameters:
@@ -8819,67 +8844,8 @@ vy=(x(:,1).*x(:,3));
 
 end
 
-function [mu,kappa,sd] = get_vmests(x,B)
-%GET_VMESTS Calculates bootstrap estimate of mean and standard error of bearings.
-%  [MU,KAPPA,SD] = GET_VMESTS(X,B) assumes that X is an n-by-2 matrix of x-y
-%  coordinate pairs and B is a scalar denoting the number of bootstrap iterations.
-%  MU is the mean bearing, KAPPA is an estimate of the standard error of the mean
-%  expressed as the von Mises concentration parameter, and SD is the standard error
-%  estimate in degrees expressed as for a linear (not a circular variable).
-%
-%  Note: B may be reduced for greater speed.
-
-n = size(x,1);
-flag = 0;           % Set to 1 to calculate estimates of kappa and Rbar for each
-%   bootstrap sample, 0 for mean vector only.
-mux_hat = zeros(B,2);
-options = optimset('Display','off');
-mux = vm_ests_uneq(x,options,flag);             % Get mean angle from the data.
-mu = 180/pi*atan2(mux(1),mux(2));
-%tic
-%for i = 1:B,
-%  U = ceil(n .* rand(n,1));          % The guts of UNIDRND.M without error checking.
-%  xb = x(U,:);
-%  mux_hat(i,:) = vm_ests_uneq(xb,options,flag); % Estimation accounting for lengths.
-%end
-
-U = ceil(n .* rand(n,B));          % The guts of UNIDRND.M without error checking.
-for i = 1:B
-    %U = ceil(n .* rand(n,1));          % The guts of UNIDRND.M without error checking.
-    %xb = x(U,:);
-    mux_hat(i,:) = vm_ests_uneq(x(U(:,i),:),options,flag); % Estimation accounting for lengths.
-end
-
-[junk,kappa,sd] = vm_ests(mux_hat,options);     % Estimation ignoring lengths.
-%toc
-end
-
-function [mux,Rbar,kappa] = vm_ests_uneq(x,options,flag) %#ok<STOUT>
-%VM_ESTS_UNEQ Maximum likelihood estimates of Von Mises parameters from data.
-%  [MUX,RBAR,KAPPA] = VM_ESTS_UNEQ(X,OPTIONS,FLAG) estimates the mean vector (MUX),
-%  the length of the mean vector (RBAR), and the concentration parameter (KAPPA)
-%  of the Von Mises distribution.  X is assumed to be an n-by-2 matrix, where
-%  each row represents an x,y coordinate pair, which defines a bearing from
-%  origin (0,0).  OPTIONS is an argument for FMINBND, for instance as set by
-%  OPTIMSET.  FLAG is a boolean: 0 indicates that only MUX will be calculated;
-%  1 indicates that RBAR and KAPPA will also be calculated
-%
-%  Calculates mean vector length, and thus KAPPA, taking account of individual
-%  vector lengths.
-
-%n1 = size(x,1);
-
-lx = sqrt(sum(x.^2,2));                % Get length of each vector
-idx = find(lx>0);                        % Get rid of 0-length vectors
-%n = length(idx);
-%if n<n1,
-x = x(idx,:);
-%end
-r = sum(x);
-mux = r/sum(lx);                       % Mean x,y coordinate
 
 
-end
 
 function bearings=bnorm(bearings)
 Ibig=find(bearings>=360);
