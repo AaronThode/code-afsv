@@ -1,4 +1,4 @@
-function boxPlot(data0, lineWidth, width)
+function boxplot(data0, lineWidth, width)
 % boxPlot(data0) - plot box-whiskers diagram, accept multiple columns
 %  shows max, 25,50,75, max percentiles
 % Arguments: data0 -  unsorted data, mxn, m samples, n columns

@@ -84,7 +84,7 @@ try
         'ProgressPosition', 5, ...
         'ProgressRatio', 0.4 );
     s.addText( 30, 50, 'Ulysses/Ribbit', 'FontSize', 30, 'Color', [0 0 0.6] )
-    s.addText( 30, 80, 'v1.0, March 3, 2014', 'FontSize', 20, 'Color', [0.2 0.2 0.5] )
+    s.addText( 30, 80, 'v1.1, August 26, 2014', 'FontSize', 20, 'Color', [0.2 0.2 0.5] )
     s.addText( 30, 110, 'Aaron Thode and Jit Sarkar', 'FontSize', 20, 'Color', [0.2 0.2 0.5] )
     s.addText( 30, 150, 'Adventure through Analysis', 'FontSize', 20, 'Color', [0.2 0.2 0.5] ,'Fontangle','Italic')
     
