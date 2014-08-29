@@ -39,11 +39,7 @@ draw_data=NaN*ones(length(percentiles),n);
 for i=1:n  %For each column... (need to do because of different numbers of nan's)
     ni=find(isnan(data(:,i)));
     if length(ni)==m
-%         q2(i)=0;
-%         q1(i)=0;
-%         q3(i)=0;
-%         q_least(i)=0;
-%         q_most(i)=0;
+
         continue
     elseif isempty(ni)  %All data good...
         ni(1)=m+1;
