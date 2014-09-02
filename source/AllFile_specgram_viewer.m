@@ -1257,11 +1257,7 @@ switch	Batch_mode
                     end  %length pms.fmin
                     
                     
-                    %if isempty(date_tick_chc) %auto adjustment has failed..
-                        %date_tick_chc=get_datetick_style('auto',pms.xlabel_inc,'datenumber');
-                    %end
-                    %pms.label_style=date_tick_chc;
-                    
+                     
                     if suppress_output==1
                          
                         %%Plot contour plots if enough frequency bands

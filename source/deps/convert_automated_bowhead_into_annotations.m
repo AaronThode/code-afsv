@@ -38,6 +38,8 @@ try
     Defaults.Template.range=0;
     Defaults.Template.position=[0 0];
     Defaults.Template.Istation=1;
+    Defaults.Template.array_index=[];
+    
     
     Defaults.Events		=	Defaults.Template;
     Defaults.edit_fields=edit_fields;
@@ -142,6 +144,9 @@ try
     end  % I
     close(h)
     %Now write events to output file.  Check where folder location is...
+    
+    %Check folder location, output in same directory as bowhead
+    %detections..
     
     
     for J=1:Ns
