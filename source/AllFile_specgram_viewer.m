@@ -5784,7 +5784,6 @@ end
 end
         
 function handles=shift_linked_annotation(hObject,eventdata,handles,stepp_type)
-%persistent currentEvent 
 
 annotation_exists=true;
 switch handles.filetype
@@ -5941,14 +5940,14 @@ switch handles.filetype
             
         end
         
-        newEvent=handles.notes.Data.Events(handles.notes.i_sel);
+        newEvent=handles.notes.Data.Events(handles.notes.i_sel);  %Event that is on new station
         
         fprintf('I am file %s, station %i\n',handles.notes.file_name,str2num(newEvent.Istation));
         
         %Check that localization information has not changed.  If it has,
-        %it means the position has been recalculated...
+        %it means the position has been recalculated, or that original
+        % calculation had an incorrect error ellipse.
         
-        % position not reliable, because NaNs possible.
         flag_positions_changed=compare_localizations(currentEvent,newEvent);
         
        
@@ -5971,7 +5970,7 @@ switch handles.filetype
             newEvent.link_hashtags(Iarray,1:Nchar)=newEvent.hash_tag(1:Nchar);
             
             %copy localization fields, this ensures that new bearings
-            %  propagated
+            %  are propagated throught linked files
             
             if flag_fix_event
                 bearing=newEvent.localization.bearings_all(Iarray);
@@ -5981,17 +5980,16 @@ switch handles.filetype
             
                 newEvent.localization.bearings_all(Iarray)=bearing;
                 newEvent.localization.kappa(Iarray)=kappa;
-                newEvent=update_GSI_localization(newEvent);
-                
+                 
             else
                 newEvent.localization=currentEvent.localization;
-                %Update range, bearing, and position fields
-                newEvent=update_GSI_localization(newEvent);
-                
-                %newEvent=update_localization_fields(newEvent);  %Do this to recalculate range from this station
-                
+                 
             
             end
+             %Update range, bearing, and position, and error ellipse fields
+               
+            newEvent=update_GSI_localization(newEvent);
+                
             %,Iarray_org, str2num(currentEvent.bearing),currentEvent.localization.kappa(Iarray_org));
           
             handles.notes.Data.Events(handles.notes.i_sel)=newEvent;
@@ -6009,7 +6007,7 @@ end
 end 
 
 function flag_positions_changed=compare_localizations(currentEvent,newEvent)
-        %check bearings instead.
+        %check if bearings consistent
         bearings1=currentEvent.localization.bearings_all;
         bearings2=newEvent.localization.bearings_all;
         
@@ -6027,6 +6025,32 @@ function flag_positions_changed=compare_localizations(currentEvent,newEvent)
         end
         
         flag_positions_changed=test_change2||test_change1;
+        
+        %%Next, check the error ellipse of the new Event
+        DASAR_coords=[newEvent.localization.station_position.easting newEvent.localization.station_position.northing];
+        Igood=find(~isnan(bearings2));
+        [VM,Qhat,~,outcome] = vmmle_r(bearings2(Igood),DASAR_coords(Igood,:),'h');
+        mean_coords=mean(DASAR_coords(Igood,:));
+        CRITVAL=4.60517; %chi2inv(0.90,2);
+        [~,A,B,ANG,Baxis] = ellipsparms(Qhat,CRITVAL,mean_coords,VM);
+
+        %If localization info different than what is stored, flag for a
+        %change
+        
+        Astored=newEvent.localization.major;
+        Bstored=newEvent.localization.minor;
+        Estored=newEvent.localization.ellipse_ang;
+        
+        if ~strcmp(outcome,'successful')||isnan(A)||isnan(B)
+            flag_positions_changed=true;
+            return
+        end
+        
+        if abs((A-Astored)./Astored)>0.1||abs((B-Bstored)./Bstored)>0.1
+            flag_positions_changed=true;
+            return
+        end
+       % if isnan(A)&~isnan(
         
 end
         
@@ -7093,15 +7117,40 @@ if isfield(Event,'localization')
     %Identify which station we are...
     
     Istation=str2num(Event.Istation);
-   
+    
     DASAR_coords=[Event.localization.station_position.easting Event.localization.station_position.northing];
     bearings=Event.localization.bearings_all;
     Igood=find(~isnan(bearings));
+    
     VM=Event.localization.location;
     A=Event.localization.major;
     B=Event.localization.minor;
     ANG=Event.localization.ellipse_ang;
     [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,35,Istation);
+    
+    %Compare stored with recomputed results
+    %     org.VM=Event.localization.location;
+    %     org.A=Event.localization.major;
+    %     org.B=Event.localization.minor;
+    %     org.ANG=Event.localization.ellipse_ang;
+    %
+    %     [VM,Qhat,~,outcome] = vmmle_r(bearings(Igood),DASAR_coords(Igood,:),'h');
+    %     mean_coords=mean(DASAR_coords(Igood,:));
+    %     CRITVAL=4.60517; %chi2inv(0.90,2);
+    %
+    %     [~,A,B,ANG,Baxis] = ellipsparms(Qhat,CRITVAL,mean_coords,VM);
+    %
+    %     [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,35,Istation);
+%     
+    %%used to demonstrate original stored data.
+     %disp('Original stored parameters:');
+     %org
+%     
+%     figure
+%     [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,org.VM,org.A,org.B,org.ANG,35,Istation);
+%     title('original stored parameters');
+   %pause
+   %close
 end
 
 end %show_event_info
