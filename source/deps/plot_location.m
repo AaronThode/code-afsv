@@ -70,8 +70,14 @@ xlim([-20 20]);
 ylim([-20 20]);
 
 hold off;
+
+
 if isnan(A)||isnan(B)
    title('Ellipse parameters not calculated'); 
+end
+
+if all(isnan(VM))
+    title('No convergence');
 end
 
 end%plot_location

@@ -5940,10 +5940,18 @@ switch handles.filetype
             
         end
         
+        %Create the new Event
         newEvent=handles.notes.Data.Events(handles.notes.i_sel);  %Event that is on new station
         
         fprintf('I am file %s, station %i\n',handles.notes.file_name,str2num(newEvent.Istation));
         
+        %As a courtesy, copy over author information
+        if ~strcmp(newEvent.author,currentEvent.author)
+            newEvent.author=currentEvent.author;
+            newEvent.call_type=currentEvent.call_type;
+            
+            handles	=	plot_events(handles);
+        end
         %Check that localization information has not changed.  If it has,
         %it means the position has been recalculated, or that original
         % calculation had an incorrect error ellipse.
@@ -6198,7 +6206,9 @@ end
 %Check to see if a specific annotation file has already been requested...
 
 if nargin>2 && ~isempty(annotation_file_name)  %if annotation_file_name has been fed in...
-    cd(handles.outputdir)  %Should already be here, but just in case
+    %cd(handles.outputdir)  %Should already be here, but just in case
+    mydirr=pwd;
+    cd(folder_name)
     if exist(annotation_file_name,'file')==2
         file_name	=	annotation_file_name;
         sel_names{1}=file_name;
@@ -6207,6 +6217,7 @@ if nargin>2 && ~isempty(annotation_file_name)  %if annotation_file_name has been
         fprintf('Requested annotation file %s does not exist!\n',annotation_file_name);
         sel_names=[];
     end
+    cd(mydirr);
 else  %have user select annotation file interactively
     sel_names	=	[];
     if	~isempty(listing)
