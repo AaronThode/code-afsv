@@ -72,8 +72,10 @@ function AllFile_specgram_viewer_OpeningFcn(hObject, eventdata, handles, varargi
 %   (2) Function handles file name and location
 %   (3) Multipath results file name and location
 
+if ~ isdeployed
 path('~/Desktop/Ulysses',path);
 path('~/Desktop/Ulysses/deps',path);
+end
 
 startupinfo		=	gui_startup_information;
 
@@ -5334,15 +5336,16 @@ hrec	=	rectangle('Position',[x,y,width,height],...
     'LineWidth',2,'LineStyle','-',...
     'EdgeColor','r');
 
-%	Initial signal type selection
-sig_types	=	{'Pulsive','FM'};
-choice		=	menu('Signal type?',sig_types);
-if	choice == 0
-    disp('Input cancelled');
-    delete(hrec);
-    return;
-end
-sig_type	=	sig_types{choice};
+%	Initial signal type selection--can change when editing event.
+% sig_types	=	{'Pulsive','FM'};
+% choice		=	menu('Signal type?',sig_types);
+% if	choice == 0
+%     disp('Input cancelled');
+%     delete(hrec);
+%     return;
+% end
+% sig_type	=	sig_types{choice};
+sig_type = 'FM';
 
 %	Get automated parameters from basic information
 params_extract	=	extract_automated_fields(Times, Freq, handles);
@@ -6523,25 +6526,25 @@ if	length(Description) ~= N_fields
     error('# of Descriptors differs from # of fields');
 end
 
+%Convert structures into inputsdlg
+
 %	Create input dialogbox
-options.Resize	=	'on';
-answer		=	inputdlg(Description, dlgTitle, num_lines, defaults, options);
+%options.Resize	=	'on';
+%answer		=	inputdlg(Description, dlgTitle, num_lines, defaults, options);
+%answer		=	newid(Description, dlgTitle, num_lines, defaults, options);
 
-%formats(1).size = -1; % auto-expand width and auto-set height
-% options.Resize='on';
- options.WindowStyle='normal';
- options.Interpreter='tex';
+prep_inputsdlg;
+[answer,Cancelled] = inputsdlg(Prompt,dlgTitle,Formats,DefAns,Options);
 %
- %answer = inputsdlg(Description,dlgTitle,num_lines,defaults,options);
-
-if	isempty(answer)
+ 
+if	isempty(answer)||Cancelled
     NewEvent	=	[];
     return;
 end
 
 NewEvent	=	OldEvent;
 for	ii	=	1:N_fields
-    NewEvent.(names{ii})	=	answer{ii};
+    NewEvent.(names{ii})	=	answer.(names{ii});
 end
 
 
