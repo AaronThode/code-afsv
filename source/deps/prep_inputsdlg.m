@@ -77,7 +77,7 @@ Prompt(II,:) = {Description{II}, 'num_harmonics',[]};
 Formats(5,2).type = 'list';
 Formats(5,2).format = 'text';
 Formats(5,2).style = 'radiobutton';
-Formats(5,2).items = {'0' '1' '2' '3'};
+Formats(5,2).items = {'0' '1' '2' '3','4','5','6'};
 DefAns.(names{II}) = '0';
 
 II=II+1;

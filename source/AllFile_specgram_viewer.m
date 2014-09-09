@@ -5462,7 +5462,7 @@ else
                 [bearing,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,[Times Freq]);
                 %Event.bearing=num2str(bearing);
                 %if isfield(Event,'localization')&&strcmp(ButtonName,'Replacing')
-                if isfield(Event,'localization')
+                if isfield(Event,'localization')&&~isempty(getfield(Event,'localization'))
                     Event=update_GSI_localization(Event,str2num(Event.Istation),bearing,kappa);
                     
                 end
@@ -5562,7 +5562,7 @@ else
     Event	=	edit_event(Event, handles.notes.Data.Description, handles.notes.edit_fields);
     
     %Check if need to relocalize...
-    if isfield(Event,'bearing')
+    if isfield(Event,'bearing')&&~isempty(getfield(Event,'localization'))
         
         switch handles.filetype
             case 'GSI'
@@ -5694,6 +5694,7 @@ newdir=[];
 newfile=[];
 Iarray=[];
 Iarray_org=[];
+new_annotation_file_name=[];
 
 if ~exist('link_names')
     link_names=[];
@@ -5717,6 +5718,9 @@ end
 
 switch filetype
     case 'GSI'
+        if isempty(link_names)
+            return
+        end
         current_letter=current_file_name(5);
         DASAR_letters=link_names(:,5);
         NDASAR=length(DASAR_letters);
@@ -5901,7 +5905,8 @@ switch handles.filetype
         if ~isempty(findstr(stepp_type,'link'))
             
             if isempty(handles.notes.i_sel) %The data in link_hashtags is out of date!  Annotation has been deleted
-                keyboard
+                msgbox('Warning!  The annotation does not exist here!');
+                return
             end
             
         else  %If I'm switching channel
@@ -7114,7 +7119,7 @@ htxt	=	uicontrol(hdlg(1), 'Style', 'edit',...
     'String', Message(:));
 
 % If localization info exists, plot it!
-if isfield(Event,'localization')
+if isfield(Event,'localization')&&~isempty(getfield(Event,'localization'))
      
     if nargin < 3 || isempty(hdlg) || ~all(ishandle(hdlg))||length(hdlg)<2
         hdlg(2)	=	dialog('Windowstyle', 'normal');
