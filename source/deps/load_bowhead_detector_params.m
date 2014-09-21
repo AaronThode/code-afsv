@@ -77,12 +77,13 @@ Site5_northing=[
 station_locations.northing=Site5_northing;
 station_locations.easting=Site5_easting;
 
-IDASAR=logical([0 0 1 1 1 0]);  %DASARS CDE
+%What DASARS used to compute box?
+IDASAR=logical([1 1 1 1 1 1]);  %DASARS CDEG
 
 Site5_northing=Site5_northing(IDASAR);
 Site5_easting=Site5_easting(IDASAR);
 
-xbuffer=50; %A little extra shrinking of the center site width, in meters (makes sure box of Center is inside of all DASARS
+xbuffer=100; %A little extra shrinking of the center site width, in meters (makes sure box of Center is inside of all DASARS
 filter_params.northing=[min(Site5_northing)+xbuffer max(Site5_northing)-xbuffer];  %Boxes at same latitude
 dl=abs(min(Site5_easting)-max(Site5_easting));  %How wide should a box be?  For now, make width the same as the width of the 'center' box..
 %dl=10000; %10 km box width

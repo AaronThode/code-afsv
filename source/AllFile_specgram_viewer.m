@@ -7668,7 +7668,7 @@ elseif strcmp(handles.display_view,'Time Series') %%Time series
     
     t=(1:length(x(:,1)))/Fs;
     xlabel('Time (sec)');
-    if strfind(hdr.calunits,'mPa')
+    if isfield(hdr,'calunits')&&strfind(hdr.calunits,'mPa')
         plot(handles.axes1,t,1000*y);grid on;
         ylabel('uPa');
     else
@@ -8380,6 +8380,8 @@ switch filetype
         Fs=head.fs;
         t=(1:length(x))/Fs;
         
+        head.multichannel=true;
+
         tmin=head.tfs;
         tmax=head.tfe;
         head.Nchan=size(x,2);
@@ -10526,10 +10528,11 @@ if isempty(list_names)
 end
 
 for I=1:length(list_names)
+   sprintf('%s starting ...',list_names{I});
    success_flag=convert_automated_bowhead_into_annotations(list_names{I},filter_params,station_position); 
    if success_flag==0
       uiwait(msgbox(sprintf('%s failed to process',list_names{I}),'Failed!','modal'));
-      return
+      
    else
        disp(sprintf('%s procesed',list_names{I}));
        

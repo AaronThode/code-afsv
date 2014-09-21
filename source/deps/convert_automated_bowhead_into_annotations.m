@@ -158,6 +158,9 @@ try
     success_flag=1;
 catch
     success_flag=0;  
+    MException.last
+    %lasterr.identifier
+    %lasterr.stack
 end
 end
 
@@ -222,7 +225,13 @@ for Iname=1:length(names)
            
            
        otherwise
-           newEvent.automated.(names{Iname})=location.(names{Iname})(Istation);
+           temp=location.(names{Iname});
+           if length(temp)>=Istation
+               newEvent.automated.(names{Iname})=location.(names{Iname})(Istation);
+           else
+               newEvent.automated.(names{Iname})=location.(names{Iname})(end);
+               
+           end
    end
     
     
