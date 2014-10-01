@@ -7770,11 +7770,15 @@ end
 %set(handles.pushbutton_previous_linked_annotation,'enable','on');
 
 if handles.file_flags.multichannel
-    for II=1:length(handles.buttongroup.array)
-        set(handles.buttongroup.array(II),'vis',status);
-        set(handles.buttongroup.array(II),'enable',status);
-    end
+    status='on';
+else
+    status='off';
 end
+for II=1:length(handles.buttongroup.array)
+    set(handles.buttongroup.array(II),'vis',status);
+    set(handles.buttongroup.array(II),'enable',status);
+end
+
     
 % if strcmpi(handles.filetype,'mdat')||strcmpi(handles.filetype,'wav')||strcmpi(handles.filetype,'mat')
 %     set(handles.pushbutton_CSDM,'vis','on');
