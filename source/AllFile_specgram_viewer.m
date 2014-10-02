@@ -31,7 +31,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 04-Aug-2014 21:30:12
+% Last Modified by GUIDE v2.5 01-Oct-2014 16:39:29
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -7847,8 +7847,9 @@ small_step	=	5/T_len;				% 5s
 big_step	=	0.1;					% 10%
 set(handles.slider_datestr,'sliderstep',[small_step big_step]);
 
-set(handles.slider_datestr,'Value',0.5);
-handles.tdate_start		=	0.5*(tmin+tmax);
+set(handles.slider_datestr,'Value',0.0);
+%handles.tdate_start		=	0.5*(tmin+tmax);
+handles.tdate_start		=	tmin;
 set(handles.edit_datestr,'String',datestr(handles.tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'));
 
 set(handles.text_mintime,'String',datestr(tmin,0));
@@ -7856,8 +7857,11 @@ set(handles.text_maxtime,'String',datestr(tmax,0));
 handles.tdate_min	=	tmin;
 handles.tdate_max	=	tmax;
 
-set(handles.edit_fmax,'String',Fs/2000);
-set(handles.edit_fmin,'String',0);
+currentFs=str2num(get(handles.edit_fmax,'String'));
+if currentFs==0
+    set(handles.edit_fmax,'String',Fs/2000);
+    set(handles.edit_fmin,'String',0);
+end
 %slider_step(1) = datenum(0,0,0,0,0,handles.tlen)/(maxx-minn);
 %slider_step(2) = min([datenum(0,0,0,0,5,0) 0.1*(maxx-minn)])/(maxx-minn);
 %set(handles.slider_datestr,'sliderstep',slider_step)
@@ -8225,8 +8229,12 @@ switch filetype
             return
         end
         
-        
-        np_start=1+round((tdate_start-tmin)*24*3600*Fs);
+        if tdate_start>0
+            np_start=1+round((tdate_start-tmin)*24*3600*Fs);
+        else
+            
+            np_start=1;
+        end
         if np_start>head.np
             errordlg('load_data:  SIO start time exceeds points available!');
             return
@@ -10551,4 +10559,57 @@ end
 
 
 
+% --------------------------------------------------------------------
+function batch_spectrogram_Callback(hObject, eventdata, handles)
+% hObject    handle to batch_spectrogram (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
 
+%Generate a bunch of spectrograms using current parameters.
+mydir=pwd;
+batch_dir = uigetdir(handles.mydir, 'Select a batch folder');
+cd(batch_dir);
+fnames=dir(['*.' handles.myext]);
+for I=1:length(fnames)
+    files{I}=fnames(I).name;
+end
+[SELECTION,OK] = listdlg('ListString',files);
+files=files(SELECTION);
+
+file_org=handles.myfile;
+
+%	Stop audio playback if it's running
+if	~isempty(handles.audioplayer) && isplaying(handles.audioplayer)
+    stop(handles.audioplayer);
+end
+
+for I=1:length(files)
+    handles.myfile=files{I};
+    
+    %yes_wav=get(handles.togglebutton_getwav,'value');
+    tlenn=datenum(0,0,0,0,0,handles.tlen);
+    Nshots=(handles.tdate_max-handles.tdate_min)/tlenn;
+    handles.tdate_start=handles.tdate_min;
+    [handles,~]		=	set_slider_controls(handles, handles.filetype);
+        
+    while ((handles.tdate_max-handles.tdate_start)>tlenn)
+        set(handles.edit_datestr,'String',datestr(handles.tdate_start));
+        
+        edit_datestr_Callback(handles.edit_datestr, [], handles);
+        
+        set(handles.text_filename,'String',fullfile(handles.mydir, handles.myfile));
+        
+        %	Call actual function to produce figure
+        handles		=	load_and_display_spectrogram(handles);
+        pushbutton_print_Callback([], [], handles);
+        %pushbutton_update_Callback(hObject, eventdata, handles);
+        disp('done')
+        handles.tdate_start=handles.tdate_start+tlenn;
+        
+        pause(1)
+    end
+    
+end
+
+
+end
