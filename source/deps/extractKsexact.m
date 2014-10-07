@@ -126,15 +126,17 @@ for I=Isnap
     end
 end  %I=Isnap
 
-figure
-tt=Isnap*(1-ovlap)*Nfft/Fs;
-plot(tt,10*log10(abs(power)));
-grid on
-if ~isinf(threshold)
-    hold on
-    line([min(tt) max(tt)],threshold*[1 1]);
+if length(power)>2
+    figure
+    tt=Isnap*(1-ovlap)*Nfft/Fs;
+    plot(tt,10*log10(abs(power)));
+    grid on
+    if ~isinf(threshold)
+        hold on
+        line([min(tt) max(tt)],threshold*[1 1]);
+    end
+    xlabel('Time (s)');ylabel('dB power');
 end
-xlabel('Time (s)');ylabel('dB power');
 
 if length(findex)>MAXF,
     Kstot=[];

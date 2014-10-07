@@ -3556,7 +3556,7 @@ tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 mydir=pwd;
 Ichan='all';  %Hardwire first channel
-set(handles.togglebutton_ChannelBeam,'String','Channel');
+%set(handles.togglebutton_ChannelBeam,'String','Channel');
 [x,t,Fs,~,~,head]=load_data(handles.filetype, tdate_start,tlen,Ichan,handles);
 
 %If not multichannel data, return
@@ -3659,13 +3659,15 @@ while yes>1
     
     if yes<6
         
-        prompt1={'Vector of angles (deg) [(-90:90)]','hydrophone indicies [all]'};
-        def1={'-90:90', sprintf('[1:%i]',length(chann))};
+        prompt1={'Vector of angles (deg) [(-20:0.5:20)]','hydrophone indicies [all]','sound speed (m/sec)', ...
+            };
+        def1={'-20:0.1:20', sprintf('[1:%i]',length(chann)),'1500'};
         
         answer=inputdlg(prompt1,'Beamforming parameters',1,def1);
         try
             angles=eval(answer{1});
             Igood_el=eval(answer{2});
+            cc=eval(answer{3});
         catch
             errdlg('Could not understand your beamforming parameters');
             return
@@ -3675,7 +3677,8 @@ while yes>1
     switch yes
         case 2
             beam_str='CV';
-            B=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),1485);
+            B=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
+            
             figure(20);
             imagesc(Ksout.freq,[],10*log10(abs(Ksout.EE)));xlabel('frequency (Hz)');ylabel('Eigenvalue');colorbar
             
@@ -3685,24 +3688,24 @@ while yes>1
                 for If=1:length(Ksout.freq)
                     Ksout.Kstot_eig(:,:,If)=V1(:,If)*V1(:,If)';
                 end
-                B_eig=conventional_beamforming(Ksout.Kstot_eig(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),1495);
+                B_eig=conventional_beamforming(Ksout.Kstot_eig(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
                 yes_eigen=1;
             end
             
         case 3
             beam_str='MV';
             
-            B=MV_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),1495);
+            B=MV_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
         case 4
             beam_str='CVnMV';
             
-            B=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),1495);
+            B=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
             
-            B2=MV_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),1495);
+            B2=MV_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
         case 5
             beam_str='RC';
             
-            R=derive_reflection_coefficient2(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),1495);
+            R=derive_reflection_coefficient2(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
         case 6
             beam_str='MFP';
             
@@ -3824,8 +3827,9 @@ end
 % xlabel('Frequency (Hz)');
 % ylabel('dB SNR');
 
-
+%%Inner function for plot_beamforming_results
     function plot_beamforming_results
+        %Plot beamforming output
         try
             close(1);
         end
@@ -3834,6 +3838,7 @@ end
             subplot(2,1,1)
         end
         
+        %Image of beamform output vs look angle and frequency.
         imagesc(Ksout.freq,angles,10*log10(B'));
         colorbar
         cmap=colormap;
@@ -3849,11 +3854,69 @@ end
             subplot(2,1,1)
         end
         
+        %%%Plot summed beampattern
         df=Ksout.freq(2)-Ksout.freq(1);
-        plot(sum(10*log10((B)))/length(Ksout.freq),angles,'k');
+        Bsum=sum(10*log10((B)))/length(Ksout.freq);
+        plot(Bsum,angles,'k');
         set(gca,'fontweight','bold','fontsize',14);axis('ij');
         xlabel('Mean dB Beampower ');ylabel('Angle from horizontal (deg)');grid on;
         title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
+        
+        %%%%%%%%%%%
+        %%%Look for local maxima:
+        not_happy=true;
+        hplot=[];
+        while not_happy
+            if ~isempty(hplot)
+                set(hplot,'vis','off');
+            end
+            prompt1={'Automatic peak pick?','Half-beamwidth (deg)', 'threshold SNR'};
+            def1={'yes','3', '3'};
+            
+            answer=inputdlg(prompt1,'Peakpicking parameters',1,def1);
+            try
+                peak_pick_chc=strcmpi(answer{1},'yes');
+                halfbeamwidth=eval(answer{2});
+                thresholddB=eval(answer{3});
+                
+            catch
+                errdlg('Could not understand your peakpicking parameters');
+                return
+                
+            end
+            
+            if peak_pick_chc
+                peaks=peak_picker_Thode(Bsum,angles,halfbeamwidth,[min(angles) max(angles)],thresholddB);
+                figure(2)
+                hold on
+                hplot=plot(peaks{1}.adp.PdB,peaks{1}.adp.F,'go');
+                for I=1:length(peaks{1}.adp.PdB)
+                    fprintf('Adp Path %i: %6.2f deg beampower %6.2f dB\n',I,peaks{1}.adp.F(I),peaks{1}.adp.PdB(I));
+                    %try
+                    %fprintf('ISI Path %i: %6.2f deg beampower %6.2f dB\n',I,peaks{1}.isi.F(I),peaks{1}.isi.PdB(I));
+                    %end
+                end
+                [PdB,Isort]=sort(peaks{1}.adp.PdB,'descend');
+                ray_angles=peaks{1}.adp.F(Isort);
+            else
+                prompt1={'Number of picks'};
+                def1={'3'};
+                answer=inputdlg(prompt1,'Peakpicking parameters',1,def1);
+                tmp=ginput(eval(answer{1}));
+                PdB=tmp(:,1);
+                ray_angles=tmp(:,2);
+                [PdB,Isort]=sort(PdB,'descend');
+                ray_angles=ray_angles(Isort);
+            end
+            not_happy = questdlg('Redo Peak Pick?', ...
+                ' Question', ...
+                'Yes', 'No', 'No');
+            not_happy=strcmp(not_happy,'Yes');
+        end %while not_happy
+        %%save ray angles, sorted by power
+        Bshift=conventional_beam_timedelay(Ksout.Kstot(Igood_el,Igood_el,:),ray_angles,Ksout.freq,head.geom.rd(Igood_el),cc,Nfft,Fs);
+        
+        
         
         if yes==4
             figure(1)
@@ -8250,7 +8313,7 @@ switch filetype
         %%%If beamforming is desired for a look at a given direction...
         beamform_data=0;
         get_geometry=0;
-        if strcmpi(sio_chc,'angle')
+        if strcmpi(sio_chc,'angle')&&~strcmpi(Ichan,'all')
             beamform_data=1;
             get_geometry=1;
         elseif strcmpi(Ichan,'all')
@@ -9129,40 +9192,6 @@ Ksout.pgoal=pgoal;
 Ksout.SN=SN;
 
 close;
-end
-
-
-function [B,wout]=conventional_beamforming(Ks,angles,freq,Lz,c,yesnorm)
-B=zeros(length(freq),length(angles));
-if size(Lz,2)>1
-    Lz=Lz.';
-end
-
-if nargout==2
-    wout=zeros(length(Lz),length(freq),length(angles));
-end
-winn=hanning(length(Lz));
-for If=1:length(freq)
-    for Iang=1:length(angles)
-        % lambda=1500/freq(If);
-        w=exp((-1i*2*pi*Lz*freq(If)/c)*sin(angles(Iang)*pi/180));
-        w=w.*winn;
-        
-        w=w/norm(w);
-        K=squeeze(Ks(:,:,If));
-        if exist('yesnorm', 'var')
-            K=K/norm(K);
-        end
-        B(If,Iang)=real(w'*K*w);
-        if nargout==2
-            wout(:,If,Iang)=w;
-        end
-    end
-    
-    
-end
-
-%plot(angles,10*log10(B(If,:)));
 end
 
 function B=MV_beamforming(Ks,angles,freq,Lz,c)

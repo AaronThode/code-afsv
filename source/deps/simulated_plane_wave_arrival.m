@@ -66,20 +66,28 @@ end
 
 
 delay=(params.Fs*sin(angle*pi/180)*L/params.c);
-x=ones(1+(Nchan+1)*ceil(max(abs(delay)))+ceil(max(abs(delay0)))+length(y),Nchan);
+delay0_offset=0;
+if min(delay0)<0
+   delay0_offset=abs(min(delay0))+1; 
+end
+
+%Reserve time space for delays and offsets
+dn=ceil(max(delay)-min(delay));
+dn0=ceil(max(delay0)-min(delay0));
+x=ones(1+(Nchan+1)*dn+dn0+length(y),Nchan);
 x=sqrt(noise_var)*randn(size(x)).*x;
 for J=1:length(angle)
     for I=1:Nchan
         if delay(J)>0
-            K=round(delay0(J)+(I-1)*delay(J))+1+(1:length(y));
-            x(K,I)=x(K,I)+ysignal;
-        else
-            K=round(delay0(J)+(Nchan-I)*abs(delay(J)))+1+(1:length(y));
+            K=round(delay0_offset+delay0(J)+(I-1)*delay(J))+1+(1:length(y));
             
-            x(K,I)=x(K,I)+ysignal;
+        else
+            K=round(delay0_offset+delay0(J)+(Nchan-I)*abs(delay(J)))+1+(1:length(y));
+            
+            
             
         end
-        
+        x(K,I)=x(K,I)+ysignal;
         
     end
 end
@@ -88,9 +96,10 @@ t=(1:length(x(:,1)))/params.Fs;
 if Iplot>0
     figure
     
-    for I=1:Nchan
-        subplot(Nchan,1,I)
-        plot(t*1000,x(:,I))
+    Nplot=round(linspace(1,Nchan,10));
+    for I=1:length(Nplot)
+        subplot(length(Nplot),1,I)
+        plot(t*1000,x(:,Nplot(I)))
     end
     xlabel('Time (msec)');
 end
