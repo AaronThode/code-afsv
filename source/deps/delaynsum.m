@@ -15,6 +15,12 @@ function xtot=delaynsum(x,thta,space,Fs,goodel)
 %disp('pause');pause
 nx=size(x,1);
 thta=thta*pi/180;
+
+if length(thta)~=1
+    disp('Error, delaynsum requires scalar input for thta');
+    xtot=[];
+    return
+end
 dpt=Fs*space*sin(thta)/1500; %point shift per element
 disp(sprintf('Fs is %6.2f',Fs));
 Mel=ceil(.5*(max(goodel)+min(goodel)));  %Element number that experiences zero shift
@@ -33,6 +39,8 @@ end
 xtot=[zeros(maxn,size(xtot,2)); xtot];
 xtot=xtot/length(goodel);
 
+%Cut to same length as input
+xtot=[xtot; zeros(nx-size(xtot,1),1)];
 
 %Makes a simulated plane wave from the surface plus reflection, plot results
 if 1==0

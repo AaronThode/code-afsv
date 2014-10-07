@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="AllFile_specgram_viewer_Mac" location="/Users/thode/repos/code-afsv" file="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.app" build-checksum="3895047508" preferred-package-location="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution">
+  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="AllFile_specgram_viewer_Mac" location="/Users/thode/repos/code-afsv" file="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.app" build-checksum="1463637383" preferred-package-location="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution">
     <param.appname>AllFile_specgram_viewer_Mac</param.appname>
     <param.authnamewatermark>Aaron Thode</param.authnamewatermark>
     <param.email>athode@ucsd.edu</param.email>
@@ -120,6 +120,7 @@
       <file>${PROJECT_ROOT}/source/deps/ellipsparms.m</file>
       <file>${PROJECT_ROOT}/source/deps/example_splash.png</file>
       <file>${PROJECT_ROOT}/source/deps/expand_date_range.m</file>
+      <file>${PROJECT_ROOT}/source/deps/extractKsexact.m</file>
       <file>${PROJECT_ROOT}/source/deps/extract_SEL_n_PSD.m</file>
       <file>${PROJECT_ROOT}/source/deps/extract_image_features.m</file>
       <file>${PROJECT_ROOT}/source/deps/extract_ridge_traces.m</file>
@@ -131,6 +132,11 @@
       <file>${PROJECT_ROOT}/source/deps/get_level_metrics_simple.m</file>
       <file>${PROJECT_ROOT}/source/deps/get_vmests.m</file>
       <file>${PROJECT_ROOT}/source/deps/hist2D.m</file>
+      <file>${PROJECT_ROOT}/source/deps/inputsdlg.m</file>
+      <file>${PROJECT_ROOT}/source/deps/inputsdlg_demo.m</file>
+      <file>${PROJECT_ROOT}/source/deps/inputsdlg_demo_contactinfo.m</file>
+      <file>${PROJECT_ROOT}/source/deps/inputsdlg_demo_mine.m</file>
+      <file>${PROJECT_ROOT}/source/deps/inputsdlg_demo_tile.m</file>
       <file>${PROJECT_ROOT}/source/deps/interval.m</file>
       <file>${PROJECT_ROOT}/source/deps/kurtosis.m</file>
       <file>${PROJECT_ROOT}/source/deps/load_MFP_scenario.m</file>
@@ -140,11 +146,13 @@
       <file>${PROJECT_ROOT}/source/deps/load_mt.m</file>
       <file>${PROJECT_ROOT}/source/deps/load_program_location.m</file>
       <file>${PROJECT_ROOT}/source/deps/merge_structure.m</file>
+      <file>${PROJECT_ROOT}/source/deps/newid.m</file>
       <file>${PROJECT_ROOT}/source/deps/peak_picker_Thode.m</file>
       <file>${PROJECT_ROOT}/source/deps/plot_data_boxplot.m</file>
       <file>${PROJECT_ROOT}/source/deps/plot_data_boxplot_percentile.m</file>
       <file>${PROJECT_ROOT}/source/deps/plot_letter_label.m</file>
       <file>${PROJECT_ROOT}/source/deps/plot_location.m</file>
+      <file>${PROJECT_ROOT}/source/deps/prep_inputsdlg.m</file>
       <file>${PROJECT_ROOT}/source/deps/readEnergySnips.m</file>
       <file>${PROJECT_ROOT}/source/deps/readEnergySummary.m</file>
       <file>${PROJECT_ROOT}/source/deps/readEnergy_header.m</file>
@@ -162,6 +170,7 @@
       <file>${PROJECT_ROOT}/source/deps/scatter_transparent.m</file>
       <file>${PROJECT_ROOT}/source/deps/shipdet_metrics.m</file>
       <file>${PROJECT_ROOT}/source/deps/simulate_FMsweep_with_noise.m</file>
+      <file>${PROJECT_ROOT}/source/deps/simulated_plane_wave_arrival.m</file>
       <file>${PROJECT_ROOT}/source/deps/sioread.m</file>
       <file>${PROJECT_ROOT}/source/deps/tftb_window.m</file>
       <file>${PROJECT_ROOT}/source/deps/update_GSI_localization.m</file>
@@ -198,7 +207,7 @@
       <vista>false</vista>
       <linux>false</linux>
       <solaris>false</solaris>
-      <osver>10.9.4</osver>
+      <osver>10.9.5</osver>
       <os32>false</os32>
       <os64>true</os64>
       <arch>maci64</arch>

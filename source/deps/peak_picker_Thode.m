@@ -69,8 +69,8 @@ for Ipar=1:length(df_search)
         index=index(index>0); %Make sure indicies are between 1 and max frequency
         index=index(index<=length(P));
         if (P(Ipeak(I))/median(P(index))>=threshold)
-            peaks{Ipar}.isi.F=[peaks{Ipar}.isi.F F(Ipeak(I))];
-            peaks{Ipar}.isi.P=[peaks{Ipar}.isi.P P(Ipeak(I))];
+            peaks{Ipar}.isi.F=[peaks{Ipar}.isi.F F(Ipeak(I)+1)];
+            peaks{Ipar}.isi.P=[peaks{Ipar}.isi.P P(Ipeak(I)+1)];
         end
         
     end
@@ -104,10 +104,10 @@ for Ipar=1:length(df_search)
             continue
         end
         
-        peaks{Ipar}.adp.F=[peaks{Ipar}.adp.F F(Ipeak(I))];
+        peaks{Ipar}.adp.F=[peaks{Ipar}.adp.F F(Ipeak(I)+1)];
         peaks{Ipar}.adp.bandwidth=[peaks{Ipar}.adp.bandwidth F(Iu)-F(Il)];
         peaks{Ipar}.adp.PdBint=[peaks{Ipar}.adp.PdBint dF*sum(P(Il:Iu))];
-        peaks{Ipar}.adp.PdB=[peaks{Ipar}.adp.PdB PdB(Ipeak(I))];
+        peaks{Ipar}.adp.PdB=[peaks{Ipar}.adp.PdB PdB(Ipeak(I)+1)];
     end
     
     peaks{Ipar}.adp.pdBinttotal=10*log10(sum(peaks{Ipar}.adp.PdBint));

@@ -49,16 +49,23 @@ DASAR_coords=[station_position.easting station_position.northing];
 %Version that uses kappa
 %[Event.localization.location,Event.localization.Qhat,~,Event.localization.outcome] = vmmle_r(theta(Ikeep),DASAR_coords(Ikeep,:),'h',kappa(Ikeep));
 [Event.localization.location,Event.localization.Qhat,~,Event.localization.outcome] = vmmle_r(theta(Ikeep),DASAR_coords(Ikeep,:),'h');
+mean_coords=mean(DASAR_coords(Ikeep,:));
 
-    
+CRITVAL=4.60517; %chi2inv(0.90,2);
+
+[Area,A,B,ANG,Baxis] = ellipsparms(Event.localization.Qhat,CRITVAL,mean_coords,Event.localization.location);
+Event.localization.major=A;
+Event.localization.minor=B;
+Event.localization.ellipse_ang=ANG;
+Event.localization.Baxis=Baxis;
+Event.localization.Area=Area;
+
+
 
 Event.localization.Nused=length(Ikeep);
 
 %Update range and bearing
 Event=update_localization_fields(Event);
-%Event.localization.range=sqrt((station_position.easting(Istation)-Event.localization.location(1)).^2+ ...
-%    (station_position.northing(Istation)-Event.localization.location(2)).^2);
-%Event.range=num2str(Event.localization.range/1000);
 
 
 end

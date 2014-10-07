@@ -38,6 +38,8 @@ try
     Defaults.Template.range=0;
     Defaults.Template.position=[0 0];
     Defaults.Template.Istation=1;
+    Defaults.Template.array_index=[];
+    
     
     Defaults.Events		=	Defaults.Template;
     Defaults.edit_fields=edit_fields;
@@ -143,6 +145,9 @@ try
     close(h)
     %Now write events to output file.  Check where folder location is...
     
+    %Check folder location, output in same directory as bowhead
+    %detections..
+    
     
     for J=1:Ns
         Data=Data_all{J};
@@ -153,6 +158,9 @@ try
     success_flag=1;
 catch
     success_flag=0;  
+    MException.last
+    %lasterr.identifier
+    %lasterr.stack
 end
 end
 
@@ -217,7 +225,13 @@ for Iname=1:length(names)
            
            
        otherwise
-           newEvent.automated.(names{Iname})=location.(names{Iname})(Istation);
+           temp=location.(names{Iname});
+           if length(temp)>=Istation
+               newEvent.automated.(names{Iname})=location.(names{Iname})(Istation);
+           else
+               newEvent.automated.(names{Iname})=location.(names{Iname})(end);
+               
+           end
    end
     
     
