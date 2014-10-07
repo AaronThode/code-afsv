@@ -7454,10 +7454,10 @@ cla;
 
 %tdate_start		=	handles.tdate_start;
 tlen	=	handles.tlen;
-if tlen<1e-2 %somehow window length is way too short
-    tlen=1;
-    set(handles.edit_winlen,'String',num2str(tlen));
-end
+%if tlen<1e-2 %somehow window length is way too short
+%    tlen=1;
+ %   set(handles.edit_winlen,'String',num2str(tlen));
+%end
 if isempty(tlen)
     tlen    =   str2double(get(handles.edit_winlen,'String'));
     
