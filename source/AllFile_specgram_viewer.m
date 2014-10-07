@@ -10355,6 +10355,62 @@ end
 guidata(hObject, handles);
 end
 
+
+% --------------------------------------------------------------------
+function batch_spectrogram_Callback(hObject, eventdata, handles)
+% hObject    handle to batch_spectrogram (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%Generate a bunch of spectrograms using current parameters.
+mydir=pwd;
+batch_dir = uigetdir(handles.mydir, 'Select a batch folder');
+cd(batch_dir);
+fnames=dir(['*.' handles.myext]);
+for I=1:length(fnames)
+    files{I}=fnames(I).name;
+end
+[SELECTION,OK] = listdlg('ListString',files);
+files=files(SELECTION);
+
+file_org=handles.myfile;
+
+%	Stop audio playback if it's running
+if	~isempty(handles.audioplayer) && isplaying(handles.audioplayer)
+    stop(handles.audioplayer);
+end
+
+for I=1:length(files)
+    handles.myfile=files{I};
+    
+    %yes_wav=get(handles.togglebutton_getwav,'value');
+    tlenn=datenum(0,0,0,0,0,handles.tlen);
+    Nshots=(handles.tdate_max-handles.tdate_min)/tlenn;
+    handles.tdate_start=handles.tdate_min;
+    [handles,~]		=	set_slider_controls(handles, handles.filetype);
+        
+    while ((handles.tdate_max-handles.tdate_start)>tlenn)
+        set(handles.edit_datestr,'String',datestr(handles.tdate_start));
+        
+        edit_datestr_Callback(handles.edit_datestr, [], handles);
+        
+        set(handles.text_filename,'String',fullfile(handles.mydir, handles.myfile));
+        
+        %	Call actual function to produce figure
+        handles		=	load_and_display_spectrogram(handles);
+        pushbutton_print_Callback([], [], handles);
+        %pushbutton_update_Callback(hObject, eventdata, handles);
+        disp('done')
+        handles.tdate_start=handles.tdate_start+tlenn;
+        
+        pause(1)
+    end
+    
+end
+
+
+end
+
 %% Annotation Utilties
 % --------------------------------------------------------------------
 function Annotation_Utilities_Callback(hObject, eventdata, handles)
@@ -10430,57 +10486,3 @@ end
 
 
 
-% --------------------------------------------------------------------
-function batch_spectrogram_Callback(hObject, eventdata, handles)
-% hObject    handle to batch_spectrogram (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-%Generate a bunch of spectrograms using current parameters.
-mydir=pwd;
-batch_dir = uigetdir(handles.mydir, 'Select a batch folder');
-cd(batch_dir);
-fnames=dir(['*.' handles.myext]);
-for I=1:length(fnames)
-    files{I}=fnames(I).name;
-end
-[SELECTION,OK] = listdlg('ListString',files);
-files=files(SELECTION);
-
-file_org=handles.myfile;
-
-%	Stop audio playback if it's running
-if	~isempty(handles.audioplayer) && isplaying(handles.audioplayer)
-    stop(handles.audioplayer);
-end
-
-for I=1:length(files)
-    handles.myfile=files{I};
-    
-    %yes_wav=get(handles.togglebutton_getwav,'value');
-    tlenn=datenum(0,0,0,0,0,handles.tlen);
-    Nshots=(handles.tdate_max-handles.tdate_min)/tlenn;
-    handles.tdate_start=handles.tdate_min;
-    [handles,~]		=	set_slider_controls(handles, handles.filetype);
-        
-    while ((handles.tdate_max-handles.tdate_start)>tlenn)
-        set(handles.edit_datestr,'String',datestr(handles.tdate_start));
-        
-        edit_datestr_Callback(handles.edit_datestr, [], handles);
-        
-        set(handles.text_filename,'String',fullfile(handles.mydir, handles.myfile));
-        
-        %	Call actual function to produce figure
-        handles		=	load_and_display_spectrogram(handles);
-        pushbutton_print_Callback([], [], handles);
-        %pushbutton_update_Callback(hObject, eventdata, handles);
-        disp('done')
-        handles.tdate_start=handles.tdate_start+tlenn;
-        
-        pause(1)
-    end
-    
-end
-
-
-end
