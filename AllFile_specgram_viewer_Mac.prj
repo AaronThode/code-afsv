@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="AllFile_specgram_viewer_Mac" location="/Users/thode/repos/code-afsv" file="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.app" build-checksum="1463637383" preferred-package-location="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution">
+  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="AllFile_specgram_viewer_Mac" location="/Users/thode/repos/code-afsv" file="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.app" build-checksum="2021145322" preferred-package-location="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution">
     <param.appname>AllFile_specgram_viewer_Mac</param.appname>
     <param.authnamewatermark>Aaron Thode</param.authnamewatermark>
     <param.email>athode@ucsd.edu</param.email>
@@ -108,6 +108,8 @@
       <file>${PROJECT_ROOT}/source/deps/close_all_figures.m</file>
       <file>${PROJECT_ROOT}/source/deps/compare_files.m</file>
       <file>${PROJECT_ROOT}/source/deps/cond2.m</file>
+      <file>${PROJECT_ROOT}/source/deps/conventional_beam_timedelay.m</file>
+      <file>${PROJECT_ROOT}/source/deps/conventional_beamforming.m</file>
       <file>${PROJECT_ROOT}/source/deps/convert_automated_airgun_into_annotations.m</file>
       <file>${PROJECT_ROOT}/source/deps/convert_automated_bowhead_into_annotations.m</file>
       <file>${PROJECT_ROOT}/source/deps/convert_date.m</file>

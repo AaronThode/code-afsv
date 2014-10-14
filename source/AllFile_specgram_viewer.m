@@ -7912,8 +7912,9 @@ set(handles.slider_datestr,'Max',1);
 
 %	5sec and 10% increments
 T_len		=	(tmax-tmin)*24*60*60;
-small_step	=	5/T_len;				% 5s
 big_step	=	0.1;					% 10%
+small_step	=	0.01;				% 5s
+
 set(handles.slider_datestr,'sliderstep',[small_step big_step]);
 
 set(handles.slider_datestr,'Value',0.0);
