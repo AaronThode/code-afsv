@@ -3171,14 +3171,17 @@ lineNo=1;
 answer=inputdlg(prompt,'',lineNo,def);
 Np=str2num(answer{1});
 tmp=ginput(Np);
-
-msg=sprintf('Absolute time at start: %s \n' ,datestr(start_time+datenum(0,0,0,0,0,min(tmp(:,1))),0));
+msg=[];
 for If=1:Np
-   msg=sprintf('%s Frequency %i: %6.2f Hz \n',msg,If,1000*tmp(If,2)); 
+   msg=sprintf('%s Point %i Time: %8.6f Frequency: %6.2f Hz \n',msg,If,tmp(If,1),1000*tmp(If,2)); 
 end
+
+msg=sprintf('%s\n Absolute time at min time: %s \n' ,msg, datestr(start_time+datenum(0,0,0,0,0,min(tmp(:,1))),0));
+
 duration=max(tmp(:,1))-min(tmp(:,1));
 bandwidth=max(tmp(:,2))-min(tmp(:,2));
-msg=sprintf('%s Duration: %6.2f sec \n Bandwidth: %6.2f Hz \n Slope: %6.2f Hz/sec\n',msg,duration,1000*bandwidth,1000*bandwidth/duration);
+msg=sprintf('%s Duration: %6.2f sec \n Bandwidth: %6.2f Hz \n Slope: %6.2f Hz/sec\n', ...
+    msg,duration,1000*bandwidth,1000*bandwidth/duration);
 uiwait(msgbox(msg,'Modal'));
 
 disp(sprintf('Slope is %6.2f Hz/sec',1000*bandwidth/duration))
@@ -3661,7 +3664,7 @@ while yes>1
         
         prompt1={'Vector of angles (deg) [(-20:0.5:20)]','hydrophone indicies [all]','sound speed (m/sec)', ...
             };
-        def1={'-20:0.1:20', sprintf('[1:%i]',length(chann)),'1500'};
+        def1={'-20:0.1:20', sprintf('[1:%i]',length(chann)),'1480'};
         
         answer=inputdlg(prompt1,'Beamforming parameters',1,def1);
         try
@@ -3871,7 +3874,7 @@ end
                 set(hplot,'vis','off');
             end
             prompt1={'Automatic peak pick?','Half-beamwidth (deg)', 'threshold SNR'};
-            def1={'yes','3', '3'};
+            def1={'no','3', '3'};
             
             answer=inputdlg(prompt1,'Peakpicking parameters',1,def1);
             try
@@ -3905,8 +3908,8 @@ end
                 tmp=ginput(eval(answer{1}));
                 PdB=tmp(:,1);
                 ray_angles=tmp(:,2);
-                [PdB,Isort]=sort(PdB,'descend');
-                ray_angles=ray_angles(Isort);
+                %[PdB,Isort]=sort(PdB,'descend');
+                %ray_angles=ray_angles(Isort);
             end
             not_happy = questdlg('Redo Peak Pick?', ...
                 ' Question', ...
