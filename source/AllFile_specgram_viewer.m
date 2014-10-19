@@ -3589,7 +3589,7 @@ fmax=str2double(get(handles.edit_fmax,'String'));
 chann=1:head.Nchan; %We now assume that any bad channels are marked in the LOG files.
 %end
 
-Ichc=menu('Enter type of frequency processing:','Contour','All');
+Ichc=menu('Enter type of frequency processing:','Contour','All (averaged)','Individual Frames');
 
 if Ichc==1
     Nf=input('Enter number of harmonics:');
@@ -3649,11 +3649,30 @@ elseif Ichc==2  %extractKsexact
     else
         Ksout.SNR=Inf*ones(size(Ksout.freq));
     end
+    
+    figure
+    plot(Ksout.freq,10*log10(Ksout.SNR),'-x');ylabel('dB SNR');xlabel('Freq (Hz)')
+    grid on;title('estimated SNR of CSDM frequency components: first eignvalue/sum(rest)')
+
+elseif Ichc==3 %%Extract frames
+    disp('Select bounding box for time and range:');
+    ftmp=ginput(2);
+    
+    %Trim x...
+    Igood=( t>=min(ftmp(:,1))&t<=max(ftmp(:,1)));
+    x=x(Igood,:);
+    
+    
+    frange=sort(ftmp(:,2)*1000);
+    fprintf('frange: %6.2f to %6.2f Hz\n',frange);
+    threshold=input('Enter threshold in dB[-Inf]:');
+    if isempty(threshold)
+        threshold=-Inf;
+    end
+    [Ksout.Kstot,Ksout.freq,Ksout.t]=extractKsframes(x,ovlap,Nfft,chann,frange,Fs,Nfft,0,threshold);
+    
 end
 
-figure
-plot(Ksout.freq,10*log10(Ksout.SNR),'-x');ylabel('dB SNR');xlabel('Freq (Hz)')
-grid on;title('estimated SNR of CSDM frequency components: first eignvalue/sum(rest)')
 
 
 yes=menu('Beamform?','No','Conventional','MV','Both','Reflection Coefficient Estimation','MFP');
@@ -3680,19 +3699,42 @@ while yes>1
     switch yes
         case 2
             beam_str='CV';
-            B=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
+            Ndim=ndims(Ksout.Kstot);
             
-            figure(20);
-            imagesc(Ksout.freq,[],10*log10(abs(Ksout.EE)));xlabel('frequency (Hz)');ylabel('Eigenvalue');colorbar
-            
-            Ieig=input('Pick eigenvector [return yields none]:');
-            if ~isempty(Ieig)
-                V1=squeeze(Ksout.VV(:,Ieig,:));
-                for If=1:length(Ksout.freq)
-                    Ksout.Kstot_eig(:,:,If)=V1(:,If)*V1(:,If)';
+            if Ndim==3
+                B=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
+                
+                figure(20);
+                imagesc(Ksout.freq,[],10*log10(abs(Ksout.EE)));xlabel('frequency (Hz)');ylabel('Eigenvalue');colorbar
+                
+                Ieig=input('Pick eigenvector [return yields none]:');
+                if ~isempty(Ieig)
+                    V1=squeeze(Ksout.VV(:,Ieig,:));
+                    for If=1:length(Ksout.freq)
+                        Ksout.Kstot_eig(:,:,If)=V1(:,If)*V1(:,If)';
+                    end
+                    B_eig=conventional_beamforming(Ksout.Kstot_eig(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
+                    yes_eigen=1;
+                else
+                    close(20);
                 end
-                B_eig=conventional_beamforming(Ksout.Kstot_eig(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
-                yes_eigen=1;
+                
+            elseif Ndim==4  %Individual snapshots
+                Bsum=zeros(length(angles),length(Ksout.t));
+                
+                df=Ksout.freq(2)-Ksout.freq(1);
+                %plot(Bsum,angles,'k');
+                
+                for Isnap=1:length(Ksout.t)
+                    if rem(Isnap,10)==0,disp(Isnap);end
+                    B=conventional_beamforming(squeeze(Ksout.Kstot(Igood_el,Igood_el,:,Isnap)),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
+                    Bsum(:,Isnap)=10*log10(sum(abs(B)))/length(Ksout.freq);
+                end
+                figure
+                imagesc(Ksout.t,angles,Bsum)
+                set(gca,'fontweight','bold','fontsize',14)
+                xlabel('Time (sec)');ylabel('Elevation angle (deg)');
+                keyboard
             end
             
         case 3
