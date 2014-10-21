@@ -3681,9 +3681,9 @@ while yes>1
     
     if yes<6
         
-        prompt1={'Vector of angles (deg) [(-20:0.5:20)]','hydrophone indicies [all]','sound speed (m/sec)', ...
+        prompt1={'Vector of angles (deg) [(-20:0.2:20)]','hydrophone indicies [all]','sound speed (m/sec)', ...
             };
-        def1={'-20:0.1:20', sprintf('[1:%i]',length(chann)),'1480'};
+        def1={'-10:0.2:10', sprintf('[1:%i]',length(chann)),'1480'};
         
         answer=inputdlg(prompt1,'Beamforming parameters',1,def1);
         try
@@ -3728,13 +3728,23 @@ while yes>1
                 for Isnap=1:length(Ksout.t)
                     if rem(Isnap,10)==0,disp(Isnap);end
                     B=conventional_beamforming(squeeze(Ksout.Kstot(Igood_el,Igood_el,:,Isnap)),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
-                    Bsum(:,Isnap)=10*log10(sum(abs(B)))/length(Ksout.freq);
+                    %Bsum(:,Isnap)=10*log10(sum(abs(B)))/length(Ksout.freq);
+                    Bsum(:,Isnap)=(sum(10*log10(abs(B))))/length(Ksout.freq);
                 end
                 figure
-                imagesc(Ksout.t,angles,Bsum)
+                imagesc((Ksout.t-min(Ksout.t))*1000,angles,Bsum)
                 set(gca,'fontweight','bold','fontsize',14)
-                xlabel('Time (sec)');ylabel('Elevation angle (deg)');
+                xlabel('Time (msec)');ylabel('Elevation angle (deg)');
+                ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
+                titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
+                title(titstr);grid on;orient landscape
+                xlimm=xlim;
+                set(gca,'xtick',0:5:xlimm(2));
+                printstr=sprintf('AngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
+                print(gcf,'-djpeg',[printstr '.jpg']);
+                saveas(gcf,[printstr '.fig'],'fig')
                 keyboard
+                return
             end
             
         case 3
@@ -3919,6 +3929,9 @@ end
             def1={'no','3', '3'};
             
             answer=inputdlg(prompt1,'Peakpicking parameters',1,def1);
+            if isempty(answer)
+                return
+            end
             try
                 peak_pick_chc=strcmpi(answer{1},'yes');
                 halfbeamwidth=eval(answer{2});
