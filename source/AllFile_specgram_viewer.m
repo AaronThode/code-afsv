@@ -132,8 +132,9 @@ handles.buttongroup.array(1)=handles.pushbutton_CSDM;
 handles.buttongroup.array(2)=handles.pushbutton_Mode;
 handles.buttongroup.array(3)=handles.pushbutton_tilt;
 handles.buttongroup.array(4)=handles.pushbutton_modalfiltering;
-handles.buttongroup.array(5)=handles.togglebutton_ChannelBeam;
-handles.buttongroup.array(6)=handles.edit_chan;
+
+handles.buttongroup.multichan(1)=handles.togglebutton_ChannelBeam;
+handles.buttongroup.multichan(2)=handles.edit_chan;
 
 handles.buttongroup.GSI(1)=handles.pushbutton_GSIbearing;
 handles.buttongroup.GSI(2)=handles.pushbutton_GSI_localization;
@@ -151,23 +152,21 @@ end
 for I=1:length(handles.buttongroup.GSI)
     set(handles.buttongroup.GSI(I),'Vis','off');
 end
+
+for I=1:length(handles.buttongroup.multichan)
+    set(handles.buttongroup.multichan(I),'Vis','off');
+end
 %set(handles.pushbutton_GSIbearing,'Vis','off');
 %set(handles.pushbutton_GSI_localization,'Vis','off');
 
 for I=1:length(handles.buttongroup.array)
     set(handles.buttongroup.array(I),'Vis','off');
 end
-%set(handles.pushbutton_CSDM,'Vis','off');
-%set(handles.pushbutton_Mode,'Vis','off');
-%set(handles.pushbutton_tilt,'Vis','off');
-%set(handles.pushbutton_modalfiltering,'Vis','off');
 
 for I=1:length(handles.buttongroup.accelerometer)
     set(handles.buttongroup.accelerometer(I),'Vis','off');
 end
 
-%set(handles.edit_normal_rotation,'Vis','off');
-%set(handles.text_normal_rotation,'Vis','off');
 
 %	Set prev/next buttons inactive initially
 set(handles.pushbutton_next,'Enable','off');
@@ -3503,21 +3502,43 @@ for Idasar=1:NDasar
     
 end
 
-prompt1={'File of locations','Site','UTM location to compute range'};
-dlgTitle1='Parameters for GSI localization...';
-%def1={'/Volumes/ThodePortable2/2010_Beaufort_Shell_DASAR/DASAR_locations_2010.mat', '5','[4.174860699660919e+05 7.817274204098196e+06]'};
-%'/Volumes/Data/Shell2010_GSI_Data/DASARlocations/DASAR_locations_2010.mat',
-def1={[filesep fullfile('Volumes','Data','Shell2010_GSI_Data','DASARlocations','DASAR_locations_2010.mat')], '5','[4.174860699660919e+05 7.817274204098196e+06]'};
-answer=inputdlg(prompt1,dlgTitle1,1,def1);
-locs=load(answer{1});
-Isite=str2double(answer{2});
+faill=false;
+if isfield(handles,'notes')
+    try
+        locc=handles.notes.Data.Events(2).localization.station_position;
+        strr=handles.notes.Data.Events(2).link_names(:,5);
+        indicies=double(strr)-64;
+        DASAR_coords=zeros(7,2);
+        DASAR_coords(indicies,:)=[locc.easting locc.northing];
+        VA_cords=[];
+    catch
+        faill=true;
+    end
+else
+    faill=true;
+end
+
+if faill
+    prompt1={'File of locations','Site','UTM location to compute range'};
+    dlgTitle1='Parameters for GSI localization...';
+    %def1={'/Volumes/ThodePortable2/2010_Beaufort_Shell_DASAR/DASAR_locations_2010.mat', '5','[4.174860699660919e+05 7.817274204098196e+06]'};
+    %'/Volumes/Data/Shell2010_GSI_Data/DASARlocations/DASAR_locations_2010.mat',
+    def1={[filesep fullfile('Volumes','Data','Shell2010_GSI_Data','DASARlocations','DASAR_locations_2010.mat')], '5','[4.174860699660919e+05 7.817274204098196e+06]'};
+    answer=inputdlg(prompt1,dlgTitle1,1,def1);
+    locs=load(answer{1});
+    Isite=str2double(answer{2});
+    VA_cords=str2num(answer{3})/1000;
+
+    DASAR_coords=[locs.Site{Isite}.easting locs.Site{Isite}.northing];
+    
+end
+
 Ikeep=find(~isnan(theta)&theta>0);  %Remove absent or unselected DASARs
 Igood=find(~isnan(theta)&theta>-2);  %Remove absent DASARS (used to compute center of array)
 %theta=theta(Ikeep);
 %kappa=kappa(Ikeep);
 %Note that the Site contains all DASAR locations,
 %  whether they collected data or not
-DASAR_coords=[locs.Site{Isite}.easting locs.Site{Isite}.northing];
 
 %Using kappa gives too precise an estimate
 %[VM,Qhat,~,outcome] = vmmle_r(theta(Ikeep)',DASAR_coords(Ikeep,:),'h',kappa(Ikeep)');
@@ -3531,11 +3552,13 @@ figure
 Ikeep=find(~isnan(theta(Igood))&theta(Igood)>0);
 [~,xg,yg]=plot_location(DASAR_coords(Igood,:),theta(Igood),Ikeep,VM,A,B,ANG);
 hold on
-VA_cords=str2num(answer{3})/1000;
-tmp=(VA_cords-[xg yg]);
-plot(tmp(1),tmp(2),'o');
-range=sqrt(sum((VA_cords-VM/1000).^2));
-title(sprintf('Range of source from chosen location: %6.2f +/- %3.2f km, minor axis %3.2f km',range,A/1000,B/1000));
+
+if ~isempty(VA_cords)
+    tmp=(VA_cords-[xg yg]);
+    plot(tmp(1),tmp(2),'o');
+    range=sqrt(sum((VA_cords-VM/1000).^2));
+    title(sprintf('Range of source from chosen location: %6.2f +/- %3.2f km, minor axis %3.2f km',range,A/1000,B/1000));
+end
 fprintf('Position of location (can copy for annotation): %s\n',mat2str(VM,10));
 yes=menu('Print and Save?','Yes','No');
 if yes==1
@@ -3589,7 +3612,7 @@ fmax=str2double(get(handles.edit_fmax,'String'));
 chann=1:head.Nchan; %We now assume that any bad channels are marked in the LOG files.
 %end
 
-Ichc=menu('Enter type of frequency processing:','Contour','All (averaged)','Individual Frames');
+Ichc=menu('Enter type of frequency processing:','Contour','All (averaged)','Individual Frames (and ray tracing)');
 
 if Ichc==1
     Nf=input('Enter number of harmonics:');
@@ -3638,10 +3661,12 @@ elseif Ichc==2  %extractKsexact
     
     frange=sort(ftmp(:,2)*1000);
     fprintf('frange: %6.2f to %6.2f Hz\n',frange);
-    threshold=input('Enter threshold in dB[-Inf]:');
-    if isempty(threshold)
-        threshold=-Inf;
-    end
+    prompt1={'Threshold (dB)', };
+    def1={'-Inf'};
+    answer=inputdlg(prompt1,'CSDM threshold?',1,def1);
+    
+    threshold=eval(answer{1});
+    
     [Ksout.Kstot,Ksout.freq,Ksout.VV,Ksout.EE]=extractKsexact(x,ovlap,Nfft,chann,frange,Fs,-1,Nfft,0,threshold);
     if ~isempty(Ksout.EE)
         %Ksout.SNR=Ksout.EE(1,:)./Ksout.EE(2,:);
@@ -3654,7 +3679,8 @@ elseif Ichc==2  %extractKsexact
     plot(Ksout.freq,10*log10(Ksout.SNR),'-x');ylabel('dB SNR');xlabel('Freq (Hz)')
     grid on;title('estimated SNR of CSDM frequency components: first eignvalue/sum(rest)')
 
-elseif Ichc==3 %%Extract frames
+    %%%%%%%%%Extract individual frames and ray trace%%%%%%%%%
+elseif Ichc==3 %%Extract frames and ray trace
     disp('Select bounding box for time and range:');
     ftmp=ginput(2);
     
@@ -3665,10 +3691,12 @@ elseif Ichc==3 %%Extract frames
     
     frange=sort(ftmp(:,2)*1000);
     fprintf('frange: %6.2f to %6.2f Hz\n',frange);
-    threshold=input('Enter threshold in dB[-Inf]:');
-    if isempty(threshold)
-        threshold=-Inf;
-    end
+     prompt1={'Threshold (dB)', };
+    def1={'-Inf'};
+    answer=inputdlg(prompt1,'CSDM threshold?',1,def1);
+    
+    threshold=eval(answer{1});
+    
     [Ksout.Kstot,Ksout.freq,Ksout.t]=extractKsframes(x,ovlap,Nfft,chann,frange,Fs,Nfft,0,threshold);
     
 end
@@ -3719,6 +3747,10 @@ while yes>1
                     close(20);
                 end
                 
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%Individual snapshots and ray tracing%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                
             elseif Ndim==4  %Individual snapshots
                 Bsum=zeros(length(angles),length(Ksout.t));
                 
@@ -3743,7 +3775,33 @@ while yes>1
                 printstr=sprintf('AngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
                 print(gcf,'-djpeg',[printstr '.jpg']);
                 saveas(gcf,[printstr '.fig'],'fig')
-                keyboard
+                
+                ButtonName = questdlg('Do you Want to trace rays?', 'Ray Tracing!', 'Yes', 'No', 'Yes');
+                switch ButtonName,
+                    case 'No'
+                        return
+                end % switch
+                
+                
+                scenarios=raytrace_MATLAB;
+                [Selection,OK]=listdlg('liststring',scenarios,'SelectionMode','single');
+                if ~OK
+                    return
+                end
+                
+                prompt1={'Number of paths to pick?'};
+                def1={'0'};
+                %Other defaults: MURI_Feb2014_20140218T140039, 
+                answer=inputdlg(prompt1,'Ray picks',1,def1);
+                Nrays=str2num(answer{1});
+                
+                tmp=ginput(Nrays);
+                dt=max(tmp(:,1))-tmp(:,1);  %Rays that arrive first will have positive numbers
+                [dt_meas,Isort]=sort(dt);
+                ang_meas=tmp(Isort,2);
+                
+                [x,dt,dz]=raytrace_MATLAB(ang_meas,dt_meas,scenarios{Selection});
+
                 return
             end
             
@@ -3894,13 +3952,13 @@ end
         end
         
         %Image of beamform output vs look angle and frequency.
-        imagesc(Ksout.freq,angles,10*log10(B'));
+        imagesc(Ksout.freq/1000,angles,10*log10(B'));
         colorbar
         cmap=colormap;
         caxis([60 100])
         caxis('auto');
         set(gca,'fontweight','bold','fontsize',14);
-        xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
+        xlabel('Frequency (kHz)');ylabel('Angle from horizontal (deg)');grid on;
         title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
         set(gcf,'colormap',cmap(1:4:64,:));
         
@@ -7872,22 +7930,6 @@ handles.Fs	=	Fs;
 
 
 %Update all control buttons, depending on loaded data
-if strcmpi(lower(handles.filetype),'gsi')
-    status='on';
-else
-    status='off';
-end
-
-for II=1:length(handles.buttongroup.GSI)
-    set(handles.buttongroup.GSI(II),'vis',status);
-    set(handles.buttongroup.GSI(II),'enable',status);
-end
-
-
-for II=1:length(handles.buttongroup.linked)
-    set(handles.buttongroup.linked(II),'vis',status);
-    set(handles.buttongroup.linked(II),'enable',status);
-end
 
 %set(handles.pushbutton_GSIbearing,'vis','on');
 %set(handles.pushbutton_GSI_localization,'vis','on');
@@ -7906,19 +7948,34 @@ for II=1:length(handles.buttongroup.array)
     set(handles.buttongroup.array(II),'enable',status);
 end
 
-    
-% if strcmpi(handles.filetype,'mdat')||strcmpi(handles.filetype,'wav')||strcmpi(handles.filetype,'mat')
-%     set(handles.pushbutton_CSDM,'vis','on');
-%     set(handles.pushbutton_Mode,'vis','on');
-%     set(handles.pushbutton_tilt,'vis','on');
-%     set(handles.pushbutton_modalfiltering,'vis','on');
-% else
-%     set(handles.pushbutton_CSDM,'vis','off');
-%     set(handles.pushbutton_Mode,'vis','off');
-%     set(handles.pushbutton_modalfiltering,'vis','off');
-%     set(handles.pushbutton_tilt,'vis','off');
-%     
-% end
+
+if strcmpi(lower(handles.filetype),'gsi')
+    status='on';
+else
+    status='off';
+end
+
+for II=1:length(handles.buttongroup.linked)
+    set(handles.buttongroup.linked(II),'vis',status);
+    set(handles.buttongroup.linked(II),'enable',status);
+end
+
+for II=1:length(handles.buttongroup.GSI)
+    set(handles.buttongroup.GSI(II),'vis',status);
+    set(handles.buttongroup.GSI(II),'enable',status);
+end
+
+if strcmpi(lower(handles.filetype),'gsi')||handles.file_flags.multichannel
+    status='on';
+else
+    status='off';
+end
+
+for II=1:length(handles.buttongroup.multichan)
+    set(handles.buttongroup.multichan(II),'vis',status);
+    set(handles.buttongroup.multichan(II),'enable',status);
+end
+ 
 
 %if strcmpi(handles.filetype,'sio')
 %    set(handles.pushbutton_CSDM,'vis','on');
