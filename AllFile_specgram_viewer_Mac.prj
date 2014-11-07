@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="AllFile_specgram_viewer_Mac" location="/Users/thode/repos/code-afsv" file="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.app" build-checksum="2762179542" preferred-package-location="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution">
+  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="AllFile_specgram_viewer_Mac" location="/Users/thode/repos/code-afsv" file="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.app" build-checksum="1010622004" preferred-package-location="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution">
     <param.appname>AllFile_specgram_viewer_Mac</param.appname>
     <param.authnamewatermark>Aaron Thode</param.authnamewatermark>
     <param.email>athode@ucsd.edu</param.email>
@@ -97,6 +97,7 @@
       <file>${PROJECT_ROOT}/source/deps/104703.JPG</file>
       <file>${PROJECT_ROOT}/source/deps/Bulk_Processing_ShippingIndex.m</file>
       <file>${PROJECT_ROOT}/source/deps/Energy_detector_review.m</file>
+      <file>${PROJECT_ROOT}/source/deps/SSP_MURI_Feb2014_smooth.mat</file>
       <file>${PROJECT_ROOT}/source/deps/SplashScreen.m</file>
       <file>${PROJECT_ROOT}/source/deps/boxplot.m</file>
       <file>${PROJECT_ROOT}/source/deps/boxplot_percentile.m</file>
@@ -131,9 +132,14 @@
       <file>${PROJECT_ROOT}/source/deps/find_DASAR_dates.m</file>
       <file>${PROJECT_ROOT}/source/deps/fmodany.m</file>
       <file>${PROJECT_ROOT}/source/deps/gaussian_asym_filter.m</file>
+      <file>${PROJECT_ROOT}/source/deps/generalcalc.m</file>
       <file>${PROJECT_ROOT}/source/deps/get_SUDAR_time.m</file>
       <file>${PROJECT_ROOT}/source/deps/get_level_metrics_simple.m</file>
       <file>${PROJECT_ROOT}/source/deps/get_vmests.m</file>
+      <file>${PROJECT_ROOT}/source/deps/getcgeneral.m</file>
+      <file>${PROJECT_ROOT}/source/deps/getcgeneral_crude.m</file>
+      <file>${PROJECT_ROOT}/source/deps/getclin.m</file>
+      <file>${PROJECT_ROOT}/source/deps/getcmunk.m</file>
       <file>${PROJECT_ROOT}/source/deps/hist2D.m</file>
       <file>${PROJECT_ROOT}/source/deps/inputsdlg.m</file>
       <file>${PROJECT_ROOT}/source/deps/inputsdlg_demo.m</file>
@@ -142,6 +148,7 @@
       <file>${PROJECT_ROOT}/source/deps/inputsdlg_demo_tile.m</file>
       <file>${PROJECT_ROOT}/source/deps/interval.m</file>
       <file>${PROJECT_ROOT}/source/deps/kurtosis.m</file>
+      <file>${PROJECT_ROOT}/source/deps/linearcalc.m</file>
       <file>${PROJECT_ROOT}/source/deps/load_MFP_scenario.m</file>
       <file>${PROJECT_ROOT}/source/deps/load_airgun_detector_params.m</file>
       <file>${PROJECT_ROOT}/source/deps/load_bowhead_detector_params.m</file>
@@ -149,13 +156,16 @@
       <file>${PROJECT_ROOT}/source/deps/load_mt.m</file>
       <file>${PROJECT_ROOT}/source/deps/load_program_location.m</file>
       <file>${PROJECT_ROOT}/source/deps/merge_structure.m</file>
+      <file>${PROJECT_ROOT}/source/deps/munkcalc.m</file>
       <file>${PROJECT_ROOT}/source/deps/newid.m</file>
+      <file>${PROJECT_ROOT}/source/deps/ode45ray.m</file>
       <file>${PROJECT_ROOT}/source/deps/peak_picker_Thode.m</file>
       <file>${PROJECT_ROOT}/source/deps/plot_data_boxplot.m</file>
       <file>${PROJECT_ROOT}/source/deps/plot_data_boxplot_percentile.m</file>
       <file>${PROJECT_ROOT}/source/deps/plot_letter_label.m</file>
       <file>${PROJECT_ROOT}/source/deps/plot_location.m</file>
       <file>${PROJECT_ROOT}/source/deps/prep_inputsdlg.m</file>
+      <file>${PROJECT_ROOT}/source/deps/raytrace_MATLAB.m</file>
       <file>${PROJECT_ROOT}/source/deps/readEnergySnips.m</file>
       <file>${PROJECT_ROOT}/source/deps/readEnergySummary.m</file>
       <file>${PROJECT_ROOT}/source/deps/readEnergy_header.m</file>

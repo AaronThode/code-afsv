@@ -3763,6 +3763,20 @@ while yes>1
                     %Bsum(:,Isnap)=10*log10(sum(abs(B)))/length(Ksout.freq);
                     Bsum(:,Isnap)=(sum(10*log10(abs(B))))/length(Ksout.freq);
                 end
+                
+                 %plot vs sin angle
+                
+                figure
+                imagesc((Ksout.t-min(Ksout.t))*1000,sin(angles*pi/180),Bsum)
+                 set(gca,'fontweight','bold','fontsize',14)
+                xlabel('Time (msec)');ylabel('sine of Elevation angle');
+                ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
+                titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
+                title(titstr);grid on;orient landscape
+                xlimm=xlim;
+                set(gca,'xtick',0:5:xlimm(2));
+                
+                %plot migration angle...
                 figure
                 imagesc((Ksout.t-min(Ksout.t))*1000,angles,Bsum)
                 set(gca,'fontweight','bold','fontsize',14)
@@ -3775,6 +3789,13 @@ while yes>1
                 printstr=sprintf('AngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
                 print(gcf,'-djpeg',[printstr '.jpg']);
                 saveas(gcf,[printstr '.fig'],'fig')
+                
+               
+                
+                %printstr=sprintf('AngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
+                %print(gcf,'-djpeg',[printstr '.jpg']);
+                %saveas(gcf,[printstr '.fig'],'fig')
+               
                 
                 ButtonName = questdlg('Do you Want to trace rays?', 'Ray Tracing!', 'Yes', 'No', 'Yes');
                 switch ButtonName,
