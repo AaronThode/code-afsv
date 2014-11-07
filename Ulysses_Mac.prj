@@ -1,36 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="AllFile_specgram_viewer_Mac" location="/Users/thode/repos/code-afsv" file="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac.prj" preferred-package-type="package.type.app" build-checksum="1010622004" preferred-package-location="/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_redistribution">
-    <param.appname>AllFile_specgram_viewer_Mac</param.appname>
+  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="Ulysses_Mac" location="/Users/thode/repos/code-afsv" file="/Users/thode/repos/code-afsv/Ulysses_Mac.prj" preferred-package-type="package.type.app" build-checksum="1173930314" preferred-package-location="/Users/thode/repos/code-afsv/Ulysses_Mac/for_redistribution">
+    <param.appname>Ulysses_Mac</param.appname>
     <param.authnamewatermark>Aaron Thode</param.authnamewatermark>
     <param.email>athode@ucsd.edu</param.email>
     <param.company>MPL-SIO-UCSD</param.company>
-    <param.icon>${PROJECT_ROOT}/AllFile_specgram_viewer_Mac_resources/icon.icns</param.icon>
+    <param.icon>${PROJECT_ROOT}/Ulysses_Mac_resources/icon.icns</param.icon>
     <param.icons>
-      <file>${PROJECT_ROOT}/AllFile_specgram_viewer_Mac_resources/icon_48.png</file>
-      <file>${PROJECT_ROOT}/AllFile_specgram_viewer_Mac_resources/icon_32.png</file>
-      <file>${PROJECT_ROOT}/AllFile_specgram_viewer_Mac_resources/icon_24.png</file>
-      <file>${PROJECT_ROOT}/AllFile_specgram_viewer_Mac_resources/icon_16.png</file>
+      <file>${PROJECT_ROOT}/Ulysses_Mac_resources/icon_48.png</file>
+      <file>${PROJECT_ROOT}/Ulysses_Mac_resources/icon_32.png</file>
+      <file>${PROJECT_ROOT}/Ulysses_Mac_resources/icon_24.png</file>
+      <file>${PROJECT_ROOT}/Ulysses_Mac_resources/icon_16.png</file>
     </param.icons>
     <param.summary />
     <param.description />
     <param.screenshot>${PROJECT_ROOT}/source/104703.JPG</param.screenshot>
     <param.version>1.0</param.version>
-    <param.namespace>AllFile_specgram_viewer_Mac</param.namespace>
+    <param.namespace>Ulysses_Mac</param.namespace>
     <param.guid />
-    <param.installpath.string>AllFile_specgram_viewer_Mac</param.installpath.string>
+    <param.installpath.string>Ulysses</param.installpath.string>
     <param.installpath.combo>option.installpath.systemwideapp</param.installpath.combo>
     <param.logo>${PROJECT_ROOT}/source/104703.JPG</param.logo>
     <param.install.notes />
-    <param.intermediate>${PROJECT_ROOT}/AllFile_specgram_viewer_Mac/for_testing</param.intermediate>
-    <param.output>${PROJECT_ROOT}/AllFile_specgram_viewer_Mac/for_redistribution</param.output>
+    <param.intermediate>${PROJECT_ROOT}/Ulysses_Mac/for_testing</param.intermediate>
+    <param.output>${PROJECT_ROOT}/Ulysses_Mac/for_redistribution</param.output>
     <param.embed.ctf>true</param.embed.ctf>
     <param.target.type>subtarget.standalone</param.target.type>
     <param.classorg />
     <param.web.mcr>true</param.web.mcr>
     <param.package.mcr>false</param.package.mcr>
     <param.no.mcr>false</param.no.mcr>
-    <param.web.mcr.name>AFSV_installer</param.web.mcr.name>
+    <param.web.mcr.name>Ulysses_Mac_installer</param.web.mcr.name>
     <param.package.mcr.name>MyAppInstaller_mcr</param.package.mcr.name>
     <param.no.mcr.name>MyAppInstaller_app</param.no.mcr.name>
     <param.user.defined.mcr.options />
@@ -45,7 +45,7 @@
     <param.net.tsa.enable>false</param.net.tsa.enable>
     <param.net.tsa.assembly />
     <param.net.tsa.interface />
-    <param.net.tsa.namespace>AllFile_specgram_viewer_Mac</param.net.tsa.namespace>
+    <param.net.tsa.namespace>Ulysses_Mac</param.net.tsa.namespace>
     <param.net.tsa.superclass />
     <param.net.tsa.metadata />
     <param.net.tsa.metadata.assembly>/Users/thode/Documents/MATLAB</param.net.tsa.metadata.assembly>
@@ -68,7 +68,6 @@
       <param.no.mcr />
       <param.package.mcr.name />
       <param.no.mcr.name />
-      <param.user.defined.mcr.options />
       <param.windows.command.prompt />
       <param.user.only.registration />
       <param.mads.no.java />
@@ -202,9 +201,9 @@
       <file>${PROJECT_ROOT}/source/PreProcessV1.jar</file>
     </fileset.package>
     <build-deliverables>
-      <file name="run_AllFile_specgram_viewer_Mac.sh" location="${PROJECT_ROOT}/AllFile_specgram_viewer_Mac/for_testing" optional="false">/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_testing/run_AllFile_specgram_viewer_Mac.sh</file>
-      <file name="readme.txt" location="${PROJECT_ROOT}/AllFile_specgram_viewer_Mac/for_testing" optional="true">/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_testing/readme.txt</file>
-      <file name="AllFile_specgram_viewer_Mac.app" location="${PROJECT_ROOT}/AllFile_specgram_viewer_Mac/for_testing" optional="false">/Users/thode/repos/code-afsv/AllFile_specgram_viewer_Mac/for_testing/AllFile_specgram_viewer_Mac.app</file>
+      <file name="readme.txt" location="${PROJECT_ROOT}/Ulysses_Mac/for_testing" optional="true">/Users/thode/repos/code-afsv/Ulysses_Mac/for_testing/readme.txt</file>
+      <file name="run_Ulysses_Mac.sh" location="${PROJECT_ROOT}/Ulysses_Mac/for_testing" optional="false">/Users/thode/repos/code-afsv/Ulysses_Mac/for_testing/run_Ulysses_Mac.sh</file>
+      <file name="Ulysses_Mac.app" location="${PROJECT_ROOT}/Ulysses_Mac/for_testing" optional="false">/Users/thode/repos/code-afsv/Ulysses_Mac/for_testing/Ulysses_Mac.app</file>
     </build-deliverables>
     <workflow />
     <matlab>

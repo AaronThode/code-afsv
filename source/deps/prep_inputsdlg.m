@@ -33,9 +33,12 @@ while II<=length(names)
             Formats(2,2).type = 'list';
             Formats(2,2).format = 'text';
             Formats(2,2).style = 'radiobutton';
-            Formats(2,2).items = {'upsweep' 'downsweep' 'U-shaped' 'N-shaped'};
+            Formats(2,2).items = {'upsweep' 'downsweep' 'U-shaped' 'N-shaped','other'};
             % Formats(7,1).span = [2 1];  % item is 2 field x 1 fields
-            DefAns.(names{II}) = 'downsweep';
+            %DefAns.(names{II}) = 'downsweep';
+            if ~any(strcmp(DefAns.(names{II}),Formats(2,2).items))
+                DefAns.(names{II}) = 'downsweep';
+            end
             
         case 'min_freq'
             Formats(3,1).type = 'edit';
