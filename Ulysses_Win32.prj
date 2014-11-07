@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="AllFile_specgram_viewer_Win64" location="E:\Work\matlab\AllFile_specgram_viewer" file="E:\Work\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win64.prj" preferred-package-type="package.type.exe" build-checksum="3419267926" preferred-package-location="E:\Work\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win64\for_redistribution">
-    <param.appname>AllFile_specgram_viewer_Win64</param.appname>
-    <param.authnamewatermark />
-    <param.email />
-    <param.company />
-    <param.icon />
+  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="Ulysses_Win32" location="E:\Work\matlab\AllFile_specgram_viewer" file="E:\Work\matlab\AllFile_specgram_viewer\Ulysses_Win32.prj" preferred-package-type="package.type.exe" build-checksum="794189086" preferred-package-location="E:\Work\matlab\AllFile_specgram_viewer\Ulysses_Win32\for_redistribution">
+    <param.appname>Ulysses_Win32</param.appname>
+    <param.authnamewatermark>Aaron Thode</param.authnamewatermark>
+    <param.email>athode@ucsd.edu</param.email>
+    <param.company>MPL-SIO-UCSD</param.company>
+    <param.icon>${PROJECT_ROOT}\AllFile_specgram_viewer_Mac_resources\icon.icns</param.icon>
     <param.icons />
     <param.summary />
     <param.description />
-    <param.screenshot />
+    <param.screenshot>${PROJECT_ROOT}\source\104703.JPG</param.screenshot>
     <param.version>1.0</param.version>
-    <param.namespace>AllFile_specgram_viewer_Win64</param.namespace>
+    <param.namespace>Ulysses_Win32</param.namespace>
     <param.guid />
-    <param.installpath.string>AllFile_specgram_viewer_Win64</param.installpath.string>
+    <param.installpath.string>Ulysses</param.installpath.string>
     <param.installpath.combo>option.installpath.programfiles</param.installpath.combo>
-    <param.logo />
+    <param.logo>${PROJECT_ROOT}\source\104703.JPG</param.logo>
     <param.install.notes />
-    <param.intermediate>${PROJECT_ROOT}\AllFile_specgram_viewer_Win64\for_testing</param.intermediate>
-    <param.output>${PROJECT_ROOT}\AllFile_specgram_viewer_Win64\for_redistribution</param.output>
+    <param.intermediate>${PROJECT_ROOT}\Ulysses_Win32\for_testing</param.intermediate>
+    <param.output>${PROJECT_ROOT}\Ulysses_Win32\for_redistribution</param.output>
     <param.embed.ctf>true</param.embed.ctf>
     <param.target.type>subtarget.standalone</param.target.type>
     <param.classorg />
     <param.web.mcr>true</param.web.mcr>
     <param.package.mcr>false</param.package.mcr>
     <param.no.mcr>false</param.no.mcr>
-    <param.web.mcr.name>MyAppInstaller_web</param.web.mcr.name>
+    <param.web.mcr.name>Ulysses_Win32_installer</param.web.mcr.name>
     <param.package.mcr.name>MyAppInstaller_mcr</param.package.mcr.name>
     <param.no.mcr.name>MyAppInstaller_app</param.no.mcr.name>
     <param.user.defined.mcr.options />
@@ -40,25 +40,19 @@
     <param.net.tsa.enable>false</param.net.tsa.enable>
     <param.net.tsa.assembly />
     <param.net.tsa.interface />
-    <param.net.tsa.namespace>AllFile_specgram_viewer_Win64</param.net.tsa.namespace>
+    <param.net.tsa.namespace>Ulysses_Win32</param.net.tsa.namespace>
     <param.net.tsa.superclass />
     <param.net.tsa.metadata />
     <param.net.tsa.metadata.assembly>C:\Users\Default.VPC_WIN7x64\Documents\MATLAB</param.net.tsa.metadata.assembly>
-    <param.create.log>false</param.create.log>
-    <param.log.file />
+    <param.create.log>true</param.create.log>
+    <param.log.file>test</param.log.file>
     <unset>
-      <param.authnamewatermark />
-      <param.email />
-      <param.company />
-      <param.icon />
       <param.icons />
       <param.summary />
       <param.description />
-      <param.screenshot />
       <param.version />
       <param.namespace />
       <param.guid />
-      <param.logo />
       <param.install.notes />
       <param.intermediate />
       <param.output />
@@ -68,10 +62,8 @@
       <param.web.mcr />
       <param.package.mcr />
       <param.no.mcr />
-      <param.web.mcr.name />
       <param.package.mcr.name />
       <param.no.mcr.name />
-      <param.user.defined.mcr.options />
       <param.windows.command.prompt />
       <param.user.only.registration />
       <param.mads.no.java />
@@ -87,15 +79,14 @@
       <param.net.tsa.superclass />
       <param.net.tsa.metadata />
       <param.net.tsa.metadata.assembly />
-      <param.create.log />
-      <param.log.file />
     </unset>
     <fileset.main>
       <file>${PROJECT_ROOT}\source\AllFile_specgram_viewer.m</file>
     </fileset.main>
     <fileset.resources>
+      <file>${PROJECT_ROOT}\source\104703.JPG</file>
       <file>${PROJECT_ROOT}\source\AllFile_specgram_viewer.fig</file>
-      <file>${PROJECT_ROOT}\source\deps</file>
+      <file>${PROJECT_ROOT}\source\AllFile_specgram_viewer.m</file>
       <file>${PROJECT_ROOT}\source\deps\104703.JPG</file>
       <file>${PROJECT_ROOT}\source\deps\boxplot.m</file>
       <file>${PROJECT_ROOT}\source\deps\boxplot_percentile.m</file>
@@ -132,14 +123,9 @@
       <file>${PROJECT_ROOT}\source\deps\find_DASAR_dates.m</file>
       <file>${PROJECT_ROOT}\source\deps\fmodany.m</file>
       <file>${PROJECT_ROOT}\source\deps\gaussian_asym_filter.m</file>
-      <file>${PROJECT_ROOT}\source\deps\generalcalc.m</file>
       <file>${PROJECT_ROOT}\source\deps\get_level_metrics_simple.m</file>
       <file>${PROJECT_ROOT}\source\deps\get_SUDAR_time.m</file>
       <file>${PROJECT_ROOT}\source\deps\get_vmests.m</file>
-      <file>${PROJECT_ROOT}\source\deps\getcgeneral.m</file>
-      <file>${PROJECT_ROOT}\source\deps\getcgeneral_crude.m</file>
-      <file>${PROJECT_ROOT}\source\deps\getclin.m</file>
-      <file>${PROJECT_ROOT}\source\deps\getcmunk.m</file>
       <file>${PROJECT_ROOT}\source\deps\hist2D.m</file>
       <file>${PROJECT_ROOT}\source\deps\inputsdlg.m</file>
       <file>${PROJECT_ROOT}\source\deps\inputsdlg_demo.m</file>
@@ -148,7 +134,6 @@
       <file>${PROJECT_ROOT}\source\deps\inputsdlg_demo_tile.m</file>
       <file>${PROJECT_ROOT}\source\deps\interval.m</file>
       <file>${PROJECT_ROOT}\source\deps\kurtosis.m</file>
-      <file>${PROJECT_ROOT}\source\deps\linearcalc.m</file>
       <file>${PROJECT_ROOT}\source\deps\load_airgun_detector_params.m</file>
       <file>${PROJECT_ROOT}\source\deps\load_bowhead_detector_params.m</file>
       <file>${PROJECT_ROOT}\source\deps\load_default_annotation_template.m</file>
@@ -156,16 +141,13 @@
       <file>${PROJECT_ROOT}\source\deps\load_mt.m</file>
       <file>${PROJECT_ROOT}\source\deps\load_program_location.m</file>
       <file>${PROJECT_ROOT}\source\deps\merge_structure.m</file>
-      <file>${PROJECT_ROOT}\source\deps\munkcalc.m</file>
       <file>${PROJECT_ROOT}\source\deps\newid.m</file>
-      <file>${PROJECT_ROOT}\source\deps\ode45ray.m</file>
       <file>${PROJECT_ROOT}\source\deps\peak_picker_Thode.m</file>
       <file>${PROJECT_ROOT}\source\deps\plot_data_boxplot.m</file>
       <file>${PROJECT_ROOT}\source\deps\plot_data_boxplot_percentile.m</file>
       <file>${PROJECT_ROOT}\source\deps\plot_letter_label.m</file>
       <file>${PROJECT_ROOT}\source\deps\plot_location.m</file>
       <file>${PROJECT_ROOT}\source\deps\prep_inputsdlg.m</file>
-      <file>${PROJECT_ROOT}\source\deps\raytrace_MATLAB.m</file>
       <file>${PROJECT_ROOT}\source\deps\read_adi_file.m</file>
       <file>${PROJECT_ROOT}\source\deps\read_dat_file.m</file>
       <file>${PROJECT_ROOT}\source\deps\read_Java_PSD.m</file>
@@ -186,7 +168,6 @@
       <file>${PROJECT_ROOT}\source\deps\simulated_plane_wave_arrival.m</file>
       <file>${PROJECT_ROOT}\source\deps\sioread.m</file>
       <file>${PROJECT_ROOT}\source\deps\SplashScreen.m</file>
-      <file>${PROJECT_ROOT}\source\deps\SSP_MURI_Feb2014_smooth.mat</file>
       <file>${PROJECT_ROOT}\source\deps\tftb_window.m</file>
       <file>${PROJECT_ROOT}\source\deps\update_GSI_localization.m</file>
       <file>${PROJECT_ROOT}\source\deps\update_localization_fields.m</file>
@@ -195,17 +176,23 @@
       <file>${PROJECT_ROOT}\source\deps\vmmle_r.m</file>
       <file>${PROJECT_ROOT}\source\deps\write_Java_script.m</file>
       <file>${PROJECT_ROOT}\source\deps\writeEnergyDetectorCshell.m</file>
+      <file>${PROJECT_ROOT}\source\JAVA_instructions.doc</file>
+      <file>${PROJECT_ROOT}\source\WORKLOG_vesselnoise.txt</file>
     </fileset.resources>
     <fileset.package>
       <file>${PROJECT_ROOT}\change.log</file>
+      <file>${PROJECT_ROOT}\compiled\run_Ulysses_Mac.sh</file>
+      <file>${PROJECT_ROOT}\compiled\start_Ulysses_Mac.command</file>
+      <file>${PROJECT_ROOT}\source\104703.JPG</file>
+      <file>${PROJECT_ROOT}\source\PreProcessV1.jar</file>
     </fileset.package>
     <build-deliverables>
-      <file name="AllFile_specgram_viewer_Win64.exe" location="${PROJECT_ROOT}\AllFile_specgram_viewer_Win64\for_testing" optional="false">E:\Work\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win64\for_testing\AllFile_specgram_viewer_Win64.exe</file>
-      <file name="readme.txt" location="${PROJECT_ROOT}\AllFile_specgram_viewer_Win64\for_testing" optional="true">E:\Work\matlab\AllFile_specgram_viewer\AllFile_specgram_viewer_Win64\for_testing\readme.txt</file>
+      <file name="readme.txt" location="${PROJECT_ROOT}\Ulysses_Win32\for_testing" optional="true">E:\Work\matlab\AllFile_specgram_viewer\Ulysses_Win32\for_testing\readme.txt</file>
+      <file name="Ulysses_Win32.exe" location="${PROJECT_ROOT}\Ulysses_Win32\for_testing" optional="false">E:\Work\matlab\AllFile_specgram_viewer\Ulysses_Win32\for_testing\Ulysses_Win32.exe</file>
     </build-deliverables>
     <workflow />
     <matlab>
-      <root>C:\Program Files\MATLAB\R2013b</root>
+      <root>C:\Program Files (x86)\MATLAB\R2013b</root>
       <toolboxes>
         <toolbox name="fixedpoint" />
       </toolboxes>
@@ -220,9 +207,9 @@
       <linux>false</linux>
       <solaris>false</solaris>
       <osver>6.1</osver>
-      <os32>false</os32>
-      <os64>true</os64>
-      <arch>win64</arch>
+      <os32>true</os32>
+      <os64>false</os64>
+      <arch>win32</arch>
       <matlab>true</matlab>
     </platform>
   </configuration>

@@ -192,7 +192,7 @@
     </build-deliverables>
     <workflow />
     <matlab>
-      <root>C:\Program Files\MATLAB\R2013b</root>
+      <root>C:\Program Files (x86)\MATLAB\R2013b</root>
       <toolboxes>
         <toolbox name="fixedpoint" />
       </toolboxes>
@@ -207,9 +207,9 @@
       <linux>false</linux>
       <solaris>false</solaris>
       <osver>6.1</osver>
-      <os32>false</os32>
-      <os64>true</os64>
-      <arch>win64</arch>
+      <os32>true</os32>
+      <os64>false</os64>
+      <arch>win32</arch>
       <matlab>true</matlab>
     </platform>
   </configuration>
