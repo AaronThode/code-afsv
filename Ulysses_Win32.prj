@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
+<<<<<<< HEAD:Ulysses_Win32.prj
   <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="Ulysses_Win32" location="E:\Work\matlab\AllFile_specgram_viewer" file="E:\Work\matlab\AllFile_specgram_viewer\Ulysses_Win32.prj" preferred-package-type="package.type.exe" build-checksum="794189086" preferred-package-location="E:\Work\matlab\AllFile_specgram_viewer\Ulysses_Win32\for_redistribution">
+=======
+  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="Ulysses_Win32" location="E:\Work\matlab\AllFile_specgram_viewer" file="E:\Work\matlab\AllFile_specgram_viewer\Ulysses_Win32.prj" preferred-package-type="package.type.exe" build-checksum="164528651" preferred-package-location="E:\Work\matlab\AllFile_specgram_viewer\Ulysses_Win32\for_redistribution">
+>>>>>>> cad4cc319e68368a7a364bfd528ca2a2754e20a7:Ulysses_Win32.prj
     <param.appname>Ulysses_Win32</param.appname>
     <param.authnamewatermark>Aaron Thode</param.authnamewatermark>
     <param.email>athode@ucsd.edu</param.email>
