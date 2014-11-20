@@ -3810,17 +3810,11 @@ while yes>1
                 
                
                 
-                %printstr=sprintf('AngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
-                %print(gcf,'-djpeg',[printstr '.jpg']);
-                %saveas(gcf,[printstr '.fig'],'fig')
-               
-                
                 ButtonName = questdlg('Do you Want to trace rays?', 'Ray Tracing!', 'Yes', 'No', 'Yes');
                 switch ButtonName,
                     case 'No'
                         return
                 end % switch
-                
                 
                 scenarios=raytrace_MATLAB;
                 [Selection,OK]=listdlg('liststring',scenarios,'SelectionMode','single');
@@ -6083,7 +6077,7 @@ switch handles.filetype
                         i_sel	=	N;
                     end
                     handles.notes.i_sel	=	i_sel;
-                    
+                    handles.notes.saved=false;
                     %Explicitly turn off delete checkbox to eliminate
                     %inadvertant deletions.
                     set(handles.checkbox_notes_delete,'Value',false)
@@ -6202,12 +6196,17 @@ switch handles.filetype
             newEvent.link_hashtags=currentEvent.link_hashtags;
             
             %Add current hashtag to link_hashtags
+            %Warning, need to make sure not to cut off hashtag...
             if isnumeric(newEvent.hash_tag)
                 newEvent.hash_tag=num2str(newEvent.hash_tag);
             end
-            Nchar=min([length(newEvent.hash_tag) size(newEvent.link_hashtags,2)]);
-            newEvent.link_hashtags(Iarray,:)=blanks(size(newEvent.link_hashtags,2));
-            newEvent.link_hashtags(Iarray,1:Nchar)=newEvent.hash_tag(1:Nchar);
+            
+            temp=char(newEvent.link_hashtags,newEvent.hash_tag);  %Ensures blanks are correct
+            temp(Iarray,:)=temp(end,:);
+            newEvent.link_hashtags=temp(1:(end-1),:);
+            %Nchar=min([length(newEvent.hash_tag) size(newEvent.link_hashtags,2)]);
+           % newEvent.link_hashtags(Iarray,:)=blanks(size(newEvent.link_hashtags,2));
+           % newEvent.link_hashtags(Iarray,1:Nchar)=newEvent.hash_tag(1:Nchar);
             
             %copy localization fields, this ensures that new bearings
             %  are propagated throught linked files
