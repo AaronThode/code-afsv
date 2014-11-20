@@ -88,7 +88,7 @@ set(gca,'fontweight','bold','fontsize',14);
 set(gca,'xminorgrid','on','yminorgrid','on');
 
 hh=colorbar('east');
-set(hh,'fontweight','bold','fontsize',14,'xcolor','w','ycolor','k');
+set(hh,'fontweight','bold','fontsize',14,'DecorationColor','w','DecorationColor','k');
 poss=get(hh,'pos');
 poss(1)=.94;
 set(hh,'pos',poss);

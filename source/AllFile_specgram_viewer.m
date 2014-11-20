@@ -3089,7 +3089,7 @@ if strcmpi(handles.filetype,'MDAT')
                 disp('No elements depths provided');
             end
             hh=colorbar('East');
-            set(hh,'fontweight','bold','fontsize',14,'ycolor','y')
+            set(hh,'fontweight','bold','fontsize',14)
             
             %             if Ichan==1
             %                 xall=zeros(8,length(x));
@@ -3431,7 +3431,14 @@ function uipanel_type_CreateFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-set(hObject,'SelectionChangeFcn',@uipanel_type_SelectionChangeFcn);
+%WARNING! AARON Changes on 11/16 to be compatible
+if verLessThan('matlab','8.4.0')
+    set(hObject,'SelectionChangeFcn',@uipanel_type_SelectionChangeFcn);
+    % execute code for R2014a or earlier
+else
+    % execute code for R2014b or later
+end
+%
 
 
 end
@@ -3691,13 +3698,18 @@ elseif Ichc==3 %%Extract frames and ray trace
     
     frange=sort(ftmp(:,2)*1000);
     fprintf('frange: %6.2f to %6.2f Hz\n',frange);
-     prompt1={'Threshold (dB)', };
-    def1={'-Inf'};
+     prompt1={'Threshold (dB)', 'optional FFT for longer FFT of small segments'};
+    def1={'-Inf',''};
     answer=inputdlg(prompt1,'CSDM threshold?',1,def1);
     
     threshold=eval(answer{1});
+    if isempty(answer{2})
+        Nfft2=Nfft;
+    else
+        Nfft2=eval(answer{2});
+    end
     
-    [Ksout.Kstot,Ksout.freq,Ksout.t]=extractKsframes(x,ovlap,Nfft,chann,frange,Fs,Nfft,0,threshold);
+    [Ksout.Kstot,Ksout.freq,Ksout.t]=extractKsframes(x,ovlap,Nfft2,chann,frange,Fs,Nfft,0,threshold);
     
 end
 
@@ -3709,15 +3721,21 @@ while yes>1
     
     if yes<6
         
-        prompt1={'Vector of angles (deg) [(-20:0.2:20)]','hydrophone indicies [all]','sound speed (m/sec)', ...
+        prompt1={'Vector of angles (deg) [(-20:0.2:20)]','Vector of sin angles (deg) [(-0.2:0.01:0.2)]','hydrophone indicies [all]','sound speed (m/sec)', ...
             };
-        def1={'-10:0.2:10', sprintf('[1:%i]',length(chann)),'1480'};
+        def1={'-10:0.2:10', '',sprintf('[1:%i]',length(chann)),'1480'};
         
         answer=inputdlg(prompt1,'Beamforming parameters',1,def1);
         try
-            angles=eval(answer{1});
-            Igood_el=eval(answer{2});
-            cc=eval(answer{3});
+            if isempty(answer{2})
+                angles=eval(answer{1});
+            else
+                angles=180*asin(eval(answer{2}))/pi;
+                
+            end
+            Igood_el=eval(answer{3});
+            cc=eval(answer{4});
+            
         catch
             errdlg('Could not understand your beamforming parameters');
             return
@@ -7208,8 +7226,10 @@ Start_Times	=	cell2mat({Events.start_time});
 i_show	=	find((Times(1) <= Start_Times) & (Start_Times <= Times(2)));
 
 %	Plot rectangles for visible events
-h_show	=	zeros(1,length(i_show));
-x_show =h_show;
+h_show	=	gobjects(1,length(i_show));
+x_show	=	zeros(1,length(i_show));
+
+%x_show =h_show;
 sel_vis	=	false;
 %axes(h_axes);
 for	ii	=	1:length(i_show)
@@ -7482,7 +7502,7 @@ X=get_histogram_vars(ButtonName, handles.notes.Data.Events,handles.notes.Data.De
 if isempty(X.start)
     return
 end
-hprint=[];
+hprint=gobjects(0);
 switch ButtonName
     case '1-D histogram'
         for Ix=1:(length(X.start)-1)
@@ -8051,7 +8071,7 @@ T_len		=	(tmax-tmin)*24*60*60;
 big_step	=	0.1;					% 10%
 small_step	=	0.01;				% 5s
 
-set(handles.slider_datestr,'sliderstep',[small_step big_step]);
+set(handles.slider_datestr,'sliderstep',sort([small_step big_step]));
 
 set(handles.slider_datestr,'Value',0.0);
 %handles.tdate_start		=	0.5*(tmin+tmax);

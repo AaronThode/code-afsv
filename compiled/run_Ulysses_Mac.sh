@@ -26,7 +26,7 @@ else
       args="${args} \"${token}\"" 
       shift
   done
-  eval "\"${exe_dir}/AllFile_specgram_viewer_Mac.app/Contents/MacOS/AllFile_specgram_viewer_Mac\"" $args
+  eval "\"${exe_dir}/Ulysses_Mac.app/Contents/MacOS/Ulysses_Mac\"" $args
 fi
 exit
 

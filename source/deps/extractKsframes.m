@@ -15,7 +15,7 @@ function [Kstot,f,t]=extractKsframes(x,ovlap,Nfft,chann,frange,Fs,M,nowin,thresh
 %frange-pairs of frequencies that define desired ranges If odd, last
 %	element is bin spacing (i.e.) evaluate every other bin
 % Fs: sampling rate in Hz
-%M amount of dataused for the fft snapshot
+% M amount of dataused for the fft snapshot
 % nowin-if exists, don't window the data before using fft.used for source signature estimates
 % threshold-dB threshold of power (sum of energy across all frequencies and channels) to reject a snapshot.
 %    Set to Inf to ensure all snapshots used.

@@ -36,15 +36,19 @@ function [x,fparms]=read_synchronized_mdat_files(fname_in,tdate_start,tlen)
 		
 		toffset=fparms_bot.synch.offset+fparms_bot.synch.drift*nsec/(3600*1000);
 		
-        
-		[xtop,fparms_top]=read_mdat_file(fparms.synch.file,tdate_start+datenum(0,0,0,0,0,toffset),tlen,1);
-		
-		x=[xbot xtop];  %Start with bottom element, move to top.
-		
-        rd=[fparms_bot.geom.rd fparms_top.geom.rd];
-        %spacing=[fparms_bot.geom.spacing fparms_top.geom.spacing];
-        Igood=[fparms_bot.Igood fparms_top.Igood];
-        
+        try  %Look for corresponding file
+            [xtop,fparms_top]=read_mdat_file(fparms.synch.file,tdate_start+datenum(0,0,0,0,0,toffset),tlen,1);
+            
+            x=[xbot xtop];  %Start with bottom element, move to top.
+            
+            rd=[fparms_bot.geom.rd fparms_top.geom.rd];
+            %spacing=[fparms_bot.geom.spacing fparms_top.geom.spacing];
+            Igood=[fparms_bot.Igood fparms_top.Igood];
+        catch
+            Igood=fparms_bot.Igood;
+            x=xbot;
+            rd=fparms_bot.geom.rd;
+        end
         %Include only valid channels..
         rd=rd(Igood>0);
         Ichan=1:size(x,2);

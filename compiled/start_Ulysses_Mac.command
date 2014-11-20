@@ -2,10 +2,10 @@
 exe_name=$0
 exe_dir=`dirname "$0"`
 
-# Matlab2012b installation path
+# Matlab2014b installation path
   MATLABROOT='/Applications/MATLAB_R2013b.app'
 # Default MCR install path on mac
-  MCRROOT='/Applications/MATLAB/MATLAB_Compiler_Runtime/v82'
+  MCRROOT='/Applications/MATLAB/MATLAB_Compiler_Runtime/v84'
 	
 # Check for existence
 if [[ -d "$MCRROOT" ]] ; then

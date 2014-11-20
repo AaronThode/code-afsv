@@ -229,8 +229,8 @@ for YOffLp=2:NumQuest,
     EditYOffset(YOffLp)=QuestYOffset(YOffLp)-EditHeight(YOffLp);
 end % for YOffLp
 
-QuestHandle=[]; %#ok
-EditHandle=[];
+QuestHandle=gobjects(0); %#ok
+EditHandle=gobjects(0);
 
 AxesHandle=axes('Parent',InputFig,'Position',[0 0 1 1],'Visible','off');
 

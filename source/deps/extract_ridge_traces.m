@@ -116,7 +116,7 @@ end
 
 if Idebug>1
     figure(4)
-    set(4,'pos',[118   103   554   980]);
+    set(get(gcf,'Number'),'pos',[118   103   554   980]);
     subplot(2,2,1)
     imagesc([],F,Beq);title('extract_ridge_traces: Beq');axis('xy')
     caxis([0 70]); colorbar('southoutside');

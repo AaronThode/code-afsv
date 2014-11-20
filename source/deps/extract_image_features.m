@@ -874,7 +874,7 @@ end
     function plot_dual_threshold
         if Idebug>1
             figure(1);
-            set(1,'pos',[86   214   1437   1030]);
+            set(get(gcf,'Number'),'pos',[86   214   1437   1030]);
             subplot(3,2,1)
             imagesc(T,F/1000,Borg);%caxis([0 max(max(Beq))]);axis('xy');
             set(gca,'fontweight','bold','fontsize',14);%xlabel('Time');
@@ -1249,7 +1249,7 @@ Back_close=flipud(Back_close);
 
 if Idebug>1
     figure(1)
-    set(1,'pos',[60    85   564   987]);
+    set(get(gcf,'Number'),'pos',[60    85   564   987]);
     subplot(4,1,1)
     imagesc(T,F,Beq);caxis([0 max(max(Beq))]);axis('xy');
     set(gca,'fontweight','bold','fontsize',14);

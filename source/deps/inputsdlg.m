@@ -2274,8 +2274,8 @@ istext = reshape(arrayfun(@(s)strcmp(s.type,'text'),Formats),num,1);
 autosize = zeros(num,2); % 0-fixed, 1-autosize, 2-resize with window
 rowspan = zeros(num,1); % # of rows control occupies
 colspan = zeros(num,1); % # of columns control occupies
-hPanels = zeros(num,2); % [uipanel|axes]
-hCtrls = zeros(num,3); % [Prompt|Edit|Unit]
+hPanels = gobjects(num,2); % [uipanel|axes]
+hCtrls = gobjects(num,3); % [Prompt|Edit|Unit]
 for m = 1:num % for each control
    
    % get current control's Format spec
@@ -2328,7 +2328,7 @@ for m = 1:num % for each control
       dim_btns = size(fmt.items);
       kvalid = find(~cellfun(@isempty,fmt.items));
       Nvalid = numel(kvalid);
-      hButtons = zeros(Nvalid,1);
+      hButtons = gobjects(Nvalid,1);
       btn_w = zeros(dim_btns);
       btn_h = zeros(dim_btns);
       for n = 1:numel(kvalid)
@@ -2535,7 +2535,7 @@ for m = 1:num % for each control
             
             % set slider step if items field is filled
             if ~isempty(fmt.items)
-               set(hc,'SliderStep',fmt.items);
+               set(hc,'SliderStep',sort(fmt.items));
             end
             
          case 'pushbutton' % button & color types
