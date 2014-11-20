@@ -73,8 +73,8 @@ function AllFile_specgram_viewer_OpeningFcn(hObject, eventdata, handles, varargi
 %   (3) Multipath results file name and location
 
 if ~ isdeployed
-path('~/Desktop/Ulysses',path);
-path('~/Desktop/Ulysses/deps',path);
+    path('~/Desktop/Ulysses',path);
+    path('~/Desktop/Ulysses/deps',path);
 end
 
 startupinfo		=	gui_startup_information;
@@ -683,7 +683,7 @@ switch	Batch_mode
                     print(hprint(II),'-djpeg',save_str);
                     saveas(hprint(II),save_str,'fig');
                     close(hprint(II));
-                       
+                    
                 end
                 Tabs_all=[]; boat_detections=[];
                 Iplot=Iplot+1;
@@ -947,7 +947,7 @@ switch	Batch_mode
                         percents.data=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
                         percents.x=temp.x;
                         percents.percentiles=pms.percentiles;
-                           
+                        
                         
                     end
                     percents.data(Iff,:,:)=temp.data;
@@ -1069,9 +1069,9 @@ switch	Batch_mode
                     end
                     Iplot=Iplot+1;
                     [~,local_fname{Iplot},~]=fileparts(fname);
-                   
+                    
                     [hprint(Iplot),save_tag{Iplot}]=image_PSD(min(Tabs_all), max(Tabs_all),local_fname{Iplot});
-                               
+                    
                     save_str=sprintf('PSD_%s', save_tag{Iplot});
                     if ~exist('pms'),pms=[];end
                     save(save_str,'pms','PSD_all','Tabs_all','params','titlestr','Batch_vars_bulkload','sec_avg');
@@ -1160,12 +1160,12 @@ switch	Batch_mode
                     
                     Nfigs=sort(get(0,'Child'));
                     Nfigs=Nfigs(Nfigs<150);
-                   
+                    
                     for II=1:length(Nfigs)
                         
                         save_str=sprintf('PSD_%s', save_tag{II});
-                    
-                         %uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
+                        
+                        %uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
                         orient landscape
                         print(hprint(II),'-djpeg',save_str);
                         
@@ -1178,16 +1178,16 @@ switch	Batch_mode
                         
                         for JJ=1:(length(Tabs_frame)-1)
                             try
-                            xlim([Tabs_frame(JJ) Tabs_frame(JJ+1)]);
-                            datetick('x',date_tick_chc,'keeplimits');
-                            save_str_zoom=sprintf('PSDzoom_%s_%s', datestr(Tabs_frame(JJ),30), datestr(Tabs_frame(JJ+1),30));
-                            %[~,local_fname,~]=fileparts(fname);
-                            titlestr=sprintf('%s\nStart time: %s, End Time: %s, seconds averaged: %6.2f', ...
-                                local_fname{II},datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
-                            title(titlestr);
-                            print(hprint(II),'-djpeg',save_str_zoom);
+                                xlim([Tabs_frame(JJ) Tabs_frame(JJ+1)]);
+                                datetick('x',date_tick_chc,'keeplimits');
+                                save_str_zoom=sprintf('PSDzoom_%s_%s', datestr(Tabs_frame(JJ),30), datestr(Tabs_frame(JJ+1),30));
+                                %[~,local_fname,~]=fileparts(fname);
+                                titlestr=sprintf('%s\nStart time: %s, End Time: %s, seconds averaged: %6.2f', ...
+                                    local_fname{II},datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
+                                title(titlestr);
+                                print(hprint(II),'-djpeg',save_str_zoom);
                             catch
-                               disp('Failure to plot Tabs_frame: plot_interval is likely bad'); 
+                                disp('Failure to plot Tabs_frame: plot_interval is likely bad');
                             end
                             
                         end
@@ -1215,7 +1215,7 @@ switch	Batch_mode
                 while yes
                     close_all_figures;  %Close all open figures..
                     clear hprint
-                
+                    
                     if Nf<=5
                         suppress_output=0;
                     else
@@ -1236,7 +1236,7 @@ switch	Batch_mode
                             [temp]=create_percentile_distributions(Tabs_all, sumPSD,pms, suppress_output);
                             
                         end
-                       
+                        
                         if Iff==1
                             percents.data=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
                             percents.x=temp.x;
@@ -1251,16 +1251,16 @@ switch	Batch_mode
                         percents.data(Iff,:,:)=temp.data;
                         percents.title{Iff}=pms.title;
                         %if suppress_output==0
-                          %  save(save_tag{Iff}, 'pms','Tabs_all','sumPSD','percents');
-                           % save(save_tag,'Tabs_all','PSD_all','pms','params','Batch_vars_bulkload','sec_avg','percents');
-                    
+                        %  save(save_tag{Iff}, 'pms','Tabs_all','sumPSD','percents');
+                        % save(save_tag,'Tabs_all','PSD_all','pms','params','Batch_vars_bulkload','sec_avg','percents');
+                        
                         %end
                     end  %length pms.fmin
                     
                     
-                     
+                    
                     if suppress_output==1
-                         
+                        
                         %%Plot contour plots if enough frequency bands
                         clear hprint
                         for Ipp=1:length(pms.percentiles)
@@ -1285,7 +1285,7 @@ switch	Batch_mode
                             ylabel('Frequency (Hz)','fontweight','bold','fontsize',14);
                             grid on;
                             
-                           
+                            
                             
                         end %for Ipp
                     end  %suppress_output==1
@@ -1311,12 +1311,12 @@ switch	Batch_mode
                     tmp=3600*tmp(4)+60*tmp(5)+tmp(6);
                     
                     if suppress_output==0
-                    save_tag=sprintf('Percentile_PSD_%s_%s_fmin%iHz_fmax%iHz_interval%isec', ...
+                        save_tag=sprintf('Percentile_PSD_%s_%s_fmin%iHz_fmax%iHz_interval%isec', ...
                             datestr(Tabs_all(1),30),datestr(Tabs_all(end),30),(pms.fmin(Iprint)),(pms.fmax(Iprint)),tmp);
                     else
-                       save_tag=sprintf('Percentile%i_PSD_%s_%s_fmin%iHz_fmax%iHz_interval%isec', ...
+                        save_tag=sprintf('Percentile%i_PSD_%s_%s_fmin%iHz_fmax%iHz_interval%isec', ...
                             100*pms.percentiles(Iprint),datestr(Tabs_all(1),30),datestr(Tabs_all(end),30),min(pms.fmin),max(pms.fmax),tmp);
-                     
+                        
                     end
                     set(hprint(Iprint),'paperpositionmode','auto')
                     print(hprint(Iprint),'-djpeg',save_tag)
@@ -1325,7 +1325,7 @@ switch	Batch_mode
                     
                 end
                 
-            
+                
         end  %switch
     otherwise
         error('Batch mode not recognized');
@@ -1422,7 +1422,7 @@ end
 %
 function pms=get_PSD_percentile_params(fmin,fmax,def_old)
 
-    
+
 if exist('def_old','var')
     def=def_old;
     def{3}=num2str(1000*fmin);
@@ -1458,7 +1458,7 @@ while yes
         yes=0;
     end
     date_tick_chc=get_datetick_style('auto',pms.xlabel_inc,'datenumber');
-
+    
     pms.label_style=date_tick_chc;
     pms.def=answer;
     
@@ -1803,7 +1803,7 @@ end
 %Select second example file if needed
 if strcmp(Batch_vars_bulkload.end_time,'select')
     dialog_title	=	'Select the final Bulk file to load: Note that I am looking in analysis directory, not data directory';
-
+    
     [FileNameEnd,DirectoryNameEnd] = uigetfile([token '*.psd'],dialog_title);
     if isnumeric(FileName)
         disp('No second file selected');
@@ -1837,7 +1837,7 @@ for II=1:length(Other_FileNames)
     [~,~,~,~,params]=read_Java_PSD(Other_FileNames(II).name,0,Inf,1); %Read header only
     tabs_file_start(II)=params.tstart_file;
     tabs_file_end(II)=params.tend_file;
-   
+    
     
 end
 
@@ -1847,7 +1847,7 @@ tabs_file_end=tabs_file_end(Isort);
 Other_FileNames=Other_FileNames(Isort);
 
 for II=1:length(Other_FileNames)
-     if strcmp(Other_FileNames(II).name,FileName)
+    if strcmp(Other_FileNames(II).name,FileName)
         tabs_select_start=tabs_file_start(II);
         tabs_select_end=tabs_file_end(II);
         Iselect_file=II;
@@ -3172,7 +3172,7 @@ Np=str2num(answer{1});
 tmp=ginput(Np);
 msg=[];
 for If=1:Np
-   msg=sprintf('%s Point %i Time: %8.6f Frequency: %6.2f Hz \n',msg,If,tmp(If,1),1000*tmp(If,2)); 
+    msg=sprintf('%s Point %i Time: %8.6f Frequency: %6.2f Hz \n',msg,If,tmp(If,1),1000*tmp(If,2));
 end
 
 msg=sprintf('%s\n Absolute time at min time: %s \n' ,msg, datestr(start_time+datenum(0,0,0,0,0,min(tmp(:,1))),0));
@@ -3535,7 +3535,7 @@ if faill
     locs=load(answer{1});
     Isite=str2double(answer{2});
     VA_cords=str2num(answer{3})/1000;
-
+    
     DASAR_coords=[locs.Site{Isite}.easting locs.Site{Isite}.northing];
     
 end
@@ -3685,7 +3685,7 @@ elseif Ichc==2  %extractKsexact
     figure
     plot(Ksout.freq,10*log10(Ksout.SNR),'-x');ylabel('dB SNR');xlabel('Freq (Hz)')
     grid on;title('estimated SNR of CSDM frequency components: first eignvalue/sum(rest)')
-
+    
     %%%%%%%%%Extract individual frames and ray trace%%%%%%%%%
 elseif Ichc==3 %%Extract frames and ray trace
     disp('Select bounding box for time and range:');
@@ -3698,7 +3698,7 @@ elseif Ichc==3 %%Extract frames and ray trace
     
     frange=sort(ftmp(:,2)*1000);
     fprintf('frange: %6.2f to %6.2f Hz\n',frange);
-     prompt1={'Threshold (dB)', 'optional FFT for longer FFT of small segments'};
+    prompt1={'Threshold (dB)', 'optional FFT for longer FFT of small segments'};
     def1={'-Inf',''};
     answer=inputdlg(prompt1,'CSDM threshold?',1,def1);
     
@@ -3748,6 +3748,11 @@ while yes>1
             Ndim=ndims(Ksout.Kstot);
             
             if Ndim==3
+                beamchc='freqvspwr';
+            elseif Ndim==4
+                beamchc='angvstime';  %migration
+            end
+            if strcmp(beamchc,'freqvspwr')
                 B=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
                 
                 figure(20);
@@ -3765,11 +3770,13 @@ while yes>1
                     close(20);
                 end
                 
+                ray_angles=plot_beamforming_results(true); % peakpicking
+                
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%Individual snapshots and ray tracing%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
-            elseif Ndim==4  %Individual snapshots
+            elseif strcmp(beamchc,'angvstime')  %Individual snapshots
                 Bsum=zeros(length(angles),length(Ksout.t));
                 
                 df=Ksout.freq(2)-Ksout.freq(1);
@@ -3782,11 +3789,11 @@ while yes>1
                     Bsum(:,Isnap)=(sum(10*log10(abs(B))))/length(Ksout.freq);
                 end
                 
-                 %plot vs sin angle
+                %plot vs sin angle
                 
                 figure
                 imagesc((Ksout.t-min(Ksout.t))*1000,sin(angles*pi/180),Bsum)
-                 set(gca,'fontweight','bold','fontsize',14)
+                set(gca,'fontweight','bold','fontsize',14)
                 xlabel('Time (msec)');ylabel('sine of Elevation angle');
                 ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
                 titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
@@ -3808,36 +3815,48 @@ while yes>1
                 print(gcf,'-djpeg',[printstr '.jpg']);
                 saveas(gcf,[printstr '.fig'],'fig')
                 
-               
                 
-                ButtonName = questdlg('Do you Want to trace rays?', 'Ray Tracing!', 'Yes', 'No', 'Yes');
-                switch ButtonName,
-                    case 'No'
-                        return
-                end % switch
-                
-                scenarios=raytrace_MATLAB;
-                [Selection,OK]=listdlg('liststring',scenarios,'SelectionMode','single');
-                if ~OK
+            end
+            
+            
+            %%Permit ray tracing if desired
+            
+            ButtonName = questdlg('Do you Want to trace rays?', 'Ray Tracing!', 'Yes', 'No', 'Yes');
+            switch ButtonName,
+                case 'No'
                     return
-                end
-                
+            end % switch
+            
+            scenarios=raytrace_MATLAB;
+            [Selection,OK]=listdlg('liststring',scenarios,'SelectionMode','single');
+            if ~OK
+                return
+            end
+            
+            %%Interpret results depending on plot
+            if strcmp(beamchc,'angvstime')
                 prompt1={'Number of paths to pick?'};
                 def1={'0'};
-                %Other defaults: MURI_Feb2014_20140218T140039, 
+                %Other defaults: MURI_Feb2014_20140218T140039,
                 answer=inputdlg(prompt1,'Ray picks',1,def1);
                 Nrays=str2num(answer{1});
                 
                 tmp=ginput(Nrays);
-                dt=max(tmp(:,1))-tmp(:,1);  %Rays that arrive first will have positive numbers
-                [dt_meas,Isort]=sort(dt);
-                ang_meas=tmp(Isort,2);
                 
-                [x,dt,dz]=raytrace_MATLAB(ang_meas,dt_meas,scenarios{Selection});
-
-                return
+                
+                dt=max(tmp(:,1))-tmp(:,1);  %Rays that arrive first will have positive numbers
+                [dt_meas,Isort]=sort(dt);  %Arrange by first-arriving rays
+                ang_meas=tmp(Isort,2);
+            elseif strcmp(beamchc,'freqvspwr')
+                
+                ang_meas=ray_angles;
+                dt_meas=zeros(size(ang_meas));  %No relative arrival information
+                
             end
             
+            [x,dt,dz]=raytrace_MATLAB(ang_meas,dt_meas,scenarios{Selection});
+            
+            return
         case 3
             beam_str='MV';
             
@@ -3913,11 +3932,11 @@ while yes>1
             return
     end
     
-    plot_beamforming_results;
+    plot_beamforming_results(true); %ppeak picking
     
     
     yes=menu('Beamform?','No','Conventional','MV','Both','Reflection Coefficient Estimation','MFP');
-
+    
 end  %while yes
 
 % yes=input('Type ''y'' to write a file:','s');
@@ -3938,7 +3957,7 @@ if yes==1
         
     end
     
-   
+    
     %     srcname=sprintf('CSDM_Nfft%i_%s_flipped',Nfft,datestr(tdate_start,30));
     %     write_covmat(Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
     %
@@ -3974,7 +3993,8 @@ end
 % ylabel('dB SNR');
 
 %%Inner function for plot_beamforming_results
-    function plot_beamforming_results
+    function ray_angles=plot_beamforming_results(peak_picking)
+        ray_angles=[];
         %Plot beamforming output
         try
             close(1);
@@ -4008,6 +4028,9 @@ end
         xlabel('Mean dB Beampower ');ylabel('Angle from horizontal (deg)');grid on;
         title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
         
+        if ~peak_picking
+            return
+        end
         %%%%%%%%%%%
         %%%Look for local maxima:
         not_happy=true;
@@ -4063,8 +4086,10 @@ end
             not_happy=strcmp(not_happy,'Yes');
         end %while not_happy
         %%save ray angles, sorted by power
-        Bshift=conventional_beam_timedelay(Ksout.Kstot(Igood_el,Igood_el,:),ray_angles,Ksout.freq,head.geom.rd(Igood_el),cc,Nfft,Fs);
         
+        if length(ray_angles)>1
+            Bshift=conventional_beam_timedelay(Ksout.Kstot(Igood_el,Igood_el,:),ray_angles,Ksout.freq,head.geom.rd(Igood_el),cc,Nfft,Fs);
+        end
         
         
         if yes==4
@@ -4274,7 +4299,7 @@ end
 
 %AARON: make sure channels are columns
 if size(x,2)~=head.Nchan
-%if size(x,2)>1
+    %if size(x,2)>1
     x=x';
 end
 
@@ -5653,7 +5678,7 @@ if ~linked_file
         Event.hash_tag      =   2*datenum(1970,1,1,0,0,0)-now;  %manual hashtags go back into past, automated hashtags into future.
         %If this is a brand new creation with empty link file, zero out
         %hashtags and position
-       
+        
     else
         disp('copying hashtag...');
         %Keep current event hashtag...
@@ -5733,7 +5758,7 @@ end
 %	Delete entry if enabled
 delete_on	=	get(handles.checkbox_notes_delete, 'Value');
 if	delete_on
-
+    
     current_time=handles.notes.Data.Events(i_sel).start_time;
     handles.notes.Data.Events(i_sel)	=	[];
     N	=	length(handles.notes.Data.Events);
@@ -5877,14 +5902,14 @@ guidata(hObject, handles);
 end
 
 function pushbutton_previous_linked_annotation_Callback(hObject, eventdata, handles)
-    shift_linked_annotation(hObject,eventdata,handles,'prevlink');
+shift_linked_annotation(hObject,eventdata,handles,'prevlink');
 end
 % --- Executes on button press in pushbutton_next_linked_annotation.
 function pushbutton_next_linked_annotation_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_next_linked_annotation (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-  shift_linked_annotation(hObject,eventdata,handles,'nextlink');
+shift_linked_annotation(hObject,eventdata,handles,'nextlink');
 
 end
 
@@ -6000,14 +6025,14 @@ switch filetype
         
         %Check that everything makes sense
         if ~strcmp(current_file_name,link_names(Iarray_org,:))
-           fprintf('%s in notes files does not match %s in link file names \n', file_name,link_names(Iarray_org,:));
+            fprintf('%s in notes files does not match %s in link file names \n', file_name,link_names(Iarray_org,:));
             
         end
         
-        new_annotation_file_name=link_names(Iarray,:); 
+        new_annotation_file_name=link_names(Iarray,:);
 end
 end
-        
+
 function handles=shift_linked_annotation(hObject,eventdata,handles,stepp_type)
 
 annotation_exists=true;
@@ -6022,10 +6047,10 @@ switch handles.filetype
         
         i_sel=handles.notes.i_sel;
         if isempty(i_sel) %We have no annotation
-           annotation_exists=false;
-           i_sel=1;
-           handles.notes.i_sel=1;
-           stepp_type=[stepp_type(1:4) 'station'];  %Can't link if no current annotation
+            annotation_exists=false;
+            i_sel=1;
+            handles.notes.i_sel=1;
+            stepp_type=[stepp_type(1:4) 'station'];  %Can't link if no current annotation
         end
         currentEvent=handles.notes.Data.Events(i_sel);
         
@@ -6045,7 +6070,7 @@ switch handles.filetype
         if str2num(currentEvent.Istation)~=Iarray_org
             disp('Warning!! Events.Istation not equal to Iarray_org');
         end
-       
+        
         try
             handles		=	load_and_display_spectrogram(handles);
         catch
@@ -6100,7 +6125,7 @@ switch handles.filetype
         %Create hashtag array
         hashtag=-1*ones(length(handles.notes.Data.Events),1);
         for I=1:length(handles.notes.Data.Events)
-           hashtag(I)=str2num(handles.notes.Data.Events(I).hash_tag);
+            hashtag(I)=str2num(handles.notes.Data.Events(I).hash_tag);
         end
         
         
@@ -6116,7 +6141,7 @@ switch handles.filetype
             handles	=	plot_events(handles);
             handles.notes.i_sel=min(handles.notes.i_show);
             guidata(hObject, handles);
-            return                
+            return
         end
         
         flag_fix_event=false;
@@ -6130,39 +6155,39 @@ switch handles.filetype
         else  %If I'm switching channel
             
             ButtonName = questdlg('What Next?', ...
-                    'Linking choice', ...
-                    'Do Nothing', 'Add link', 'Replace','Do Nothing');
-                axes(handles.axes1)
-                       
-                switch ButtonName
-                    case 'Do Nothing'
-                        %If no linked annotation exists in this station,
-                        %return
-                        if isempty(handles.notes.i_sel)
-                           % i_sel=pushbutton_notes_screen_Callback(handles.pushbutton_notes_screen,eventdata,handles);
-                           % handles.notes.i_sel=i_sel;
-                            guidata(hObject, handles);
-                            return
-                        end
-                        
-                        %Otherwise, continue as if next_link button has
-                        %been pressed
-                    case 'Add link'
-                         handles=pushbutton_notes_new_Callback(handles.pushbutton_notes_new, eventdata, handles);
-                        
-                        % handles.notes.i_sel should be updated
-                        % automatically
-                    case 'Replace'
-                        uiwait(msgbox('After hitting OK, please click on left side of annotation you wish to link'));
-                        tmp=ginput(1);
-                        [~,ichc]=min(abs(tmp(1)-handles.notes.x_show));
-                        handles.notes.i_sel=handles.notes.i_show(ichc);
-                        handles	=	plot_events(handles);
-         
-                end
-                
-                flag_fix_event=strcmp(ButtonName,'Add link')|strcmp(ButtonName,'Replace');
-           
+                'Linking choice', ...
+                'Do Nothing', 'Add link', 'Replace','Do Nothing');
+            axes(handles.axes1)
+            
+            switch ButtonName
+                case 'Do Nothing'
+                    %If no linked annotation exists in this station,
+                    %return
+                    if isempty(handles.notes.i_sel)
+                        % i_sel=pushbutton_notes_screen_Callback(handles.pushbutton_notes_screen,eventdata,handles);
+                        % handles.notes.i_sel=i_sel;
+                        guidata(hObject, handles);
+                        return
+                    end
+                    
+                    %Otherwise, continue as if next_link button has
+                    %been pressed
+                case 'Add link'
+                    handles=pushbutton_notes_new_Callback(handles.pushbutton_notes_new, eventdata, handles);
+                    
+                    % handles.notes.i_sel should be updated
+                    % automatically
+                case 'Replace'
+                    uiwait(msgbox('After hitting OK, please click on left side of annotation you wish to link'));
+                    tmp=ginput(1);
+                    [~,ichc]=min(abs(tmp(1)-handles.notes.x_show));
+                    handles.notes.i_sel=handles.notes.i_show(ichc);
+                    handles	=	plot_events(handles);
+                    
+            end
+            
+            flag_fix_event=strcmp(ButtonName,'Add link')|strcmp(ButtonName,'Replace');
+            
             
         end
         
@@ -6184,13 +6209,13 @@ switch handles.filetype
         
         flag_positions_changed=compare_localizations(currentEvent,newEvent);
         
-       
+        
         %If bearings have changed, copy localization object to newEvent and
         %update related fields
         handles.notes.saved=true;
-       
+        
         if flag_positions_changed
-             
+            
             %Copy over link_names and link_hashtags
             newEvent.link_names=currentEvent.link_names;
             newEvent.link_hashtags=currentEvent.link_hashtags;
@@ -6205,8 +6230,8 @@ switch handles.filetype
             temp(Iarray,:)=temp(end,:);
             newEvent.link_hashtags=temp(1:(end-1),:);
             %Nchar=min([length(newEvent.hash_tag) size(newEvent.link_hashtags,2)]);
-           % newEvent.link_hashtags(Iarray,:)=blanks(size(newEvent.link_hashtags,2));
-           % newEvent.link_hashtags(Iarray,1:Nchar)=newEvent.hash_tag(1:Nchar);
+            % newEvent.link_hashtags(Iarray,:)=blanks(size(newEvent.link_hashtags,2));
+            % newEvent.link_hashtags(Iarray,1:Nchar)=newEvent.hash_tag(1:Nchar);
             
             %copy localization fields, this ensures that new bearings
             %  are propagated throught linked files
@@ -6216,21 +6241,21 @@ switch handles.filetype
                 kappa=newEvent.localization.kappa(Iarray);
                 
                 newEvent.localization=currentEvent.localization;
-            
+                
                 newEvent.localization.bearings_all(Iarray)=bearing;
                 newEvent.localization.kappa(Iarray)=kappa;
-                 
+                
             else
                 newEvent.localization=currentEvent.localization;
-                 
-            
-            end
-             %Update range, bearing, and position, and error ellipse fields
-               
-            newEvent=update_GSI_localization(newEvent);
                 
+                
+            end
+            %Update range, bearing, and position, and error ellipse fields
+            
+            newEvent=update_GSI_localization(newEvent);
+            
             %,Iarray_org, str2num(currentEvent.bearing),currentEvent.localization.kappa(Iarray_org));
-          
+            
             handles.notes.Data.Events(handles.notes.i_sel)=newEvent;
             handles.notes.saved=false;  %position now changed
             handles=plot_events(handles);
@@ -6243,56 +6268,56 @@ switch handles.filetype
         return
 end
 
-end 
+end
 
 function flag_positions_changed=compare_localizations(currentEvent,newEvent)
-        %check if bearings consistent
-        bearings1=currentEvent.localization.bearings_all;
-        bearings2=newEvent.localization.bearings_all;
-        
-        Inan1=find(isnan(bearings1));
-        Inan2=find(isnan(bearings2));
-        if length(Inan1)~=length(Inan2)
-            test_change1=true;
-            test_change2=true;
-        else
-            test_change1=~all(Inan1==Inan2);
-            Inan1=find(~isnan(bearings1));
-            Inan2=find(~isnan(bearings2));
-            test_change2=~all(bearings1(Inan1)==bearings2(Inan2));
-       
-        end
-        
-        flag_positions_changed=test_change2||test_change1;
-        
-        %%Next, check the error ellipse of the new Event
-        DASAR_coords=[newEvent.localization.station_position.easting newEvent.localization.station_position.northing];
-        Igood=find(~isnan(bearings2));
-        [VM,Qhat,~,outcome] = vmmle_r(bearings2(Igood),DASAR_coords(Igood,:),'h');
-        mean_coords=mean(DASAR_coords(Igood,:));
-        CRITVAL=4.60517; %chi2inv(0.90,2);
-        [~,A,B,ANG,Baxis] = ellipsparms(Qhat,CRITVAL,mean_coords,VM);
+%check if bearings consistent
+bearings1=currentEvent.localization.bearings_all;
+bearings2=newEvent.localization.bearings_all;
 
-        %If localization info different than what is stored, flag for a
-        %change
-        
-        Astored=newEvent.localization.major;
-        Bstored=newEvent.localization.minor;
-        Estored=newEvent.localization.ellipse_ang;
-        
-        if ~strcmp(outcome,'successful')||isnan(A)||isnan(B)
-            flag_positions_changed=true;
-            return
-        end
-        
-        if abs((A-Astored)./Astored)>0.1||abs((B-Bstored)./Bstored)>0.1
-            flag_positions_changed=true;
-            return
-        end
-       % if isnan(A)&~isnan(
-        
+Inan1=find(isnan(bearings1));
+Inan2=find(isnan(bearings2));
+if length(Inan1)~=length(Inan2)
+    test_change1=true;
+    test_change2=true;
+else
+    test_change1=~all(Inan1==Inan2);
+    Inan1=find(~isnan(bearings1));
+    Inan2=find(~isnan(bearings2));
+    test_change2=~all(bearings1(Inan1)==bearings2(Inan2));
+    
 end
-        
+
+flag_positions_changed=test_change2||test_change1;
+
+%%Next, check the error ellipse of the new Event
+DASAR_coords=[newEvent.localization.station_position.easting newEvent.localization.station_position.northing];
+Igood=find(~isnan(bearings2));
+[VM,Qhat,~,outcome] = vmmle_r(bearings2(Igood),DASAR_coords(Igood,:),'h');
+mean_coords=mean(DASAR_coords(Igood,:));
+CRITVAL=4.60517; %chi2inv(0.90,2);
+[~,A,B,ANG,Baxis] = ellipsparms(Qhat,CRITVAL,mean_coords,VM);
+
+%If localization info different than what is stored, flag for a
+%change
+
+Astored=newEvent.localization.major;
+Bstored=newEvent.localization.minor;
+Estored=newEvent.localization.ellipse_ang;
+
+if ~strcmp(outcome,'successful')||isnan(A)||isnan(B)
+    flag_positions_changed=true;
+    return
+end
+
+if abs((A-Astored)./Astored)>0.1||abs((B-Bstored)./Bstored)>0.1
+    flag_positions_changed=true;
+    return
+end
+% if isnan(A)&~isnan(
+
+end
+
 %	Supporting functions, i.e. not auto-generated callbacks
 function	status	=	dependency_check()
 
@@ -6764,7 +6789,7 @@ end
 prep_inputsdlg;
 [answer,Cancelled] = inputsdlg(Prompt,dlgTitle,Formats,DefAns,Options);
 %
- 
+
 if	isempty(answer)||Cancelled
     NewEvent	=	[];
     return;
@@ -7313,7 +7338,7 @@ for	ii	=	1:length(names)
     if iscell(Event.(names{ii}))
         temp			=	cell2mat(Event.(names{ii})');
         Message{2,ii}	=	[char(9) char(9) temp(:).'];
-   
+        
         continue
     end
     
@@ -7345,7 +7370,7 @@ htxt	=	uicontrol(hdlg(1), 'Style', 'edit',...
 
 % If localization info exists, plot it!
 if isfield(Event,'localization')&&~isempty(getfield(Event,'localization'))
-     
+    
     if nargin < 3 || isempty(hdlg) || ~all(ishandle(hdlg))||length(hdlg)<2
         hdlg(2)	=	dialog('Windowstyle', 'normal');
         pos		=	get(hdlg(2), 'Position');
@@ -7357,7 +7382,7 @@ if isfield(Event,'localization')&&~isempty(getfield(Event,'localization'))
         figure(hdlg(2));
         clf(hdlg(2));
     end
-   
+    
     %Identify which station we are...
     
     Istation=str2num(Event.Istation);
@@ -7385,16 +7410,16 @@ if isfield(Event,'localization')&&~isempty(getfield(Event,'localization'))
     %     [~,A,B,ANG,Baxis] = ellipsparms(Qhat,CRITVAL,mean_coords,VM);
     %
     %     [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,35,Istation);
-%     
+    %
     %%used to demonstrate original stored data.
-     %disp('Original stored parameters:');
-     %org
-%     
-%     figure
-%     [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,org.VM,org.A,org.B,org.ANG,35,Istation);
-%     title('original stored parameters');
-   %pause
-   %close
+    %disp('Original stored parameters:');
+    %org
+    %
+    %     figure
+    %     [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,org.VM,org.A,org.B,org.ANG,35,Istation);
+    %     title('original stored parameters');
+    %pause
+    %close
 end
 
 end %show_event_info
@@ -7675,7 +7700,7 @@ cla;
 tlen	=	handles.tlen;
 %if tlen<1e-2 %somehow window length is way too short
 %    tlen=1;
- %   set(handles.edit_winlen,'String',num2str(tlen));
+%   set(handles.edit_winlen,'String',num2str(tlen));
 %end
 if isempty(tlen)
     tlen    =   str2double(get(handles.edit_winlen,'String'));
@@ -7683,10 +7708,10 @@ if isempty(tlen)
     handles.tlen=tlen;
 end
 mydir	=	pwd;
-Ichan	=	eval(get(handles.edit_chan,'String'));  
+Ichan	=	eval(get(handles.edit_chan,'String'));
 
 try
-   % [x,t,Fs,tmin,tmax,head]	=	...
+    % [x,t,Fs,tmin,tmax,head]	=	...
     %load_data(filetype,tdate_start,tlen,Ichan,handles)
     
     if ~exist(fullfile(handles.mydir,handles.myfile),'file')
@@ -7771,7 +7796,7 @@ handles.old_display_view=[];
 if isfield(handles,'display_view')
     handles.old_display_view=handles.display_view;
 end
-    
+
 handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
 
 if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New Fig')
@@ -7860,22 +7885,22 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
     end
 elseif strcmp(handles.display_view,'Time Series') %%Time series
     
-       
+    
     %%Check that we are looking at acoustic data and are in spectrogram
     %%mode
     if isempty(strfind(handles.myfile,'Press'))
-       % msgbox('Enter min and max frequency, or hit return to skip filtering:','modal');
-       if strcmp(handles.old_display_view,'Spectrogram')
-           ButtonName = questdlg('Filter? (If yes, click on two frequency values in spectrogram)');
-       else
-           ButtonName='No';
-       end
-       
-       %if ~isempty(tmp)&&size(tmp,1)==2
+        % msgbox('Enter min and max frequency, or hit return to skip filtering:','modal');
+        if strcmp(handles.old_display_view,'Spectrogram')
+            ButtonName = questdlg('Filter? (If yes, click on two frequency values in spectrogram)');
+        else
+            ButtonName='No';
+        end
+        
+        %if ~isempty(tmp)&&size(tmp,1)==2
         %%Check that are on current spectrogram view
         if strcmp(ButtonName,'Yes')
             tmp=ginput(2);
-        
+            
             freq=sort(tmp(:,2))*1000;
             minfreq=freq(1);maxfreq=freq(2);
             %y=quick_filter(x(:,1),Fs,freq(1),freq(2))
@@ -8015,7 +8040,7 @@ for II=1:length(handles.buttongroup.multichan)
     set(handles.buttongroup.multichan(II),'vis',status);
     set(handles.buttongroup.multichan(II),'enable',status);
 end
- 
+
 
 %if strcmpi(handles.filetype,'sio')
 %    set(handles.pushbutton_CSDM,'vis','on');
@@ -8330,7 +8355,7 @@ switch filetype
             %uiwait(msgbox('No start time requested'));
             head.multichannel=false;
             head.linked=false;
-
+            
             return
         end
         %Load accelerometer data as desired
@@ -8344,11 +8369,11 @@ switch filetype
                 myfile_temp=myfile;
                 myfile_temp(Ispace)=mystr(Iacc);
                 try
-                [x0,t]=load_mt([mydir filesep myfile_temp],nsec,tlen);
-                if isempty(x)
-                    x=zeros(length(x0),3);
-                end
-                x(:,Iacc)=x0;
+                    [x0,t]=load_mt([mydir filesep myfile_temp],nsec,tlen);
+                    if isempty(x)
+                        x=zeros(length(x0),3);
+                    end
+                    x(:,Iacc)=x0;
                 catch
                     fprintf('Channel %s of %s not available...\n',mystr(Iacc),myfile_temp);
                     
@@ -8465,7 +8490,7 @@ switch filetype
             return
         end
         
-            
+        
         %%%If beamforming is desired for a look at a given direction...
         beamform_data=0;
         get_geometry=0;
@@ -8503,9 +8528,9 @@ switch filetype
             return
         end
         
-       
-       
-       if get_geometry==1
+        
+        
+        if get_geometry==1
             if isempty(space)
                 prompt = {'Enter spacing[m] between elements for SIO file:'};
                 dlg_title = 'SIO file spacing';
@@ -8541,7 +8566,7 @@ switch filetype
                 keyboard
             end
         end
-         
+        
         %Set time
         t=(1:size(x,1))/Fs;
         
@@ -8621,7 +8646,7 @@ switch filetype
         t=(1:length(x))/Fs;
         
         head.multichannel=true;
-
+        
         tmin=head.tfs;
         tmax=head.tfe;
         head.Nchan=size(x,2);
@@ -8662,13 +8687,13 @@ switch filetype
         
         [head.cable_factor,sens]=get_ADAT24_cable_factor;
         
-         
+        
         
         try
             [SUDAR_true,tmin,tmax,Fs]=get_SUDAR_time(mydir,myfile); %Check whether a sUDAR file exists
             if SUDAR_true
-              sens=(10^(186/20))/(2^15);
-              
+                sens=(10^(186/20))/(2^15);
+                
             end
             if ~SUDAR_true
                 tmin	=	convert_date(myfile,'_');
@@ -8699,11 +8724,11 @@ switch filetype
         
         try
             [x,Fs]		=	wavread(fullfile(mydir,myfile),[N1 N2],'native');
-              
+            
             
         catch
             x=[];
-           
+            
             t=[];
             head.Nchan=0;
             return
@@ -8717,7 +8742,7 @@ switch filetype
         
         x			=	double(x)*sens;
         head.Nchan	=	size(x,2);
-
+        
 end
 
 if isempty(tmin) || isempty(tmax)
@@ -8748,51 +8773,51 @@ end
 end  %function load_data
 
 function [cable_factor,sens]=get_ADAT24_cable_factor
-        %%Can we calibrate the data?
-        %%  load_wav often normalizes the data so the peak value is 1.
-        %sens0=157; %dB re 1 unit of wav entry
-        %sens=input('Enter sensitivity of entire system (flat-spectrum calibration) [180 dB re 1 unit]:');
-        %if isempty(sens)
-        %sens=sens0;
-        %end
-        %sens=10^(sens/20);
-        
-        %%Calibration for ADAT 24 attached to Sonotech hydrophone array
-        %//ADAT HD24 has 6.9 V Rms max input for 24 bit data
-        %//Factor of 2 from differential inputs...
-        %//Hydrophone gain set to Sonotech array -157 dB
-        %// Don't have cable attenuation  here...
-        sens=(6.9*sqrt(2)/16777215)*0.5*10^(157.0 / 20.0);
-        %freq_cal[i]=(1.0+2*Math.PI*f*(110e-9)*140.0);
-        
-        % Nov 15, 2011
-        %         Hi Aaron,
-        %
-        % I thumbed through my notes for a few minutes to refresh my memory on this project.  The attenuation problem can be hugely simplified by eliminating many of the parameters right away.  The preamp output impedance is ordinarily very small, and the cable insulation resistance and receiver input impedance will be very large.  All of the above parameters can generally be ignored.
-        %
-        % This really only leaves the cable resistance and capacitance and so becomes a fairly simple voltage divider problem.  From my notes, I measured the cable (the entire 800+ length) resistance to be ~70 ohms and the capacitance to be ~110 nF.  The model would look like a series resistance with a shunt capacitance, so:
-        %
-        % R = 140 ohms (round trip)
-        % X = 1/(2*pi*f*C)
-        %
-        % So, the 6 dB down frequency will be when R= X, so:
-        % f = 1/(2*pi*C*R) = ~10 kHz.
-        %
-        % And the attenuation at any frequency:
-        % X/(R + X)  or 1/(1+ 2*pi*f*C*R)
-        %
-        % The cable attenuation seen by the vector sensor will essentially look like a single pole low pass filter with Fc = 10 kHz:
-        % 5   kHz: -3 dB
-        % 10 kHz: -6 dB
-        % 20 kHz: -9 dB
-        %
-        % This is consistent with my notes where I measured the cable attenuation to roll off by 3 dB/octave starting at 4-5 kHz.  The above is for the case of the vector sensor driving the entire length of the array.  For the other hydrophones driving shorter lengths of cable, the calculations will be the same but you will need to use different R and C values in the equation 20 log (1/(1+ 2*pi*f*C*R)) to compute the new attenuation values vs frequency.
-        %
-        % Jeff
-        
-        cable_factor=2*pi*(110e-9)*140.0;  %Unit resistance 140 ohm, capacitance 110 nF
-        end
-              
+%%Can we calibrate the data?
+%%  load_wav often normalizes the data so the peak value is 1.
+%sens0=157; %dB re 1 unit of wav entry
+%sens=input('Enter sensitivity of entire system (flat-spectrum calibration) [180 dB re 1 unit]:');
+%if isempty(sens)
+%sens=sens0;
+%end
+%sens=10^(sens/20);
+
+%%Calibration for ADAT 24 attached to Sonotech hydrophone array
+%//ADAT HD24 has 6.9 V Rms max input for 24 bit data
+%//Factor of 2 from differential inputs...
+%//Hydrophone gain set to Sonotech array -157 dB
+%// Don't have cable attenuation  here...
+sens=(6.9*sqrt(2)/16777215)*0.5*10^(157.0 / 20.0);
+%freq_cal[i]=(1.0+2*Math.PI*f*(110e-9)*140.0);
+
+% Nov 15, 2011
+%         Hi Aaron,
+%
+% I thumbed through my notes for a few minutes to refresh my memory on this project.  The attenuation problem can be hugely simplified by eliminating many of the parameters right away.  The preamp output impedance is ordinarily very small, and the cable insulation resistance and receiver input impedance will be very large.  All of the above parameters can generally be ignored.
+%
+% This really only leaves the cable resistance and capacitance and so becomes a fairly simple voltage divider problem.  From my notes, I measured the cable (the entire 800+ length) resistance to be ~70 ohms and the capacitance to be ~110 nF.  The model would look like a series resistance with a shunt capacitance, so:
+%
+% R = 140 ohms (round trip)
+% X = 1/(2*pi*f*C)
+%
+% So, the 6 dB down frequency will be when R= X, so:
+% f = 1/(2*pi*C*R) = ~10 kHz.
+%
+% And the attenuation at any frequency:
+% X/(R + X)  or 1/(1+ 2*pi*f*C*R)
+%
+% The cable attenuation seen by the vector sensor will essentially look like a single pole low pass filter with Fc = 10 kHz:
+% 5   kHz: -3 dB
+% 10 kHz: -6 dB
+% 20 kHz: -9 dB
+%
+% This is consistent with my notes where I measured the cable attenuation to roll off by 3 dB/octave starting at 4-5 kHz.  The above is for the case of the vector sensor driving the entire length of the array.  For the other hydrophones driving shorter lengths of cable, the calculations will be the same but you will need to use different R and C values in the equation 20 log (1/(1+ 2*pi*f*C*R)) to compute the new attenuation values vs frequency.
+%
+% Jeff
+
+cable_factor=2*pi*(110e-9)*140.0;  %Unit resistance 140 ohm, capacitance 110 nF
+end
+
 function [y,t,head]=readGSIfile(rawfile,cbegin,tlen,nchan,formatt,calibrate)
 %function [y,t,head]=readGSIfile(rawfile,cbegin,tlen,nchan,formatt,calibrate)
 % Input Parameters:
@@ -10103,7 +10128,7 @@ end %audio_timer
 
 % --------------------------------------------------------------------
 
-%% 
+%%
 %[X.var,X.start,X.dx,X.label_inc,X.label,X.name,X.style]=get_histogram_vars(ButtonName,handles.notes.Data.Events);
 
 function X=get_histogram_vars(ButtonName,Events,Description)
@@ -10262,7 +10287,7 @@ function image_processor_Callback(hObject, eventdata, handles)
 
 param.morph=[];
 cbegin=3600*24*(handles.tdate_start-datenum(1970,1,1,0,0,0));
- 
+
 chc_list=    load_image_parameters(1);
 
 param.Fs=handles.Fs;
@@ -10284,7 +10309,7 @@ yess=1;
 while yess==1
     Ichc=menu('Select a group of image processing parameters to define ...', chc_list);
     param=load_image_parameters(param,chc_list{Ichc},get(hObject, 'Label'));
-
+    
     [features,final_image]=extract_image_features(handles.x, cbegin,param,2);
     yess=menu('Redo?','Yes','No');
     
@@ -10324,7 +10349,7 @@ if strcmp(chc_list{2},batch_chc)||do_all
     
     out_param.morph=merge_image_params(out_param.morph,Batch_vars,Batch_desc,Batch_type,load_defaults);
     if isempty(out_param.morph.equalization)
-       out_param.morph= rmfield(out_param.morph,'equalization');
+        out_param.morph= rmfield(out_param.morph,'equalization');
     end
     Batch_type=[];Batch_vars=[];Batch_desc=[];
 end
@@ -10544,7 +10569,7 @@ for I=1:length(files)
     Nshots=(handles.tdate_max-handles.tdate_min)/tlenn;
     handles.tdate_start=handles.tdate_min;
     [handles,~]		=	set_slider_controls(handles, handles.filetype);
-        
+    
     while ((handles.tdate_max-handles.tdate_start)>tlenn)
         set(handles.edit_datestr,'String',datestr(handles.tdate_start));
         
@@ -10593,14 +10618,14 @@ if isempty(list_names)
 end
 
 for I=1:length(list_names)
-   success_flag=convert_automated_airgun_into_annotations(list_names{I},filter_params); 
-   if success_flag==0
-      uiwait(msgbox(sprintf('%s failed to process',list_names{I}),'Failed!','modal'));
-      return
-   else
-       disp(sprintf('%s processed',list_names{I}));
-       
-   end
+    success_flag=convert_automated_airgun_into_annotations(list_names{I},filter_params);
+    if success_flag==0
+        uiwait(msgbox(sprintf('%s failed to process',list_names{I}),'Failed!','modal'));
+        return
+    else
+        disp(sprintf('%s processed',list_names{I}));
+        
+    end
     
 end
 
@@ -10623,15 +10648,15 @@ if isempty(list_names)
 end
 
 for I=1:length(list_names)
-   sprintf('%s starting ...',list_names{I});
-   success_flag=convert_automated_bowhead_into_annotations(list_names{I},filter_params,station_position); 
-   if success_flag==0
-      uiwait(msgbox(sprintf('%s failed to process',list_names{I}),'Failed!','modal'));
-      
-   else
-       disp(sprintf('%s procesed',list_names{I}));
-       
-   end
+    sprintf('%s starting ...',list_names{I});
+    success_flag=convert_automated_bowhead_into_annotations(list_names{I},filter_params,station_position);
+    if success_flag==0
+        uiwait(msgbox(sprintf('%s failed to process',list_names{I}),'Failed!','modal'));
+        
+    else
+        disp(sprintf('%s procesed',list_names{I}));
+        
+    end
     
 end
 
@@ -10639,6 +10664,8 @@ uiwait(msgbox(sprintf('Conversion finished')));
 
 
 end
+
+
 
 %% Time warping
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
