@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="191950793" file="/Users/thode/repos/code-afsv/Ulysses_Mac.prj" location="/Users/thode/repos/code-afsv" name="Ulysses_Mac" preferred-package-location="/Users/thode/repos/code-afsv/Ulysses_Mac/for_redistribution" preferred-package-type="package.type.app" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
+  <configuration build-checksum="4293131839" file="/Users/thode/repos/code-afsv/Ulysses_Mac.prj" location="/Users/thode/repos/code-afsv" name="Ulysses_Mac" preferred-package-location="/Users/thode/repos/code-afsv/Ulysses_Mac/for_redistribution" preferred-package-type="package.type.app" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
     <param.appname>Ulysses_Mac</param.appname>
     <param.icon>${PROJECT_ROOT}/Ulysses_Mac_resources/icon.icns</param.icon>
     <param.icons>
@@ -40,20 +40,6 @@
     <param.package.mcr.name>MyAppInstaller_mcr</param.package.mcr.name>
     <param.no.mcr.name>MyAppInstaller_app</param.no.mcr.name>
     <param.windows.command.prompt>true</param.windows.command.prompt>
-    <param.user.only.registration>false</param.user.only.registration>
-    <param.mads.no.java>false</param.mads.no.java>
-    <param.mads.exclusive.mcr>false</param.mads.exclusive.mcr>
-    <param.net.framework>option.net.framework.default</param.net.framework>
-    <param.assembly.type>false</param.assembly.type>
-    <param.encryption.key.file />
-    <param.net.enable.remoting>false</param.net.enable.remoting>
-    <param.net.tsa.enable>false</param.net.tsa.enable>
-    <param.net.tsa.assembly />
-    <param.net.tsa.interface />
-    <param.net.tsa.namespace>Ulysses_Mac</param.net.tsa.namespace>
-    <param.net.tsa.superclass />
-    <param.net.tsa.metadata />
-    <param.net.tsa.metadata.assembly>/Users/jit/Work/matlab</param.net.tsa.metadata.assembly>
     <param.create.log>true</param.create.log>
     <param.log.file>test</param.log.file>
     <unset>
@@ -213,7 +199,7 @@
       <vista>false</vista>
       <linux>false</linux>
       <solaris>false</solaris>
-      <osver>10.10</osver>
+      <osver>10.10.1</osver>
       <os32>false</os32>
       <os64>true</os64>
       <arch>maci64</arch>
