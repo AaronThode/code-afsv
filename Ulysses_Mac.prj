@@ -40,6 +40,20 @@
     <param.package.mcr.name>MyAppInstaller_mcr</param.package.mcr.name>
     <param.no.mcr.name>MyAppInstaller_app</param.no.mcr.name>
     <param.windows.command.prompt>true</param.windows.command.prompt>
+    <param.user.only.registration>false</param.user.only.registration>
+    <param.mads.no.java>false</param.mads.no.java>
+    <param.mads.exclusive.mcr>false</param.mads.exclusive.mcr>
+    <param.net.framework>option.net.framework.default</param.net.framework>
+    <param.assembly.type>false</param.assembly.type>
+    <param.encryption.key.file />
+    <param.net.enable.remoting>false</param.net.enable.remoting>
+    <param.net.tsa.enable>false</param.net.tsa.enable>
+    <param.net.tsa.assembly />
+    <param.net.tsa.interface />
+    <param.net.tsa.namespace>Ulysses_Mac</param.net.tsa.namespace>
+    <param.net.tsa.superclass />
+    <param.net.tsa.metadata />
+    <param.net.tsa.metadata.assembly>/Users/jit/Work/matlab</param.net.tsa.metadata.assembly>
     <param.create.log>true</param.create.log>
     <param.log.file>test</param.log.file>
     <unset>
@@ -73,7 +87,6 @@
       <file>${PROJECT_ROOT}/source/AllFile_specgram_viewer.m</file>
       <file>${PROJECT_ROOT}/source/JAVA_instructions.doc</file>
       <file>${PROJECT_ROOT}/source/WORKLOG_vesselnoise.txt</file>
-      <file>${PROJECT_ROOT}/source/deps/104703.JPG</file>
       <file>${PROJECT_ROOT}/source/deps/Bulk_Processing_ShippingIndex.m</file>
       <file>${PROJECT_ROOT}/source/deps/Energy_detector_review.m</file>
       <file>${PROJECT_ROOT}/source/deps/SSP_MURI_Feb2014_smooth.mat</file>
