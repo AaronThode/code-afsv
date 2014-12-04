@@ -95,7 +95,7 @@ for Itilt=1:length(tilt)
     
     dt=zeros(Nrays,Nsamps);
     dz=dt;
-    cchc='krbgc';
+    cchc='krbgckrbgc';
     for I=1:Nrays
         N=size(x{I},1);
         x{I}=[x{I}; ones(Nsamps-N,1)*x{I}(end,:)];
@@ -164,13 +164,13 @@ for Itilt=1:length(tilt)
     %ylim([0 1000]);
     
     fname=sprintf('RayTimetrace_%s_tilt%3.2f.jpg',scenario_chc,tilt(Itilt));
-    print('-djpeg',fname);
+    print(gcf,'-djpeg',fname);
     
     %save(sprintf('Ray_trace_demo_tilt_%3.2f.mat',tilt),'x','dt','dz');
     [best_err(Itilt),best_range(Itilt),best_depth(Itilt)]=error_plot(x,dt,dz,dt_meas,sig_dt,sig_z,fname,Itilt+20,1000);
     orient landscape
     [~,fname,~]=fileparts(fname);
-    print('-djpeg',sprintf('CrudeError_%s.jpg',fname));
+    print(gcf,'-djpeg',sprintf('CrudeError_%s.jpg',fname));
     saveas(gcf,sprintf('CrudeError_%s.fig',fname),'fig')
 end %Itilt
 
@@ -193,7 +193,7 @@ set(gca,'fontweight','bold','fontsize',16);grid on;
 xlabel('Tilt (deg)');ylabel('Depth (m)')
 
 orient landscape
-print('-djpeg',sprintf('ErrVsTilt_RayTimeTrace_%s.jpg',scenario_chc))
+print(gcf,'-djpeg',sprintf('ErrVsTilt_RayTimeTrace_%s.jpg',scenario_chc))
 end
 
 function [best_err,rbest,zbest]=error_plot(x,dt,dz,dt_meas,sig_dt,sig_z,fname,Ifig,D)
@@ -222,7 +222,7 @@ fprintf('modeled time delays for timing error: %s\n',mat2str(dt(:,Ir)*1000));
 fprintf('modeled time delays for total error: %s\n',mat2str(dt(:,Ir)*1000));
 
 
-cchc='krbgc';
+cchc='krbgckrbgc';
 figure(Ifig);
 subplot(3,1,1);
 for I=1:Nrays

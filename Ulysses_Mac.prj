@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="4293131839" file="/Users/thode/repos/code-afsv/Ulysses_Mac.prj" location="/Users/thode/repos/code-afsv" name="Ulysses_Mac" preferred-package-location="/Users/thode/repos/code-afsv/Ulysses_Mac/for_redistribution" preferred-package-type="package.type.app" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
+  <configuration build-checksum="2351136443" file="/Users/thode/repos/code-afsv/Ulysses_Mac.prj" location="/Users/thode/repos/code-afsv" name="Ulysses_Mac" preferred-package-location="/Users/thode/repos/code-afsv/Ulysses_Mac/for_redistribution" preferred-package-type="package.type.app" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
     <param.appname>Ulysses_Mac</param.appname>
     <param.icon>${PROJECT_ROOT}/Ulysses_Mac_resources/icon.icns</param.icon>
     <param.icons>
@@ -8,12 +8,12 @@
       <file>${PROJECT_ROOT}/Ulysses_Mac_resources/icon_24.png</file>
       <file>${PROJECT_ROOT}/Ulysses_Mac_resources/icon_16.png</file>
     </param.icons>
-    <param.version>1.0</param.version>
+    <param.version>1.9</param.version>
     <param.authnamewatermark>Aaron Thode</param.authnamewatermark>
     <param.email>athode@ucsd.edu</param.email>
     <param.company>MPL-SIO-UCSD</param.company>
     <param.summary />
-    <param.description />
+    <param.description>Acoustic data analysis program</param.description>
     <param.screenshot>${PROJECT_ROOT}/source/104703.JPG</param.screenshot>
     <param.guid />
     <param.installpath.string>Ulysses</param.installpath.string>
@@ -43,9 +43,7 @@
     <param.create.log>true</param.create.log>
     <param.log.file>test</param.log.file>
     <unset>
-      <param.version />
       <param.summary />
-      <param.description />
       <param.guid />
       <param.install.notes />
       <param.intermediate />

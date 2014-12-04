@@ -307,6 +307,7 @@ handles.filetype	=	File_types{file_ind};
 handles.filedesc	=	File_descs{file_ind};
 
 %yes_wav=get(handles.togglebutton_getwav,'value');
+
 [handles,~]		=	set_slider_controls(handles, handles.filetype);
 set(handles.text_filename,'String',fullfile(handles.mydir, handles.myfile));
 set(handles.text_filetype,'String',handles.filetype);
@@ -3150,7 +3151,7 @@ save_path	=	fullfile(handles.outputdir, save_name);
 disp(['Printing %s ...' save_name]);
 
 orient landscape
-print(figchc,'-djpeg',save_path);
+print(gcf,'-djpeg',sprintf('%s.jpg',save_path));
 %print(figchc,'-dtiff',save_path);
 
 %print('-depsc',save_path);
@@ -3723,7 +3724,7 @@ while yes>1
         
         prompt1={'Vector of angles (deg) [(-20:0.2:20)]','Vector of sin angles (deg) [(-0.2:0.01:0.2)]','hydrophone indicies [all]','sound speed (m/sec)', ...
             };
-        def1={'-10:0.2:10', '',sprintf('[1:%i]',length(chann)),'1480'};
+        def1={'-10:0.2:10', '-0.25:0.01:0.25',sprintf('[1:%i]',length(chann)),'1480'};
         
         answer=inputdlg(prompt1,'Beamforming parameters',1,def1);
         try
@@ -3731,7 +3732,7 @@ while yes>1
                 angles=eval(answer{1});
             else
                 angles=180*asin(eval(answer{2}))/pi;
-                
+                fprintf('Angular range is %6.2f to %6.2f degrees\n',min(angles),max(angles));
             end
             Igood_el=eval(answer{3});
             cc=eval(answer{4});
@@ -8680,10 +8681,11 @@ switch filetype
             -1.229223450332553e+00];
         
     case 'WAV' %% Includes SUDAR data
-        Nsamples	=	wavread(fullfile(mydir,myfile),'size');
-        [~,Fs]		=	wavread(fullfile(mydir,myfile),1,'native');
-        Nsamples	=	Nsamples(1);
-        handles.Fs	=	Fs;
+        info	=	audioinfo(fullfile(mydir,myfile));
+        %[~,Fs]		=	audioread(fullfile(mydir,myfile),1,'native');
+        Nsamples	=	info.TotalSamples;
+        handles.Fs	=	info.SampleRate;
+        Fs=info.SampleRate;
         
         [head.cable_factor,sens]=get_ADAT24_cable_factor;
         
@@ -8723,7 +8725,7 @@ switch filetype
         N2			=	N1 + round(tlen*handles.Fs);
         
         try
-            [x,Fs]		=	wavread(fullfile(mydir,myfile),[N1 N2],'native');
+            [x,Fs]		=	audioread(fullfile(mydir,myfile),[N1 N2],'native');
             
             
         catch
@@ -8734,6 +8736,10 @@ switch filetype
             return
         end
         
+        head.Nchan	=	size(x,2);
+        if head.Nchan>1
+            head.multichannel=true;
+        end
         if ~strcmp(Ichan,'all')
             x		=	x(:,Ichan);
         end
@@ -8741,7 +8747,6 @@ switch filetype
         t	=	(1:length(x))/Fs;
         
         x			=	double(x)*sens;
-        head.Nchan	=	size(x,2);
         
 end
 
