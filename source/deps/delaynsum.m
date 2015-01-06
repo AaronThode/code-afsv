@@ -5,11 +5,12 @@
 %  October 17, 1996
 %  Given an angle theta, element spacing d,
 %  delay and sum an incoming signal
-%function xtot=delaynsum(x,thta,space,Fs,goodel)
+%  function xtot=delaynsum(x,thta,space,Fs,goodel)
 %  theta is in degrees, where broadside is zero
-% space is a scalar in units of meters
+%   space is a scalar in units of meters
 %   Fs is sampling rate in Hz
 %   goodel is vector of indicies of x that are good
+%   rows of x are samples, columns are channels
 
 function xtot=delaynsum(x,thta,space,Fs,goodel)
 %disp('pause');pause
@@ -41,6 +42,9 @@ xtot=xtot/length(goodel);
 
 %Cut to same length as input
 xtot=[xtot; zeros(nx-size(xtot,1),1)];
+
+return
+
 
 %Makes a simulated plane wave from the surface plus reflection, plot results
 if 1==0
