@@ -3620,8 +3620,9 @@ fmax=str2double(get(handles.edit_fmax,'String'));
 chann=1:head.Nchan; %We now assume that any bad channels are marked in the LOG files.
 %end
 
-Ichc=menu('Enter type of frequency processing:','Contour','All (averaged)','Individual Frames (and ray tracing)');
+Ichc=menu('Enter type of frequency processing:','Contour','All (averaged)','Individual Frames (and ray tracing)','Time delay and sum');
 
+delay_and_sum_flag=false;  %Boolean variable is true if delay and sum option selected
 if Ichc==1
     Nf=input('Enter number of harmonics:');
     if isempty(Nf)
@@ -3712,11 +3713,41 @@ elseif Ichc==3 %%Extract frames and ray trace
     
     [Ksout.Kstot,Ksout.freq,Ksout.t]=extractKsframes(x,ovlap,Nfft2,chann,frange,Fs,Nfft,0,threshold);
     
+elseif Ichc==4 %% simple time and delay on filtered signal...
+    
+    delay_and_sum_flag=true;
+    disp('Select bounding box for time and range:');
+    ftmp=ginput(2);
+    
+    %Trim x...
+    Igood=( t>=min(ftmp(:,1))&t<=max(ftmp(:,1)));
+    x=x(Igood,:);
+    
+    
+    frange=sort(ftmp(:,2)*1000);
+    fprintf('frange: %6.2f to %6.2f Hz\n',frange);
+    prompt1={'Min Freq (Hz)', 'Max Freq (Hz)'};
+    def1={num2str(frange(1)),num2str(frange(2))};
+    answer=inputdlg(prompt1,'Check frequency selection',1,def1);
+    
+    frange=[eval(answer{1}) eval(answer{2})];
+    
+    bpFilt = designfilt('bandpassiir', 'FilterOrder', 20, ...
+             'HalfPowerFrequency1', frange(1), 'HalfPowerFrequency2', frange(2),...
+             'SampleRate', Fs);
+  
+    %fvtool(bpFilt);
+    x=filter(bpFilt,x);
+    
+    
 end
 
 
-
-yes=menu('Beamform?','No','Conventional','MV','Both','Reflection Coefficient Estimation','MFP');
+if ~delay_and_sum_flag
+    yes=menu('Beamform?','No','Conventional','MV','Both','Reflection Coefficient Estimation','MFP');
+else
+    yes=2;
+end
 yes_eigen=0;
 while yes>1
     
@@ -3746,12 +3777,17 @@ while yes>1
     switch yes
         case 2
             beam_str='CV';
-            Ndim=ndims(Ksout.Kstot);
             
-            if Ndim==3
-                beamchc='freqvspwr';
-            elseif Ndim==4
-                beamchc='angvstime';  %migration
+            if delay_and_sum_flag
+                beamchc='delaynsum';
+            else
+                Ndim=ndims(Ksout.Kstot);
+                
+                if Ndim==3
+                    beamchc='freqvspwr';
+                elseif Ndim==4
+                    beamchc='angvstime';  %migration
+                end
             end
             if strcmp(beamchc,'freqvspwr')
                 B=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
@@ -3777,9 +3813,8 @@ while yes>1
                 %%%%%Individual snapshots and ray tracing%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
-            elseif strcmp(beamchc,'angvstime')  %Individual snapshots
+            elseif strcmp(beamchc,'angvstime') %Individual snapshots
                 Bsum=zeros(length(angles),length(Ksout.t));
-                
                 df=Ksout.freq(2)-Ksout.freq(1);
                 %plot(Bsum,angles,'k');
                 
@@ -3817,47 +3852,104 @@ while yes>1
                 saveas(gcf,[printstr '.fig'],'fig')
                 
                 
-            end
+                
+                
+                %%Permit ray tracing if desired
+                prep_ray_trace;
             
             
-            %%Permit ray tracing if desired
+            elseif strcmp(beamchc,'delaynsum') %Individual snapshots
             
-            ButtonName = questdlg('Do you Want to trace rays?', 'Ray Tracing!', 'Yes', 'No', 'Yes');
-            switch ButtonName,
-                case 'No'
+           
+                Bsum=zeros(length(angles),size(x,1));
+                space=head.geom.rd(Igood_el);
+                space=space(2)-space(1);
+                for Isnap=1:length(angles)
+                    if rem(Isnap,10)==0,disp(Isnap);end
+                    xtot=delaynsum(x,-angles(Isnap),space,Fs,Igood_el,cc);
+                   % Bsum(Isnap,:)=abs(hilbert(xtot'));
+                    Bsum(Isnap,:)=xtot';
+                end
+                
+                Bsum_org=Bsum;
+                Bsum=abs(hilbert(Bsum.'))';
+                Bsum=Bsum/max(max(Bsum));
+                Bsum=20*log10(Bsum);
+                
+                %plot vs sin angle
+                tt=(1:length(xtot))/Fs;
+                figure
+                imagesc(tt*1000,sin(angles*pi/180),Bsum);
+                caxis([-20 0]);colorbar
+                set(gca,'fontweight','bold','fontsize',14)
+                xlabel('Time (msec)');ylabel('sine of Elevation angle');
+                ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
+                titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
+                title(titstr);grid on;orient landscape
+                xlimm=xlim;
+                set(gca,'xtick',0:5:xlimm(2));
+                printstr=sprintf('SinAngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
+                print(gcf,'-djpeg',[printstr '.jpg']);
+                saveas(gcf,[printstr '.fig'],'fig')
+                
+                %plot migration angle...
+                figure
+                imagesc(tt*1000,angles,Bsum)
+                caxis([-20 0]);colorbar
+                set(gca,'fontweight','bold','fontsize',14)
+                xlabel('Time (msec)');ylabel('Elevation angle (deg)');
+                ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
+                titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
+                title(titstr);grid on;orient landscape
+                xlimm=xlim;
+                set(gca,'xtick',0:5:xlimm(2));
+                printstr=sprintf('AngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
+                print(gcf,'-djpeg',[printstr '.jpg']);
+                saveas(gcf,[printstr '.fig'],'fig')
+                
+                %Repeat using cross-correlation result (to remove
+                %   complexities in time waveform)
+                figure(gcf)
+                uiwait(msgbox('Please select a box to cross-correlate with other beams (matched filter), hit return to skip:'));
+                tmp=ginput(2);
+                if isempty(tmp)
+                    prep_ray_trace;
                     return
-            end % switch
-            
-            scenarios=raytrace_MATLAB;
-            [Selection,OK]=listdlg('liststring',scenarios,'SelectionMode','single');
-            if ~OK
-                return
-            end
-            
-            %%Interpret results depending on plot
-            if strcmp(beamchc,'angvstime')
-                prompt1={'Number of paths to pick?'};
-                def1={'0'};
-                %Other defaults: MURI_Feb2014_20140218T140039,
-                answer=inputdlg(prompt1,'Ray picks',1,def1);
-                Nrays=str2num(answer{1});
+                end
                 
-                tmp=ginput(Nrays);
+                Bsum_corr=zeros(length(angles),2*size(Bsum_org,2)-1);
+                angle_want=mean(tmp(:,2));
+                indd=round(tmp(1,1)*Fs):round(Fs*tmp(2,1));
+                [~,Iang]=min(abs(angle_want-angles));
+                x_match=((Bsum_org(Iang,:)));Nx=length(x_match);
                 
-                
-                dt=max(tmp(:,1))-tmp(:,1);  %Rays that arrive first will have positive numbers
-                [dt_meas,Isort]=sort(dt);  %Arrange by first-arriving rays
-                ang_meas=tmp(Isort,2);
-            elseif strcmp(beamchc,'freqvspwr')
-                
-                ang_meas=ray_angles;
-                dt_meas=zeros(size(ang_meas));  %No relative arrival information
-                
-            end
-            
-            [x,dt,dz]=raytrace_MATLAB(ang_meas,dt_meas,scenarios{Selection});
-            
+                for Iang=1:length(angles)
+                   Bsum_corr(Iang,:)= xcov(x_match,Bsum_org(Iang,:));
+                    
+                end
+                Bsum_corr=20*log10(abs(hilbert(Bsum_corr.')))';
+                Bsum_corr=Bsum_corr-max(max(Bsum_corr));
+                %Bsum_conv=Bsum_conv./max(max(Bsum_conv));
+                %plot vs sin angle
+                 figure
+                imagesc(1000*(1:size(Bsum_corr,2))/Fs,sin(angles*pi/180),Bsum_corr);
+                caxis([-20 0]);colorbar
+                set(gca,'fontweight','bold','fontsize',14)
+                xlabel('Time (msec)');ylabel('sine of Elevation angle');
+                ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
+                titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
+                title(titstr);grid on;orient landscape
+                xlimm=xlim;
+                set(gca,'xtick',0:5:xlimm(2));
+                printstr=sprintf('MatchSinAngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
+               % print(gcf,'-djpeg',[printstr '.jpg']);
+               % saveas(gcf,[printstr '.fig'],'fig')
+            %%Permit ray tracing if desired
+            prep_ray_trace
+
             return
+            end
+            
         case 3
             beam_str='MV';
             
@@ -3940,13 +4032,6 @@ while yes>1
     
 end  %while yes
 
-% yes=input('Type ''y'' to write a file:','s');
-% if strcmp(yes,'y')
-%     disp(['Printing ' srcname]);
-%
-%     save(srcname,'Ksout','head');
-% end
-%Save only non-zero CSDM to *.in file
 yes=menu('Save CSDM?','Yes','No');
 if yes==1
     
@@ -3982,16 +4067,43 @@ if yes==1
     
 end
 
-%keyboard;
-
-% figure;
-% axx=plotyy(freq_all,SNRest,freq_all,pwr_est);grid on;
-% %set(axx(1),'xlim',xlimm)
-% %set(axx(2),'xlim',xlimm)
-% set(axx(1),'ylim',[0 40]);
-% set(axx(1),'ytick',[0 10 20 30]);
-% xlabel('Frequency (Hz)');
-% ylabel('dB SNR');
+%%Inner function for prepping a ray trace
+    function prep_ray_trace
+        ButtonName = questdlg('Do you Want to trace rays?', 'Ray Tracing!', 'Yes', 'No', 'Yes');
+        switch ButtonName,
+            case 'No'
+                return
+        end % switch
+        
+        scenarios=raytrace_MATLAB;
+        [Selection,OK]=listdlg('liststring',scenarios,'SelectionMode','single');
+        if ~OK
+            return
+        end
+        
+        %%Interpret results depending on plot
+        if strcmp(beamchc,'angvstime')||strcmp(beamchc,'delaynsum')
+            prompt1={'Number of paths to pick?'};
+            def1={'0'};
+            %Other defaults: MURI_Feb2014_20140218T140039,
+            answer=inputdlg(prompt1,'Ray picks',1,def1);
+            Nrays=str2num(answer{1});
+            
+            tmp=ginput(Nrays);
+            
+            
+            dt=max(tmp(:,1))-tmp(:,1);  %Rays that arrive first will have positive numbers
+            [dt_meas,Isort]=sort(dt);  %Arrange by first-arriving rays
+            ang_meas=tmp(Isort,2);
+        elseif strcmp(beamchc,'freqvspwr')
+            
+            ang_meas=ray_angles;
+            dt_meas=zeros(size(ang_meas));  %No relative arrival information
+            
+        end
+        
+        [x,dt,dz]=raytrace_MATLAB(ang_meas,dt_meas,scenarios{Selection});
+    end
 
 %%Inner function for plot_beamforming_results
     function ray_angles=plot_beamforming_results(peak_picking)

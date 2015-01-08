@@ -6,23 +6,26 @@
 %  Given an angle theta, element spacing d,
 %  delay and sum an incoming signal
 %  function xtot=delaynsum(x,thta,space,Fs,goodel)
-%  theta is in degrees, where broadside is zero
+%  theta is in degrees, where broadside is zero.  A scalar value
 %   space is a scalar in units of meters
 %   Fs is sampling rate in Hz
 %   goodel is vector of indicies of x that are good
 %   rows of x are samples, columns are channels
 
-function xtot=delaynsum(x,thta,space,Fs,goodel)
+function xtot=delaynsum(x,thta,space,Fs,goodel,cc)
 %disp('pause');pause
 nx=size(x,1);
 thta=thta*pi/180;
+if ~exist('cc','var')
+   cc=1500;
+end
 
 if length(thta)~=1
     disp('Error, delaynsum requires scalar input for thta');
     xtot=[];
     return
 end
-dpt=Fs*space*sin(thta)/1500; %point shift per element
+dpt=Fs*space*sin(thta)/cc; %point shift per element
 disp(sprintf('Fs is %6.2f',Fs));
 Mel=ceil(.5*(max(goodel)+min(goodel)));  %Element number that experiences zero shift
 disp(sprintf('Median element is %i',Mel));
@@ -83,11 +86,11 @@ if 1==0
     plot(x(:,25));title(int2str(Ioff));grid;axis([0 500 -2 2]);hold on
     plot(x(:,1),'--');plot(x(:,48),'k');
     subplot(3,1,2);
-    y1=delaynsum(x,a1,space,Fs,goodel);
+    y1=delaynsum(x,a1,space,Fs,goodel,1500);
     plot(y1);hold;%plot(x(:,Ioff),'k');
     grid;axis([0 500 -2 2])
     subplot(3,1,3);
-    y2=delaynsum(x,a2,space,Fs,goodel);
+    y2=delaynsum(x,a2,space,Fs,goodel,1500);
     plot(y2);hold;%plot(x(:,Ioff),'k');
     grid;axis([0 500 -2 2])
 
