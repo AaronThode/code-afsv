@@ -681,7 +681,7 @@ switch	Batch_mode
                     %uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
                     
                     orient tall
-                    print(hprint(II),'-djpeg',save_str);
+                    print(hprint(II),'-djpeg','-r300',save_str);
                     saveas(hprint(II),save_str,'fig');
                     close(hprint(II));
                     
@@ -717,7 +717,7 @@ switch	Batch_mode
                     uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
                     
                     orient tall
-                    print(hprint(II),'-djpeg',save_str);
+                    print(hprint(II),'-djpeg','-r300',save_str);
                     saveas(hprint(II),save_str,'fig');
                     if length(Nfigs)>10
                         close(hprint(II));
@@ -924,7 +924,7 @@ switch	Batch_mode
                 uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
                 
                 orient landscape
-                print(hprint,'-djpeg',save_str);
+                print(hprint,'-djpeg','-r300',save_str);
             case 'Plot percentiles'
                 
                 pms=get_PSD_percentile_params(fmin,fmax);
@@ -932,10 +932,17 @@ switch	Batch_mode
                 
                 pms.y_label='dB re 1uPa';
                 Tabs=datenum(get(handles.edit_datestr,'String'))+datenum(0,0,0,0,0,Tnew);
+                
                 if length(pms.fmin)>5
-                    suppress_output=1;
+                    make_percentile_image=1;
                 else
-                    suppress_output=0;
+                    make_percentile_image=0;
+                end
+                
+                if strcmp(pms.plot_chc,'line')
+                    make_line_plot=1;
+                else
+                    make_line_plot=0;
                 end
                 
                 %%Process PSD matrix..
@@ -943,7 +950,11 @@ switch	Batch_mode
                     Igood= (F>=pms.fmin(Iff)&F<=pms.fmax(Iff));
                     sumPSD=10*log10((F(2)-F(1))*sum(PSD(Igood,:),1));  %Now power spectral density converted to power
                     pms.title=sprintf('Spectral power between %i and %i Hz, beginning %s',pms.fmin(Iff),pms.fmax(Iff),datestr(Tabs(1)));
-                    [temp,hprint]=create_percentile_distributions(Tabs, sumPSD,pms, suppress_output);
+                    if make_line_plot==0&~make_percentile_image
+                        [temp,hprint]=create_percentile_distributions(Tabs, sumPSD,pms);  %make whisker plot
+                    else
+                        [temp]=create_percentile_distributions(Tabs, sumPSD,pms,1);  %supporess output for subsequent analysis
+                    end
                     if Iff==1
                         percents.data=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
                         percents.x=temp.x;
@@ -956,7 +967,7 @@ switch	Batch_mode
                 end
                 
                 %%Plot contour plots if enough frequency bands
-                if suppress_output
+                if make_percentile_image==1
                     for Ipp=1:length(pms.percentiles)
                         figure
                         imagesc(percents.x,pms.fmin,squeeze(percents.data(:,Ipp,:)));
@@ -968,6 +979,24 @@ switch	Batch_mode
                         xlabel('Time','fontweight','bold','fontsize',14);
                         ylabel('Frequency (Hz)','fontweight','bold','fontsize',14);
                     end
+                    
+                end
+                
+                if ~make_percentile_image&make_line_plot
+                    keyboard
+                    figure
+                    plot(percents.x,squeeze(percents.data)')
+                    datetick('x',pms.label_style);
+                    ylim(pms.y_limits);
+                    grid on;
+                    clear legstr
+                    for II=1:length(pms.percentiles)
+                        legstr{II}=num2str(pms.percentiles(II),3);
+                    end
+                    legend(legstr)
+                    title(pms.title);
+                    xlabel('Time','fontweight','bold','fontsize',14);
+                    ylabel('Integrated power (dB re 1uPa)','fontweight','bold','fontsize',14);
                     
                 end
                 
@@ -1084,7 +1113,7 @@ switch	Batch_mode
                         orient landscape
                         figure(hprint(Iplot));
                         
-                        print(hprint(Iplot),'-djpeg',save_str);
+                        print(hprint(Iplot),'-djpeg','-r300',save_str);
                         
                         %Plot zooms if desired
                         Tabs_limm=get(gca,'xlim');
@@ -1101,7 +1130,7 @@ switch	Batch_mode
                                 titlestr=sprintf('%s\nStart time: %s, End Time: %s, seconds averaged: %6.2f', ...
                                     local_fname{Iplot},datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
                                 title(titlestr);
-                                print(hprint(Iplot),'-djpeg',save_str_zoom);
+                                print(hprint(Iplot),'-djpeg','-r300',save_str_zoom);
                             catch
                                 disp('Failure to plot Tabs_frame: plot_interval is likely bad');
                             end
@@ -1168,7 +1197,7 @@ switch	Batch_mode
                         
                         %uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
                         orient landscape
-                        print(hprint(II),'-djpeg',save_str);
+                        print(hprint(II),'-djpeg','-r300',save_str);
                         
                         %Plot zooms if desired
                         figure(hprint(II));
@@ -1186,7 +1215,7 @@ switch	Batch_mode
                                 titlestr=sprintf('%s\nStart time: %s, End Time: %s, seconds averaged: %6.2f', ...
                                     local_fname{II},datestr(Tabs_frame(JJ),30),datestr(Tabs_frame(JJ+1),30),sec_avg);
                                 title(titlestr);
-                                print(hprint(II),'-djpeg',save_str_zoom);
+                                print(hprint(II),'-djpeg','-r300',save_str_zoom);
                             catch
                                 disp('Failure to plot Tabs_frame: plot_interval is likely bad');
                             end
@@ -1320,7 +1349,7 @@ switch	Batch_mode
                         
                     end
                     set(hprint(Iprint),'paperpositionmode','auto')
-                    print(hprint(Iprint),'-djpeg',save_tag)
+                    print(hprint(Iprint),'-djpeg','-r300',save_tag)
                     saveas(hprint(Iprint), save_tag, 'fig');
                     save(save_tag,'Tabs_all','PSD_all','pms','params','Batch_vars_bulkload','sec_avg','percents');
                     
@@ -1430,13 +1459,14 @@ if exist('def_old','var')
     def{4}=num2str(1000*fmax);
     
 else
-    def = {'Date/Time','4*3600',num2str(1000*fmin),num2str(1000*fmax),'[90 140]','48*3600','[0.1 0.5 0.9]'};
+    def = {'Date/Time','4*3600',num2str(1000*fmin),num2str(1000*fmax),'[90 140]','48*3600','[0.1 0.5 0.9]','line'};
     
 end
 yes=1;
 while yes
     prompt = {'Time unit','Time increment (sec):','Min Frequencies (Hz) [Examples: ''[100 200 300]" or "100:10:300"]:', ...
-        'Max Frequencies(Hz) [Examples: ''[100 200 300]" or "100:10:300"]','dB limits [min max]','tick increment (sec)','percentile'};
+        'Max Frequencies(Hz) [Examples: ''[100 200 300]" or "100:10:300"]', ...
+        'dB limits [min max]','tick increment (sec)','percentile','whisker plot or line plot'};
     dlg_title = 'Input for PSD statistics';
     num_lines = 1;
     answer = inputdlg(prompt,dlg_title,num_lines,def);
@@ -1447,11 +1477,12 @@ while yes
     
     pms.x_label=answer{1};
     pms.x_inc=datenum(0,0,0,0,0,str2num(answer{2}));
-    pms.fmin=str2num(answer{3});
-    pms.fmax=str2num(answer{4});
-    pms.y_limits=str2num(answer{5});
+    pms.fmin=eval(answer{3});
+    pms.fmax=eval(answer{4});
+    pms.y_limits=eval(answer{5});
     pms.xlabel_inc=datenum(0,0,0,0,0,str2num(answer{6}));
-    pms.percentiles=str2num(answer{7});
+    pms.percentiles=eval(answer{7});
+    pms.plot_chc=answer{8};
     
     if rem(length(pms.percentiles),2)==0
         uiwait(msgbox('Must be an odd number of percentiles'));
@@ -1562,7 +1593,7 @@ switch	Batch_mode
             uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
             
             orient landscape
-            print(hprint,'-djpeg',save_str);
+            print(hprint,'-djpeg','-r300',save_str);
         end
         
         return
@@ -1742,7 +1773,7 @@ switch	Batch_mode
             uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
             
             orient landscape
-            print(hprint,'-djpeg',save_str);
+            print(hprint,'-djpeg','-r300',save_str);
         end
     otherwise
         error('Batch mode not recognized');
@@ -1793,7 +1824,7 @@ if ~strcmp(Batch_vars_bulkload.start_time,'select')
     dialog_title	=	'Select an example Bulk file to load: Note that I am looking in analysis directory, not data directory';
 else
     dialog_title	=	'Select the first Bulk file to load: Note that I am looking in analysis directory, not data directory';
-    
+    token=[];
 end
 [FileName,DirectoryName] = uigetfile([token '*.psd'],dialog_title);
 if isnumeric(FileName)
@@ -1852,7 +1883,9 @@ for II=1:length(Other_FileNames)
         tabs_select_start=tabs_file_start(II);
         tabs_select_end=tabs_file_end(II);
         Iselect_file=II;
-    elseif strcmp(Other_FileNames(II).name,FileNameEnd)
+    end
+    
+    if strcmp(Other_FileNames(II).name,FileNameEnd)
         tabs_selectEnd_start=tabs_file_start(II);
         tabs_selectEnd_end=tabs_file_end(II);
         IselectEnd_file=II;
@@ -3112,7 +3145,7 @@ if strcmpi(handles.filetype,'MDAT')
                 disp(['Printing %s ...' save_name1]);
                 figure(I)
                 orient landscape
-                print(I,'-djpeg',[save_path '.jpg']);
+                print(I,'-djpeg','-r300',[save_path '.jpg']);
                 save([save_path '.mat'],'x','Fs');
                 close(I);
             end
@@ -3131,6 +3164,7 @@ if ~strcmp(handles.display_view,'New Fig')
 else
     figure(gcf);
     chcc=get(0,'child');
+    chcc=[chcc.Number];
     Igoodd	=	(chcc-round(chcc)==0);
     chcc=chcc(Igoodd);
     if isempty(chcc)
@@ -3151,7 +3185,7 @@ save_path	=	fullfile(handles.outputdir, save_name);
 disp(['Printing %s ...' save_name]);
 
 orient landscape
-print(gcf,'-djpeg',sprintf('%s.jpg',save_path));
+print(gcf,'-djpeg','-r300',sprintf('%s.jpg',save_path));
 %print(figchc,'-dtiff',save_path);
 
 %print('-depsc',save_path);
@@ -3573,8 +3607,8 @@ if yes==1
     orient landscape
     tstart=datestr(datenum(0,0,0,0,0,tsec)+handles.tdate_start,30);
     figure(1);
-    print(1,'-djpeg',sprintf('Localization_G_%s.jpg',tstart));
-    print('-djpeg',sprintf('Spectrogram_G_%s.jpg',tstart));
+    print(1,'-djpeg','-r300',sprintf('Localization_G_%s.jpg',tstart));
+    print('-djpeg','-r300',sprintf('Spectrogram_G_%s.jpg',tstart));
     save(sprintf('DASAR_localization_%s',tstart),'DASAR_coords','Igood','theta','Ikeep','VM','A','B','ANG','range');
 end
 close(1)
@@ -3753,9 +3787,9 @@ while yes>1
     
     if yes<6
         
-        prompt1={'Vector of angles (deg) [(-20:0.2:20)]','Vector of sin angles (deg) [(-0.2:0.01:0.2)]','hydrophone indicies [all]','sound speed (m/sec)', ...
+        prompt1={'Vector of angles (deg) [(-20:0.2:20)]','Vector of sin angles (deg) [(-0.2:0.005:0.2)]','hydrophone indicies [all]','sound speed (m/sec)', ...
             };
-        def1={'-10:0.2:10', '-0.25:0.01:0.25',sprintf('[1:%i]',length(chann)),'1480'};
+        def1={'-10:0.2:10', '-0.3:0.005:0.3',sprintf('[1:%i]',length(chann)),'1480'};
         
         answer=inputdlg(prompt1,'Beamforming parameters',1,def1);
         try
@@ -3838,7 +3872,7 @@ while yes>1
                 set(gca,'xtick',0:5:xlimm(2));
                 
                 %plot migration angle...
-                figure
+                figure(21)
                 imagesc((Ksout.t-min(Ksout.t))*1000,angles,Bsum)
                 set(gca,'fontweight','bold','fontsize',14)
                 xlabel('Time (msec)');ylabel('Elevation angle (deg)');
@@ -3848,7 +3882,7 @@ while yes>1
                 xlimm=xlim;
                 set(gca,'xtick',0:5:xlimm(2));
                 printstr=sprintf('AngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
-                print(gcf,'-djpeg',[printstr '.jpg']);
+                print(gcf,'-djpeg','-r300',[printstr '.jpg']);
                 saveas(gcf,[printstr '.fig'],'fig')
                 
                 
@@ -3878,7 +3912,7 @@ while yes>1
                 
                 %plot vs sin angle
                 tt=(1:length(xtot))/Fs;
-                figure
+                figure(20);clf;
                 imagesc(tt*1000,sin(angles*pi/180),Bsum);
                 caxis([-20 0]);colorbar
                 set(gca,'fontweight','bold','fontsize',14)
@@ -3889,11 +3923,11 @@ while yes>1
                 xlimm=xlim;
                 set(gca,'xtick',0:5:xlimm(2));
                 printstr=sprintf('SinAngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
-                print(gcf,'-djpeg',[printstr '.jpg']);
+                print(gcf,'-djpeg','-r300',[printstr '.jpg']);
                 saveas(gcf,[printstr '.fig'],'fig')
                 
                 %plot migration angle...
-                figure
+                figure(21);clf;
                 imagesc(tt*1000,angles,Bsum)
                 caxis([-20 0]);colorbar
                 set(gca,'fontweight','bold','fontsize',14)
@@ -3902,37 +3936,43 @@ while yes>1
                 titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
                 title(titstr);grid on;orient landscape
                 xlimm=xlim;
-                set(gca,'xtick',0:5:xlimm(2));
+                if diff(xlimm)<100
+                    set(gca,'xtick',0:5:xlimm(2));
+                else
+                    set(gca,'xtick',0:100:xlimm(2));
+                    
+                end
                 printstr=sprintf('AngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
-                print(gcf,'-djpeg',[printstr '.jpg']);
+                print(gcf,'-djpeg','-r300',[printstr '.jpg']);
                 saveas(gcf,[printstr '.fig'],'fig')
                 
                 %Repeat using cross-correlation result (to remove
                 %   complexities in time waveform)
-                figure(gcf)
+                figure(21)
                 uiwait(msgbox('Please select a box to cross-correlate with other beams (matched filter), hit return to skip:'));
                 tmp=ginput(2);
+               % tmp=[];
                 if isempty(tmp)
                     prep_ray_trace;
                     return
                 end
                 
-                Bsum_corr=zeros(length(angles),2*size(Bsum_org,2)-1);
+                Bsum_corr=zeros(length(angles),size(Bsum,2));
                 angle_want=mean(tmp(:,2));
                 indd=round(tmp(1,1)*Fs):round(Fs*tmp(2,1));
                 [~,Iang]=min(abs(angle_want-angles));
-                x_match=((Bsum_org(Iang,:)));Nx=length(x_match);
+                x_match=fliplr((Bsum_org(Iang,:)));Nx=length(x_match);
                 
                 for Iang=1:length(angles)
-                   Bsum_corr(Iang,:)= xcov(x_match,Bsum_org(Iang,:));
+                   Bsum_corr(Iang,:)= conv(x_match,Bsum_org(Iang,:),'same');
                     
                 end
                 Bsum_corr=20*log10(abs(hilbert(Bsum_corr.')))';
                 Bsum_corr=Bsum_corr-max(max(Bsum_corr));
                 %Bsum_conv=Bsum_conv./max(max(Bsum_conv));
                 %plot vs sin angle
-                 figure
-                imagesc(1000*(1:size(Bsum_corr,2))/Fs,sin(angles*pi/180),Bsum_corr);
+                 figure(22)
+                imagesc(1000*(1:size(Bsum_corr,2))/Fs,(angles),Bsum_corr);
                 caxis([-20 0]);colorbar
                 set(gca,'fontweight','bold','fontsize',14)
                 xlabel('Time (msec)');ylabel('sine of Elevation angle');
@@ -3940,13 +3980,18 @@ while yes>1
                 titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
                 title(titstr);grid on;orient landscape
                 xlimm=xlim;
-                set(gca,'xtick',0:5:xlimm(2));
+                 if diff(xlimm)<100
+                    set(gca,'xtick',0:5:xlimm(2));
+                else
+                    set(gca,'xtick',0:100:xlimm(2));
+                    
+                end
                 printstr=sprintf('MatchSinAngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
                % print(gcf,'-djpeg',[printstr '.jpg']);
                % saveas(gcf,[printstr '.fig'],'fig')
-            %%Permit ray tracing if desired
-            prep_ray_trace
-
+               %%Permit ray tracing if desired
+               prep_ray_trace;
+               
             return
             end
             
@@ -4067,42 +4112,73 @@ if yes==1
     
 end
 
-%%Inner function for prepping a ray trace
-    function prep_ray_trace
-        ButtonName = questdlg('Do you Want to trace rays?', 'Ray Tracing!', 'Yes', 'No', 'Yes');
+%%Inner function for prepping a ray trace and/or invariant trace
+    function prep_ray_trace(ray_angles2,dt_data)
+        
+        repeat=1;
+        while repeat==1
+        ButtonName = questdlg('What to do?', 'Migration Analysis','Ray Tracing', 'Invariant Tracing', 'Nada', 'Nada');
         switch ButtonName,
-            case 'No'
+            case 'Nada'
                 return
+            case 'Ray Tracing'
+                scenarios=raytrace_MATLAB;
+                [Selection,OK]=listdlg('liststring',scenarios,'SelectionMode','single');
+                if ~OK
+                    return
+                end
+                
+                %figure(21);pause(0.5);
+                %%Interpret results depending on plot
+                if strcmp(beamchc,'angvstime')||strcmp(beamchc,'delaynsum')
+                    
+                    prompt1={'Number of paths to pick?'};
+                    def1={'0'};
+                    %Other defaults: MURI_Feb2014_20140218T140039,
+                    answer=inputdlg(prompt1,'Ray picks',1,def1);
+                    Nrays=str2num(answer{1});
+                    
+                    tmp=ginput(Nrays);
+                    
+                    
+                    dt=max(tmp(:,1))-tmp(:,1);  %Rays that arrive first will have positive numbers
+                    [dt_meas,Isort]=sort(dt);  %Arrange by first-arriving rays
+                    ang_meas=tmp(Isort,2);
+                elseif strcmp(beamchc,'freqvspwr')
+      
+                        ang_meas=(ray_angles2);
+                        dt_meas=[dt_data];  %No relative arrival information
+                    
+                        dt_meas=dt_meas-min(dt_meas);
+                        [dt_meas,Isort]=sort(dt_meas);
+                        ang_meas=ang_meas(Isort);
+                end
+                
+                [x,dt,dz]=raytrace_MATLAB(ang_meas,dt_meas,scenarios{Selection});
+            case 'Invariant Tracing'
+                
+                prompt1={'Ranges (km)','Beta','sound speed at receiver (m/sec)'};
+                
+                dlgTitle1='Parameters for invariant tracing...';
+                
+                def1={'[40:10:60 90:10:120]','-9','1481'};
+                answer=inputdlg(prompt1,dlgTitle1,1,def1);
+                
+                try
+                    figure(20);
+                    pause(0.5);
+                    invariant_range_estimate(eval(answer{1}),eval(answer{2}),eval(answer{3}));
+                catch
+                    uiwait(errordlg('Invariant Processing failed!')); 
+                end
+                
+                
         end % switch
         
-        scenarios=raytrace_MATLAB;
-        [Selection,OK]=listdlg('liststring',scenarios,'SelectionMode','single');
-        if ~OK
-            return
+        repeat=menu('Another analysis?','Yes','No');
         end
         
-        %%Interpret results depending on plot
-        if strcmp(beamchc,'angvstime')||strcmp(beamchc,'delaynsum')
-            prompt1={'Number of paths to pick?'};
-            def1={'0'};
-            %Other defaults: MURI_Feb2014_20140218T140039,
-            answer=inputdlg(prompt1,'Ray picks',1,def1);
-            Nrays=str2num(answer{1});
-            
-            tmp=ginput(Nrays);
-            
-            
-            dt=max(tmp(:,1))-tmp(:,1);  %Rays that arrive first will have positive numbers
-            [dt_meas,Isort]=sort(dt);  %Arrange by first-arriving rays
-            ang_meas=tmp(Isort,2);
-        elseif strcmp(beamchc,'freqvspwr')
-            
-            ang_meas=ray_angles;
-            dt_meas=zeros(size(ang_meas));  %No relative arrival information
-            
-        end
         
-        [x,dt,dz]=raytrace_MATLAB(ang_meas,dt_meas,scenarios{Selection});
     end
 
 %%Inner function for plot_beamforming_results
@@ -4186,10 +4262,27 @@ end
             else
                 prompt1={'Number of picks'};
                 def1={'3'};
-                answer=inputdlg(prompt1,'Peakpicking parameters',1,def1);
-                tmp=ginput(eval(answer{1}));
+                try
+                    answer=inputdlg(prompt1,'Peakpicking parameters',1,def1);
+                    
+                    tmp=ginput(eval(answer{1}));
+                catch
+                    return
+                end
                 PdB=tmp(:,1);
                 ray_angles=tmp(:,2);
+                
+                %Find local maxima near each selection
+                fprintf('Original angles selected: %s\n',mat2str(ray_angles,3));
+                sigma_ang=2;
+                for Iray=1:length(ray_angles)
+                    Iseg=find(angles>ray_angles(Iray)-sigma_ang&angles<ray_angles(Iray)+sigma_ang);
+                    [~,Imax]=max(Bsum(Iseg));
+                    ray_angles(Iray)=angles(Iseg(Imax));
+                    
+                end
+                fprintf('Revised angles: %s\n',mat2str(ray_angles,3));
+                
                 %[PdB,Isort]=sort(PdB,'descend');
                 %ray_angles=ray_angles(Isort);
             end
@@ -4201,7 +4294,8 @@ end
         %%save ray angles, sorted by power
         
         if length(ray_angles)>1
-            Bshift=conventional_beam_timedelay(Ksout.Kstot(Igood_el,Igood_el,:),ray_angles,Ksout.freq,head.geom.rd(Igood_el),cc,Nfft,Fs);
+            [Bshift,dt_data]=conventional_beam_timedelay(Ksout.Kstot(Igood_el,Igood_el,:),ray_angles,Ksout.freq,head.geom.rd(Igood_el),cc,Nfft,Fs);
+            prep_ray_trace(ray_angles,dt_data);
         end
         
         
@@ -4249,12 +4343,16 @@ end
         
         yes_print=menu('Print?','Yes','No');
         if yes_print==1
-            for III=1:2
+            for III=1:3
                 figure(III)
                 orient tall
                 
-                print(gcf,'-djpeg',sprintf('Beamforming%s_%s_%ito%ideg_%4.2fres_%i.jpg', ...
-                    beam_str,datestr(tdate_start,30),min(angles),max(angles),angles(2)-angles(1),III));
+                 ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
+                printstr=sprintf('Beamforming_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
+                print(gcf,'-djpeg','-r300',[printstr '.jpg']);
+               
+                print(gcf,'-djpeg','-r300',sprintf('Beamforming%s_%s_%ito%ideg_%4.2fres_%i.jpg', ...
+                    beam_str,datestr(ttt,'yyyymmddTHHMMSS.FFF'),min(angles),max(angles),angles(2)-angles(1),III));
             end
         end
     end %function plot_beamforming_results
@@ -4495,7 +4593,7 @@ yes=menu('Save a tilt example?','Yes','No');
 if yes==1
     figure(1)
     orient landscape
-    print(1,'-djpeg',sprintf('TiltExample_%s_%ito%iHz',datestr(tdate_start,30),round(minfreq),round(maxfreq)));
+    print(1,'-djpeg','-r300',sprintf('TiltExample_%s_%ito%iHz',datestr(tdate_start,30),round(minfreq),round(maxfreq)));
 end
 %close(1);
 %%%Test to understand xcorr lags
@@ -4850,7 +4948,7 @@ for Imodel=1:length(MFP_scenario)
             if any(get(0,'child')==I)
                 figure(I)
                 orient tall
-                print(I,'-djpeg',sprintf('ModalBeamform%i',I));
+                print(I,'-djpeg','-r300',sprintf('ModalBeamform%i',I));
             end
         end
     end
@@ -4946,7 +5044,7 @@ end %Imodel
                     
                     figure(10+Itilt2)
                     orient landscape
-                    print(gcf,'-djpeg',sprintf('RangeEstimate_%s.jpg',savename_base));
+                    print(gcf,'-djpeg','-r300',sprintf('RangeEstimate_%s.jpg',savename_base));
                     
                     %%%%%Plot best range vs. fit%%%%%%
                     figure(1)
@@ -4998,12 +5096,12 @@ end %Imodel
                 figure(1)
                 orient landscape
                 legend('full model','Pekeris model','Averaged Pekeris')
-                print(gcf,'-djpeg',sprintf('RangeError1_%s.jpg',savename_base));
+                print(gcf,'-djpeg','-r300',sprintf('RangeError1_%s.jpg',savename_base));
                 
                 figure(2)
                 orient landscape
                 legend('full model','Pekeris model','Averaged Pekeris')
-                print(gcf,'-djpeg',sprintf('RangeError2_%s.jpg',savename_base));
+                print(gcf,'-djpeg','-r300',sprintf('RangeError2_%s.jpg',savename_base));
                 
                 
                 save(sprintf('ModalEstimateRange_%s.mat',savename_base), ...
@@ -5139,7 +5237,7 @@ end %Imodel
             ylabel('Source depth (m)');
             title('No frequency weighting');
             orient tall
-            print(gcf,'-djpeg',sprintf('DepthEstimate2D_%s.jpg',savename_base));
+            print(gcf,'-djpeg','-r300',sprintf('DepthEstimate2D_%s.jpg',savename_base));
             
             
             %Plot frequency-averaged depth estimator%
@@ -5161,7 +5259,7 @@ end %Imodel
             axis('ij')
             hold on
             legend('frequency weighted','abs value');
-            print(gcf,'-djpeg',sprintf('DepthEstimate_%s.jpg',savename_base));
+            print(gcf,'-djpeg','-r300',sprintf('DepthEstimate_%s.jpg',savename_base));
             
             
             
@@ -7776,7 +7874,7 @@ try
         end
         
         orient landscape
-        print(hprint(Ix),'-djpeg',save_str);
+        print(hprint(Ix),'-djpeg','-r300',save_str);
         saveas(hprint(Ix), save_str, 'fig');
         %end
         close(hprint(Ix));
@@ -9769,7 +9867,7 @@ for Itilt=1:length(tilt_offset)
         figure(gcf)
         orient landscape
         
-        print(gcf,'-djpeg',[savename '.jpg']);
+        print(gcf,'-djpeg','-r300',[savename '.jpg']);
     end
 end %tilt
 end %matched_field_processor
@@ -11031,7 +11129,7 @@ legend(num2str(freq_plot','%2.1f'));
 for II=18:20
     figure(II)
     orient landscape
-    print('-djpeg',sprintf('ModeTiltWarpInversion_%i',II));
+    print('-djpeg','-r300',sprintf('ModeTiltWarpInversion_%i',II));
 end
 end
 
@@ -11193,7 +11291,7 @@ for Iguess=1:length(r_guess)
         caxis([80 120]);colorbar;
         
         orient landscape
-        print('-djpeg',sprintf('WarpedSpectrogram_range%2.0fkm_depth%2.0fm',r_guess(Iguess)/1000,rd));
+        print('-djpeg','-r300',sprintf('WarpedSpectrogram_range%2.0fkm_depth%2.0fm',r_guess(Iguess)/1000,rd));
         
     end
 end
@@ -11267,7 +11365,7 @@ for J=1:Nroi
         title(sprintf('Recovered mode %i at depth: %6.2f m',J,rd));
         if J==Nroi
             orient tall
-            print('-djpeg',sprintf('warp_tranform_%2.0fm',round(rd)))
+            print('-djpeg','-r300',sprintf('warp_tranform_%2.0fm',round(rd)))
         end
     end
 end
