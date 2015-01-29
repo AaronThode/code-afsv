@@ -10,7 +10,7 @@ dz=[];
 prompt = {'Water depth (m)','Source depth (m)','Profile choice (munk,linear,MURI_Feb2014)', ...
     'path length (km)','ray angles (degrees)', ...
     'Relative arrival times (msec; positive means arrives before first path)','Tilt (deg)' , ...
-    'Uncertainty in timing (msec)','Uncertainty in depth (m)'};
+    'Uncertainty in timing (msec)','Uncertainty in depth (m)','Max depth permitted (m)'};
 dlg_title = 'Ray tracing parameters';
 num_lines = 1;
 
@@ -26,10 +26,10 @@ end
 switch scenario_chc
     case 'MURI_Feb2014'
         
-        def = {'4000','330','MURI_Feb2014','200',mat2str(ang_meas),mat2str(dt_meas),'-2:2','2','50'};
+        def = {'4000','330','MURI_Feb2014','200',mat2str(ang_meas,3),mat2str(dt_meas,3),'-1:1','2','50','1000'};
    
     otherwise
-        def = {'4000','330','MURI_Feb2014','200',mat2str(ang_meas),mat2str(dt_meas),'-1:1','2','50'};
+        def = {'4000','330','MURI_Feb2014','200',mat2str(ang_meas,3),mat2str(dt_meas,3),'-1:1','2','50','1000'};
         %errdlg(sprintf('Scenario %s not in database!',scenario_chc));
         %return
 end
@@ -65,6 +65,7 @@ dt_meas=eval(answer{6});
 tilt=eval(answer{7});
 sig_dt=eval(answer{8});  %Uncertainty in measurement, msec
 sig_z=eval(answer{9});  %Uncertainty in depth
+zmax=eval(answer{10});
 
 best_err=zeros(1,length(tilt));
 for Itilt=1:length(tilt)
@@ -167,7 +168,7 @@ for Itilt=1:length(tilt)
     print(gcf,'-djpeg',fname);
     
     %save(sprintf('Ray_trace_demo_tilt_%3.2f.mat',tilt),'x','dt','dz');
-    [best_err(Itilt),best_range(Itilt),best_depth(Itilt)]=error_plot(x,dt,dz,dt_meas,sig_dt,sig_z,fname,Itilt+20,1000);
+    [best_err(Itilt),best_range(Itilt),best_depth(Itilt)]=error_plot(x,dt,dz,dt_meas,sig_dt,sig_z,fname,Itilt+20,1000,zmax);
     orient landscape
     [~,fname,~]=fileparts(fname);
     print(gcf,'-djpeg',sprintf('CrudeError_%s.jpg',fname));
@@ -196,7 +197,9 @@ orient landscape
 print(gcf,'-djpeg',sprintf('ErrVsTilt_RayTimeTrace_%s.jpg',scenario_chc))
 end
 
-function [best_err,rbest,zbest]=error_plot(x,dt,dz,dt_meas,sig_dt,sig_z,fname,Ifig,D)
+
+%%subfunction
+function [best_err,rbest,zbest]=error_plot(x,dt,dz,dt_meas,sig_dt,sig_z,fname,Ifig,D,zmax)
 
 if size(dt_meas,2)>1
     dt_meas=dt_meas';
@@ -215,10 +218,15 @@ err_dt=sqrt(err_dt);
 err_z=sqrt(err_z);
 err_all=err_dt+err_z;
 
-[best_err,Ir]=min(err_dt);
+
+%zmax=1000;
+Igood=find(zmax>x{1}(:,2));
+
+
+[best_err,Ir]=min(err_dt(Igood));
 fprintf('modeled time delays for timing error: %s\n',mat2str(dt(:,Ir)*1000));
 
-[best_err,Ir]=min(err_all);
+[best_err,Ir]=min(err_all(Igood));
 fprintf('modeled time delays for total error: %s\n',mat2str(dt(:,Ir)*1000));
 
 
@@ -227,11 +235,13 @@ figure(Ifig);
 subplot(3,1,1);
 for I=1:Nrays
     plot(x{I}(:,1)/1000,x{I}(:,2),cchc(I),'linewidth',3);axis('ij');hold on
-   
+    
 end
 set(gca,'fontweight','bold','fontsize',18);
- xlabel('range(km)');ylabel('depth(m)');grid on;ylim([0 D])
-    set(gca,'ytick',0:250:D);
+xlabel('range(km)');ylabel('depth(m)');grid on;ylim([0 D])
+xlimm=xlim;
+set(gca,'ytick',0:250:D);
+set(gca,'xtick',0:5:max(xlimm));
 title(fname,'interp','none');
 
 subplot(3,1,2);
@@ -240,15 +250,19 @@ set(gca,'fontweight','bold','fontsize',18);
 
 legend('Timing error','depth error');ylim([0.1 100]);
 xlabel('range(km)');ylabel('rms err ');grid on
+xlim(xlimm);set(gca,'xtick',0:5:max(xlimm));
 
 subplot(3,1,3);
 semilogy(x{1}(:,1)/1000,(err_all),'linewidth',3);grid on;ylim([1 100]);
 set(gca,'fontweight','bold','fontsize',18);
 xlabel('range(km)');ylabel('total err ');grid on
+xlim(xlimm);set(gca,'xtick',0:5:max(xlimm));
 
-rbest=x{1}(Ir,1);
-zbest=x{1}(Ir,2);
+rbest=x{1}(Igood(Ir),1);
+zbest=x{1}(Igood(Ir),2);
 
+subplot(3,1,1);
+xlim(xlimm);
 fprintf('Error: %6.2g, Best range: %6.2f km, Best depth: %6.2f m\n**\n',best_err,rbest/1000,zbest);
 
 
