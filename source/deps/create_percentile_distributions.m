@@ -1,4 +1,4 @@
-function [output,hprint]=create_percentile_distributions(xdata,ydata,param, suppress_output)
+function [output,hprint]=create_percentile_distributions(xdata,ydata,param)
 
 %function hprint=percentile_boxplots(xdata,x_inc_boxplot,ydata,ylimits,xlabel_inc,percentiles,label_style)
 
@@ -13,8 +13,8 @@ function [output,hprint]=create_percentile_distributions(xdata,ydata,param, supp
 %     x_label, y_label: plot labels for x and y axis.
 %     percentiles: percentile distribution...
 %     title: title to plot, if plot generated
-% suppress_output:  If exists, do not plot data, just return
-%      percentile data instead...
+%     plot:  structure with boolean fields
+%       'none','boxplot','line','image'
 %
 % Output:
 %   output: fields  x,  percentiles, data [Npercentiles, Nx];
@@ -38,10 +38,6 @@ end
 
 hprint=[];
 output=[];
-
-if ~exist('suppress_output')
-    suppress_output=0;
-end
 
 
 t1=xdata(1);
@@ -87,10 +83,11 @@ end
 if isempty(data_fin)
    uiwait(msgbox('data_fin is empty: you have requested odd times for percentiles')); 
 end
-if suppress_output==0
+
+if param.plot.boxplot
     hprint=figure;
 
-    make_boxplot(data_fin,tbin,x_inc_boxplot,xlabel_inc,percentiles,label_style,ylimits);
+    data=make_boxplot(data_fin,tbin,x_inc_boxplot,xlabel_inc,percentiles,label_style,ylimits);
     if isfield(param,'x_label')
         xlabel(param.x_label,'fontsize',14,'fontweight','bold');
     end
@@ -109,7 +106,32 @@ if suppress_output==0
     
 end
 
-data=boxplot_percentile(data_fin,percentiles,1);
+if param.plot.line
+    figure
+    data=boxplot_percentile(data_fin,percentiles,1);
+    Igood=~any(isnan(data));
+    
+    plot(tbin(Igood),data(:,Igood)');
+    datetick('x',param.label_style);
+    ylim(param.y_limits);
+    %xlim([min(tbin) max(tbin)]);
+    grid on;
+    clear legstr
+    for II=1:length(param.percentiles)
+        legstr{II}=num2str(param.percentiles(II),3);
+    end
+    legend(legstr)
+    title(param.title);
+    xlabel('Time','fontweight','bold','fontsize',14);
+    ylabel('Integrated power (dB re 1uPa)','fontweight','bold','fontsize',14);
+    
+    
+end
+
+if param.plot.none||param.plot.image
+    data=boxplot_percentile(data_fin,percentiles,1);
+end
+
 if isempty(data)
     output.data=[];
     output.x=[];
@@ -121,7 +143,7 @@ output.x=tbin;
 output.percentiles=percentiles;
 %ylim(ylimits);
 
-    function make_boxplot(data_fin,tbin,x_inc_boxplot,xlabel_inc,percentiles,label_style,ylimits)
+    function test=make_boxplot(data_fin,tbin,x_inc_boxplot,xlabel_inc,percentiles,label_style,ylimits)
         test=boxplot_percentile(data_fin,percentiles,0);
         
         if isempty(test)

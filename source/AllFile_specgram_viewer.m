@@ -932,29 +932,14 @@ switch	Batch_mode
                 
                 pms.y_label='dB re 1uPa';
                 Tabs=datenum(get(handles.edit_datestr,'String'))+datenum(0,0,0,0,0,Tnew);
-                
-                if length(pms.fmin)>5
-                    make_percentile_image=1;
-                else
-                    make_percentile_image=0;
-                end
-                
-                if strcmp(pms.plot_chc,'line')
-                    make_line_plot=1;
-                else
-                    make_line_plot=0;
-                end
-                
+                 
                 %%Process PSD matrix..
                 for Iff=1:length(pms.fmin)
                     Igood= (F>=pms.fmin(Iff)&F<=pms.fmax(Iff));
                     sumPSD=10*log10((F(2)-F(1))*sum(PSD(Igood,:),1));  %Now power spectral density converted to power
                     pms.title=sprintf('Spectral power between %i and %i Hz, beginning %s',pms.fmin(Iff),pms.fmax(Iff),datestr(Tabs(1)));
-                    if make_line_plot==0&~make_percentile_image
-                        [temp,hprint]=create_percentile_distributions(Tabs, sumPSD,pms);  %make whisker plot
-                    else
-                        [temp]=create_percentile_distributions(Tabs, sumPSD,pms,1);  %supporess output for subsequent analysis
-                    end
+                    [temp,hprint]=create_percentile_distributions(Tabs, sumPSD,pms);  %make whisker plot
+                    
                     if Iff==1
                         percents.data=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
                         percents.x=temp.x;
@@ -967,10 +952,13 @@ switch	Batch_mode
                 end
                 
                 %%Plot contour plots if enough frequency bands
-                if make_percentile_image==1
+                if pms.plot.image
                     for Ipp=1:length(pms.percentiles)
                         figure
-                        imagesc(percents.x,pms.fmin,squeeze(percents.data(:,Ipp,:)));
+                        
+                        yy=squeeze(percents.data(:,Ipp,:));
+                        Igood=~all(isnan(yy));
+                        imagesc(percents.x(Igood),pms.fmin,yy(:,Igood));
                         axis('xy');
                         datetick('x',pms.label_style);
                         colorbar
@@ -982,23 +970,7 @@ switch	Batch_mode
                     
                 end
                 
-                if ~make_percentile_image&make_line_plot
-                    keyboard
-                    figure
-                    plot(percents.x,squeeze(percents.data)')
-                    datetick('x',pms.label_style);
-                    ylim(pms.y_limits);
-                    grid on;
-                    clear legstr
-                    for II=1:length(pms.percentiles)
-                        legstr{II}=num2str(pms.percentiles(II),3);
-                    end
-                    legend(legstr)
-                    title(pms.title);
-                    xlabel('Time','fontweight','bold','fontsize',14);
-                    ylabel('Integrated power (dB re 1uPa)','fontweight','bold','fontsize',14);
-                    
-                end
+               
                 
         end
         
@@ -1451,8 +1423,21 @@ end
 
 %
 function pms=get_PSD_percentile_params(fmin,fmax,def_old)
-
-
+%
+% pms.plot.line=false;
+% pms.plot.boxplot=false;
+% pms.plot.none=false;
+% pms.plot.image=false;
+% pms.x_label=answer{1};
+% pms.x_inc=datenum(0,0,0,0,0,str2num(answer{2}));
+% pms.fmin=eval(answer{3});
+% pms.fmax=eval(answer{4});
+% pms.y_limits=eval(answer{5});
+% pms.xlabel_inc=datenum(0,0,0,0,0,str2num(answer{6}));
+% pms.percentiles=eval(answer{7});
+% pms.plot_chc=answer{8};
+% pms.label_style
+ 
 if exist('def_old','var')
     def=def_old;
     def{3}=num2str(1000*fmin);
@@ -1466,7 +1451,7 @@ yes=1;
 while yes
     prompt = {'Time unit','Time increment (sec):','Min Frequencies (Hz) [Examples: ''[100 200 300]" or "100:10:300"]:', ...
         'Max Frequencies(Hz) [Examples: ''[100 200 300]" or "100:10:300"]', ...
-        'dB limits [min max]','tick increment (sec)','percentile','whisker plot or line plot'};
+        'dB limits [min max]','tick increment (sec)','percentile','Plot type (boxplot, line, image, none):'};
     dlg_title = 'Input for PSD statistics';
     num_lines = 1;
     answer = inputdlg(prompt,dlg_title,num_lines,def);
@@ -1500,6 +1485,40 @@ while yes
     def2{1}=date_tick_chc;
     answer = inputdlg(prompt,dlg_title,num_lines,def2);
     pms.label_style=answer{1};
+    
+    pms.plot.line=false;
+    pms.plot.boxplot=false;
+    pms.plot.none=false;
+    pms.plot.image=false;
+    
+    switch pms.plot_chc
+        case 'line'
+            pms.plot.line=true;
+        case 'image'
+            pms.plot.image=true;
+        case 'boxplot'
+            pms.plot.boxplot=true;
+        case 'none'
+            pms.plot.none=true;
+        otherwise
+            uiwait(msgbox('Invalid plot format selected, will just plot nothing'));
+            pms.plot.none=true;
+    end
+              
+    %%Determine what type of plot to use, if any
+    if length(pms.fmin)>5&&~pms.plot.none
+        ButtonName = questdlg(sprintf('You have chosen over %i frequency bands.  Use image plot instead?',length(pms.fmin)), ...
+            'Plot percentile image?', ...
+            'Yes', 'No', 'No');
+        if strcmp(ButtonName,'Yes')
+            pms.plot.image=true;
+            pms.plot.line=false;
+            pms.plot.boxplot=false;
+        end
+        
+    end
+                
+               
     
     % if pms.xlabel_inc>=datenum(0,0,0,12,0,0) %label spacing on order of days
     %     pms.label_style='dd';
