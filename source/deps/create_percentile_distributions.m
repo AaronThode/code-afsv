@@ -107,7 +107,8 @@ if param.plot.boxplot
 end
 
 if param.plot.line
-    figure
+    hprint=figure;
+
     data=boxplot_percentile(data_fin,percentiles,1);
     Igood=~any(isnan(data));
     
@@ -129,6 +130,7 @@ if param.plot.line
 end
 
 if param.plot.none||param.plot.image
+    hprint=-1;
     data=boxplot_percentile(data_fin,percentiles,1);
 end
 

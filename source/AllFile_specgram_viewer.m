@@ -1218,11 +1218,7 @@ switch	Batch_mode
                     close_all_figures;  %Close all open figures..
                     clear hprint
                     
-                    if Nf<=5
-                        suppress_output=0;
-                    else
-                        suppress_output=1;
-                    end
+                    
                     %%Process PSD matrix..
                     for Iff=1:length(pms.fmin)
                         tmp=datevec(pms.x_inc);
@@ -1232,23 +1228,19 @@ switch	Batch_mode
                         sumPSD=PSD_all(Iff,:);  %Now power spectral density converted to power
                         pms.title=sprintf('Spectral power between %i and %i Hz, averaged %6.2f sec, beginning %s', ...
                             pms.fmin(Iff),pms.fmax(Iff),sec_avg,datestr(Tabs_all(1)));
-                        if suppress_output==0
-                            [temp,hprint(Iff)]=create_percentile_distributions(Tabs_all, sumPSD,pms, suppress_output);
-                        else
-                            [temp]=create_percentile_distributions(Tabs_all, sumPSD,pms, suppress_output);
-                            
-                        end
+                        [temp,hprint(Iff)]=create_percentile_distributions(Tabs_all, sumPSD,pms);
+                        
                         
                         if Iff==1
                             percents.data=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
                             percents.x=temp.x;
                             percents.percentiles=pms.percentiles;
-                            if suppress_output==0
-                                uiwait(msgbox('Please click on screen to print out percentiles used'));
-                                try
-                                    gtext(sprintf('Percentiles: %s',num2str(pms.percentiles)),'fontweight','bold','fontsize',18)
-                                end
-                            end
+%                             if suppress_output==0
+%                                 uiwait(msgbox('Please click on screen to print out percentiles used'));
+%                                 try
+%                                     gtext(sprintf('Percentiles: %s',num2str(pms.percentiles)),'fontweight','bold','fontsize',18)
+%                                 end
+%                             end
                         end
                         percents.data(Iff,:,:)=temp.data;
                         percents.title{Iff}=pms.title;
@@ -1261,13 +1253,18 @@ switch	Batch_mode
                     
                     
                     
-                    if suppress_output==1
+                    if pms.plot.image
                         
                         %%Plot contour plots if enough frequency bands
                         clear hprint
                         for Ipp=1:length(pms.percentiles)
                             hprint(Ipp)=figure;
-                            imagesc(percents.x,pms.fmin,squeeze(percents.data(:,Ipp,:)));
+                            
+                            yy=squeeze(percents.data(:,Ipp,:));
+                            Igood=~all(isnan(yy));
+                            imagesc(percents.x(Igood),pms.fmin,yy(:,Igood));
+                            
+                            %imagesc(percents.x,pms.fmin,squeeze(percents.data(:,Ipp,:)));
                             axis('xy');
                             %datetick('x',date_tick_chc);
                             Ibin=get(gca,'xtick');
@@ -1290,7 +1287,7 @@ switch	Batch_mode
                             
                             
                         end %for Ipp
-                    end  %suppress_output==1
+                    end  %if plot.image
                     yes=menu('Redo formatting? ','Yes','No');
                     if yes==1
                         pms=get_PSD_percentile_params(pms.fmin/1000,pms.fmax/1000,pms.def);
@@ -1312,7 +1309,7 @@ switch	Batch_mode
                     tmp=datevec(pms.x_inc);
                     tmp=3600*tmp(4)+60*tmp(5)+tmp(6);
                     
-                    if suppress_output==0
+                    if ~pms.plot.image
                         save_tag=sprintf('Percentile_PSD_%s_%s_fmin%iHz_fmax%iHz_interval%isec', ...
                             datestr(Tabs_all(1),30),datestr(Tabs_all(end),30),(pms.fmin(Iprint)),(pms.fmax(Iprint)),tmp);
                     else
