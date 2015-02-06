@@ -112,7 +112,7 @@ if param.plot.line
     data=boxplot_percentile(data_fin,percentiles,1);
     Igood=~any(isnan(data));
     
-    plot(tbin(Igood),data(:,Igood)');
+    plot(tbin(Igood),data(:,Igood)','.');
     datetick('x',param.label_style);
     ylim(param.y_limits);
     %xlim([min(tbin) max(tbin)]);
