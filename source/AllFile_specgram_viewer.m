@@ -239,17 +239,18 @@ function OpenMenuItem_Callback(hObject, eventdata, handles)
 %end
 
 %	List of supported file types + descriptions/names
-File_types	=	{'MT';'SIO';'WAV';'GSI';'ADI';'DAT';'MDAT';'PSD';'MAT'};
+File_types	=	{'MT';'SIO';'WAV';'GSI';'ADI';'DAT';'MDAT';'PSD';'MAT';'M4V'};
 File_descs	=	...
     {	'MT files';...
+     'SIO files';...
     'WAV files';...
-    'SIO files';...
     'GSI files';...
     'ADI files';...
     'DAT files';...
     'MDAT files';...
     'PSD binary files'; ...
-    'Simulations'};
+    'Simulations'; ...
+    'M4A,M4V (GoPro) files'};
 
 %	 Setup menu file extensions
 menustr		=	cell(length(File_types)+1,1);
@@ -3022,7 +3023,18 @@ tlen=handles.tlen;
 %yes_wav=get(handles.togglebutton_getwav,'value');
 
 mydir=pwd;
-Ichan='all';
+try
+    chan=eval(get(handles.edit_chan,'String'));
+    if chan<0
+        Ichan=chan;
+    else
+        Ichan='all';
+    end
+catch
+    Ichan='all';
+end
+
+
 %[x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
 [x,~,Fs,~,~,hdr]=load_data(handles.filetype,tdate_start,tlen,Ichan,handles);
 
@@ -3036,7 +3048,7 @@ chan=get(handles.edit_chan,'String');
 save_name=sprintf('soundsamp%s_%s',handles.mydir((Islash(end)+1):end),datestr(tdate_start,30));
 disp(['Saving ...' save_name]);
 
-save_path	=	fullfile(handles.outputdir, save_name);  %AARON: save to local directory, not server
+save_path	=	fullfile(handles.outputdir,[ save_name ]);  %AARON: save to local directory, not server
 
 try
     if size(x,2)>size(x,1)
@@ -3045,15 +3057,15 @@ try
     for Ichan=1:size(x,2)
         xfilt(:,Ichan)=filter(handles.b,1,x(:,Ichan));
     end
-    wavwrite(xfilt/(1.1*max(max(abs(xfilt)))),Fs,save_path);
+    audiowrite(save_path,xfilt/(1.1*max(max(abs(xfilt)))),Fs);
     
 catch
     disp('No filtering desired... exists; saving raw acoustic data to WAV');
     xfilt=[];
-    wavwrite(x/(1.1*max(max(abs(x)))),Fs,save_path);
+    audiowrite([save_path '.wav'],(x/(1.1*max(max(abs(x))))),Fs);
     
 end
-save(save_path,'x','xfilt','Fs','tdate_start','hdr');
+save([save_path '.mat'],'x','xfilt','Fs','tdate_start','hdr');
 
 end
 
@@ -3161,7 +3173,7 @@ if strcmpi(handles.filetype,'MDAT')
                 disp(['Printing %s ...' save_name1]);
                 figure(I)
                 orient landscape
-                print(I,'-djpeg','-r300',[save_path '.jpg']);
+                print(I,'-djpeg','-r500',[save_path '.jpg']);
                 save([save_path '.mat'],'x','Fs');
                 close(I);
             end
@@ -8870,16 +8882,29 @@ switch filetype
         
         [x,head]=read_synchronized_mdat_files(fullfile(mydir,myfile),tdate_start,tlen);
         Fs=head.fs;
-        t=(1:length(x))/Fs;
-        
+        sio_chc=get(handles.togglebutton_ChannelBeam,'String');
         head.multichannel=true;
+        t=(1:length(x))/Fs;
         
         tmin=head.tfs;
         tmax=head.tfe;
         head.Nchan=size(x,2);
-        if strcmp(Ichan,'all')
+        beamform_data=0;
+        get_geometry=1;
+        if strcmpi(sio_chc,'angle')&&~strcmpi(Ichan,'all')
+            beamform_data=1;
+            get_geometry=1;
+        elseif strcmp(Ichan,'all')
+            Ichan=1:head.Nchan;
+            beamform_data=0;
+            get_geometry=1;
+        end
+        
+        if beamform_data==1
+            thta=-Ichan;
             Ichan=1:head.Nchan;
         end
+        
         if max(Ichan)>head.Nchan
             disp(sprintf('Channel too high, max channel %i',head.Nchan));
             Ichan=head.Nchan;
@@ -8893,6 +8918,21 @@ switch filetype
         end
         
         x=x';
+        
+        if beamform_data==1
+            try
+                space=head.geom.rd(2)-head.geom.rd(1);
+                xtot=delaynsum(x',thta,space,Fs,Ichan);
+                x=xtot;
+                head.thta=thta;
+            catch
+                disp('load_data: MDAT beamform failure');
+                keyboard
+            end
+        end
+        
+        %Set time
+        t=(1:length(x))/Fs;
         head.calcurv=[
             -3.826740371096994e+07
             8.955964717194067e+07
@@ -8906,7 +8946,55 @@ switch filetype
             5.178423592184026e+01
             -1.229223450332553e+00];
         
+    case 'M4V'
+        info	=	audioinfo(fullfile(mydir,myfile));
+        info_vid = mmfileinfo(fullfile(mydir,myfile));
+        %[~,Fs]		=	audioread(fullfile(mydir,myfile),1,'native');
+        Nsamples	=	info.TotalSamples;
+        handles.Fs	=	info.SampleRate;
+        Fs=info.SampleRate;
+        tmin=datenum([1970 1 1 0 0 0]);
+        tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
+        %tlen=Nsamples/handles.Fs;
+        sens=1;
+        
+        tdate_vec	=	datevec(tdate_start - tmin);
+        nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);  %Ignores differences in days
+        N1			=	1 + round(nsec*handles.Fs);
+        N2			=	N1 + round(tlen*handles.Fs);
+        
+        try
+            [x,Fs]		=	audioread(fullfile(mydir,myfile),[N1 N2],'native');
+            
+            
+        catch
+            x=[];
+            
+            t=[];
+            head.Nchan=0;
+            return
+        end
+        
+        head.Nchan	=	size(x,2);
+        if head.Nchan>1
+            head.multichannel=true;
+        end
+        
+        %%Option for "adaptive processing" to remove interference...
+        % Set channel equal to -1 to give difference between signal
+        
+        if ~strcmp(Ichan,'all')&Ichan>0
+            x		=	x(:,Ichan);
+        elseif Ichan<0
+            x=x(:,2)-x(:,1);
+        end
+        
+        t	=	(1:length(x))/Fs;
+        
+        x			=	double(x)*sens;
     case 'WAV' %% Includes SUDAR data
+        
+        
         info	=	audioinfo(fullfile(mydir,myfile));
         %[~,Fs]		=	audioread(fullfile(mydir,myfile),1,'native');
         Nsamples	=	info.TotalSamples;
@@ -8915,8 +9003,7 @@ switch filetype
         
         [head.cable_factor,sens]=get_ADAT24_cable_factor;
         
-        
-        
+          
         try
             [SUDAR_true,tmin,tmax,Fs]=get_SUDAR_time(mydir,myfile); %Check whether a sUDAR file exists
             if SUDAR_true
