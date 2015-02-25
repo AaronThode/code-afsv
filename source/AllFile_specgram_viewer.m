@@ -239,7 +239,7 @@ function OpenMenuItem_Callback(hObject, eventdata, handles)
 %end
 
 %	List of supported file types + descriptions/names
-File_types	=	{'MT';'SIO';'WAV';'GSI';'ADI';'DAT';'MDAT';'PSD';'MAT';'M4V'};
+File_types	=	{'MT';'SIO';'WAV';'GSI';'ADI';'DAT';'MDAT';'PSD';'MAT';'MP4'};
 File_descs	=	...
     {	'MT files';...
      'SIO files';...
@@ -250,7 +250,7 @@ File_descs	=	...
     'MDAT files';...
     'PSD binary files'; ...
     'Simulations'; ...
-    'M4A,M4V (GoPro) files'};
+    'M4A,M4V,MP4 (GoPro) files'};
 
 %	 Setup menu file extensions
 menustr		=	cell(length(File_types)+1,1);
@@ -1442,7 +1442,7 @@ if exist('def_old','var')
     def{4}=num2str(1000*fmax);
     
 else
-    def = {'Date/Time','4*3600',num2str(1000*fmin),num2str(1000*fmax),'[90 140]','48*3600','[0.1 0.5 0.9]','line'};
+    def = {'Date/Time','4*3600',num2str(1000*fmin),num2str(1000*fmax),'[90 140]','48*3600','[0.001 0.01 0.1 0.25 0.5 0.75 0.9 0.99 0.999]','line'};
     
 end
 yes=1;
@@ -8946,7 +8946,7 @@ switch filetype
             5.178423592184026e+01
             -1.229223450332553e+00];
         
-    case 'M4V'
+    case {'M4V','MP4'}
         info	=	audioinfo(fullfile(mydir,myfile));
         info_vid = mmfileinfo(fullfile(mydir,myfile));
         %[~,Fs]		=	audioread(fullfile(mydir,myfile),1,'native');
