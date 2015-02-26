@@ -2240,7 +2240,7 @@ end
             
             contents=get(handles.popupmenu_ovlap,'String');
             param.ovlap=(contents{get(handles.popupmenu_ovlap,'Value')});
-            param_desc{K}='percent overlap';K=K+1;
+            param_desc{K}='Percent overlap';K=K+1;
             
             try
                 param.Fs=num2str(handles.sgram.Fs);param_desc{K}='Sampling rate (will be overidden for most files)';K=K+1;
@@ -2252,8 +2252,8 @@ end
             param.dumpsize='100000';param_desc{K}='JAVA dump size (points):';K=K+1;
             
             if ~isempty(strfind(Batch_mode,'Start Bulk Processing'))
-                param.nstart='0';param_desc{K}='number of samples to skip before processing:';K=K+1;
-                param.nsamples='0';param_desc{K}='number of samples to process:';K=K+1;
+                param.nstart='0';param_desc{K}='Number of samples to skip before processing:';K=K+1;
+                param.nsamples='0';param_desc{K}='Number of samples to process:';K=K+1;
             else
                 test_time=datenum(get(handles.edit_datestr,'String'))-datenum(0,0,0,0,burn_in_time,0);
                 if test_time<handles.tdate_min
@@ -2264,16 +2264,16 @@ end
                 param.nsamples=num2str(str2num(get(handles.edit_winlen,'String'))+60*burn_in_time);param_desc{K}='seconds to process:';K=K+1;
                 
             end
-            param.f_low=(get(handles.edit_fmin,'String'));param_desc{K}='minimum frequency (kHz)';K=K+1;
-            param.f_high=(get(handles.edit_fmax,'String'));param_desc{K}='maximum frequency (kHz)';K=K+1;
+            param.f_low=(get(handles.edit_fmin,'String'));param_desc{K}='Minimum frequency (kHz)';K=K+1;
+            param.f_high=(get(handles.edit_fmax,'String'));param_desc{K}='Maximum frequency (kHz)';K=K+1;
             %param.bandwidth=param.f_high-param.f_low;
             
             
             param.eq_time='10';   param_desc{K}='Equalization time (s): should be roughly twice the duration of signal of interest';K=K+1;
             param.bandwidth='.05';     param_desc{K}='Bandwidth of detector in kHz';K=K+1;
-            param.threshold='10';  param_desc{K}='threshold in dB to accept a detection';K=K+1;
+            param.threshold='10';  param_desc{K}='Threshold in dB to accept a detection';K=K+1;
             param.snips_chc='1';  param_desc{K}='0 for no snips file, 1 for snips file of one channel, 2 for snips file of all channels';K=K+1;
-            param.bufferTime='0.5'; param_desc{K}='buffer Time in seconds to store before and after each detection snip, -1 suppress snips file';K=K+1;
+            param.bufferTime='0.5'; param_desc{K}='Buffer Time in seconds to store before and after each detection snip, -1 suppress snips file';K=K+1;
             param.TolTime='1e-4';  param_desc{K}='Minimum time in seconds that must elapse for two detections to be listed as separate';K=K+1;
             param.MinTime='0';     param_desc{K}='Minimum time in seconds a required for a detection to be logged';K=K+1;
             param.MaxTime='3';     param_desc{K}= 'Maximum time in seconds a detection is permitted to have';K=K+1;
@@ -2403,7 +2403,37 @@ dlgTitle	=	['Parameters for  ' Batch_type];
 
 
 %	Create input dialogbox
-answer		=	inputdlg(Batch_desc, dlgTitle, num_lines, defaults,'on');
+%answer		=	inputdlg(Batch_desc, dlgTitle, num_lines, defaults,'on');
+
+%prep_inputsdlg;
+Options.Resize='on';
+Options.WindowStyle='normal';
+Options.Interpreter='tex';
+
+Prompt = {};
+Formats = {};
+DefAns = struct([]);
+Nrows_max=12;
+
+
+for II=1:length(names)
+  
+    Prompt(II,:) = {Batch_desc{II}, names{II},[]};
+    DefAns(1).(names{II}) = defaults{II};
+    
+     Icol=1;
+     Irow=II;
+     if II>Nrows_max
+        Icol=2;
+        Irow=II-Nrows_max;
+        
+     end
+     Formats(Irow,Icol).type = 'edit';
+     Formats(Irow,Icol).format = 'text';
+     Formats(Irow,Icol).span = [1 1];
+           
+end
+[answer,Cancelled] = inputsdlg(Prompt,dlgTitle,Formats,DefAns,Options);
 
 
 %	Put variables into output structure
@@ -2413,10 +2443,10 @@ if	isempty(answer)
 end
 
 for	ii	=	1:N_fields
-    Batch_vars.(names{ii})	=	answer{ii};
+    Batch_vars.(names{ii})	=	answer.(names{ii});
     if nargin>3
         try
-            Batch_vars.(names{ii})	=	eval(answer{ii});
+            Batch_vars.(names{ii})	=	eval(answer.(names{ii}));
         end
         
     end
@@ -6591,7 +6621,7 @@ end
 
 end  %disable_notes_nav
 
-
+%load_notes_file
 function	handles		=	load_notes_file(handles, new_folder,annotation_file_name)
 %new_folder can be empty if want to use annotation_file_name
 
@@ -7211,6 +7241,9 @@ transient_params=extract_transient_levels(full_snips_name,1:length(auto.ctime),a
     round(head.Fs),head.bufferTime, ...
     filter_transition_band,filter_passband_frequencies,run_options);
 
+if transient_params.success<0
+    return
+end
 
 hh	=	waitbar(0,sprintf('Importing %s...',sel_names));
 for JJ = 1:length(auto.ctime)

@@ -3,6 +3,8 @@
 
 function [x,dt,dz]=raytrace_MATLAB(ang_meas,dt_meas,scenario_chc,ssp_chc)
 
+global NB NT  %number of bottom and top bounces registered by ode45ray
+
 x=[];
 dt=[];
 dz=[];
@@ -68,6 +70,8 @@ sig_z=eval(answer{9});  %Uncertainty in depth
 zmax=eval(answer{10});
 
 best_err=zeros(1,length(tilt));
+Nbottom=best_err;
+Ntop=best_err;
 for Itilt=1:length(tilt)
     fprintf('Tilt: %6.2f deg\n',tilt(Itilt));
     clear x r z
@@ -90,6 +94,8 @@ for Itilt=1:length(tilt)
         fprintf('Starting ray %i, launch angle %6.2f deg\n',I,theta(I)*180/pi);
         [s,x{I}]=ode45ray(funname,0,send,x0, 1e-10,0,D);
         Nsamps=max([Nsamps length(s)]);
+        Nbottom(I)=NB;
+        Ntop(I)=NT;
     end
     
     clear r z

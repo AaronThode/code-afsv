@@ -39,6 +39,7 @@ function [tout, yout] = ode45(ypfun, t0, tfinal, y0, tol, trace, D)
 %	C.B. Moler, 3-25-87, 8-26-91, 9-08-92.
 %	Copyright (c) 1984-93 by The MathWorks, Inc.
 
+global NB NT %%number of bottom and top bounces registered by ode45ray
 % The Fehlberg coefficients:
 alpha = [1/4  3/8  12/13  1  1/2]';
 beta  = [ [    1      0      0     0      0    0]/4
@@ -53,6 +54,7 @@ if nargin < 5, tol = 1.e-6; end
 if nargin < 6, trace = 0; end
 
 % Initialization
+NB=0;NT=0; %Number of top and bottom bounces
 t = t0;
 hmax = (tfinal - t)/16;
 h = hmax/8;
@@ -83,6 +85,7 @@ while (t < tfinal) & (t + h >= t)
     z=y(2); 		%#
     if (z>=D)		%#
         disp('z greater than D')
+        NB=NB+1;
         %disp([y(4) z])		%#
         if y(4)>0
             y(4)=-y(4);
@@ -90,6 +93,7 @@ while (t < tfinal) & (t + h >= t)
        % h=hmax/8;
     elseif (z<=0)	%#
         disp('z is less than 0')
+        NT=NT+1;
         %disp([y(4) z]);
         y(4)=abs(y(4));	%#
     end			%#
