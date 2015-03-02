@@ -1228,7 +1228,7 @@ switch	Batch_mode
                             datestr(Tabs_all(1),30),datestr(Tabs_all(end),30),(pms.fmin(Iff)),(pms.fmax(Iff)),tmp);
                         sumPSD=PSD_all(Iff,:);  %Now power spectral density converted to power
                         pms.title=sprintf('Spectral power between %i and %i Hz, averaged %6.2f sec, beginning %s', ...
-                            pms.fmin(Iff),pms.fmax(Iff),sec_avg,datestr(Tabs_all(1)));
+                            pms.fmin(Iff),pms.fmax(Iff),pms.sec_inc,datestr(Tabs_all(1)));
                         [temp,hprint(Iff)]=create_percentile_distributions(Tabs_all, sumPSD,pms);
                         
                         
@@ -1280,7 +1280,7 @@ switch	Batch_mode
                             
                             colorbar
                             caxis(pms.y_limits);
-                            title(sprintf('%ith percentile, %6.2f s average, starting %s',100*pms.percentiles(Ipp),sec_avg,datestr(Tabs(1))));
+                            title(sprintf('%ith percentile, %6.2f s average, starting %s',100*pms.percentiles(Ipp),pms.sec_inc,datestr(Tabs(1))));
                             xlabel('Date/Time','fontweight','bold','fontsize',14);
                             ylabel('Frequency (Hz)','fontweight','bold','fontsize',14);
                             grid on;
@@ -1459,7 +1459,8 @@ while yes
     end
     
     pms.x_label=answer{1};
-    pms.x_inc=datenum(0,0,0,0,0,str2num(answer{2}));
+    pms.sec_inc=str2num(answer{2});
+    pms.x_inc=datenum(0,0,0,0,0,pms.sec_inc);
     pms.fmin=eval(answer{3});
     pms.fmax=eval(answer{4});
     pms.y_limits=eval(answer{5});

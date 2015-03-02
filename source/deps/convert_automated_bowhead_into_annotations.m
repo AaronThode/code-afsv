@@ -58,18 +58,20 @@ try
     
     %%Set flags for filtering
     filter_position=0;
-    if isfield(filter_params,'northing')&&isfield(filter_params,'easting')
+    if isfield(filter_params,'northing')&&isfield(filter_params,'easting')&&~(strcmp(lower(keyword),'all'))
         filter_position=1;  %Filter locations by position
     end
     
-    Igood= false(1,length(data.locations));
+    Igood= true(1,length(data.locations));
     
     %%Restrict annotations to certain UTM positions bounded by filt_param
     %%'northing' and 'easting' restrictions.
     if filter_position
+        Igood= false(1,length(data.locations));
+    
         poss=zeros(length(data.locations),2);
         h=waitbar(0,'Filtering positions.. wait');
-     
+        
         for I=1:length(data.locations)
             
             if rem(I,500)==0
@@ -91,9 +93,9 @@ try
         % Check our filtering
         %plot(poss(:,1),poss(:,2),'kx');hold on;grid on; axis('equal');
         %plot(poss(Igood,1),poss(Igood,2),'ro');hold on;grid on; axis('equal');
-        
+        close(h)
     end
-    close(h)
+    
     
     %%Finish filtering locations
     data.locations=data.locations(Igood);
@@ -104,8 +106,8 @@ try
     %We cycle through each station at each location to make hashtag processing
     %easier.
     Icount=ones(Ns,1);
-     h=waitbar(0,'Please wait');
-       
+    h=waitbar(0,'Please wait');
+    
     for I=1:length(data.locations)
         hashtags=-1*ones(Ns,1);
         isPresent=false(Ns,1);
@@ -140,7 +142,7 @@ try
             end
             
         end
-     
+        
     end  % I
     close(h)
     %Now write events to output file.  Check where folder location is...
@@ -157,7 +159,7 @@ try
     end
     success_flag=1;
 catch
-    success_flag=0;  
+    success_flag=0;
     MException.last
     %lasterr.identifier
     %lasterr.stack
@@ -192,47 +194,47 @@ newEvent.max_freq		=	max_freq;
 newEvent.duration		=	duration;
 newEvent.hash_tag       =   now+datenum(0,0,Ihash,0,0,0);  %Just need a unique number within a given event
 newEvent.link_names    =    cell2mat(annotation_names');
-       
+
 %Copy over rest of automated data into a separate 'automated' field
 names=fieldnames(location);
 for Iname=1:length(names)
-   switch names{Iname}
-       case 'feature'
-           newEvent.automated.feature=location.feature(Istation);
-       case 'equalization'
-          
-       case 'position'
-           newEvent.localization=location.position;
-           
-           %Since a position is guaranteed for this analysis, can compute
-           %range.  But just in case...
-           
-           try
-               newEvent.localization.range=sqrt((station_position.easting(Istation)-location.position.location(1)).^2+ ...
-                   (station_position.northing(Istation)-location.position.location(2)).^2);
-               newEvent.range=newEvent.localization.range/1000; %km
-               newEvent.localization.bearings_all=location.bearing;  %Store all bearings for plotting..
-               newEvent.localization.kappa=location.kappa;  %Store all bearings for plotting..
-               
-               newEvent.bearing=location.bearing(Istation);
-               newEvent.position=location.position.location;  %This is an editable field
-               newEvent.Istation=Istation; %Useful to identify where in bearings_all we are.
-               
-           catch
-              fprintf('convert_automated_bowhead_into_annotations: You cannot assign a range to this event: no position associated with this detection.\n'); 
-           end
-           
-           
-           
-       otherwise
-           temp=location.(names{Iname});
-           if length(temp)>=Istation
-               newEvent.automated.(names{Iname})=location.(names{Iname})(Istation);
-           else
-               newEvent.automated.(names{Iname})=location.(names{Iname})(end);
-               
-           end
-   end
+    switch names{Iname}
+        case 'feature'
+            newEvent.automated.feature=location.feature(Istation);
+        case 'equalization'
+            
+        case 'position'
+            newEvent.localization=location.position;
+            
+            %Since a position is guaranteed for this analysis, can compute
+            %range.  But just in case...
+            
+            try
+                newEvent.localization.range=sqrt((station_position.easting(Istation)-location.position.location(1)).^2+ ...
+                    (station_position.northing(Istation)-location.position.location(2)).^2);
+                newEvent.range=newEvent.localization.range/1000; %km
+                newEvent.localization.bearings_all=location.bearing;  %Store all bearings for plotting..
+                newEvent.localization.kappa=location.kappa;  %Store all bearings for plotting..
+                
+                newEvent.bearing=location.bearing(Istation);
+                newEvent.position=location.position.location;  %This is an editable field
+                newEvent.Istation=Istation; %Useful to identify where in bearings_all we are.
+                
+            catch
+                fprintf('convert_automated_bowhead_into_annotations: You cannot assign a range to this event: no position associated with this detection.\n');
+            end
+            
+            
+            
+        otherwise
+            temp=location.(names{Iname});
+            if length(temp)>=Istation
+                newEvent.automated.(names{Iname})=location.(names{Iname})(Istation);
+            else
+                newEvent.automated.(names{Iname})=location.(names{Iname})(end);
+                
+            end
+    end
     
     
 end

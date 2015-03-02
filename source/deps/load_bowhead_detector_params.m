@@ -22,7 +22,7 @@ cd(dirname);
 
 % Define a template for selecting files
 prompt={'Enter a template string for a location output file:', ...
-    'Enter geographical restriction (West,Center,East) or 2x2 UTC matrix:'};
+    'Enter geographical restriction (West,Center,East), 2x2 UTC matrix, or ''All'':'};
 name='File Template';
 numlines=1;
 options.Resize='on';
@@ -90,13 +90,15 @@ dl=abs(min(Site5_easting)-max(Site5_easting));  %How wide should a box be?  For 
 
 filter_params.easting=[min(Site5_easting)+xbuffer max(Site5_easting)-xbuffer];
 
-switch(answer{2})
-    case 'Center'
+switch(lower(answer{2}))
+    case 'center'
         %Keep the same
-    case 'West'
+    case 'west'
         filter_params.easting=filter_params.easting-(2*xbuffer+dl);
-    case 'East'
+    case 'east'
         filter_params.easting=filter_params.easting+(2*xbuffer+dl);
+    case 'all'
+        filter_params.easting=[];
     otherwise
         return
         

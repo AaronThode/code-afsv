@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="2633005061" file="/Users/thode/repos/code-afsv/Ulysses_Mac.prj" location="/Users/thode/repos/code-afsv" name="Ulysses_Mac" preferred-package-location="/Users/thode/repos/code-afsv/Ulysses_Mac/for_redistribution" preferred-package-type="package.type.app" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
+  <configuration build-checksum="1308223980" file="/Users/thode/repos/code-afsv/Ulysses_Mac.prj" location="/Users/thode/repos/code-afsv" name="Ulysses_Mac" preferred-package-location="/Users/thode/repos/code-afsv/Ulysses_Mac/for_redistribution" preferred-package-type="package.type.app" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
     <param.appname>Ulysses_Mac</param.appname>
     <param.icon>${PROJECT_ROOT}/Ulysses_Mac_resources/icon.icns</param.icon>
     <param.icons>
@@ -8,13 +8,13 @@
       <file>${PROJECT_ROOT}/Ulysses_Mac_resources/icon_24.png</file>
       <file>${PROJECT_ROOT}/Ulysses_Mac_resources/icon_16.png</file>
     </param.icons>
-    <param.version>1.9</param.version>
+    <param.version>1.95</param.version>
     <param.authnamewatermark>Aaron Thode</param.authnamewatermark>
     <param.email>athode@ucsd.edu</param.email>
     <param.company>MPL-SIO-UCSD</param.company>
     <param.summary />
     <param.description>Acoustic data analysis program</param.description>
-    <param.screenshot>${PROJECT_ROOT}/source/104703.JPG</param.screenshot>
+    <param.screenshot>${PROJECT_ROOT}/compiled/104703.JPG</param.screenshot>
     <param.guid />
     <param.installpath.string>Ulysses</param.installpath.string>
     <param.installpath.combo>option.installpath.systemwideapp</param.installpath.combo>
@@ -93,6 +93,7 @@
       <file>${PROJECT_ROOT}/source/deps/create_percentile_distributions.m</file>
       <file>${PROJECT_ROOT}/source/deps/crude_decimate_uneven.m</file>
       <file>${PROJECT_ROOT}/source/deps/ctime2str.m</file>
+      <file>${PROJECT_ROOT}/source/deps/dat2play.m</file>
       <file>${PROJECT_ROOT}/source/deps/delaynsum.m</file>
       <file>${PROJECT_ROOT}/source/deps/diffkr.m</file>
       <file>${PROJECT_ROOT}/source/deps/ellipse.m</file>
@@ -123,6 +124,7 @@
       <file>${PROJECT_ROOT}/source/deps/inputsdlg_demo_mine.m</file>
       <file>${PROJECT_ROOT}/source/deps/inputsdlg_demo_tile.m</file>
       <file>${PROJECT_ROOT}/source/deps/interval.m</file>
+      <file>${PROJECT_ROOT}/source/deps/invariant_range_estimate.m</file>
       <file>${PROJECT_ROOT}/source/deps/kurtosis.m</file>
       <file>${PROJECT_ROOT}/source/deps/linearcalc.m</file>
       <file>${PROJECT_ROOT}/source/deps/load_MFP_scenario.m</file>
@@ -197,7 +199,7 @@
       <vista>false</vista>
       <linux>false</linux>
       <solaris>false</solaris>
-      <osver>10.10.1</osver>
+      <osver>10.10.2</osver>
       <os32>false</os32>
       <os64>true</os64>
       <arch>maci64</arch>
