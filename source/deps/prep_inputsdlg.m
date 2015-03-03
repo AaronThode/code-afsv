@@ -6,7 +6,9 @@ Prompt = {};
 Formats = {};
 DefAns = struct([]);
 II=1;
+Iother=0;
 
+names
 while II<=length(names)
     
     
@@ -21,7 +23,13 @@ while II<=length(names)
             Formats(1,1).span = [1 1];
             %Formats(2,1).size = 200; % automatically assign the height
             %DefAns.(names{II}) = defaults{II};
-            
+%         case 'bearing'
+%             Formats(1,2).type = 'edit';
+%             Formats(1,2).format = 'text';
+%             Formats(1,2).span = [1 1];
+%             %Formats(2,1).size = 200; % automatically assign the height
+%             %DefAns.(names{II}) = defaults{II};
+%             
         case 'sig_type'
             Formats(2,1).type = 'list';
             Formats(2,1).format = 'text';
@@ -108,18 +116,28 @@ while II<=length(names)
             %Formats(7,1).items = {'*.itm','Auction Item File';'*.*','All Files'};
             Formats(8,1).span = [1 2];  % item is 1 field x 3 fields
             
-        case 'comments'
-            Formats(9,1).type = 'edit';
-            Formats(9,1).format = 'text';
-            Formats(9,1).limits = [0 3]; % multi-select files
-            Formats(9,1).size = [-1 -1];
-            %Formats(7,1).items = {'*.itm','Auction Item File';'*.*','All Files'};
-            Formats(9,1).span = [1 1];  % item is 1 field x 3 fields
+        case 'comments'  %%Always last field to add.
             
+            Irow=size(Formats,1)+1;
+            Icol=1;
+            Formats(Irow,1).type = 'edit';
+            Formats(Irow,1).format = 'text';
+            Formats(Irow,1).limits = [0 3]; % multi-select files
+            Formats(Irow,1).size = [-1 -1];
+            %Formats(7,1).items = {'*.itm','Auction Item File';'*.*','All Files'};
+            Formats(Irow,1).span = [1 2];  % item is 1 field x 3 fields
+%         case 'range'
+%             Formats(9,2).type = 'edit';
+%             Formats(9,2).format = 'text';
+%             Formats(9,2).span = [1 1];
+%             %Formats(2,1).size = 200; % automatically assign the height
+%             %DefAns.(names{II}) = defaults{II};
+%         
         otherwise
-           
-            Irow=ceil(II/2);
-            Icol=2-rem(II,2);
+            Iother=Iother+1;
+%             Irow=ceil(II/2);
+            Irow=ceil(Iother/2)+9;
+            Icol=2-rem(Iother,2);
             Prompt(II,:) = {Description{II}, names{II},[]};
             Formats(Irow,Icol).type = 'edit';
             Formats(Irow,Icol).format = 'text';
