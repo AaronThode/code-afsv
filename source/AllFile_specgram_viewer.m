@@ -242,7 +242,7 @@ function OpenMenuItem_Callback(hObject, eventdata, handles)
 File_types	=	{'MT';'SIO';'WAV';'GSI';'ADI';'DAT';'MDAT';'PSD';'MAT';'MP4'};
 File_descs	=	...
     {	'MT files';...
-     'SIO files';...
+    'SIO files';...
     'WAV files';...
     'GSI files';...
     'ADI files';...
@@ -933,7 +933,7 @@ switch	Batch_mode
                 
                 pms.y_label='dB re 1uPa';
                 Tabs=datenum(get(handles.edit_datestr,'String'))+datenum(0,0,0,0,0,Tnew);
-                 
+                
                 %%Process PSD matrix..
                 for Iff=1:length(pms.fmin)
                     Igood= (F>=pms.fmin(Iff)&F<=pms.fmax(Iff));
@@ -971,7 +971,7 @@ switch	Batch_mode
                     
                 end
                 
-               
+                
                 
         end
         
@@ -1236,12 +1236,12 @@ switch	Batch_mode
                             percents.data=zeros(length(pms.fmin),length(pms.percentiles),size(temp.data,2));
                             percents.x=temp.x;
                             percents.percentiles=pms.percentiles;
-%                             if suppress_output==0
-%                                 uiwait(msgbox('Please click on screen to print out percentiles used'));
-%                                 try
-%                                     gtext(sprintf('Percentiles: %s',num2str(pms.percentiles)),'fontweight','bold','fontsize',18)
-%                                 end
-%                             end
+                            %                             if suppress_output==0
+                            %                                 uiwait(msgbox('Please click on screen to print out percentiles used'));
+                            %                                 try
+                            %                                     gtext(sprintf('Percentiles: %s',num2str(pms.percentiles)),'fontweight','bold','fontsize',18)
+                            %                                 end
+                            %                             end
                         end
                         percents.data(Iff,:,:)=temp.data;
                         percents.title{Iff}=pms.title;
@@ -1435,7 +1435,7 @@ function pms=get_PSD_percentile_params(fmin,fmax,def_old)
 % pms.percentiles=eval(answer{7});
 % pms.plot_chc=answer{8};
 % pms.label_style
- 
+
 if exist('def_old','var')
     def=def_old;
     def{3}=num2str(1000*fmin);
@@ -1503,7 +1503,7 @@ while yes
             uiwait(msgbox('Invalid plot format selected, will just plot nothing'));
             pms.plot.none=true;
     end
-              
+    
     %%Determine what type of plot to use, if any
     if length(pms.fmin)>5&&~pms.plot.none
         ButtonName = questdlg(sprintf('You have chosen over %i frequency bands.  Use image plot instead?',length(pms.fmin)), ...
@@ -1516,8 +1516,8 @@ while yes
         end
         
     end
-                
-               
+    
+    
     
     % if pms.xlabel_inc>=datenum(0,0,0,12,0,0) %label spacing on order of days
     %     pms.label_style='dd';
@@ -2405,53 +2405,67 @@ dlgTitle	=	['Parameters for  ' Batch_type];
 
 %	Create input dialogbox
 %answer		=	inputdlg(Batch_desc, dlgTitle, num_lines, defaults,'on');
-
-%prep_inputsdlg;
-Options.Resize='on';
-Options.WindowStyle='normal';
-Options.Interpreter='tex';
-
-Prompt = {};
-Formats = {};
-DefAns = struct([]);
-Nrows_max=12;
-
-
-for II=1:length(names)
-  
-    Prompt(II,:) = {Batch_desc{II}, names{II},[]};
-    DefAns(1).(names{II}) = defaults{II};
+try
+    %prep_inputsdlg;
+    Options.Resize='on';
+    Options.WindowStyle='normal';
+    Options.Interpreter='tex';
     
-     Icol=1;
-     Irow=II;
-     if II>Nrows_max
-        Icol=2;
-        Irow=II-Nrows_max;
+    Prompt = {};
+    Formats = {};
+    DefAns = struct([]);
+    Nrows_max=12;
+    
+    
+    for II=1:length(names)
         
-     end
-     Formats(Irow,Icol).type = 'edit';
-     Formats(Irow,Icol).format = 'text';
-     Formats(Irow,Icol).span = [1 1];
-           
-end
-[answer,Cancelled] = inputsdlg(Prompt,dlgTitle,Formats,DefAns,Options);
-
-
-%	Put variables into output structure
-if	isempty(answer)
-    Batch_vars	=	[];
-    return;
-end
-
-for	ii	=	1:N_fields
-    Batch_vars.(names{ii})	=	answer.(names{ii});
-    if nargin>3
-        try
-            Batch_vars.(names{ii})	=	eval(answer.(names{ii}));
+        Prompt(II,:) = {Batch_desc{II}, names{II},[]};
+        DefAns(1).(names{II}) = defaults{II};
+        
+        Icol=1;
+        Irow=II;
+        if II>Nrows_max
+            Icol=2;
+            Irow=II-Nrows_max;
+            
         end
+        Formats(Irow,Icol).type = 'edit';
+        Formats(Irow,Icol).format = 'text';
+        Formats(Irow,Icol).span = [1 1];
         
     end
+    [answer,Cancelled] = inputsdlg(Prompt,dlgTitle,Formats,DefAns,Options);
+    
+    %	Put variables into output structure
+    if	isempty(answer)
+        Batch_vars	=	[];
+        return;
+    end
+    
+    for	ii	=	1:N_fields
+        Batch_vars.(names{ii})	=	answer.(names{ii});
+        if nargin>3
+            try
+                Batch_vars.(names{ii})	=	eval(answer.(names{ii}));
+            end
+            
+        end
+    end
+catch
+    answer		=	inputdlg(Batch_desc, dlgTitle, num_lines, defaults,'on');
+    for	ii	=	1:N_fields
+        Batch_vars.(names{ii})	=	answer{ii};
+        if nargin>3
+            try
+                Batch_vars.(names{ii})	=	eval(answer{ii});
+            end
+            
+        end
+    end
+    
 end
+
+
 
 Batch_names=fieldnames(Batch_vars);
 
@@ -3826,9 +3840,9 @@ elseif Ichc==4 %% simple time and delay on filtered signal...
     frange=[eval(answer{1}) eval(answer{2})];
     
     bpFilt = designfilt('bandpassiir', 'FilterOrder', 20, ...
-             'HalfPowerFrequency1', frange(1), 'HalfPowerFrequency2', frange(2),...
-             'SampleRate', Fs);
-  
+        'HalfPowerFrequency1', frange(1), 'HalfPowerFrequency2', frange(2),...
+        'SampleRate', Fs);
+    
     %fvtool(bpFilt);
     x=filter(bpFilt,x);
     
@@ -3949,18 +3963,18 @@ while yes>1
                 
                 %%Permit ray tracing if desired
                 prep_ray_trace;
-            
-            
+                
+                
             elseif strcmp(beamchc,'delaynsum') %Individual snapshots
-            
-           
+                
+                
                 Bsum=zeros(length(angles),size(x,1));
                 space=head.geom.rd(Igood_el);
                 space=space(2)-space(1);
                 for Isnap=1:length(angles)
                     if rem(Isnap,10)==0,disp(Isnap);end
                     xtot=delaynsum(x,-angles(Isnap),space,Fs,Igood_el,cc);
-                   % Bsum(Isnap,:)=abs(hilbert(xtot'));
+                    % Bsum(Isnap,:)=abs(hilbert(xtot'));
                     Bsum(Isnap,:)=xtot';
                 end
                 
@@ -4010,7 +4024,7 @@ while yes>1
                 figure(21)
                 uiwait(msgbox('Please select a box to cross-correlate with other beams (matched filter), hit return to skip:'));
                 tmp=ginput(2);
-               % tmp=[];
+                % tmp=[];
                 if isempty(tmp)
                     prep_ray_trace;
                     return
@@ -4023,14 +4037,14 @@ while yes>1
                 x_match=fliplr((Bsum_org(Iang,:)));Nx=length(x_match);
                 
                 for Iang=1:length(angles)
-                   Bsum_corr(Iang,:)= conv(x_match,Bsum_org(Iang,:),'same');
+                    Bsum_corr(Iang,:)= conv(x_match,Bsum_org(Iang,:),'same');
                     
                 end
                 Bsum_corr=20*log10(abs(hilbert(Bsum_corr.')))';
                 Bsum_corr=Bsum_corr-max(max(Bsum_corr));
                 %Bsum_conv=Bsum_conv./max(max(Bsum_conv));
                 %plot vs sin angle
-                 figure(22)
+                figure(22)
                 imagesc(1000*(1:size(Bsum_corr,2))/Fs,(angles),Bsum_corr);
                 caxis([-20 0]);colorbar
                 set(gca,'fontweight','bold','fontsize',14)
@@ -4039,19 +4053,19 @@ while yes>1
                 titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
                 title(titstr);grid on;orient landscape
                 xlimm=xlim;
-                 if diff(xlimm)<100
+                if diff(xlimm)<100
                     set(gca,'xtick',0:5:xlimm(2));
                 else
                     set(gca,'xtick',0:100:xlimm(2));
                     
                 end
                 printstr=sprintf('MatchSinAngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
-               % print(gcf,'-djpeg',[printstr '.jpg']);
-               % saveas(gcf,[printstr '.fig'],'fig')
-               %%Permit ray tracing if desired
-               prep_ray_trace;
-               
-            return
+                % print(gcf,'-djpeg',[printstr '.jpg']);
+                % saveas(gcf,[printstr '.fig'],'fig')
+                %%Permit ray tracing if desired
+                prep_ray_trace;
+                
+                return
             end
             
         case 3
@@ -4176,65 +4190,65 @@ end
         
         repeat=1;
         while repeat==1
-        ButtonName = questdlg('What to do?', 'Migration Analysis','Ray Tracing', 'Invariant Tracing', 'Nada', 'Nada');
-        switch ButtonName,
-            case 'Nada'
-                return
-            case 'Ray Tracing'
-                scenarios=raytrace_MATLAB;
-                [Selection,OK]=listdlg('liststring',scenarios,'SelectionMode','single');
-                if ~OK
+            ButtonName = questdlg('What to do?', 'Migration Analysis','Ray Tracing', 'Invariant Tracing', 'Nada', 'Nada');
+            switch ButtonName,
+                case 'Nada'
                     return
-                end
-                
-                %figure(21);pause(0.5);
-                %%Interpret results depending on plot
-                if strcmp(beamchc,'angvstime')||strcmp(beamchc,'delaynsum')
+                case 'Ray Tracing'
+                    scenarios=raytrace_MATLAB;
+                    [Selection,OK]=listdlg('liststring',scenarios,'SelectionMode','single');
+                    if ~OK
+                        return
+                    end
                     
-                    prompt1={'Number of paths to pick?'};
-                    def1={'0'};
-                    %Other defaults: MURI_Feb2014_20140218T140039,
-                    answer=inputdlg(prompt1,'Ray picks',1,def1);
-                    Nrays=str2num(answer{1});
-                    
-                    tmp=ginput(Nrays);
-                    
-                    
-                    dt=max(tmp(:,1))-tmp(:,1);  %Rays that arrive first will have positive numbers
-                    [dt_meas,Isort]=sort(dt);  %Arrange by first-arriving rays
-                    ang_meas=tmp(Isort,2);
-                elseif strcmp(beamchc,'freqvspwr')
-      
+                    %figure(21);pause(0.5);
+                    %%Interpret results depending on plot
+                    if strcmp(beamchc,'angvstime')||strcmp(beamchc,'delaynsum')
+                        
+                        prompt1={'Number of paths to pick?'};
+                        def1={'0'};
+                        %Other defaults: MURI_Feb2014_20140218T140039,
+                        answer=inputdlg(prompt1,'Ray picks',1,def1);
+                        Nrays=str2num(answer{1});
+                        
+                        tmp=ginput(Nrays);
+                        
+                        
+                        dt=max(tmp(:,1))-tmp(:,1);  %Rays that arrive first will have positive numbers
+                        [dt_meas,Isort]=sort(dt);  %Arrange by first-arriving rays
+                        ang_meas=tmp(Isort,2);
+                    elseif strcmp(beamchc,'freqvspwr')
+                        
                         ang_meas=(ray_angles2);
                         dt_meas=[dt_data];  %No relative arrival information
-                    
+                        
                         dt_meas=dt_meas-min(dt_meas);
                         [dt_meas,Isort]=sort(dt_meas);
                         ang_meas=ang_meas(Isort);
-                end
-                
-                [x,dt,dz]=raytrace_MATLAB(ang_meas,dt_meas,scenarios{Selection});
-            case 'Invariant Tracing'
-                
-                prompt1={'Ranges (km)','Beta','sound speed at receiver (m/sec)'};
-                
-                dlgTitle1='Parameters for invariant tracing...';
-                
-                def1={'[40:10:60 90:10:120]','-9','1481'};
-                answer=inputdlg(prompt1,dlgTitle1,1,def1);
-                
-                try
-                    figure(20);
-                    pause(0.5);
-                    invariant_range_estimate(eval(answer{1}),eval(answer{2}),eval(answer{3}));
-                catch
-                    uiwait(errordlg('Invariant Processing failed!')); 
-                end
-                
-                
-        end % switch
-        
-        repeat=menu('Another analysis?','Yes','No');
+                    end
+                    
+                    [x,dt,dz]=raytrace_MATLAB(ang_meas,dt_meas,scenarios{Selection});
+                case 'Invariant Tracing'
+                    
+                    prompt1={'Ranges (km)','Beta','sound speed at receiver (m/sec)'};
+                    
+                    dlgTitle1='Parameters for invariant tracing...';
+                    
+                    def1={'[40:10:60 90:10:120]','-9','1481'};
+                    answer=inputdlg(prompt1,dlgTitle1,1,def1);
+                    
+                    try
+                        figure(20);
+                        pause(0.5);
+                        invariant_range_estimate(eval(answer{1}),eval(answer{2}),eval(answer{3}));
+                    catch
+                        uiwait(errordlg('Invariant Processing failed!'));
+                    end
+                    
+                    
+            end % switch
+            
+            repeat=menu('Another analysis?','Yes','No');
         end
         
         
@@ -4406,10 +4420,10 @@ end
                 figure(III)
                 orient tall
                 
-                 ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
+                ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
                 printstr=sprintf('Beamforming_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
                 print(gcf,'-djpeg','-r300',[printstr '.jpg']);
-               
+                
                 print(gcf,'-djpeg','-r300',sprintf('Beamforming%s_%s_%ito%ideg_%4.2fres_%i.jpg', ...
                     beam_str,datestr(ttt,'yyyymmddTHHMMSS.FFF'),min(angles),max(angles),angles(2)-angles(1),III));
             end
@@ -9037,7 +9051,7 @@ switch filetype
         
         [head.cable_factor,sens]=get_ADAT24_cable_factor;
         
-          
+        
         try
             [SUDAR_true,tmin,tmax,Fs]=get_SUDAR_time(mydir,myfile); %Check whether a sUDAR file exists
             if SUDAR_true
