@@ -8594,15 +8594,42 @@ switch filetype
         head.Nchan=size(x,2);
         x=x';
     case 'GSI'
-        if strcmp(Ichan,'all')
+        
+         
+        
+        button_chc=get(handles.togglebutton_ChannelBeam,'String');
+        beamform_data=0;
+        get_geometry=0;
+        if strcmpi(button_chc,'angle')&&~strcmpi(Ichan,'all')
+            beamform_data=1;
+            get_geometry=1;
+        elseif strcmpi(Ichan,'all')
+            Ichan=1:3;
+            beamform_data=0;
+            get_geometry=1;
+        end
+        
+        if beamform_data==1
+            thta=-Ichan;
             Ichan=1:3;
         end
-        if max(Ichan)>3,
-            disp('Channel too high, restricting to 3');
-            Ichan=3;
+        
+        if beamform_data==0
+            if max(Ichan)>3
+                disp('Channel too high, restricting to 3');
+                Ichan=3;
+            end
+            
+            if min(Ichan)<1
+                disp('Channel too low, restricting to 1');
+                Ichan=1;
+            end
         end
+        
         [x,t,head]=readGSIfile([mydir '/' myfile],tdate_start,tlen,Ichan,'datenum','nocalibrate');
-        head.multichannel=false;
+        head.multichannel=true;
+        head.linked=true;
+        head.Nchan=3;
         
         if isempty(keyword)
             prompt = {'Enter a keyword for GSI calibration [DASARC]:'};
@@ -8623,8 +8650,14 @@ switch filetype
         
         tmin=datenum(1970,1,1,0,0,head.ctbc);
         tmax=tmin+datenum(0,0,1,0,0,0);
-        head.Nchan=length(Ichan);
-        head.linked=true;
+        %head.Nchan=length(Ichan);
+       if beamform_data==1
+             thta=head.brefa+thta;
+             x=x(:,1)+cos(thta*pi/180)*x(:,2)+sin(thta*pi/180)*x(:,3);
+ 
+           
+       end
+        
         
     case 'MT'
         %[x,t,Fs]=load_mt_mult(handles.mydir,tdate_start,tlen);

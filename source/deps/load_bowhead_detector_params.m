@@ -51,8 +51,12 @@ end
     'ListSize',[320 300]);
 
 list_names=list_names(Sel);
+%%Get site number
+
 for I=1:length(list_names)
+    Site_number(I)=str2num(list_names{I}(2));
     list_names{I}=fullfile(dirname,list_names{I});
+    
 end
 cd(mydir);
 
@@ -73,10 +77,48 @@ Site5_northing=[
     7809065
     7816110];
 
-%Save data to station_locations output variable
-station_locations.northing=Site5_northing;
-station_locations.easting=Site5_easting;
+Site4_easting=[
+    560332
+    554220
+    560195
+    554068
+    560066
+    553948
+    559900
+    541824
+    541960
+    554007
+    560054
+    554185
+    560126];
 
+Site4_northing=[
+    7794371
+    7798004
+    7801398
+    7805012
+    7808391
+    7812033
+    7815436
+    7811774
+    7804792
+    7819070
+    7822482
+    7826006
+    7829492];
+
+%Save data to station_locations output variable
+switch Site_number(1)
+    case 5
+        station_locations.northing=Site5_northing;
+        station_locations.easting=Site5_easting;
+    case 4
+        station_locations.northing=Site4_northing;
+        station_locations.easting=Site4_easting;
+        
+    otherwise
+        uiwait(errordlg('Can''t access Site location information'));
+end
 %What DASARS used to compute box?
 IDASAR=logical([1 1 1 1 1 1]);  %DASARS CDEG
 
