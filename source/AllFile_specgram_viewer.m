@@ -8610,7 +8610,7 @@ switch filetype
         end
         
         if beamform_data==1
-            thta=-Ichan;
+            thta=Ichan;
             Ichan=1:3;
         end
         
@@ -8652,9 +8652,9 @@ switch filetype
         tmax=tmin+datenum(0,0,1,0,0,0);
         %head.Nchan=length(Ichan);
        if beamform_data==1
-             thta=head.brefa+thta;
-             x=x(:,1)+cos(thta*pi/180)*x(:,2)+sin(thta*pi/180)*x(:,3);
- 
+             thta=thta-head.brefa;
+             x=x(:,1)+sin(thta*pi/180)*x(:,2)+cos(thta*pi/180)*x(:,3);
+             x=x/3; %Turn into equivalent of one channel.
            
        end
         
