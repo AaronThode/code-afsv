@@ -31,7 +31,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 01-Oct-2014 16:39:29
+% Last Modified by GUIDE v2.5 10-Mar-2015 21:50:11
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -2652,8 +2652,52 @@ function popupmenu_Nfft_Callback(hObject, eventdata, handles)
 % Hints: contents = get(hObject,'String') returns popupmenu_Nfft contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from popupmenu_Nfft
 
+
+if get(handles.checkbox_sameNfft,'Value') %%if same checkbox on
+   set(handles.popupmenu_WindowSize,'Value',get(handles.popupmenu_Nfft,'Value')); 
 end
 % --- Executes during object creation, after setting all properties.
+end
+
+% --- Executes on button press in checkbox_sameNfft.
+function checkbox_sameNfft_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_sameNfft (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_sameNfft
+if get(hObject,'Value')
+   set(handles.popupmenu_WindowSize,'Value',get(handles.popupmenu_Nfft,'Value')); 
+   set(handles.popupmenu_WindowSize,'Enable','off');  %Don't allow to be set...
+else
+    set(handles.popupmenu_WindowSize,'Enable','on');
+end
+
+end
+% --- Executes on selection change in popupmenu_WindowSize.
+function popupmenu_WindowSize_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenu_WindowSize (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu_WindowSize contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenu_WindowSize
+
+end
+
+% --- Executes during object creation, after setting all properties.
+function popupmenu_WindowSize_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenu_WindowSize (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+end
+
 function popupmenu_ovlap_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to popupmenu_ovlap (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -3153,7 +3197,10 @@ if strcmpi(handles.filetype,'MDAT')
             end
             subplot(4,2,Iplot);
             
-            [~,FF,TT,B] = spectrogram(x(Ichan,:),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
+            contents=get(handles.popupmenu_WindowSize,'String');
+            Nfft_window=str2double(contents{get(handles.popupmenu_WindowSize,'Value')});
+            
+            [~,FF,TT,B] = spectrogram(x(Ichan,:),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs);
             %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
             %axes(handles.axes1);
             imagesc(TT,FF,10*log10(B));%
@@ -4475,7 +4522,10 @@ handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String')
 for Ichan=1:head.Nchan
     
     %%Test 1
-    [S,FF,TT,B] = spectrogram(x(:,Ichan)-mean(x(:,Ichan)),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
+    contents=get(handles.popupmenu_WindowSize,'String');
+    Nfft_window=str2double(contents{get(handles.popupmenu_WindowSize,'Value')});
+    
+    [S,FF,TT,B] = spectrogram(x(:,Ichan)-mean(x(:,Ichan)),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs);
     [junk,Iwant]=min(abs(twant-TT));
     Bslice(:,Ichan)=B(:,Iwant); %#ok<*AGROW>
     
@@ -4629,13 +4679,17 @@ for I=1:(head.Nchan-Ioffset)
     grid on
     title(sprintf('Element %i, leads previous by %10.6f m with %0.5g, max negative value is %i percent of max',I+1,offsets(I+1), maxval(I,1),round(100*maxval(I,2)/maxval(I,1))));
     
+    contents=get(handles.popupmenu_WindowSize,'String');
+    Nfft_window=str2double(contents{get(handles.popupmenu_WindowSize,'Value')});
+    
+    
     subplot(3,1,2)
-    [S,FF,TT,B] = spectrogram(y(:,I),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
+    [S,FF,TT,B] = spectrogram(y(:,I),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs);
     imagesc(TT,FF/1000,10*log10(B));%
     axis('xy');ylim([minfreq maxfreq]/1000);caxis([40 120]);
     
     subplot(3,1,3)
-    [S,FF,TT,B] = spectrogram(y(:,I+Ioffset),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
+    [S,FF,TT,B] = spectrogram(y(:,I+Ioffset),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs);
     imagesc(TT,FF/1000,10*log10(B));%
     axis('xy');ylim([minfreq maxfreq]/1000);caxis([40 120]);
     
@@ -8072,6 +8126,9 @@ else
     contents=get(handles.popupmenu_Nfft,'String');
     Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
     
+    contents=get(handles.popupmenu_WindowSize,'String');
+    Nfft_window=str2double(contents{get(handles.popupmenu_WindowSize,'Value')});
+    
     contents=get(handles.popupmenu_ovlap,'String');
     ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
     ovlap=min([1-1/Nfft ovlap]);
@@ -8098,7 +8155,7 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
         return
     end
     if ~(strcmp(handles.filetype,'PSD'))
-        [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
+        [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs);
         %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
         %     For real signals, variable 'B'
         %     returns the one-sided modified periodogram estimate of the PSD of each
@@ -8227,7 +8284,10 @@ elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
     alg_chc=str2double(answer{4});
     
     if alg_chc==1
-        [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft),round(ovlap*Nfft),Nfft,Fs);
+        contents=get(handles.popupmenu_WindowSize,'String');
+        Nfft_window=str2double(contents{get(handles.popupmenu_WindowSize,'Value')});
+    
+        [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs);
         [mean_corr_org,tindex,TT_plot,pwr,pwr_tot,yscale]= create_incoherent_correlogram(TT,FF,B,param,fmin,fmax);
         
         
@@ -11321,6 +11381,10 @@ for II=18:20
     print('-djpeg','-r300',sprintf('ModeTiltWarpInversion_%i',II));
 end
 end
+
+
+
+
 
 
 
