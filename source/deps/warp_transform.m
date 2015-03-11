@@ -120,7 +120,7 @@ for Iguess=1:length(r_guess)
     time=r_guess(Iguess)/c1:1/Fe:r_guess(Iguess)/c1+(N_ok-1)/Fe;
     
     % The warped signal will be s_w
-    [s_w, Fe_w]=warp_temp(sig_rec_t,Fe,r_guess(Iguess),c1);
+    [s_w, Fe_w]=warp_temp_exa(sig_rec_t,Fe,r_guess(Iguess),c1);
     M=length(s_w);
     
     tfr_w=tfrstft(s_w,1:M,Nfft,hamming(N_window_w));
@@ -209,7 +209,7 @@ for J=1:Nroi
     
     %%The trick below works if the FFT spectrogram is computed for every sample...
     [mode_temp_warp]=real(sum(mode_rtf_warp,1));
-    s_filt(:,J)=iwarp_temp(mode_temp_warp,Fe_w,r_guess,c1,Fe,N_ok)';
+    s_filt(:,J)=iwarp_temp_exa(mode_temp_warp,Fe_w,r_guess,c1,Fe,N_ok)';
     
     if plot_chc==1
         figure(11);

@@ -1,4 +1,4 @@
-function [s_w, Fe_w]=warp_temp(s,Fe,r,c)
+function [s_w, Fe_w]=warp_temp_exa(s,Fe,r,c)
 
 if iscolumn(s)
     s=s';
