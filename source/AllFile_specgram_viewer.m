@@ -72,16 +72,22 @@ function AllFile_specgram_viewer_OpeningFcn(hObject, eventdata, handles, varargi
 %   (2) Function handles file name and location
 %   (3) Multipath results file name and location
 
+if ispc
+    deskPath=['C:/Users/' char(java.lang.System.getProperty('user.name')) '/Desktop/'];
+else
+    deskPath='~/Desktop/';
+end
+
 if ~ isdeployed
-    path('~/Desktop/Ulysses',path);
-    path('~/Desktop/Ulysses/deps',path);
+    path([deskPath 'Ulysses'],path);
+    path([deskPath 'Ulysses/deps'],path);
 end
 
 startupinfo		=	gui_startup_information;
 
 %Make a splash screen
 try
-    s = SplashScreen( 'Splashscreen', '~/Desktop/Ulysses/104703.JPG', ...
+    s = SplashScreen( 'Splashscreen', [deskPath 'Ulysses/104703.JPG'], ...
         'ProgressBar', 'on', ...
         'ProgressPosition', 5, ...
         'ProgressRatio', 0.4 );
@@ -3151,7 +3157,13 @@ try
 catch
     disp('No filtering desired... exists; saving raw acoustic data to WAV');
     xfilt=[];
-    audiowrite([save_path '.wav'],(x/(1.1*max(max(abs(x))))),Fs);
+    matVers=version('-release');
+    
+    if(str2double(matVers(1:4))>2012 || strcmp(matVers,'2012b'))
+        audiowrite([save_path '.wav'],(x/(1.1*max(max(abs(x))))),Fs);
+    else
+        wavwrite(x/(1.1*max(max(abs(x)))),Fs,[save_path '.wav']);
+    end
     
 end
 save([save_path '.mat'],'x','xfilt','Fs','tdate_start','hdr');
@@ -11146,7 +11158,7 @@ mydir=pwd;
 Ichan	=	str2double(get(handles.edit_chan,'String'));  %Hardwire first channel
 
 if ~strcmp(handles.filetype,'MDAT')
-    [x0,~,Fs,~,~,hdr]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
+    [x0,~,Fs,~,~,hdr]=load_data(handles.filetype,tdate_start,tlen,Ichan,handles);
     Ichan=1;Nchan=1;
 else
     Nchan=1:16;
@@ -11157,12 +11169,6 @@ else
     [x0,~,Fs,~,~,hdr]=load_data(handles.filetype,tdate_start,tlen,Nchan,handles);
     Nchan=1:size(x0,1);
 end
-
-RR=10;  %Decimation factor
-for I=Nchan
-    x(I,:)=decimate(x0(I,:),RR,'FIR');
-end
-Fs=Fs/RR;
 
 contents=get(handles.popupmenu_Nfft,'String');
 Nfft=(contents{get(handles.popupmenu_Nfft,'Value')});
@@ -11194,11 +11200,24 @@ fstart=(tmp(1:(end-1),2)*1000);
 fend=(tmp(2:end,2)*1000);
 tsweep=abs(tmp(2:end,1)-tmp(1:(end-1),1));
 
+RR=round(Fs/3/max(tmp(:,2))/1e3); %Decimation factor
+
+for I=Nchan
+    x(I,:)=decimate(x0(I,:),RR,'FIR');
+end
+
+Fs=Fs/RR;
+N_window=1+2*ceil((ceil(N_window/RR))/2);
+N_window_w=1+2*ceil((ceil(N_window_w/RR))/2);
+Nfft=2^nextpow2(Nfft/RR);
+
+% Bandpass filter to delete all signal outside [minfreq maxfreq]
 minfreq=min([fstart(1) fend(end)]); maxfreq=max([fstart(1) fend(end)]);
 frange=[0.8*minfreq minfreq maxfreq maxfreq+0.2*minfreq];
 [N,Fo,Ao,W] = firpmord(frange,[0 1 0],[0.05 0.01 0.1],Fs);
 B = firpm(N,Fo,Ao,W);
 y=filter(B,1,x(Ichan,:)-mean(x(Ichan,:)));
+
 %[s_w,mode_t,spectro_w,time_w, freq_w, filter_mask, Fe_w]=
 modes=warp_transform(1,hilbert(y.'),r_guess,c1,Fs, Nfft, N_window,N_window_w,n_limit,tsweep,fstart,fend,[],hdr.geom.rd(Ichan));
 %close all
@@ -11296,6 +11315,8 @@ for Im=1:MM(2)
     %tmp=sum(Umode.^2);
     %[junk,Imax]=max(tmp);
     
+    %save('vars','Umode','hdr','Ifreq_plot')
+    
     figure(20);
     subplot(MM(2),3,3*Im-2);
     plot(abs(Umode(:,Ifreq_plot)),hdr.geom.rd,'o-');grid;axis('ij')
@@ -11382,10 +11403,6 @@ for II=18:20
     print('-djpeg','-r300',sprintf('ModeTiltWarpInversion_%i',II));
 end
 end
-
-
-
-
 
 
 
