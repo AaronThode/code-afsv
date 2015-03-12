@@ -9146,9 +9146,10 @@ switch filetype
         
         
         try
-            [SUDAR_true,tmin,tmax,Fs]=get_SUDAR_time(mydir,myfile); %Check whether a sUDAR file exists
+            [SUDAR_true,tmin,tmax,FsSUDAR]=get_SUDAR_time(mydir,myfile); %Check whether a sUDAR file exists
             if SUDAR_true
                 sens=(10^(186/20))/(2^15);
+                Fs=FsSUDAR;
                 
             end
             if ~SUDAR_true

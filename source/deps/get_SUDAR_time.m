@@ -8,6 +8,7 @@ fname_found=dir(fname_log);
 if isempty(fname_found)
     tmin=[];
     tmax=[];
+    Fs=[];
     return
 end
 SUDAR_true=true;

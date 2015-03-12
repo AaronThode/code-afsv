@@ -67,11 +67,13 @@ param.energy.nsamples=floor(tlen*param.Fs);
 
 %param.energy=alter_parameters(param.energy);
 %%Write energy detector scripts
-if ~isempty(findstr(lower(computer),'mac')),
-    slashstr='/';
-else
-    slashstr='\';
-end
+% if ~isempty(findstr(lower(computer),'mac')),
+%     slashstr='/';
+% else
+%     slashstr='\';
+% end
+slashstr=filesep;
+
 
 Islash=max(findstr(fname,slashstr));
 param.energy.exten=fname((Islash+1):end);
@@ -178,7 +180,7 @@ for J=1:length(hfigs)
         %Start time of peak detection in seconds.
             %For AFSV window, subtract the burn in time (represented by
             %tview(1).
-        ttstart=(data_all.nstart(I)/param.Fs)-(2-J)*tview(1);  
+        ttstart=(data_all.nstart(I)/param.Fs)-(2-J)*tview(1)-0.35;  
         tduration=data_all.npt(I)/param.Fs;  %duration across all bands
         
         %Vertical line of frequency extent
