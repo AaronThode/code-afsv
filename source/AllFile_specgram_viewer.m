@@ -8592,6 +8592,7 @@ end
 
 function [x,t,Fs,tmin,tmax,head]	=	...
     load_data(filetype,tdate_start,tlen,Ichan,handles)
+
 %%% tmin,tmax, t are datenumbers
 %   x rows are samples, columns are channels
 %   head.geom.rd:  If multiple channels are present, this gives spacing
@@ -9044,6 +9045,7 @@ switch filetype
         head.Nchan=size(x,2);
         beamform_data=0;
         get_geometry=1;
+        
         if strcmpi(sio_chc,'angle')&&~strcmpi(Ichan,'all')
             beamform_data=1;
             get_geometry=1;
@@ -9057,12 +9059,12 @@ switch filetype
             thta=-Ichan;
             Ichan=1:head.Nchan;
         end
-        
+
         if max(Ichan)>head.Nchan
             disp(sprintf('Channel too high, max channel %i',head.Nchan));
             Ichan=head.Nchan;
         end
-        
+
         try
             x=x(:,Ichan);
             for II=Ichan
@@ -11190,36 +11192,15 @@ c1=eval(answer{2});
 Nfft=eval(answer{3});
 N_window=round(eval(answer{4}));
 N_window_w=round(eval(answer{5}));
-n_limit=eval(answer{6});
-Npts=eval(answer{7});
 
-%Select FM-sweep guess...
-fprintf('Select %i points from lowest-order mode (best guess of original FM structure:)\n',Npts);
-tmp=ginput(Npts);
-fstart=(tmp(1:(end-1),2)*1000);
-fend=(tmp(2:end,2)*1000);
-tsweep=abs(tmp(2:end,1)-tmp(1:(end-1),1));
-
-RR=round(Fs/3/max(tmp(:,2))/1e3); %Decimation factor
-
-for I=Nchan
-    x(I,:)=decimate(x0(I,:),RR,'FIR');
+s_temp=size(x0);
+if s_temp(1)>s_temp(2)
+    x0=x0';
 end
 
-Fs=Fs/RR;
-N_window=1+2*ceil((ceil(N_window/RR))/2);
-N_window_w=1+2*ceil((ceil(N_window_w/RR))/2);
-Nfft=2^nextpow2(Nfft/RR);
+filt=Whale_main_fun(x0,Fs,r_guess,c1,Nfft,N_window,1);
+%Whale_multi_hydro(filt,x0(2,:)',Fs,N_window,Nfft,r_guess,c1);
 
-% Bandpass filter to delete all signal outside [minfreq maxfreq]
-minfreq=min([fstart(1) fend(end)]); maxfreq=max([fstart(1) fend(end)]);
-frange=[0.8*minfreq minfreq maxfreq maxfreq+0.2*minfreq];
-[N,Fo,Ao,W] = firpmord(frange,[0 1 0],[0.05 0.01 0.1],Fs);
-B = firpm(N,Fo,Ao,W);
-y=filter(B,1,x(Ichan,:)-mean(x(Ichan,:)));
-
-%[s_w,mode_t,spectro_w,time_w, freq_w, filter_mask, Fe_w]=
-modes=warp_transform(1,hilbert(y.'),r_guess,c1,Fs, Nfft, N_window,N_window_w,n_limit,tsweep,fstart,fend,[],hdr.geom.rd(Ichan));
 %close all
 MM=size(modes.s_filt);
 if MM(1)>0
