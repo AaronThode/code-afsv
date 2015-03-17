@@ -3648,11 +3648,11 @@ function pushbutton_GSI_localization_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_GSI_localization (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-NDasar=7;
+strr=upper('abcdefghijklmnopqrstuvwxyz');
+numm=['012'];
+NDasar=length(strr);
 theta=-2*ones(1,NDasar);
 kappa=theta;
-strr=upper('abcdefghijklm');
 
 if ~strcmp(handles.mydir(end-6),'S')
     fprintf('Directory %s does not have form S***** \n',handles.mydir);
@@ -3660,17 +3660,36 @@ if ~strcmp(handles.mydir(end-6),'S')
 end
 for Idasar=1:NDasar
     %%Assume final directoryname containing files is of the form 'S510G0/'
+    directory_flag=false;
+    Inum=1;
+    while ~directory_flag
+        
+        handles.mydir(end-2)=strr(Idasar);
+        handles.mydir(end-1)=numm(Inum);
+        %%S510G0T20100831T000000.gsi form
+        handles.myfile(5)=strr(Idasar);
+        handles.myfile(6)=numm(Inum);
+        if exist(handles.mydir,'dir')==7
+            directory_flag=true;
+            fprintf('Directory %s contains %s\n',handles.mydir,handles.myfile);
+        else
+            Inum=Inum+1;
+            if Inum==length(numm)
+                directory_flag=true;
+            end
+        end
+        
+    end
     
+    if Inum==length(numm) %No directory found...
+        continue
+    end
     
-    handles.mydir(end-2)=strr(Idasar);
-    %%S510G0T20100831T000000.gsi form
-    handles.myfile(5)=strr(Idasar);
-    fprintf('Directory %s contains %s\n',handles.mydir,handles.myfile);
     try
         handles		=	load_and_display_spectrogram(handles);
         [theta(Idasar),kappa(Idasar),tsec]=get_GSI_bearing(hObject,eventdata,handles);
     catch
-        disp('Directory does not exist');
+        disp(sprintf('Directory %s, file %s does not exist',handles.mydir,handles.myfile));
     end
     
     
@@ -3697,7 +3716,10 @@ if faill
     dlgTitle1='Parameters for GSI localization...';
     %def1={'/Volumes/ThodePortable2/2010_Beaufort_Shell_DASAR/DASAR_locations_2010.mat', '5','[4.174860699660919e+05 7.817274204098196e+06]'};
     %'/Volumes/Data/Shell2010_GSI_Data/DASARlocations/DASAR_locations_2010.mat',
-    def1={[filesep fullfile('Volumes','Data','Shell2010_GSI_Data','DASARlocations','DASAR_locations_2010.mat')], '5','[4.174860699660919e+05 7.817274204098196e+06]'};
+    Iyear=findstr(handles.mydir,'Shell')+length('Shell');
+    year=handles.mydir(Iyear+(0:3));
+    default_location_dir=fullfile('/Volumes','Data',sprintf('Shell%s_GSI_Data',year),'DASARlocations',sprintf('DASAR_locations_%s.mat',year));
+    def1={default_location_dir, '5','[4.174860699660919e+05 7.817274204098196e+06]'};
     answer=inputdlg(prompt1,dlgTitle1,1,def1);
     locs=load(answer{1});
     Isite=str2double(answer{2});
@@ -8725,9 +8747,11 @@ switch filetype
         tmax=tmin+datenum(0,0,1,0,0,0);
         %head.Nchan=length(Ichan);
        if beamform_data==1
+             %y=x(:,1)-fudge_factor_velocity*(cos(angles(I)*pi/180)*x(:,3)+sin(angles(I)*pi/180)*x(:,2)); %switch x and y to get compass bearing
+   
              thta=thta-head.brefa;
              x=x(:,1)+sin(thta*pi/180)*x(:,2)+cos(thta*pi/180)*x(:,3);
-             x=x/3; %Turn into equivalent of one channel.
+             x=x/2; %Turn into equivalent of one channel.
            
        end
         
