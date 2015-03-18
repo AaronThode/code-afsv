@@ -145,7 +145,13 @@ handles.buttongroup.multichan(2)=handles.edit_chan;
 handles.buttongroup.GSI(1)=handles.pushbutton_GSIbearing;
 handles.buttongroup.GSI(2)=handles.pushbutton_GSI_localization;
 %Set default template 
-handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
+if strfind(getenv('USER'),'thode')
+    handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
+    
+else %Cedric to modify
+    handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
+    
+end
     
 handles.buttongroup.accelerometer(1)=handles.edit_normal_rotation;
 handles.buttongroup.accelerometer(2)=handles.text_normal_rotation;
