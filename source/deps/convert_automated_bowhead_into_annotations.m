@@ -248,10 +248,17 @@ for Iname=1:length(names)
                 newEvent.localization.range=sqrt((station_position.easting(Istation)-location.position.location(1)).^2+ ...
                     (station_position.northing(Istation)-location.position.location(2)).^2);
                 newEvent.range=newEvent.localization.range/1000; %km
-                newEvent.localization.bearings_all=location.bearing;  %Store all bearings for plotting..
-                newEvent.localization.kappa=location.kappa;  %Store all bearings for plotting..
                 
-                newEvent.bearing=location.bearing(Istation);
+                %Reject all bearings that do not contribute to a
+                %localization...
+                newEvent.localization.bearings_all=NaN*ones(size(location.bearing));
+                newEvent.localization.kappa=NaN*ones(size(location.bearing));
+                Ikeep=location.position.Ikeep;
+                
+                newEvent.localization.bearings_all(Ikeep)=location.bearing(Ikeep);  %Store all bearings for plotting..
+                newEvent.localization.kappa(Ikeep)=location.kappa(Ikeep);  %Store all kappa for plotting..
+                
+                newEvent.bearing=newEvent.localization.bearings_all(Istation);
                 newEvent.position=location.position.location;  %This is an editable field
                 newEvent.Istation=Istation; %Useful to identify where in bearings_all we are.
                 

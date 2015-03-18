@@ -144,7 +144,9 @@ handles.buttongroup.multichan(2)=handles.edit_chan;
 
 handles.buttongroup.GSI(1)=handles.pushbutton_GSIbearing;
 handles.buttongroup.GSI(2)=handles.pushbutton_GSI_localization;
-
+%Set default template 
+handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
+    
 handles.buttongroup.accelerometer(1)=handles.edit_normal_rotation;
 handles.buttongroup.accelerometer(2)=handles.text_normal_rotation;
 
@@ -3718,8 +3720,11 @@ if faill
     %'/Volumes/Data/Shell2010_GSI_Data/DASARlocations/DASAR_locations_2010.mat',
     Iyear=findstr(handles.mydir,'Shell')+length('Shell');
     year=handles.mydir(Iyear+(0:3));
-    default_location_dir=fullfile('/Volumes','Data',sprintf('Shell%s_GSI_Data',year),'DASARlocations',sprintf('DASAR_locations_%s.mat',year));
-    def1={default_location_dir, '5','[4.174860699660919e+05 7.817274204098196e+06]'};
+    %handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
+    %GSI_location_dir=fullfile('/Volumes','Data',sprintf('Shell%s_GSI_Data',year),'DASARlocations',sprintf('DASAR_locations_%s.mat',year));
+    GSI_location_dir=sprintf(handles.GSI_location_dir_template,year,year);
+    
+    def1={GSI_location_dir, '5','[4.174860699660919e+05 7.817274204098196e+06]'};
     answer=inputdlg(prompt1,dlgTitle1,1,def1);
     locs=load(answer{1});
     Isite=str2double(answer{2});
@@ -10755,7 +10760,7 @@ function bowhead_detector_Callback(hObject, eventdata, handles)
 
 %Load list of file names to be converted, along with criteria for filtering
 % the results into annotation (e.g. geographic restrictions...)
-[list_names,filter_params,station_position]=load_bowhead_detector_params(handles.outputdir);
+[list_names,filter_params,station_position]=load_bowhead_detector_params(handles.outputdir,handles.GSI_location_dir_template);
 if isempty(list_names)
     return
 end
