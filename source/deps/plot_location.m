@@ -1,4 +1,4 @@
-function  [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,linel,Istation)
+function  [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,linel,Istation,VM_extra)
 %DASAR_coords are [NDASAR 2] matrix
 % bearings is a vector in degrees, map definition (0=north, increasing
 %   clockwise to east).
@@ -6,8 +6,11 @@ function  [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM
 % VM,A,B,ANG: all provided direcly from vmests, in units of meters....
 %  linel: length of bearing line in km...
 %  Istation: line to emphasize
+% extra_VM: additional point to plot...
 
-
+if nargin<10
+    VM_extra=[];
+end
 if nargin==3
     VM=[];
     A=[];
@@ -58,6 +61,11 @@ if ~isempty(VM)
     plot(VMn(1),VMn(2),'ks','markerfacecolor',[0 0 0],'markersize',5);
 end
 
+if ~isempty(VM_extra)
+    VM_extra=VM_extra/1000;
+    VMn=[VM_extra(:,1)-xg VM_extra(:,2)-yg];
+    plot(VMn(1),VMn(2),'gd','markerfacecolor',[0 0 0],'markersize',5);
+end
 
 %Plot error elipps
 if ~isempty(A)

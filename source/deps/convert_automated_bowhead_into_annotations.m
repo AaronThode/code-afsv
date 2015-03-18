@@ -1,8 +1,9 @@
 function success_flag=convert_automated_bowhead_into_annotations(list_names,filter_params,station_position)
-%function success_flag=convert_automated_bowhead_into_annotations(list_names,filter_params)
+%function success_flag=convert_automated_bowhead_into_annotations(list_names,filter_params,station_position)
 %  Creates an annotation event from a location structure
 %  Note that the Event will have 'automated' and 'localization' fields,
 %   which are not present in a standard manual annotation.
+%  if filter_params.keyword=''all'' then no position filtering...
 
 
 try
@@ -59,14 +60,48 @@ try
     %%Set flags for filtering
     filter_position=0;
     if isfield(filter_params,'northing')&&isfield(filter_params,'easting')&&~(strcmp(lower(keyword),'all'))
-        filter_position=1;  %Filter locations by position
+        filter_position=1;  %Filter locations by position (rectangle)
+    end
+    
+    if isfield(filter_params,'range')&&isfield(filter_params,'UTM_center')&&~(strcmp(lower(keyword),'all'))
+        filter_position=2;  %Filter locations by position (circle)
+        rangee=-1*ones(1,length(data.locations));
     end
     
     Igood= true(1,length(data.locations));
     
     %%Restrict annotations to certain UTM positions bounded by filt_param
     %%'northing' and 'easting' restrictions.
-    if filter_position
+    if filter_position==2
+        Igood= false(1,length(data.locations));
+    
+        poss=zeros(length(data.locations),2);
+        h=waitbar(0,'Filtering positions.. wait');
+        for I=1:length(data.locations)
+            
+            if rem(I,500)==0
+                waitbar(I/length(data.locations),h);
+                
+            end
+            if ~strcmp(data.locations{I}.position.outcome,'successful')
+                continue
+            end
+            
+            %Does succesfull localization fit?
+            pos=data.locations{I}.position.location;
+            poss(I,:)=pos;
+            tmp=[pos(1)-filter_params.UTM_center(1) pos(2)-filter_params.UTM_center(2)];
+            rangee(I)=sqrt(sum(tmp.^2));
+            Igood(I)=(filter_params.range>=rangee(I));
+            
+            
+        end
+        
+        % Check our filtering
+        %plot(poss(:,1),poss(:,2),'kx');hold on;grid on; axis('equal');
+        %plot(poss(Igood,1),poss(Igood,2),'ro');hold on;grid on; axis('equal');
+        close(h)
+    elseif filter_position==1
         Igood= false(1,length(data.locations));
     
         poss=zeros(length(data.locations),2);

@@ -22,15 +22,23 @@ cd(dirname);
 
 % Define a template for selecting files
 prompt={'Enter a template string for a location output file:', ...
-    'Enter geographical restriction (West,Center,East), 2x2 UTC matrix, or ''All'':'};
+    'Enter geographical restriction (Range, West,Center,East), 2x2 UTC matrix, or ''All'':', ...
+    'UTM location to use if ''Range'' selected above (''2010 array'',''2012 array'',''2014 array'',or two-element vector):', ...
+    'Range (km) [used only if ''Range'' selected above]:'};
 name='File Template';
 numlines=1;
 options.Resize='on';
 options.WindowStyle='normal';
-defaultanswer={'S5*_BearingInterval_Huber_FilteredLocations.mat','Center'};
+defaultanswer={'S5*_BearingInterval_Huber_FilteredLocations.mat','Range','2010 array','10'};
 
 answer=inputdlg(prompt,name,numlines,defaultanswer,options);
 fnames=dir(answer{1});
+loc_keyword=answer{2};
+UTM_keyword=answer{3};
+filter_params.range=eval(answer{4})*1000;
+
+filter_params.keyword=loc_keyword;
+filter_params.UTM_keyword=UTM_keyword;
 
 % Look for possible matches in folder, and select all relevent files
 for I=1:length(fnames)
@@ -59,6 +67,8 @@ for I=1:length(list_names)
     
 end
 cd(mydir);
+
+
 
 % Determine UTC boundaries
 Site5_easting=[
@@ -112,6 +122,7 @@ switch Site_number(1)
     case 5
         station_locations.northing=Site5_northing;
         station_locations.easting=Site5_easting;
+        
     case 4
         station_locations.northing=Site4_northing;
         station_locations.easting=Site4_easting;
@@ -119,6 +130,26 @@ switch Site_number(1)
     otherwise
         uiwait(errordlg('Can''t access Site location information'));
 end
+
+%If range restriction, determine it...
+switch(lower(loc_keyword))
+    case 'range'
+        switch(lower(UTM_keyword))
+            case '2010 array'
+                filter_params.UTM_center=eval('[4.174860699660919e+05 7.817274204098196e+06]');
+            case '2012 array'
+                
+            case '2014 array'
+                
+            otherwise
+                filter_params.UTM_center=eval(UTM_keyword);
+        end
+        station_locations.extra=filter_params.UTM_center;
+
+        return
+end
+
+
 %What DASARS used to compute box?
 IDASAR=logical([1 1 1 1 1 1]);  %DASARS CDEG
 
@@ -132,7 +163,7 @@ dl=abs(min(Site5_easting)-max(Site5_easting));  %How wide should a box be?  For 
 
 filter_params.easting=[min(Site5_easting)+xbuffer max(Site5_easting)-xbuffer];
 
-switch(lower(answer{2}))
+switch(lower(loc_keyword))
     case 'center'
         %Keep the same
     case 'west'
@@ -145,5 +176,5 @@ switch(lower(answer{2}))
         return
         
 end
-filter_params.keyword=answer{2};
+
 

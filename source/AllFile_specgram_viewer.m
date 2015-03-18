@@ -7770,7 +7770,14 @@ if isfield(Event,'localization')&&~isempty(getfield(Event,'localization'))
     A=Event.localization.major;
     B=Event.localization.minor;
     ANG=Event.localization.ellipse_ang;
-    [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,35,Istation);
+    
+    if isfield(Event.localization.station_position,'extra')
+        VM_extra=Event.localization.station_position.extra;
+    else
+        VM_extra=[];
+        
+    end
+    [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,35,Istation,VM_extra);
     
     %Compare stored with recomputed results
     %     org.VM=Event.localization.location;
@@ -9270,51 +9277,6 @@ end
 
 end  %function load_data
 
-function [cable_factor,sens]=get_ADAT24_cable_factor
-%%Can we calibrate the data?
-%%  load_wav often normalizes the data so the peak value is 1.
-%sens0=157; %dB re 1 unit of wav entry
-%sens=input('Enter sensitivity of entire system (flat-spectrum calibration) [180 dB re 1 unit]:');
-%if isempty(sens)
-%sens=sens0;
-%end
-%sens=10^(sens/20);
-
-%%Calibration for ADAT 24 attached to Sonotech hydrophone array
-%//ADAT HD24 has 6.9 V Rms max input for 24 bit data
-%//Factor of 2 from differential inputs...
-%//Hydrophone gain set to Sonotech array -157 dB
-%// Don't have cable attenuation  here...
-sens=(6.9*sqrt(2)/16777215)*0.5*10^(157.0 / 20.0);
-%freq_cal[i]=(1.0+2*Math.PI*f*(110e-9)*140.0);
-
-% Nov 15, 2011
-%         Hi Aaron,
-%
-% I thumbed through my notes for a few minutes to refresh my memory on this project.  The attenuation problem can be hugely simplified by eliminating many of the parameters right away.  The preamp output impedance is ordinarily very small, and the cable insulation resistance and receiver input impedance will be very large.  All of the above parameters can generally be ignored.
-%
-% This really only leaves the cable resistance and capacitance and so becomes a fairly simple voltage divider problem.  From my notes, I measured the cable (the entire 800+ length) resistance to be ~70 ohms and the capacitance to be ~110 nF.  The model would look like a series resistance with a shunt capacitance, so:
-%
-% R = 140 ohms (round trip)
-% X = 1/(2*pi*f*C)
-%
-% So, the 6 dB down frequency will be when R= X, so:
-% f = 1/(2*pi*C*R) = ~10 kHz.
-%
-% And the attenuation at any frequency:
-% X/(R + X)  or 1/(1+ 2*pi*f*C*R)
-%
-% The cable attenuation seen by the vector sensor will essentially look like a single pole low pass filter with Fc = 10 kHz:
-% 5   kHz: -3 dB
-% 10 kHz: -6 dB
-% 20 kHz: -9 dB
-%
-% This is consistent with my notes where I measured the cable attenuation to roll off by 3 dB/octave starting at 4-5 kHz.  The above is for the case of the vector sensor driving the entire length of the array.  For the other hydrophones driving shorter lengths of cable, the calculations will be the same but you will need to use different R and C values in the equation 20 log (1/(1+ 2*pi*f*C*R)) to compute the new attenuation values vs frequency.
-%
-% Jeff
-
-cable_factor=2*pi*(110e-9)*140.0;  %Unit resistance 140 ohm, capacitance 110 nF
-end
 
 function [y,t,head]=readGSIfile(rawfile,cbegin,tlen,nchan,formatt,calibrate)
 %function [y,t,head]=readGSIfile(rawfile,cbegin,tlen,nchan,formatt,calibrate)
@@ -9458,154 +9420,7 @@ tabs=tm+datenum(year,mn,day,0,0,0);
 
 end
 
-function  [a_eqC2, b_eqC2]=get_DASARA_filter(f_hp,plot_data)
-% DASAR_A_equalization.m
 
-%%
-Fs = 1000; % sample rate, Hz
-
-% equalizer rev C
-% used to equalize Sparton DIFAR sonobuoy head omni phone response
-% The raw sonobuoy response is like a differentiator, with a +19 to +20dB/dec slope.
-% This equalizer is mostly an integrator, with some shaping near Nyquist to get rid
-% of aliasing effects and a high-pass filter cascaded to reduce low frequency gain
-
-f1 = 100; % Hz
-a1 = 1; % gain @ f1 (ignoring high-pass), V/V
-
-% integrator
-a = [1 -1]; % gain of integrator is cos(w/2)/sin(w), w = [0,2*pi] around unit circle
-
-% hf zero
-k = (f1/Fs)*2*pi;
-b = a1 * sin(k)/cos(k/2) * [1 0.15]/1.15; % 0.15 eyeball adhoc
-%b=a1;
-% b = a1 * sin(k)/cos(k/2);
-
-% high-pass
-%f_hp = 10; % high-pass -3 dB break freq, Hz
-[bb,aa] = butter(2,f_hp/(Fs/2),'high');
-
-a_eqC2 = conv(a,aa);
-b_eqC2 = conv(b,bb);
-
-if plot_data==1,
-    ff = [logspace(-2,log10(500),1000)]';
-    [h_eqC2,w] = freqz(b_eqC2,a_eqC2,ff*pi*(2/Fs));
-    figure
-    semilogx(w/pi *(Fs/2),20*log10(abs(h_eqC2)),'k')
-    grid on
-    xlabel('Frequency, Hz')
-    ylabel('gain, dB V/V')
-end
-
-end
-
-function [numd,dend] = DASAR_Shell_2007_equalization(Fs,plot_on)
-% DASAR_Shell_2007_equalization
-%       numd=b; dend=a;
-%   Returns filter coefficients of a digital equalization filter to flatten
-%   the (very) low-frequency response of data recorded by the
-%   omnidirectional channel in the Shell 2007 DASAR.
-%
-%   The 2007 Shell DASAR was a 4-channel unit, with a PZT flexural disk
-%   hydrophone and three orthogonal geophones. The lower band edge of the
-%   hydrophone channel is controlled by two cascaded (and independent)
-%   high-pass filters, one formed by the shunt resistor across the PZT
-%   ceramic, the other by the preamp (a single non-inverting opamp stage)
-%
-%   This equalization is only needed if it is desired to reconstruct data
-%   below 5 (or 8 Hz): for the "usual" (10 Hz and above) analysis, this
-%   equalization to the recorded data is not necessary. The user is advised
-%   that attempting to equalize more than a decade below these frequencies
-%   (i.e., 0.5 Hz) should be attempted with caution, since ambient noise
-%   can be large (especially pressure fluctuations from surface waves in
-%   shallow water), and self-noise of the instrument can become visible.
-%
-%   Unlike the DASAR-A and DASAR-Cs, which employed modified sonobuoy heads
-%   having a differentiator-like response (rising ~6 dB/octave), the
-%   in-band response of all four channels of the Shell 2007 DASAR were
-%   flat, so no equalization is needed in the passband of 10 to 450 Hz
-
-% R Norman Mar 22, 2011
-
-%%
-if(Fs ~= 1000)
-    error('designed & tested for Fs = 1000 Hz only')
-end
-%plot_on=1;
-%% equalization filter for the high-pass filter formed by PZT ceramic and shunt resistor
-R1 = 2e6; % shunt resistance, Ohms
-C1 = 15e-9; % ceramic capacitance, F
-f1a = 1/(2*pi*R1*C1); % break frequency, Hz
-
-p1a = 2*pi*f1a; % zero location, rad/s
-
-% pole location, rad/s (here, arbitrarily placed one-decade below the zero)
-% Don't place this pole at a frequency any lower than necessary)
-c = 2.5;
-p1b = p1a/c; % pole location, rad/s
-
-nums1 = c * [1/p1a 1]; % s-plane numerator coefs
-dens1 = [1/p1b 1]; % s-plane denominator coefs
-
-[numd1,dend1] = bilinear(nums1,dens1,Fs);
-
-if(plot_on)
-    hFVT = fvtool(numd1,dend1);
-    set(hFVT,'NumberofPoints',8192,'FrequencyScale','Log')
-    set(hFVT,'NormalizedFrequency','off','Fs',Fs)
-    legend(hFVT,'First Equalization Filter')
-    pause
-end
-
-%% equalization filter for the high-pass filter formed by preamplifier (non-inverting gain stage)
-R2 = 200; % resistance, Ohms
-C2 = 100e-6; % capacitance, F
-f2a = 1/(2*pi*R2*C2);
-
-p2a = 2*pi*f2a; % zero location, rad/s
-
-% pole location, rad/s (here, arbitrarily placed one-decade below the zero)
-% Don't place this pole at a frequency any lower than necessary)
-p2b = p2a/c; % pole location, rad/s
-
-nums2 = c * [1/p2a 1];
-dens2 = [1/p2b 1];
-
-[numd2,dend2] = bilinear(nums2,dens2,Fs);
-
-if(plot_on)
-    hFVT = fvtool(numd2,dend2);
-    set(hFVT,'NumberofPoints',8192,'FrequencyScale','Log')
-    set(hFVT,'NormalizedFrequency','off','Fs',Fs)
-    legend(hFVT,'Second Equalization Filter')
-    pause
-end
-
-%% cascade the two filters
-numd = conv(numd1,numd2);
-dend = conv(dend1,dend2);
-
-% future fancier
-% H1 = dfilt.df2(numd1,dend1); % df2t for transposed
-% H2 = dfilt.df2(numd2,dend2); % df2t for transposed
-% Hcascade = dfilt.cascade(H1,H2)
-% [n1,d1] = tf(Hcascade)
-% fvtool(Hcascade)
-
-%%
-if(plot_on)
-    % freqress(nums,dens,logspace(-3,2,1000))
-    hFVT = fvtool(numd,dend);
-    set(hFVT,'NumberofPoints',8192,'FrequencyScale','Log')
-    set(hFVT,'NormalizedFrequency','off','Fs',Fs)
-    legend(hFVT,'Final (composite) Equalization Filter')
-    orient landscape
-    print -djpeg DASAR2007_equalization.jpg
-end
-
-end
 
 function [thet,kappa,sd]=extract_bearings(y,bufferTime,Nfft,Fs,fmin,fmax,Nsamples)
 %function [thet,kappa,sd]=extract_bearings(y,bufferTime,Nfft,Fs,fmin,fmax,Nsamples)
@@ -10307,158 +10122,6 @@ tt=tt(Iwant);
 
 end  %create_coherent_correlogram
 
-%% Ellipse
-function h=ellipse(ra,rb,ang,x0,y0,C,Nb)
-% Ellipse adds ellipses to the current plot
-%
-% ELLIPSE(ra,rb,ang,x0,y0) adds an ellipse with semimajor axis of ra,
-% a semimajor axis of radius rb, a semimajor axis of ang, centered at
-% the point x0,y0.
-%
-% The length of ra, rb, and ang should be the same.
-% If ra is a vector of length L and x0,y0 scalars, L ellipses
-% are added at point x0,y0.
-% If ra is a scalar and x0,y0 vectors of length M, M ellipse are with the same
-% radii are added at the points x0,y0.
-% If ra, x0, y0 are vectors of the same length L=M, M ellipses are added.
-% If ra is a vector of length L and x0, y0 are  vectors of length
-% M~=L, L*M ellipses are added, at each point x0,y0, L ellipses of radius ra.
-%
-% ELLIPSE(ra,rb,ang,x0,y0,C)
-% adds ellipses of color C. C may be a string ('r','b',...) or the RGB value.
-% If no color is specified, it makes automatic use of the colors specified by
-% the axes ColorOrder property. For several circles C may be a vector.
-%
-% ELLIPSE(ra,rb,ang,x0,y0,C,Nb), Nb specifies the number of points
-% used to draw the ellipse. The default value is 300. Nb may be used
-% for each ellipse individually.
-%
-% h=ELLIPSE(...) returns the handles to the ellipses.
-%
-% as a sample of how ellipse works, the following produces a red ellipse
-% tipped up at a 45 deg axis from the x axis
-% ellipse(1,2,pi/8,1,1,'r')
-%
-% note that if ra=rb, ELLIPSE plots a circle
-%
-
-% written by D.G. Long, Brigham Young University, based on the
-% CIRCLES.m original
-% written by Peter Blattner, Institute of Microtechnology, University of
-% Neuchatel, Switzerland, blattner@imt.unine.ch
-
-
-% Check the number of input arguments
-
-if nargin<1,
-    ra=[];
-end;
-if nargin<2,
-    rb=[];
-end;
-if nargin<3,
-    ang=[];
-end;
-
-%if nargin==1,
-%  error('Not enough arguments');
-%end;
-
-if nargin<5,
-    x0=[];
-    y0=[];
-end;
-
-if nargin<6,
-    C=[];
-end
-
-if nargin<7,
-    Nb=[];
-end
-
-% set up the default values
-
-if isempty(ra),ra=1;end;
-if isempty(rb),rb=1;end;
-if isempty(ang),ang=0;end;
-if isempty(x0),x0=0;end;
-if isempty(y0),y0=0;end;
-if isempty(Nb),Nb=300;end;
-if isempty(C),C=get(gca,'colororder');end;
-
-% work on the variable sizes
-
-x0=x0(:);
-y0=y0(:);
-ra=ra(:);
-rb=rb(:);
-ang=ang(:);
-Nb=Nb(:);
-
-if ischar(C),C=C(:);end;
-
-if length(ra)~=length(rb),
-    error('length(ra)~=length(rb)');
-end;
-if length(x0)~=length(y0),
-    error('length(x0)~=length(y0)');
-end;
-
-% how many inscribed elllipses are plotted
-
-if length(ra)~=length(x0)
-    maxk=length(ra)*length(x0);
-else
-    maxk=length(ra);
-end;
-
-% drawing loop
-
-for k=1:maxk
-    
-    if length(x0)==1
-        xpos=x0;
-        ypos=y0;
-        radm=ra(k);
-        radn=rb(k);
-        if length(ang)==1
-            an=ang;
-        else
-            an=ang(k);
-        end;
-    elseif length(ra)==1
-        xpos=x0(k);
-        ypos=y0(k);
-        radm=ra;
-        radn=rb;
-        an=ang;
-    elseif length(x0)==length(ra)
-        xpos=x0(k);
-        ypos=y0(k);
-        radm=ra(k);
-        radn=rb(k);
-        an=ang(k);
-    else
-        rada=ra(fix((k-1)/size(x0,1))+1);
-        radb=rb(fix((k-1)/size(x0,1))+1);
-        an=ang(fix((k-1)/size(x0,1))+1);
-        xpos=x0(rem(k-1,size(x0,1))+1);
-        ypos=y0(rem(k-1,size(y0,1))+1);
-    end;
-    
-    co=cos(an);
-    si=sin(an);
-    the=linspace(0,2*pi,Nb(rem(k-1,size(Nb,1))+1,:)+1);
-    %  x=radm*cos(the)*co-si*radn*sin(the)+xpos;
-    %  y=radm*cos(the)*si+co*radn*sin(the)+ypos;
-    h(k)=line(radm*cos(the)*co-si*radn*sin(the)+xpos,radm*cos(the)*si+co*radn*sin(the)+ypos);
-    set(h(k),'color',C(rem(k-1,size(C,1))+1,:));
-    
-end;
-
-end
-
 
 function c = cond2(A)
 %COND2   Condition number with respect to inversion.
@@ -10478,54 +10141,6 @@ else
 end
 end
 
-function [area,a,b,ang,angax] = ellipsparms(S,critval,MD,VM)
-%ELLIPSPARMS  Calculates parameters of bivariate normal ellipse from covariance.
-%   [AREA,A,B,ANG] = ELLIPSPARMS(S,CRITVAL,MD,VM) where
-% S is the covariance matrix,
-% CRITVAL is the critical value from the chi-squared distribution,
-% MD is the mean position of the DASAR array,
-% VM is the estimated location.
-% It returns
-%   AREA of the ellipse,
-%   A and B are lengths of major and minor full axes respectively, and
-% ANG is angle in radians ccw of  major semi-axis.
-%   The angle is referenced to an imaginary vector emanating from the center of the
-%   DASAR array and directed toward the estimated location.
-%   Note: index matrices using vec representation.
-% ANGAX is angle in radians of major axis measured ccw from +X axis
-%
-% The adjustments to ANG (last set of if/then statements) reflect the
-%   angle of the major axis 180 degrees about the ray directed from MD to
-%   VM (if necessary) so that the major axis is always directed away from
-%   MD.  The absolute orientation of the ellipse is unchanged; only its
-%   "direction" relative to the center of the DASAR array may be adjusted.
-
-dp = VM-MD;
-theta = atan2(dp(2),dp(1));     % 4-quadrant inverse tangent: angle from MD to VM
-detS = det(S);
-if isnan(S(1)) || (detS<=0) || min(diag(S))<0,
-    area = nan;  a = nan;  b = nan;  ang = nan;  angax = nan;
-else
-    area = pi*sqrt(detS)*critval;
-    [V,L] = eig(S);
-    d = 2*sqrt(critval*diag(L));  % Lengths of both axes.
-    [d,i] = sort(d);
-    a = d(2);  b = d(1);          % a & b: major & minor axis lengths, respectively.
-    v = V(:,i(2));                % dominant eigenvector
-    angax = atan(v(2)/v(1));      % Absolute orientation of ellipse major axis
-    if angax<0,                   % Returns an angle between 0 and pi following
-        angax = angax+pi;           %    math convention (0 radians = 90 degrees, East;
-    end                           %    pi radians = 270 degrees, West).
-    ang = angax;
-    if ((theta>-pi/2) && (theta<pi/2)  && (ang>(pi/2+theta))), % Adjust angle for
-        ang = ang-pi;                                          %   estimated position
-    elseif ((theta>=pi/2) && (ang<(theta-pi/2))),             %   relative to center
-        ang = ang+pi;                                          %   of DASAR array.
-    elseif ((theta<=-pi/2) && (ang<(3*pi/2+theta))),
-        ang = ang+pi;
-    end
-end
-end
 
 %% write_covmat
 
@@ -11187,7 +10802,7 @@ if ~strcmp(handles.filetype,'MDAT')
     [x0,~,Fs,~,~,hdr]=load_data(handles.filetype,tdate_start,tlen,Ichan,handles);
     Ichan=1;Nchan=1;
 else
-    Nchan=1:16;
+    Nchan='all';
     %Ichan=16-Ichan;  %Fix this; why upside down?
     %function [x,t,Fs,tmin,tmax,head]	=	...
     %load_data(filetype,tdate_start,tlen,Ichan,handles)
