@@ -4,6 +4,8 @@ function modes= warp_transform(plot_chc,s_ok,r_guess,c1,Fe, Nfft, N_window,N_win
 % toolbox that you can find here : http://tftb.nongnu.org/
 % Be sure to add the tftb-01 folder to your matlab file if you want this to
 % work !
+%  function modes= warp_transform(plot_chc,s_ok,r_guess,c1,Fe, Nfft, N_window,N_window_w,t_trim, ...
+%    t_sweep,fstart,fend,spectro_mask_in,rd) % You need a long window to see the warped modes)
 % Inputs:
 %  plot_chc:  If 1, make plots
 %  s_ok: input signal, single channel

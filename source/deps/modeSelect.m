@@ -1,4 +1,4 @@
-function [modes,Nmode,choice] = modeSelect(x_ok,Fe,N,r,c,soundsamp)
+function [modes,Nmode,choice] = modeSelect(x_ok,Fe,N,r,c,soundsamp,filt)
 
 % Warping
 [s_w, Fe_w]=warp_temp(x_ok,Fe,r,c);    % s_w: warped signal, Fe_w: new warping frequency
@@ -13,7 +13,7 @@ RTF=abs(rtf);
 RTF(floor(M/2):end,:)=[];                   % Delete negative frequencies
 RTF=RTF/max(max(RTF));
 
-fig=imagescFun(t_w,f_w,RTF,[],'Warped signal');
+fig=imagescFun(t_w,f_w,RTF,[],'Warped signal');ylim([0 50]);
 axis ij
 
 choice=str2double(input(['\nAre you satisfied with the source deconvolution ? \n' ...

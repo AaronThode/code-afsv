@@ -10823,12 +10823,13 @@ else
 end
 
 contents=get(handles.popupmenu_Nfft,'String');
-Nfft=(contents{get(handles.popupmenu_Nfft,'Value')});
-
+Nfft=(contents{get(handles.popupmenu_WindowSize,'Value')});
+fmax=1000*eval(get(handles.edit_fmax,'String'));
+Rest=ceil(0.25*Fs/fmax);
 
 prompt={'Range guess(m)','water speed (m/s)','Nfft','N_window','N_window_w', ...
-    'Time to clip off front of deconvolved signal (to ensure time 0 is first mode arrival)', 'Number of FM contour points:'};
-def={'15000','1490',Nfft,'2*floor(0.5*31*Fs/200)+1','2*floor(0.5*301*Fs/200)+1','0.8','3'};
+    'Decimation factor:','Number of FM contour points:'};
+def={'15000','1490',Nfft,'155*8','155*8',num2str(Rest),'3'};
 dlgTitle	=	sprintf('Warping parameters');
 lineNo		=	ones(size(prompt));
 answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
@@ -10842,13 +10843,32 @@ c1=eval(answer{2});
 Nfft=eval(answer{3});
 N_window=round(eval(answer{4}));
 N_window_w=round(eval(answer{5}));
+R=eval(answer{6});
+Ncontour=eval(answer{7});
 
+%%Check orientation of data
 s_temp=size(x0);
-if s_temp(1)>s_temp(2)
+if s_temp(1)<s_temp(2)
     x0=x0';
 end
+if R>1
+   for J=1:size(x0,2)
+       x1(:,J)=decimate(x0(:,J),R);
+   end
+    
+    x0=x1;
+    Nfft=2^nextpow2(Nfft/R);
+    Fs=Fs/R;
+    N_window=N_window/R;
+    N_window=1+2*floor(N_window/2);
+    N_window_w=N_window_w/R;
+    N_window_w=1+2*floor(N_window_w/2);
+    
+    
+end
 
-filt=Whale_main_fun(x0,Fs,r_guess,c1,Nfft,N_window,1);
+
+filt=Whale_main_fun(x0,Fs,r_guess,c1,Nfft,N_window,Ncontour,1);
 %Whale_multi_hydro(filt,x0(2,:)',Fs,N_window,Nfft,r_guess,c1);
 
 %close all

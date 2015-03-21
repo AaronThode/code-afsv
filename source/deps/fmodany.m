@@ -46,5 +46,5 @@ elseif (t0==0)|(t0>ifrow),
  error('T0 should be between 1 and length(IFLAW)');
 end;
 
-y=exp(j*2.0*pi*cumsum(iflaw));
+y=exp(1i*2.0*pi*cumsum(iflaw));
 y=y*conj(y(t0));
