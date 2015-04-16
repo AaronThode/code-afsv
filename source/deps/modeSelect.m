@@ -1,4 +1,4 @@
-function [modes,Nmode,choice] = modeSelect(x_ok,Fe,N,r,c,soundsamp,filt)
+function [modes,Nmode,choice,filt] = modeSelect(x_ok,Fe,N,r,c,soundsamp,filt)
 
 % Warping
 [s_w, Fe_w]=warp_temp(x_ok,Fe,r,c);    % s_w: warped signal, Fe_w: new warping frequency
@@ -13,9 +13,7 @@ RTF=abs(rtf);
 RTF(floor(M/2):end,:)=[];                   % Delete negative frequencies
 RTF=RTF/max(max(RTF));
 
-fig=imagescFun(t_w,f_w,RTF,[],'Warped signal');ylim([0 50]);
-axis ij
-
+workspace;
 choice=str2double(input(['\nAre you satisfied with the source deconvolution ? \n' ...
 '1: Back to signal selection\n'...
 '2: Back to source deconvolution\n'...
@@ -31,11 +29,14 @@ end
 if choice>=4 && choice <6
 
     disp('Beginning warping')
-    disp('Choose the lowest and highest frequencies to zoom on the signal')
-    title('Frequency zoom (select 2 points)')
-    [~,y_lim]=ginput(2);
-    [fw_min,fw_max]=deal(max(1,min(y_lim)),min(M/2,max(y_lim)));
-    close(fig)
+    
+    fw_min=1;
+    fw_max=floor(M/2)-1;
+    while(max(RTF(fw_max,:))<=1e-3)
+        fw_max=fw_max-1;
+    end
+    fw_min=fw_min*Fe_w/M;
+    fw_max=fw_max*Fe_w/M;
 
     % Mode number
     Nmode=nan;
@@ -68,6 +69,7 @@ if choice>=4 && choice <6
 
         modes(mm,:)=iwarp_temp(mode_temp_warp,Fe_w,r,c,Fe,N);
         disp(strcat('Mode ',int2str(mm),' filtered'))
+        filt.(['mask' num2str(mm)])=masque;       
         clear masque mode_rtf_warp mode_temp_warp
     end
 

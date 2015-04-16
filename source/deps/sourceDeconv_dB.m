@@ -1,16 +1,13 @@
-function [x_deconv,source] = sourceDeconv_dB(x,Fs,NFFT,Nwindow,y_min,y_max,Npoint)
+function [x_deconv,source] = sourceDeconv_dB(x,Fs,NFFT,Nwindow,f_min,f_max,Npoint)
 
 N=length(x);
 % plot the tf response to select the points and interpolate the 1st mode
-sig_whale=abs(tfrstft(x,(0:N-1),NFFT,hamming(Nwindow)));
-
-%fig=imagescFun(1:N,(1:NFFT)/NFFT,10*log10(sig_whale),[y_min y_max],'Enter a number of points to perform deconvolution');
-%Npoint=str2double(input('Number of points to deconvolve: ','s'));
-%close(fig)
+sig_whale=abs(tfrstft(x,1:N,NFFT,hamming(Nwindow)));
 
 % Selecting points
 disp('Beginning source deconvolution')
-fig=imagescFun((1:N)/Fs,Fs*(1:NFFT)/NFFT,10*log10(sig_whale),[y_min y_max],'Choose the points to interpolate the 1st mode');
+fig=imagescFun((1:N)/Fs,Fs*(1:NFFT)/NFFT,10*log10(sig_whale),[f_min f_max],'Choose the points to interpolate the 1st mode');
+caxis([prctile(prctile(10*log10(sig_whale),15),15) prctile(prctile(10*log10(sig_whale),95),95)])
 [t_points,f_points]=ginput(Npoint);
 
 [~,sortIndex]=sort(t_points);
@@ -27,7 +24,7 @@ x_f=fft(x,N);
 source=fmodany(iflaw/Fs);
 source_phase=angle(fft(source,N));
 
-x_deconv=(ifft(x_f.*exp(-1i*source_phase)));
+x_deconv=ifft(x_f.*exp(-1i*source_phase));
 
 disp('End of source deconvolution')
 

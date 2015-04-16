@@ -15,7 +15,7 @@
 % Output:
 %   y: export time series, sampled at Fs Hz
 
-function [y,ysignal,ynoise]=simulate_FMsweep_with_noise(Fs,Nfft,ovlap,fstart,fend,total_window_time,tduration,tstart,SNRdB,SNRchc,no_noise)
+function [y,ysignal,ynoise, noise_var]=simulate_FMsweep_with_noise(Fs,Nfft,ovlap,fstart,fend,total_window_time,tduration,tstart,SNRdB,SNRchc,no_noise)
 
 ysignal=[];ynoise=[];y=[];
 

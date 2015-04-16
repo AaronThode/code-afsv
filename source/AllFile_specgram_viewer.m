@@ -149,8 +149,8 @@ if strfind(getenv('USER'),'thode')
     handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
     
 else %Cedric to modify
-    handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
-    
+    handles.GSI_location_dir_template=fullfile('E:\','%s_Beaufort_Shell_DASAR\','DASARlocations\','DASAR_locations_%s.mat');
+    handles.GSI_location_dir_template=strrep(handles.GSI_location_dir_template,'\','\\');
 end
     
 handles.buttongroup.accelerometer(1)=handles.edit_normal_rotation;
@@ -3724,8 +3724,14 @@ if faill
     dlgTitle1='Parameters for GSI localization...';
     %def1={'/Volumes/ThodePortable2/2010_Beaufort_Shell_DASAR/DASAR_locations_2010.mat', '5','[4.174860699660919e+05 7.817274204098196e+06]'};
     %'/Volumes/Data/Shell2010_GSI_Data/DASARlocations/DASAR_locations_2010.mat',
-    Iyear=findstr(handles.mydir,'Shell')+length('Shell');
-    year=handles.mydir(Iyear+(0:3));
+    
+    if ispc
+        Iyear=strfind(handles.mydir,':\')+length(':/');
+        year=handles.mydir(Iyear+(0:3));
+    else
+        Iyear=strfind(handles.mydir,'Shell')+length('Shell');
+        year=handles.mydir(Iyear+(0:3));
+    end
     %handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
     %GSI_location_dir=fullfile('/Volumes','Data',sprintf('Shell%s_GSI_Data',year),'DASARlocations',sprintf('DASAR_locations_%s.mat',year));
     GSI_location_dir=sprintf(handles.GSI_location_dir_template,year,year);
@@ -8220,8 +8226,7 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
         handles.sgram.ovlap	=	ovlap;
         handles.sgram.Fs	=	Fs;
         
-        
-        
+           
         %%Add spectral calibration curve, if present
         if isfield(hdr,'calcurv')
             Xp_cal_fin=polyval(hdr.calcurv,FF/Fs);
@@ -8286,6 +8291,7 @@ elseif strcmp(handles.display_view,'Time Series') %%Time series
     %%mode
     if isempty(strfind(handles.myfile,'Press'))
         % msgbox('Enter min and max frequency, or hit return to skip filtering:','modal');
+        
         if strcmp(handles.old_display_view,'Spectrogram')
             ButtonName = questdlg('Filter? (If yes, click on two frequency values in spectrogram)');
         else
@@ -8306,7 +8312,8 @@ elseif strcmp(handles.display_view,'Time Series') %%Time series
             
             y=filter(B,1,x(:,1)-mean(x(:,1)));
         else
-            y=x(:,1)-mean(x(:,1));
+            %y=x(:,1)-mean(x(:,1));
+            y=x(:,1);
         end
     else
         y=x(:,1)/1000; %Pressure conversion
@@ -8314,12 +8321,16 @@ elseif strcmp(handles.display_view,'Time Series') %%Time series
     
     t=(1:length(x(:,1)))/Fs;
     xlabel('Time (sec)');
-    if isfield(hdr,'calunits')&&strfind(hdr.calunits,'mPa')
+    if isfield(hdr,'calunits')&&~isempty(strfind(hdr.calunits,'mPa'))
         plot(handles.axes1,t,1000*y);grid on;
         ylabel('uPa');
     else
         plot(handles.axes1,t,y);grid on;
-        ylabel('Amplitude');
+        try
+            ylabel(hdr.calunits);
+        catch
+            ylabel('Amplitude');
+        end
     end
 elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
     fmax=1000*str2double(get(handles.edit_fmax,'String'));
@@ -10829,7 +10840,7 @@ Rest=ceil(0.25*Fs/fmax);
 
 prompt={'Range guess(m)','water speed (m/s)','Nfft','N_window','N_window_w', ...
     'Decimation factor:','Number of FM contour points:'};
-def={'15000','1490',Nfft,'155*8','155*8',num2str(Rest),'3'};
+def={'15000','1490',Nfft,'155*13','155*13',num2str(Rest),'3'};
 dlgTitle	=	sprintf('Warping parameters');
 lineNo		=	ones(size(prompt));
 answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
@@ -10851,6 +10862,7 @@ s_temp=size(x0);
 if s_temp(1)<s_temp(2)
     x0=x0';
 end
+
 if R>1
    for J=1:size(x0,2)
        x1(:,J)=decimate(x0(:,J),R);
@@ -10863,14 +10875,13 @@ if R>1
     N_window=1+2*floor(N_window/2);
     N_window_w=N_window_w/R;
     N_window_w=1+2*floor(N_window_w/2);
-    
-    
 end
 
-
-filt=Whale_main_fun(x0,Fs,r_guess,c1,Nfft,N_window,Ncontour,1);
-%Whale_multi_hydro(filt,x0(2,:)',Fs,N_window,Nfft,r_guess,c1);
-
+filt=Whale_main_fun(x0,Fs,r_guess,c1,Nfft,N_window,Ncontour,1,[str2double(handles.edit_fmin.String) str2double(handles.edit_fmax.String)]);
+%Whale_multi_hydro(filt,x0(:,2)',Fs,N_window,Nfft,r_guess,c1);
+%Outputs of Whale_main_fun needed:
+%Need to provide B (filter coefficients)
+%       
 %close all
 MM=size(modes.s_filt);
 if MM(1)>0

@@ -5,7 +5,11 @@ function [fig] = imagescFun(x,y,z,bounds,titleName)
 
 fig=figure('units','normalized','outerposition',[0 0 1 1]);
 imagesc(x,y,z)
-caxis([prctile(prctile(z,10),10) prctile(prctile(z,100),100)])
+try
+    caxis([prctile(prctile(z,15),15) prctile(prctile(z,100),100)])
+catch
+    
+end
 if ~isempty(bounds)
     ylim(bounds)
 end
