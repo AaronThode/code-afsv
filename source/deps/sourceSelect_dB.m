@@ -1,16 +1,13 @@
-function [x_sel,f_min,f_max,j_max] = sourceSelect_dB(x,Fs,NFFT,Nwindow,flims)
+function [x_sel,f_min,f_max,j_min,j_max] = sourceSelect_dB(x,Fs,NFFT,Nwindow,flims)
 % x_sel: snippet
 % y_min,y_max, min and max frequencies of bounding box
 % Time selection
 
 N=length(x);
 % Time selection
-tfr=tfrstft(x,1:N,NFFT,hamming(Nwindow));
-TFR=abs(tfr);
+TFR=abs(tfrstft(x,1:N,NFFT,hamming(Nwindow)));
 
-fig=imagescFun((1:N)/Fs,Fs*(1:NFFT)/NFFT,10*log10(TFR),flims,...
-    'Click twice on the spectrogram to zoom on the signal');
-caxis([prctile(prctile(10*log10(TFR),15),15) prctile(prctile(10*log10(TFR),95),95)])
+fig=imagescFun((1:N)/Fs,Fs*(1:NFFT)/NFFT,10*log10(TFR),flims,'Click twice on the spectrogram to zoom on the signal');
 disp('Selecting time-frequency window')
 lims=ginput(2);
 close(fig)

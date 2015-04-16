@@ -16,12 +16,12 @@ tmax=(N-1)/Fe+r/c;
 dt_w=iwarp_t(tmax,r,c)-iwarp_t(tmax-dt,r,c);
 
 %% Step 3: new sampling frequency
-Fe_w=2/dt_w;
+Fe_w=1/dt_w;
 
 %% Step 4: new number of points
 t_w_max=iwarp_t(tmax,r,c);
-M=ceil(t_w_max*Fe_w);
-
+%M=ceil(t_w_max*Fe_w);
+M=2^nextpow2(floor(t_w_max*Fe_w));
 
 %% Step 5: warped signal computation
 

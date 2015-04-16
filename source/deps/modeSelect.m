@@ -8,41 +8,33 @@ t_w=(0:M-1)/Fe_w;                           % Warped time
 f_w=(0:M-1)*Fe_w/M;                         % Warped frequencies
 Nww=1+2*ceil(ceil(M/4)/2);                               % Number of points for the tfr of the warped signal
 rtf=tfrstft(s_w,1:M,M,hamming(Nww));
+rtf(floor(M/2):end,:)=[];                   % Delete negative frequencies
 
 RTF=abs(rtf);
-RTF(floor(M/2):end,:)=[];                   % Delete negative frequencies
 RTF=RTF/max(max(RTF));
 
 workspace;
 choice=str2double(input(['\nAre you satisfied with the source deconvolution ? \n' ...
-'1: Back to signal selection\n'...
-'2: Back to source deconvolution\n'...
-'3: Back to time selection (for warping)\n'...
-'4: Save and continue\n'...
-'5: Continue\n'...
-'6: Exit\n'],'s'));
+'1: Back to source deconvolution\n'...
+'2: Back to time selection (for warping)\n'...
+'3: Save and continue\n'...
+'4: Continue\n'],'s'));
 
-if choice==4
+if choice==3
     save([soundsamp '_warped_modes'])
 end
 
-if choice>=4 && choice <6
+if choice==3 || choice ==4
 
     disp('Beginning warping')
-    
-    fw_min=1;
-    fw_max=floor(M/2)-1;
-    while(max(RTF(fw_max,:))<=1e-3)
-        fw_max=fw_max-1;
-    end
-    fw_min=fw_min*Fe_w/M;
-    fw_max=fw_max*Fe_w/M;
 
     % Mode number
     Nmode=nan;
     while isnan(Nmode) % if the user make a misclic in the mode selection, press esc to do it again
-        fig=imagescFun(t_w,f_w,RTF,[fw_min,fw_max],'Enter a mode number');
-        axis ij
+        fig=figure;
+        imagescFun(t_w,f_w,RTF.^2,'ij')
+        ylim(filt.fwlims)
+        title('Enter a mode number')
         Nmode=str2double(input('Number of modes ? ','s'));
         close(fig)
     end
@@ -54,8 +46,10 @@ if choice>=4 && choice <6
         BW=[];
         while isempty(BW) % if the user make a misclic in the mode selection, press esc to do it again
             disp(strcat('Filtering mode ',int2str(mm)))
-            fig=imagescFun(t_w,f_w,RTF,[fw_min,fw_max],['Draw a polygon to select the mode ' num2str(mm) ' (Press esc to do it again)']);
-            axis ij
+            fig=figure;
+            imagescFun(t_w,f_w,RTF.^2,'ij')
+            ylim(filt.fwlims)
+            title(['Draw a polygon to select the mode ' num2str(mm) ' (Press esc to do it again)'])
             BW = roipoly ;
             close(fig)
         end
