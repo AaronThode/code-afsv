@@ -8226,7 +8226,8 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
         handles.sgram.ovlap	=	ovlap;
         handles.sgram.Fs	=	Fs;
         
-           
+        
+        
         %%Add spectral calibration curve, if present
         if isfield(hdr,'calcurv')
             Xp_cal_fin=polyval(hdr.calcurv,FF/Fs);
@@ -8329,8 +8330,8 @@ elseif strcmp(handles.display_view,'Time Series') %%Time series
         try
             ylabel(hdr.calunits);
         catch
-            ylabel('Amplitude');
-        end
+        ylabel('Amplitude');
+    end
     end
 elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
     fmax=1000*str2double(get(handles.edit_fmax,'String'));
@@ -10834,13 +10835,14 @@ else
 end
 
 contents=get(handles.popupmenu_Nfft,'String');
-Nfft=(contents{get(handles.popupmenu_WindowSize,'Value')});
+Nfft=contents{get(handles.popupmenu_Nfft,'Value')};
+WindowSize=contents{get(handles.popupmenu_WindowSize,'Value')};
 fmax=1000*eval(get(handles.edit_fmax,'String'));
 Rest=ceil(0.25*Fs/fmax);
 
 prompt={'Range guess(m)','water speed (m/s)','Nfft','N_window','N_window_w', ...
     'Decimation factor:','Number of FM contour points:'};
-def={'15000','1490',Nfft,'155*13','155*13',num2str(Rest),'3'};
+def={'15000','1490',Nfft,WindowSize,'155*8',num2str(Rest),'3'};
 dlgTitle	=	sprintf('Warping parameters');
 lineNo		=	ones(size(prompt));
 answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
@@ -10867,40 +10869,40 @@ if R>1
    for J=1:size(x0,2)
        x1(:,J)=decimate(x0(:,J),R);
    end
-    
-    x0=x1;
-    Nfft=2^nextpow2(Nfft/R);
-    Fs=Fs/R;
-    N_window=N_window/R;
-    N_window=1+2*floor(N_window/2);
-    N_window_w=N_window_w/R;
-    N_window_w=1+2*floor(N_window_w/2);
+   x0=x1;
+   Nfft=2^nextpow2(Nfft/R);
+   Fs=Fs/R;
+   N_window=N_window/R;
+   N_window_w=N_window_w/R;
 end
+  
+N_window=1+2*floor(N_window/2);
+N_window_w=1+2*floor(N_window_w/2);
 
-filt=Whale_main_fun(x0,Fs,r_guess,c1,Nfft,N_window,Ncontour,1,[str2double(handles.edit_fmin.String) str2double(handles.edit_fmax.String)]);
-%Whale_multi_hydro(filt,x0(:,2)',Fs,N_window,Nfft,r_guess,c1);
-%Outputs of Whale_main_fun needed:
-%Need to provide B (filter coefficients)
-%       
+stft_param=struct('Nfft',Nfft,'N_window',N_window,'N_window_w',N_window_w,'Fs',Fs);
+filt_param=struct('Ncontour',Ncontour,'r_guess',r_guess,'c1',c1,'flims',1000*[str2double(handles.edit_fmin.String) str2double(handles.edit_fmax.String)]);
+
+filt=Whale_main_fun(x0,stft_param,filt_param,hdr);
+
 %close all
-MM=size(modes.s_filt);
-if MM(1)>0
-    
-    %%mode_stack is unwarped time series that should be mode-dominated
-    mode_stack=zeros(MM(1),MM(2),length(Nchan));
-    %sw_stack=zeros(length(Nchan),length(s_w));
-    for I=Nchan
-        fprintf('%i of %i channels\n',I,length(Nchan));
-        y=filter(B,1,x(I,:)-mean(x(I,:)));
-        tmp=warp_transform(0,hilbert(y.'),r_guess,c1,Fs, Nfft, N_window,N_window_w,n_limit,tsweep,fstart,fend,modes.spectro_mask,hdr.geom.rd(I));
-        mode_stack(:,:,I)=tmp.s_filt;
-        
-    end
-else %No modes selected
-    return
-end
-%close(10:11)
-clear tmp
+% MM=size(modes.s_filt);
+% if MM(1)>0
+%     
+%     %%mode_stack is unwarped time series that should be mode-dominated
+%     mode_stack=zeros(MM(1),MM(2),length(Nchan));
+%     %sw_stack=zeros(length(Nchan),length(s_w));
+%     for I=Nchan
+%         fprintf('%i of %i channels\n',I,length(Nchan));
+%         y=filter(B,1,x(I,:)-mean(x(I,:)));
+%         tmp=warp_transform(0,hilbert(y.'),r_guess,c1,Fs, Nfft, N_window,N_window_w,n_limit,tsweep,fstart,fend,modes.spectro_mask,hdr.geom.rd(I));
+%         mode_stack(:,:,I)=tmp.s_filt;
+%         
+%     end
+% else %No modes selected
+%     return
+% end
+% %close(10:11)
+% clear tmp
 %save temp
 
 
