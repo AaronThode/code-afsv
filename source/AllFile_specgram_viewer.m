@@ -10839,10 +10839,11 @@ Nfft=contents{get(handles.popupmenu_Nfft,'Value')};
 WindowSize=contents{get(handles.popupmenu_WindowSize,'Value')};
 fmax=1000*eval(get(handles.edit_fmax,'String'));
 Rest=ceil(0.25*Fs/fmax);
+tempWindow=str2double(get(handles.edit_winlen,'String'));
 
 prompt={'Range guess(m)','water speed (m/s)','Nfft','N_window','N_window_w', ...
     'Decimation factor:','Number of FM contour points:'};
-def={'15000','1490',Nfft,WindowSize,'155*8',num2str(Rest),'3'};
+def={'15000','1490',Nfft,WindowSize,num2str(Rest*128*ceil(tempWindow)),num2str(Rest),'3'};
 dlgTitle	=	sprintf('Warping parameters');
 lineNo		=	ones(size(prompt));
 answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
@@ -10878,35 +10879,17 @@ end
   
 N_window=1+2*floor(N_window/2);
 N_window_w=1+2*floor(N_window_w/2);
+[minfreq,maxfreq]=deal(1000*str2double(handles.edit_fmin.String),1000*str2double(handles.edit_fmax.String));
 
 stft_param=struct('Nfft',Nfft,'N_window',N_window,'N_window_w',N_window_w,'Fs',Fs);
-filt_param=struct('Ncontour',Ncontour,'r_guess',r_guess,'c1',c1,'flims',1000*[str2double(handles.edit_fmin.String) str2double(handles.edit_fmax.String)]);
+filt_param=struct('Ncontour',Ncontour,'r_guess',r_guess,'c1',c1,'flims',[minfreq maxfreq]);
 
-filt=Whale_main_fun(x0,stft_param,filt_param,hdr);
+modes=Whale_main_fun(x0,stft_param,filt_param,hdr,handles);
 
+%close all
 
-%%Variables needed
-%   modes.sfilt: time series for each modal arrival (time, mode)
-close all
-MM=size(modes.s_filt);
-if MM(1)>0
-    
-    %%mode_stack is unwarped time series that should be mode-dominated
-    mode_stack=zeros(MM(1),MM(2),length(Nchan));
-    %sw_stack=zeros(length(Nchan),length(s_w));
-    for I=Nchan
-        fprintf('%i of %i channels\n',I,length(Nchan));
-        y=filter(B,1,x(I,:)-mean(x(I,:)));
-        tmp=warp_transform(0,hilbert(y.'),r_guess,c1,Fs, Nfft, N_window,N_window_w,n_limit,tsweep,fstart,fend,modes.spectro_mask,hdr.geom.rd(I));
-        mode_stack(:,:,I)=tmp.s_filt;
-        
-    end
-else %No modes selected
-    return
-end
-%close(10:11)
-
-
+mode_stack=modes.mode_stack; % mode_stack is unwarped time series that should be mode-dominated
+MM=size(squeeze(mode_stack(:,:,1)));
 
 %depth_shift=-2;  %How much to shift my estimated depth by
 %freq_want=[84 104];
@@ -10923,17 +10906,13 @@ end
 
 freq_want=eval(answer{1});
 
-Umode_broadband=squeeze(sum(mode_stack.^2,1))';
-
 Nfft_filt=2^nextpow2(MM(1));
-%Nfft_filt=512;
 Uwarp=fft(mode_stack,Nfft_filt);  %Spectrum of each mode arrival
 Fwarp=linspace(0,Fs,Nfft_filt);
-
-%define minfreq and maxfreq to be upper and lower bandwidth of signal
 Igood=find(Fwarp>=(minfreq)&(Fwarp<=(maxfreq)));
 Uwarp=Uwarp(Igood,:,:);
 %Sum energy in each modal arrival. Assign sign later.
+Umode_broadband=squeeze(sum(mode_stack.^2,1))';
 
 Nc=length(Nchan);
 Nf=length(Igood);
@@ -10950,6 +10929,8 @@ Nplot=length(freq_plot);
 
 %Cyle through each mode and extract mode shape from various frequencies,
 % as well as broadband time series
+legendCell=cellstr(num2str(freq_plot', 'f=%2.1f Hz'))';
+
 for Im=1:MM(2)
     
     %normalize both individual-frequency based and broadband modes.
@@ -10975,7 +10956,7 @@ for Im=1:MM(2)
     sgn_chnge=-(abs(Uang(:,Ifreq_plot))>pi/2);
     sgn_chnge=2*sgn_chnge+1;  %Convert 0 and -1 to 1 and -1;
     if Nplot>1
-        sgn_chnge=median(sgn_chnge')';  %Use entire bandwidth to estimate sign changes
+        sgn_chnge=median(sgn_chnge')';
     end
     Umode_broadband(:,Im)=sgn_chnge.*Umode_broadband(:,Im);
     Umode_shape(:,:,Im)=(sgn_chnge*ones(1,Nplot)).*abs(Umode(:,Ifreq_plot));
@@ -10994,6 +10975,7 @@ for Im=1:MM(2)
     if Im==1
         ylabel('depth (m)');
     end
+    legend(legendCell);    
     
     subplot(MM(2),3,3*Im-1);
     plot((Uang_uncorrected(:,Ifreq_plot)),hdr.geom.rd,'o-');grid;axis('ij')
@@ -11002,6 +10984,7 @@ for Im=1:MM(2)
     if Im==1
         ylabel('depth (m)');
     end
+    legend(legendCell);    
     
     subplot(MM(2),3,3*Im);
     plot((Uang(:,Ifreq_plot)),hdr.geom.rd,'o-');grid;axis('ij')
@@ -11013,18 +10996,18 @@ for Im=1:MM(2)
     if Im==1
         ylabel('depth (m)');
     end
+    legend(legendCell);    
     
     figure(19)
     subplot(1,MM(2),Im)
-    plot(Umode_broadband(:,Im),hdr.geom.rd,'k',squeeze(Umode_shape(:,:,Im)),hdr.geom.rd,'g');grid on
+    plot(Umode_broadband(:,Im),hdr.geom.rd,squeeze(Umode_shape(:,:,Im)),hdr.geom.rd);grid on
     set(gca,'fontweight','bold','fontsize',14);
     title(sprintf('Normalized mode %i',Im));
     ylabel('depth(m)');
     title(sprintf('Inverted mode %i',Im));
     axis('ij')
-    legend('broadband');
     
-    
+    legend([{'broadband'},legendCell]) 
 end
 
 %%Plot recovered tilt
@@ -11052,6 +11035,7 @@ subplot(1,2,1)
 plot(U1_phase(:,Ifreq_plot),hdr.geom.rd);axis('ij');grid
 xlabel('rad');ylabel('depth (m)');
 title('Array tilt in terms of mode 1 phase');
+legend(legendCell)
 
 subplot(1,2,2);
 plot(U1_tilt(:,Ifreq_plot),hdr.geom.rd);axis('ij');grid
@@ -11060,11 +11044,7 @@ plot(tilt_broadband,hdr.geom.rd,'ko')
 title('Array tilt in terms of mode 1 offset');
 xlabel('m offset');ylabel('depth (m)');
 grid on
-legend(strvcat(num2str(freq_plot','%2.1f'),'broadband'));
-
-figure(20)
-legend(num2str(freq_plot','%2.1f'));
-
+legend([legendCell,{'broadband'}]) 
 
 for II=18:20
     figure(II)

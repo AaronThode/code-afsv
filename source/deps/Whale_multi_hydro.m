@@ -7,4 +7,3 @@ x=x(filt.xlims(1):filt.xlims(2));
 Nx=length(x);
 source_phase=angle(fft(filt.source,Nx));
 x_filt=ifft(fft(x,Nx).*exp(-1i*source_phase));
-
