@@ -10884,26 +10884,28 @@ filt_param=struct('Ncontour',Ncontour,'r_guess',r_guess,'c1',c1,'flims',1000*[st
 
 filt=Whale_main_fun(x0,stft_param,filt_param,hdr);
 
-%close all
-% MM=size(modes.s_filt);
-% if MM(1)>0
-%     
-%     %%mode_stack is unwarped time series that should be mode-dominated
-%     mode_stack=zeros(MM(1),MM(2),length(Nchan));
-%     %sw_stack=zeros(length(Nchan),length(s_w));
-%     for I=Nchan
-%         fprintf('%i of %i channels\n',I,length(Nchan));
-%         y=filter(B,1,x(I,:)-mean(x(I,:)));
-%         tmp=warp_transform(0,hilbert(y.'),r_guess,c1,Fs, Nfft, N_window,N_window_w,n_limit,tsweep,fstart,fend,modes.spectro_mask,hdr.geom.rd(I));
-%         mode_stack(:,:,I)=tmp.s_filt;
-%         
-%     end
-% else %No modes selected
-%     return
-% end
-% %close(10:11)
-% clear tmp
-%save temp
+
+%%Variables needed
+%   modes.sfilt: time series for each modal arrival (time, mode)
+close all
+MM=size(modes.s_filt);
+if MM(1)>0
+    
+    %%mode_stack is unwarped time series that should be mode-dominated
+    mode_stack=zeros(MM(1),MM(2),length(Nchan));
+    %sw_stack=zeros(length(Nchan),length(s_w));
+    for I=Nchan
+        fprintf('%i of %i channels\n',I,length(Nchan));
+        y=filter(B,1,x(I,:)-mean(x(I,:)));
+        tmp=warp_transform(0,hilbert(y.'),r_guess,c1,Fs, Nfft, N_window,N_window_w,n_limit,tsweep,fstart,fend,modes.spectro_mask,hdr.geom.rd(I));
+        mode_stack(:,:,I)=tmp.s_filt;
+        
+    end
+else %No modes selected
+    return
+end
+%close(10:11)
+
 
 
 %depth_shift=-2;  %How much to shift my estimated depth by
@@ -10921,14 +10923,17 @@ end
 
 freq_want=eval(answer{1});
 
+Umode_broadband=squeeze(sum(mode_stack.^2,1))';
+
 Nfft_filt=2^nextpow2(MM(1));
 %Nfft_filt=512;
 Uwarp=fft(mode_stack,Nfft_filt);  %Spectrum of each mode arrival
 Fwarp=linspace(0,Fs,Nfft_filt);
+
+%define minfreq and maxfreq to be upper and lower bandwidth of signal
 Igood=find(Fwarp>=(minfreq)&(Fwarp<=(maxfreq)));
 Uwarp=Uwarp(Igood,:,:);
 %Sum energy in each modal arrival. Assign sign later.
-Umode_broadband=squeeze(sum(mode_stack.^2,1))';
 
 Nc=length(Nchan);
 Nf=length(Igood);
@@ -10970,7 +10975,7 @@ for Im=1:MM(2)
     sgn_chnge=-(abs(Uang(:,Ifreq_plot))>pi/2);
     sgn_chnge=2*sgn_chnge+1;  %Convert 0 and -1 to 1 and -1;
     if Nplot>1
-        sgn_chnge=median(sgn_chnge')';
+        sgn_chnge=median(sgn_chnge')';  %Use entire bandwidth to estimate sign changes
     end
     Umode_broadband(:,Im)=sgn_chnge.*Umode_broadband(:,Im);
     Umode_shape(:,:,Im)=(sgn_chnge*ones(1,Nplot)).*abs(Umode(:,Ifreq_plot));
