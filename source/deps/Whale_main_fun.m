@@ -163,7 +163,11 @@ while next(1)
                 xw_multi=zeros(M,Nhydros);
             end
             
-            xw_multi(:,NN)=s_w;
+            try
+                xw_multi(:,NN)=s_w;
+            catch
+               keyboard %type 'dbcont' to continue
+            end
 
             t_w=(0:M-1)/Fe_w;                           % Warped time
             f_w=(0:M-1)*Fe_w/M;                         % Warped frequencies

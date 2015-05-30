@@ -933,13 +933,14 @@ switch	Batch_mode
         switch ButtonName
             case 'Save Figure'
                 
-                save_str=sprintf('PSD_plot_%4.2f_%s_%s', sec_avg,datestr(handles.tdate_start,30), ...
+                save_str=sprintf('PSD_plot_%4.2fsec_%s_%s', sec_avg,datestr(handles.tdate_start,30), ...
                     datestr(handles.tdate_start+datenum(0,0,0,0,0,handles.tlen),30));
-                save(save_str,'F','titlestr','Tnew','PSD','cmin','cmax','ylimm','sec_avg');
+                Tabs=handles.tdate_start+datenum(0,0,0,0,0,Tnew);
+                save([save_str '.mat'],'F','titlestr','Tnew','Tabs','PSD','cmin','cmax','ylimm','sec_avg');
                 uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
                 
                 orient landscape
-                print(hprint,'-djpeg','-r300',save_str);
+                print(hprint,'-djpeg','-r300',[save_str '.jpg']);
             case 'Plot percentiles'
                 
                 pms=get_PSD_percentile_params(fmin,fmax);
@@ -9162,10 +9163,21 @@ switch filetype
         Nsamples	=	info.TotalSamples;
         handles.Fs	=	info.SampleRate;
         Fs=info.SampleRate;
-        tmin=datenum([1970 1 1 0 0 0]);
+        
+        %Attempt to get date
+        tmin=get_start_time_MP4(mydir,myfile,info);
+        %tmin=datenum([1970 1 1 0 0 0]);
         tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
         %tlen=Nsamples/handles.Fs;
-        sens=1;
+        
+        %a 2 V pk-pk signal yields 0.9 pk-pak amp at 3 kHz or channel 2
+        %(audio)
+        sens=2/0.9;  %Convert to volts
+        sens_hydro=170; %dB re uPa/V
+        sens=sens*10.^(sens_hydro/20);
+        %sens=1;
+        
+       
         
         tdate_vec	=	datevec(tdate_start - tmin);
         nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);  %Ignores differences in days
@@ -9174,7 +9186,8 @@ switch filetype
         
         try
             [x,Fs]		=	audioread(fullfile(mydir,myfile),[N1 N2],'native');
-            
+            %Quick adjust for 6 dB rolloff of ultrasonic (channel 1)
+           
             
         catch
             x=[];
@@ -9193,8 +9206,12 @@ switch filetype
         % Set channel equal to -1 to give difference between signal
         
         if ~strcmp(Ichan,'all')&Ichan>0
+            try
+                x(:,1)=[0; diff(x(:,1))];
+            end
             x		=	x(:,Ichan);
-        elseif Ichan<0
+            
+        elseif Ichan<0  %for audio channel will be correct response
             x=x(:,2)-x(:,1);
         end
         
@@ -10821,6 +10838,11 @@ tlen=handles.tlen;
 mydir=pwd;
 Ichan	=	str2double(get(handles.edit_chan,'String'));  %Hardwire first channel
 
+%%x=get_signal.m
+
+%%Iwant=menu('Which signal?','Simulation','Current signal',);
+%  Cedric, insert these lines [FILENAME, PATHNAME, FILTERINDEX] = uigetfile(FILTERSPEC, TITLE)
+%fullfile(PATHNAME,FILENAME)
 if ~strcmp(handles.filetype,'MDAT')
     [x0,~,Fs,~,~,hdr]=load_data(handles.filetype,tdate_start,tlen,Ichan,handles);
     Ichan=1;Nchan=1;
@@ -10841,9 +10863,10 @@ fmax=1000*eval(get(handles.edit_fmax,'String'));
 Rest=ceil(0.25*Fs/fmax);
 tempWindow=str2double(get(handles.edit_winlen,'String'));
 
+%Load saved parameters, select new ones
 prompt={'Range guess(m)','water speed (m/s)','Nfft','N_window','N_window_w', ...
-    'Decimation factor:','Number of FM contour points:'};
-def={'15000','1490',Nfft,WindowSize,num2str(Rest*128*ceil(tempWindow)),num2str(Rest),'3'};
+    'Decimation factor:','Number of FM contour points:','Saved Parameter File'};
+def={'15000','1490',Nfft,WindowSize,num2str(Rest*128*ceil(tempWindow)),num2str(Rest),'3',''};
 dlgTitle	=	sprintf('Warping parameters');
 lineNo		=	ones(size(prompt));
 answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
