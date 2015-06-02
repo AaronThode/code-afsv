@@ -21,7 +21,7 @@ end
 %% Step 5: warped signal computation
 
 % Time axis, uniform sampling (starts from r/c)
-t=(0:N-1)/Fe+r/c;
+t=(1:N)/Fe+r/c;
 
 % Time axis, non-uniform sampling
 t_iw=iwarp_t(t,r,c);

@@ -933,14 +933,13 @@ switch	Batch_mode
         switch ButtonName
             case 'Save Figure'
                 
-                save_str=sprintf('PSD_plot_%4.2fsec_%s_%s', sec_avg,datestr(handles.tdate_start,30), ...
+                save_str=sprintf('PSD_plot_%4.2f_%s_%s', sec_avg,datestr(handles.tdate_start,30), ...
                     datestr(handles.tdate_start+datenum(0,0,0,0,0,handles.tlen),30));
-                Tabs=handles.tdate_start+datenum(0,0,0,0,0,Tnew);
-                save([save_str '.mat'],'F','titlestr','Tnew','Tabs','PSD','cmin','cmax','ylimm','sec_avg');
+                save(save_str,'F','titlestr','Tnew','PSD','cmin','cmax','ylimm','sec_avg');
                 uiwait(msgbox([save_str ' mat and jpg file written to ' pwd],'replace'));
                 
                 orient landscape
-                print(hprint,'-djpeg','-r300',[save_str '.jpg']);
+                print(hprint,'-djpeg','-r300',save_str);
             case 'Plot percentiles'
                 
                 pms=get_PSD_percentile_params(fmin,fmax);
@@ -9163,21 +9162,10 @@ switch filetype
         Nsamples	=	info.TotalSamples;
         handles.Fs	=	info.SampleRate;
         Fs=info.SampleRate;
-        
-        %Attempt to get date
-        tmin=get_start_time_MP4(mydir,myfile,info);
-        %tmin=datenum([1970 1 1 0 0 0]);
+        tmin=datenum([1970 1 1 0 0 0]);
         tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
         %tlen=Nsamples/handles.Fs;
-        
-        %a 2 V pk-pk signal yields 0.9 pk-pak amp at 3 kHz or channel 2
-        %(audio)
-        sens=2/0.9;  %Convert to volts
-        sens_hydro=170; %dB re uPa/V
-        sens=sens*10.^(sens_hydro/20);
-        %sens=1;
-        
-       
+        sens=1;
         
         tdate_vec	=	datevec(tdate_start - tmin);
         nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);  %Ignores differences in days
@@ -9186,8 +9174,7 @@ switch filetype
         
         try
             [x,Fs]		=	audioread(fullfile(mydir,myfile),[N1 N2],'native');
-            %Quick adjust for 6 dB rolloff of ultrasonic (channel 1)
-           
+            
             
         catch
             x=[];
@@ -9206,12 +9193,8 @@ switch filetype
         % Set channel equal to -1 to give difference between signal
         
         if ~strcmp(Ichan,'all')&Ichan>0
-            try
-                x(:,1)=[0; diff(x(:,1))];
-            end
             x		=	x(:,Ichan);
-            
-        elseif Ichan<0  %for audio channel will be correct response
+        elseif Ichan<0
             x=x(:,2)-x(:,1);
         end
         
@@ -10840,85 +10823,130 @@ Ichan	=	str2double(get(handles.edit_chan,'String'));  %Hardwire first channel
 
 %%x=get_signal.m
 
-%%Iwant=menu('Which signal?','Simulation','Current signal',);
-%  Cedric, insert these lines [FILENAME, PATHNAME, FILTERINDEX] = uigetfile(FILTERSPEC, TITLE)
-%fullfile(PATHNAME,FILENAME)
-if ~strcmp(handles.filetype,'MDAT')
-    [x0,~,Fs,~,~,hdr]=load_data(handles.filetype,tdate_start,tlen,Ichan,handles);
-    Ichan=1;Nchan=1;
-else
-    Nchan='all';
-    %Ichan=16-Ichan;  %Fix this; why upside down?
-    %function [x,t,Fs,tmin,tmax,head]	=	...
-    %load_data(filetype,tdate_start,tlen,Ichan,handles)
+Iwant=menu('Which signal?','Separated Modes','Current signal','Current signal with saved parameters','Simulation');
 
-    [x0,~,Fs,~,~,hdr]=load_data(handles.filetype,tdate_start,tlen,Nchan,handles);
-    Nchan=1:size(x0,1);
-end
-
-contents=get(handles.popupmenu_Nfft,'String');
-Nfft=contents{get(handles.popupmenu_Nfft,'Value')};
-WindowSize=contents{get(handles.popupmenu_WindowSize,'Value')};
-fmax=1000*eval(get(handles.edit_fmax,'String'));
-Rest=ceil(0.25*Fs/fmax);
-tempWindow=str2double(get(handles.edit_winlen,'String'));
-
-%Load saved parameters, select new ones
-prompt={'Range guess(m)','water speed (m/s)','Nfft','N_window','N_window_w', ...
-    'Decimation factor:','Number of FM contour points:','Saved Parameter File'};
-def={'15000','1490',Nfft,WindowSize,num2str(Rest*128*ceil(tempWindow)),num2str(Rest),'3',''};
-dlgTitle	=	sprintf('Warping parameters');
-lineNo		=	ones(size(prompt));
-answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
-
-if	isempty(answer)
+if Iwant==0
     return;
+
+elseif Iwant==1
+    [minfreq,maxfreq]=deal(1000*str2double(handles.edit_fmin.String),1000*str2double(handles.edit_fmax.String));
+    [FILENAME, PATHNAME, FILTERINDEX] = uigetfile();
+    load(fullfile(PATHNAME,FILENAME))
+    
+    if ~exist('mode_stack','var')
+        mode_stack=filt.mode_stack;
+        Fs=filt.Fs;
+        Nchan=filt.Nchan;
+        hdr=filt.hdr;
+    end
+    
+else
+    if Iwant==3
+        [FILENAME, PATHNAME, FILTERINDEX] = uigetfile('*.mat');
+        param_file=fullfile(PATHNAME,FILENAME);
+        tmp=load(param_file);
+        if isfield(tmp,'N_window')
+            load(param_file)
+        end
+    elseif Iwant==4
+        [FILENAME, PATHNAME, FILTERINDEX] = uigetfile('*.mat');
+        param_file=fullfile(PATHNAME,FILENAME);
+    else
+        param_file='';
+    end
+    
+    if ~strcmp(handles.filetype,'MDAT')
+        [x0,~,Fs,~,~,hdr]=load_data(handles.filetype,tdate_start,tlen,Ichan,handles);
+        Ichan=1;Nchan=1;
+    else
+        Nchan='all';
+        %Ichan=16-Ichan;  %Fix this; why upside down?
+        %function [x,t,Fs,tmin,tmax,head]	=	...
+        %load_data(filetype,tdate_start,tlen,Ichan,handles)
+
+        [x0,~,Fs,~,~,hdr]=load_data(handles.filetype,tdate_start,tlen,Nchan,handles);
+        Nchan=1:size(x0,1);
+    end
+    
+    if Iwant==4
+        clear x0
+        tmp=load(param_file);
+        load(param_file)
+        x0=pt;
+    end
+   
+    if ~exist('tmp','var') || ~isfield(tmp,'N_window')
+        contents=get(handles.popupmenu_Nfft,'String');
+        Nfft=contents{get(handles.popupmenu_Nfft,'Value')};
+        WindowSize=contents{get(handles.popupmenu_WindowSize,'Value')};
+        fmax=1000*eval(get(handles.edit_fmax,'String'));
+        Rest=ceil(Fs/fmax/2.5);
+        tempWindow=str2double(get(handles.edit_winlen,'String'));
+
+        %Load saved parameters, select new ones
+        prompt={'Range guess(m)','water speed (m/s)','bottom speed (m/s)','Nfft','N_window', ...
+            'Decimation factor:','Number of FM contour points:'};
+        def={'15000','1439','1690',Nfft,WindowSize,num2str(Rest),'3'};
+        dlgTitle	=	sprintf('Warping parameters');
+        lineNo		=	ones(size(prompt));
+        answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
+
+        if	isempty(answer)
+            return;
+        end
+
+        r_guess=eval(answer{1});
+        c1=eval(answer{2});
+        c2=eval(answer{3});
+        Nfft=eval(answer{4});
+        N_window=round(eval(answer{5}));
+        R=eval(answer{6});
+        Ncontour=eval(answer{7});
+        
+        tmp=struct('tdate_start',tdate_start,'tlen',tlen,'Ichan',Ichan,'Nchan',Nchan,'R',R,'Nfft',Nfft,'Fs',Fs,'N_window'...
+        ,N_window,'Ncontour',Ncontour,'r_guess',r_guess,'c1',c1,'c2',c2);
+       
+        [minfreq,maxfreq]=deal(1000*str2double(handles.edit_fmin.String),1000*str2double(handles.edit_fmax.String));
+    end
+    
+    %%Check orientation of data
+    s_temp=size(x0);
+    if s_temp(1)<s_temp(2)
+        x0=x0';
+    end
+
+    if R>1
+       for J=1:size(x0,2)
+           x1(:,J)=decimate(x0(:,J),R);
+       end
+       x0=x1;
+       Fs=ceil(Fs/R);
+       N_window=N_window/R;
+       Nfft=2^nextpow2(Nfft/R);
+    end
+
+    N_window=1+2*floor(N_window/2);
+
+    stft_param=struct('Nfft',Nfft,'N_window',N_window,'Fs',Fs);
+    filt_param=struct('Ncontour',Ncontour,'r_guess',r_guess,'c1',c1,'c2',c2,'flims',[minfreq maxfreq]);
+    
+    if ~isfield(tmp,'f_points'); param_file='';end;
+
+    modes=Whale_main_fun(x0,stft_param,filt_param,hdr,handles,param_file,tmp);
+    Nchan=modes.Nchan;
+    hdr.geom.rd=hdr.geom.rd(Nchan);
+    
+    mode_stack=modes.mode_stack(:,:,Nchan); % mode_stack is unwarped time series that should be mode-dominated
+
 end
 
-r_guess=eval(answer{1});
-c1=eval(answer{2});
-Nfft=eval(answer{3});
-N_window=round(eval(answer{4}));
-N_window_w=round(eval(answer{5}));
-R=eval(answer{6});
-Ncontour=eval(answer{7});
-
-%%Check orientation of data
-s_temp=size(x0);
-if s_temp(1)<s_temp(2)
-    x0=x0';
-end
-
-if R>1
-   for J=1:size(x0,2)
-       x1(:,J)=decimate(x0(:,J),R);
-   end
-   x0=x1;
-   Nfft=2^nextpow2(Nfft/R);
-   Fs=Fs/R;
-   N_window=N_window/R;
-   N_window_w=N_window_w/R;
-end
-  
-N_window=1+2*floor(N_window/2);
-N_window_w=1+2*floor(N_window_w/2);
-[minfreq,maxfreq]=deal(1000*str2double(handles.edit_fmin.String),1000*str2double(handles.edit_fmax.String));
-
-stft_param=struct('Nfft',Nfft,'N_window',N_window,'N_window_w',N_window_w,'Fs',Fs);
-filt_param=struct('Ncontour',Ncontour,'r_guess',r_guess,'c1',c1,'flims',[minfreq maxfreq]);
-
-modes=Whale_main_fun(x0,stft_param,filt_param,hdr,handles);
-
-%close all
-
-mode_stack=modes.mode_stack; % mode_stack is unwarped time series that should be mode-dominated
 MM=size(squeeze(mode_stack(:,:,1)));
 
 %depth_shift=-2;  %How much to shift my estimated depth by
 %freq_want=[84 104];
 %freq_want=[120:5:145];
 prompt={'Frequencies at which to extract modes (Hz):'};
-def={'[84 104]'};
+def={'[85:100]'};
 dlgTitle	=	sprintf('Frequencies to extract modes');
 lineNo		=	ones(size(prompt));
 answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
@@ -10928,14 +10956,19 @@ if	isempty(answer)
 end
 
 freq_want=eval(answer{1});
-
 Nfft_filt=2^nextpow2(MM(1));
-Uwarp=fft(mode_stack,Nfft_filt);  %Spectrum of each mode arrival
-Fwarp=linspace(0,Fs,Nfft_filt);
+Fwarp=(0:Nfft_filt-1)*Fs/Nfft_filt;
 Igood=find(Fwarp>=(minfreq)&(Fwarp<=(maxfreq)));
+
+Uwarp=fft(mode_stack,Nfft_filt);  %Spectrum of each mode arrival
 Uwarp=Uwarp(Igood,:,:);
+
 %Sum energy in each modal arrival. Assign sign later.
-Umode_broadband=squeeze(sum(mode_stack.^2,1))';
+Umode_broadband=squeeze(sqrt((sum(abs(mode_stack).^2,1))))';
+
+if MM(2)==1
+    Umode_broadband=Umode_broadband';
+end
 
 Nc=length(Nchan);
 Nf=length(Igood);
@@ -10952,27 +10985,27 @@ Nplot=length(freq_plot);
 
 %Cyle through each mode and extract mode shape from various frequencies,
 % as well as broadband time series
-legendCell=cellstr(num2str(freq_plot', 'f=%2.1f Hz'))';
+legendCell=cellstr(num2str(freq_plot', '%2.1f Hz'))';
 
 for Im=1:MM(2)
     
     %normalize both individual-frequency based and broadband modes.
     Umode=squeeze(Uwarp(:,Im,:)).';
     Umode_broadband(:,Im)=Umode_broadband(:,Im)/norm(Umode_broadband(:,Im));
-    Umode_broadband(:,Im)=sqrt(Umode_broadband(:,Im));
-    
+
     for II=1:Nf
         Umode(:,II)=Umode(:,II)/norm(Umode(:,II));
     end
     
-    %Extact phase along array
-    Uang_uncorrected=angle(Umode./(ones(Nc,1)*Umode(end,:)));
+    %Extract phase along array
+    Uang_uncorrected=angle(Umode./(ones(Nc,1)*Umode(1,:)));
+    
     if Im==1
         Umode1=Umode;  %We assume that mode 1 phase arises from tilt
     end
     
     tmp=(Umode.*conj(Umode1));  %Remove tilt or phase offsets
-    Uang=angle(tmp./(ones(Nc,1)*tmp(end,:)));  %Reference phase to bottom element
+    Uang=angle(tmp./(ones(Nc,1)*tmp(1,:)));  %Reference phase to first element
     
     %Determine sign of mode: observe when corrected phase
     %   (relative to bottom mode) exceeds pi/2
@@ -10981,8 +11014,9 @@ for Im=1:MM(2)
     if Nplot>1
         sgn_chnge=median(sgn_chnge')';
     end
+    
     Umode_broadband(:,Im)=sgn_chnge.*Umode_broadband(:,Im);
-    Umode_shape(:,:,Im)=(sgn_chnge*ones(1,Nplot)).*abs(Umode(:,Ifreq_plot));
+    Umode_shape=(sgn_chnge*ones(1,Nplot)).*abs(Umode(:,Ifreq_plot));
     
     %end
     %tmp=sum(Umode.^2);
@@ -10995,10 +11029,11 @@ for Im=1:MM(2)
     plot(abs(Umode(:,Ifreq_plot)),hdr.geom.rd,'o-');grid;axis('ij')
     set(gca,'fontweight','bold','fontsize',14);
     title(sprintf('%s: abs value of mode %i',datestr(tdate_start),Im));
+
     if Im==1
         ylabel('depth (m)');
+        legend(legendCell,'location','westoutside');   
     end
-    legend(legendCell);    
     
     subplot(MM(2),3,3*Im-1);
     plot((Uang_uncorrected(:,Ifreq_plot)),hdr.geom.rd,'o-');grid;axis('ij')
@@ -11007,7 +11042,6 @@ for Im=1:MM(2)
     if Im==1
         ylabel('depth (m)');
     end
-    legend(legendCell);    
     
     subplot(MM(2),3,3*Im);
     plot((Uang(:,Ifreq_plot)),hdr.geom.rd,'o-');grid;axis('ij')
@@ -11018,47 +11052,69 @@ for Im=1:MM(2)
     %     title(sprintf('Recovered mode %i',Im));
     if Im==1
         ylabel('depth (m)');
-    end
-    legend(legendCell);    
+    end   
+
+    %% To delete
+     try
+        load C:/Users/cedri_000/Desktop/Kraken/Sims/Separated/mode_t_sim mode_t_sim
+        freqs1=fieldnames(mode_t_sim);
+        tmp1=zeros(55,Nplot);
+        for ff=1:Nplot
+            [~,minf]=min(abs(str2double(strrep(strrep(freqs1,'f',''),'_','.'))-freq_plot(ff)));
+            tmp1(:,ff)=mode_t_sim.(char(freqs1(minf)))(:,Im);
+        end
+        sim=real(tmp1);
+     catch 
+        warning('error: remove this part of the script')
+        sim=0.1;
+     end
     
+    col='rgbkyrgbkyrgbkyrgbky';
     figure(19)
     subplot(1,MM(2),Im)
-    plot(Umode_broadband(:,Im),hdr.geom.rd,squeeze(Umode_shape(:,:,Im)),hdr.geom.rd);grid on
+    ylim([0 55])
+    hold on,grid on
+    for ff=1:Nplot
+        plot(Umode_shape(:,ff),hdr.geom.rd,'Color',col(ff)),
+        plot(sim(:,ff)*max(Umode_shape(:,ff))/max(sim(:,ff))-0.2,1:55,'--','Color',col(ff))
+    end
+%     plot(Umode_shape(:,:),hdr.geom.rd),
+%     plot(sim,1:55,'--')
+    plot(Umode_broadband(:,Im),hdr.geom.rd,'ko')
     set(gca,'fontweight','bold','fontsize',14);
     title(sprintf('Normalized mode %i',Im));
     ylabel('depth(m)');
     title(sprintf('Inverted mode %i',Im));
     axis('ij')
-    
-    legend([{'broadband'},legendCell]) 
+    if Im==1; legend([legendCell,{'broadband','simulation'}],'location','westoutside'); end
 end
 
 %%Plot recovered tilt
-U1_phase=angle(Umode1./(ones(Nc,1)*Umode1(end,:)));
-U1_tilt=unwrap(U1_phase)./(ones(Nc,1)*2*pi*Fwarp(Igood)/1420);
+U1_phase=angle(Umode1./(ones(Nc,1)*Umode1(1,:)));
+U1_tilt=unwrap(U1_phase)./(ones(Nc,1)*2*pi*Fwarp(Igood)/c1);
 
 %Simple broadband calculations
 xt1=squeeze(mode_stack(:,1,:));
-RR=10;
-maxlag=round(50*RR*Fs/1490);
+RR=40;
+maxlag=round(50*RR*Fs/c1);
 
 for I=1:(Nc-1)
     y1=resample(xt1(:,I),RR,1);
     y2=resample(xt1(:,I+1),RR,1);
     [cc,lags]=xcov(y1,y2,maxlag);
     [junk,Imax]=max(abs(cc));
-    tilt_broadband(I+1)=1490*lags(Imax)/(RR*Fs);
+    tilt_broadband(I+1)=c1*lags(Imax)/(RR*Fs);
     
 end
 tilt_broadband=cumsum(tilt_broadband);
-tilt_broadband=tilt_broadband-tilt_broadband(end);  %Make bottom phone the origin
+tilt_broadband=tilt_broadband-tilt_broadband(1);  %Make first phone the origin
 
 figure(18)
 subplot(1,2,1)
 plot(U1_phase(:,Ifreq_plot),hdr.geom.rd);axis('ij');grid
 xlabel('rad');ylabel('depth (m)');
 title('Array tilt in terms of mode 1 phase');
-legend(legendCell)
+if Im==1; legend(legendCell,'location','westoutside');end
 
 subplot(1,2,2);
 plot(U1_tilt(:,Ifreq_plot),hdr.geom.rd);axis('ij');grid
@@ -11067,16 +11123,19 @@ plot(tilt_broadband,hdr.geom.rd,'ko')
 title('Array tilt in terms of mode 1 offset');
 xlabel('m offset');ylabel('depth (m)');
 grid on
-legend([legendCell,{'broadband'}]) 
+legend([legendCell,{'broadband'}],'location','best')
+
+for ff=1:Nplot
+    freq=freq_plot(ff);
+    mode_extract.(strrep(num2str(freq,'f%1.1f'),'.','_'))=squeeze(Umode_shape(:,ff,:));
+end
+
+save C:\Users\cedri_000\Desktop\Kraken\mat\mode_extract mode_extract
 
 for II=18:20
     figure(II)
-    orient landscape
-    print('-djpeg','-r300',sprintf('ModeTiltWarpInversion_%i',II));
+    saveas(gcf,sprintf('C:/Users/cedri_000/Desktop/Kraken/ModeTiltWarpInversion_%i.jpg',II))
 end
 end
-
-
-
 
 

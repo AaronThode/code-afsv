@@ -1,75 +1,62 @@
-function [fwlims,clims,xmax,values] = choose_instant(x_deconv,Nww,jj,Fe,r,c,Nmode,delay,flims,clims)
-args_max=10;
-values=zeros(2,Nmode);
+function [params,values] = choose_instant(x_deconv,params,delay,Fs,r,c1,c2,Nmode)
 
-if nargin==args_max-1
-    x_ok=x_deconv(delay:end);
-    [s_w, Fe_w]=warp_temp_exa(x_ok,Fe,r,c);
-    xmax=(length(s_w)-1)/Fe_w;
-else
-    xmax=delay;
-end
+values=zeros(3,Nmode); % 3 evaluation function (assess the quality of the warping)
 
-x_min=max(1,jj);               
-x_ok=x_deconv(x_min:end);
+x_min=max(1,delay);               
+N=length(x_deconv);
+x_ok=ifft(fft(x_deconv,N).*exp(1i*2*pi*x_min/N*(1:N)'),'symmetric'); % x_deconv is delayed by x_min
 
 %% Warping
-[s_w, Fe_w]=warp_temp_exa(x_ok,Fe,r,c);     % s_w: warped signal, Fe_w: new warping frequency
+[s_w, Fe_w]=warp_temp_exa(x_ok,Fs,r,c1);     % s_w: warped signal, Fe_w: new warping frequency
 clear x_ok
 M=length(s_w);
+
+if ~isfield(params,'xmax')
+    params.xmax=(M-1)/Fe_w;
+    params.Nww=1+2*ceil(M/8);
+end
 
 t_w=(0:M-1)/Fe_w;                           % Warped time
 f_w=(0:M-1)*Fe_w/M;                         % Warped frequencies
 
-rtf=tfrstft(s_w,1:M,M,hamming(Nww));
+RTF=abs(tfrstft(s_w,1:M,M,hamming(params.Nww)));
 M1=floor(M/2);
-rtf(M1:end,:)=[];                   % Delete negative frequencies
-
-RTF=abs(rtf);
+RTF(M1:end,:)=[];                   % Delete negative frequencies
 
 % Adjust the size of the window and keep the same for each
 % time instant
-if nargin==args_max-1
-    fw_min=0;
+if ~isfield(params,'fwlims')
     fw_max=M1-1;
-    fw_thresh=1e-2; %RTF
-    %fw_thresh=5e-2; %RTF.^2
-    %fw_thresh=7e-1; %10*log10(RTF)
+    fw_thresh=1e-2;
     while(max(RTF(fw_max,:))/max(RTF(:))<=fw_thresh)
         fw_max=fw_max-1;
     end
-    fw_min=fw_min*Fe_w/M1;
-    fw_max=fw_max*Fe_w/M1;
-    clims=[0 max(RTF(:))];
-    %clims=([prctile(RTF(:),94) prctile(RTF(:),100)]);
-else
-    fw_min=flims(1);
-    fw_max=flims(2);
+    params.fwlims=[0 fw_max]*Fe_w/M1;
+    params.clims=[0 max(RTF(:))];
 end
 
 imagescFun(t_w,f_w,RTF,'ij')
-ylim([fw_min,fw_max])
-xlim([0 xmax])
+ylim(params.fwlims)
+xlim([0 params.xmax])
 hold on,
 
-% Pekeris cutoff frequencies
-%[c1,c2]=deal(1490,1707);
-[c1,c2]=deal(1439,1673);
+%% Pekeris cutoff frequencies
 D=55;
 pek_cutoff=c1*c2/2/D/sqrt(c2^2-c1^2);
-df=pek_cutoff*0.4;
-threshold=[1 3]; % thresholds to determine the height and the width of the modes (dB)
+threshold=4*[1 3]; % thresholds to determine the height and the width of the modes (dB)
+zone=struct('dpek',pek_cutoff*M1/Fe_w,'pek_cutoff',pek_cutoff*M1/Fe_w);
+
 colorMode=['r','w','c','y','g','m'];
 hold on
 
 for mm=1:Nmode
-    [x_rect,y_rect]=modes_rect(RTF,threshold,round(pek_cutoff*(mm-0.5)*M1/Fe_w),ceil(df*M1/Fe_w));
-    plot(x_rect/Fe_w,y_rect*Fe_w/M1,'Color','k')
+    [x_rect,y_rect,zone]=modes_rect(RTF,threshold,zone);
+    plot(x_rect/Fe_w,y_rect*Fe_w/M1,'Color','k','LineWidth',2)
     plot(t_w(ceil(M/2):end),linspace(pek_cutoff*(mm-0.5),pek_cutoff*(mm-0.5),M-ceil(M/2)+1),'Color',colorMode(1+mod(mm-1,length(colorMode))))
-    values(:,mm)=evalWarp(RTF,x_rect,y_rect);
+    values(:,mm)=evalWarp(RTF,x_rect,y_rect,Fe_w,M1);
 end
 
-fwlims=[fw_min,fw_max];
-caxis(clims)
+caxis(params.clims)
+colorbar
 end
 

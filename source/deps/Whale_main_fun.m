@@ -1,9 +1,7 @@
-function [filt]=Whale_main_fun(x,stft_param,filt_param,hdr,handles)
+function [filt]=Whale_main_fun(x,stft_param,filt_param,hdr,handles,param_file,var_temp)
 
 %% Create a folder to save the results
-tmp=strsplit(hdr.synch.file,'/');
-saveFold=[char(tmp(end)) '-' num2str(hdr.synch.time,'%i') '/'];
-saveFold=[strjoin(strsplit(handles.outputdir,'\'),'/') '/' saveFold];
+saveFold=[strjoin(strsplit(handles.outputdir,'\'),'/') '/' datestr(handles.tdate_start,30)];
 
 if exist(saveFold,'dir')~=7
     mkdir(saveFold)
@@ -12,23 +10,40 @@ end
 cd(saveFold)
 
 %% General parameters and variables
-filt=struct('mask',[]); % Save the filtering process to apply it on the other hydrophones
+filt=struct('hdr',hdr); % Save the filtering process to apply it on the other hydrophones
 
 set(0,'DefaultAxesFontName', 'Californian FB')
 set(0,'DefaultAxesFontSize', 12)
 
 hydro_ref=str2double(get(handles.edit_chan,'String'));
+try
+hydro_ref=hydro_ref-length(find(hdr.geom.Igood(1:hydro_ref)==0)); % In case there are some bad hydrophones
+catch
+end
 
 next=zeros(1,4)+1;      % A boolean vector used to go back and forward in the program
-Nhydros=1*(hdr.Nchan==3)+15*(hdr.Nchan==15); % DASAR or VLA
+Nhydros=1*(strcmp(handles.filetype,'GSI'))+15*(strcmp(handles.filetype,'MDAT')); % DASAR or VLA
 [Fs,NFFT]=deal(stft_param.Fs,stft_param.Nfft);
-[Nwindow,Nww]=deal(stft_param.N_window,stft_param.N_window_w);
-[r_guess,c1]=deal(filt_param.r_guess,filt_param.c1);
-flims=filt_param.flims;
+N=length(x(:,1));
+Nwindow=stft_param.N_window;
+[r_guess,c1,c2]=deal(filt_param.r_guess,filt_param.c1,filt_param.c2);
+flims=filt_param.flims; % frequency bounds
+
+%% Check for bad hydrophones
+
+if Nhydros~=1
+    norm_tmp=x/norm(x(:,hydro_ref));
+    hydros_ok=var_temp.Nchan(sqrt(sum(norm_tmp.^2,1))>0.01);
+else
+    hydros_ok=[1]; % DASAR
+end
+
+Nhydros=length(hydros_ok);
+filt.Nchan=hydros_ok;
 
 %% Signal selection
 
-for Nh=1:Nhydros
+for Nh=hydros_ok
     [x(:,Nh),~]=quick_filter(x(:,Nh),Fs,flims(1),flims(2));
 end
 
@@ -38,56 +53,78 @@ freq=(0:NFFT-1)/NFFT*Fs;
 %% Source deconvolution
 
 while next(1)
-    if Nhydros==1 % DASAR
-        [x_deconv,source] = sourceDeconv_dB(x(:,1),Fs,NFFT,Nwindow,flims,filt_param.Ncontour);
-    else % VLA
-        [x_deconv,source] = sourceDeconv_dB(x(:,hydro_ref),Fs,NFFT,Nwindow,flims,filt_param.Ncontour);
-    end
+    if strcmp(param_file,'') % If the user didn't select a file for deconvolution
+        [x_deconv,source_phase,t_points,f_points] = sourceDeconv_dB(x(:,hydro_ref),Fs,NFFT,Nwindow,flims,filt_param.Ncontour);
         
+    else %otherwise we take the selected points from the file 
+        load(param_file,'t_points','f_points')
+        t=linspace(t_points(1),t_points(end),round(1+Fs*(t_points(end)-t_points(1))));
+        iflaw=interp1(t_points,f_points,t,'linear')';
+        Fsource=fft(fmodany(iflaw/Fs),N);
+        source_phase=angle(Fsource);
+        
+        disp('End of source deconvolution')
+        
+        x_f=fft(x(:,hydro_ref),length(source_phase));
+        
+        x_deconv=ifft(x_f.*exp(-1i*source_phase),'symmetric');
+    end
+
     next(1:end)=1;
-    filt.source=source;
-    Nx=length(x_deconv);
     
 %% Time selection (for warping)
 
-    while next(2)
+     while next(2)
         next(2:end)=1;
 
-        disp('Time selection')
-        TFR=10*log10(abs(tfrstft(x_deconv,1:Nx,NFFT,hamming(Nwindow))));
+        TFR=10*log10(abs(tfrstft(x_deconv,1:N,NFFT,hamming(Nwindow))));
         fig=figure;
-        imagescFun((1:Nx)/Fs,Fs*(1:NFFT)/NFFT,TFR,'xy');
-        ylim(flims)
-        title('Signal after source deconvolution: choose the first time instant (for warping)')
-        caxis([prctile(TFR(:),50) prctile(TFR(:),100)]);
+        imagescFun((1:N)/Fs,Fs*(1:NFFT)/NFFT,TFR,'xy');
+        ylim([0.8*flims(1) 1.2*flims(2)])
+        title('Signal after source deconvolution')
+        caxis([prctile(TFR(:),60) prctile(TFR(:),100)]);
         clear TFR
 
-        j=ceil(Fs*ginput(1));
+        if strcmp(param_file,'') % If the user didn't select a file for deconvolution
+            saveDeconv=input('Do you want to save the deconvolution ?  (y/n) ','s');
+            if saveDeconv=='y'
+                var_temp.t_points=t_points;
+                var_temp.f_points=f_points;
+                var_temp.minfreq=flims(1);
+                var_temp.maxfreq=flims(2);
+                save('param_deconv.mat','-struct','var_temp')
+            end
+        end
+        
+        disp('Time selection')
+        title('Signal after source deconvolution: choose the first time instant (for warping)')
+        j=max(1,ceil(Fs*ginput(1))); % First time instant guess
         j=j(1);
         close(fig)
 
  %% Choose a list of samples near the selected one
-
-        dj=ceil(j/2*(1-(49/50)^2)*(1-(c1*j/Fs/r_guess)^2)); % Step (calculated so that the modes shift is about 1/50 of the distance between 2 pekeris cutoff frequencies
-        nj=10;                                       % Number of steps in each direction
+        frac=1/100;
+        dj=max(1,ceil(j/2*(1-(1-frac)^2)*(1-(c1*j/Fs/r_guess)^2))); % Step (calculated so that the modes shift is about 1/50 of the distance between 2 pekeris cutoff frequencies
+        nj=5;                                       % Number of steps in each direction
         j_list=max(1,j-nj*dj):dj:max(1,j+nj*dj);    % List of delay around the selected one
 
         % Make a video
 
         Nmodes=3;                           % Number of modes to search and localize
-        modes_value=zeros(2,Nmodes,2*nj+1); % 2 estimators of the warping quality
+        modes_value=zeros(3,Nmodes,length(j_list)); % 2 estimators of the warping quality
 
-        % Set the scale for the axis for the whole video
+        % Set the axis scale for the whole video
         fig=figure;
-        [fwlims,clims,xmax,vals]=choose_instant(x_deconv,Nww,j_list(1),Fs,r_guess,c1,Nmodes,max(j_list),1);
-        modes_value(:,:,1)=vals;      
+        [params,~]=choose_instant(x_deconv,struct(),j_list(1),Fs,r_guess,c1,c2,Nmodes);
+         
         close(fig)
 
         % Starting the video
         mov=figure('units','normalized','outerposition',[0 0 1 1]);
 
-        for jj = 1:length(j_list)
-            [~,~,~,vals]=choose_instant(x_deconv,Nww,j_list(jj),Fs,r_guess,c1,Nmodes,xmax,fwlims,clims);
+        for jj = 1:length(j_list) % try several time instants
+            [~,vals]=choose_instant(x_deconv,params,j_list(jj),Fs,r_guess,c1,c2,Nmodes);
+
             modes_value(:,:,jj)=vals;
             title(['delay : ' num2str((j_list(jj)-j)/Fs) ' s'])
             F(jj) = getframe(mov); % Movie  
@@ -103,19 +140,28 @@ while next(1)
             replay=input('Replay ? (y/n) ','s');
         end
         
-        f1_opt=squeeze(prod(squeeze(modes_value(1,:,:)),1));
-        f2_opt=squeeze(prod(squeeze(modes_value(2,:,:)),1));
+        f1_opt=squeeze(prod(squeeze(modes_value(1,:,:)),1)); % First optimisation function (Mode energy)
+        f2_opt=squeeze(prod(squeeze(modes_value(2,:,:)),1)); % Second optimisation function (Slope)
 
-        figure,plot((j_list-j)/Fs,f1_opt/max(f1_opt))
-        hold on
+        figure,hold on
+        plot((j_list-j)/Fs,f1_opt/max(f1_opt))
         plot((j_list-j)/Fs,1-f2_opt/max(f2_opt))
         xlabel('Delay (s)')
         legend('Modes energy','Modes sparsity')
         title('Warping efficiency')
+        
+        figure,hold on
+        for mm=1:Nmodes
+            plot((j_list-j)/Fs,squeeze(modes_value(3,mm,:)))
+            xlabel('Delay (s)')
+            ylabel('Slope')
+            title('Warping efficiency')
+        end
+        legend(cellstr(num2str((1:Nmodes)', 'Mode %i')))
 
-        [~,opt_delay]=max(f1_opt);
+        [~,opt_delay]=min(sum(squeeze(modes_value(3,:,:)),1));
 
-        disp(['The delay that optimize the warping energy is :' num2str((j_list(opt_delay)-j)/Fs)]) 
+        disp(['The delay that optimize the slope is :' num2str((j_list(opt_delay)-j)/Fs)]) 
 
         commandwindow;
         saveMov=input('\n Do you want to save the movie ? (y/n) ','s');
@@ -133,118 +179,113 @@ while next(1)
         clear F x_multi modes_value writerObj
         
         % We let the user choose the first time instant
-        x_min=floor(j+str2double(input('\n Choose a time instant: ','s'))*Fs);
+        x_min=round(j+str2double(input('\n Choose a time instant: ','s'))*Fs);
         
 %% Save the filtering process to apply it to the other hydrophones
-
-        filt.xlims=[x_min,length(x_deconv)];
-        filt.flims=flims;
-        filt.fwlims=fwlims;
         
-        x_ok=x_deconv(x_min:end);
-        disp('End of time selection')
+        filt.xmin=x_min;
+        filt.flims=flims;
+        filt.fwlims=params.fwlims;
+                
+        x_ok=ifft(fft(x_deconv,N).*exp(1i*2*pi*x_min/N*(1:N)'),'symmetric');
 
+        %% end test
+        
+        disp('End of time selection')
+        
         % Apply for all the hydrophones
         
         writerObj = VideoWriter('warping_Nhydros.avi'); % Show all the warping in a movie
         writerObj.FrameRate=5;
         open(writerObj);
 
-        if Nhydros==15
-
-        for NN=1:Nhydros
+        if Nhydros>1
             
-            x_multi=Whale_multi_hydro(filt,x(:,NN));
+            for NN=1:Nhydros
+                % Source phase removal
+                x_multi=ifft(fft(x(:,hydros_ok(NN)),N).*exp(1i*(-source_phase+2*pi*x_min*(1:N)'/N)),N,'symmetric');
+                % Warping
+                [s_w, Fe_w]=warp_temp_exa(x_multi,Fs,r_guess,c1);     % s_w: warped signal, Fe_w: new warping frequency
+                
+                if NN==1
+                    M=length(s_w);
+                    xw_multi=zeros(M,Nhydros);
+                end
+                
+                xw_multi(:,hydros_ok(NN))=s_w;
 
-            [s_w, Fe_w]=warp_temp_exa(x_multi,Fs,r_guess,c1);     % s_w: warped signal, Fe_w: new warping frequency
-            M=length(s_w);
+                t_w=(0:M-1)/Fe_w;        % Warped time
+                f_w=(0:M-1)*Fe_w/M;      % Warped frequencies
 
-            if NN==1
-                xw_multi=zeros(M,Nhydros);
-            end
-            
-            try
-                xw_multi(:,NN)=s_w;
-            catch
-               keyboard %type 'dbcont' to continue
-            end
+                RTF=abs(tfrstft(s_w,1:M,M,hamming(params.Nww)));
+                M1=floor(M/2);
+                RTF(M1:end,:)=[];                   % Delete negative frequencies
 
-            t_w=(0:M-1)/Fe_w;                           % Warped time
-            f_w=(0:M-1)*Fe_w/M;                         % Warped frequencies
+                fig=figure;
+                colorbar
+                imagescFun(t_w,f_w,RTF,'ij');
 
-            RTF=abs(tfrstft(s_w,1:M,M,hamming(Nww)));
-            M1=floor(M/2);
-            RTF(M1:end,:)=[];                   % Delete negative frequencies
+                for mm=1:Nmodes
+                    % Pekeris cutoff frequencies
+                    D=55;
+                    pek_cutoff=c1*c2/2/D/sqrt(c2^2-c1^2);
+                    colorMode=['r','w','c','y','g','m'];
+                    hold on
+                    plot(t_w(ceil(M/2):end),linspace(pek_cutoff*(mm-0.5),pek_cutoff*(mm-0.5),M-ceil(M/2)+1),'Color',colorMode(1+mod(mm-1,length(colorMode))))
+                end
 
-            fig=figure;
+                xlim([0 params.xmax])
+                ylim(params.fwlims)
+                caxis(params.clims)
+                title(['Hydro n°' num2str(hydros_ok(NN)) ' (' num2str(hdr.geom.rd(hydros_ok(NN))) 'm)'])
+
+                F(jj) = getframe(fig);
+                writeVideo(writerObj,F(jj));
+                close(fig)
+
+% Plot each warping in 4 2x2 subplots
+
+                switch NN
+                    case{1,2,3,4}
+                        subplot(2,2,NN)
+                    case{5}
+                        figure,
+                        subplot(2,2,1)
+                    case{6,7,8}
+                        subplot(2,2,NN-4)
+                    case{9}
+                        figure,
+                        subplot(2,2,1)
+                    case{10,11,12}
+                        subplot(2,2,NN-8)
+                    case{13}
+                        figure,
+                        subplot(2,2,1)
+                    case{14,15}
+                        subplot(2,2,NN-12)
+                    otherwise
+                        disp('error : wrong number of hydrophones')
+                end
+
             imagescFun(t_w,f_w,RTF,'ij');
-           
+            ylim(params.fwlims)
+            caxis(params.clims)
+            colorbar
+            xlim([0 params.xmax])
+            hold on
+            title(['Hydro n°' num2str(hydros_ok(NN)) ' (' num2str(hdr.geom.rd(hydros_ok(NN))) 'm)'])
+
             for mm=1:Nmodes
                 % Pekeris cutoff frequencies
-                [c1,c2]=deal(1439,1673);
                 D=55;
                 pek_cutoff=c1*c2/2/D/sqrt(c2^2-c1^2);
 
                 colorMode=['r','w','c','y','g','m'];
-                hold on
                 plot(t_w(ceil(M/2):end),linspace(pek_cutoff*(mm-0.5),pek_cutoff*(mm-0.5),M-ceil(M/2)+1),'Color',colorMode(1+mod(mm-1,length(colorMode))))
             end
-            
-            xlim([0 xmax])
-            ylim(fwlims)
-            caxis(clims)
-            colorbar
-            title(['Hydro n°' num2str(NN) ' (' num2str(hdr.geom.rd(NN)) 'm)'])
-            
-            F(jj) = getframe(fig);
-            writeVideo(writerObj,F(jj));
-            close(fig)
-            
-            % Plot each warping in 4 2x2 subplots
-            
-            switch NN
-                case{1,2,3,4}
-                    subplot(2,2,NN)
-                case{5}
-                    figure,
-                    subplot(2,2,1)
-                case{6,7,8}
-                    subplot(2,2,NN-4)
-                case{9}
-                    figure,
-                    subplot(2,2,1)
-                case{10,11,12}
-                    subplot(2,2,NN-8)
-                case{13}
-                    figure,
-                    subplot(2,2,1)
-                case{14,15}
-                    subplot(2,2,NN-12)
-                otherwise
-                    disp('error : wrong number of hydrophones')
+
             end
-            
-        imagescFun(t_w,f_w,RTF,'ij');
-        ylim(fwlims)
-        caxis(clims)
-        colorbar
-        
-        xlim([0 xmax])
-        hold on
-        title(['Hydro n°' num2str(NN) ' (' num2str(hdr.geom.rd(NN)) 'm)'])
-
-        for mm=1:Nmodes
-            % Pekeris cutoff frequencies
-            [c1,c2]=deal(1439,1673);
-            D=55;
-            pek_cutoff=c1*c2/2/D/sqrt(c2^2-c1^2);
-
-            colorMode=['r','w','c','y','g','m'];
-            plot(t_w(ceil(M/2):end),linspace(pek_cutoff*(mm-0.5),pek_cutoff*(mm-0.5),M-ceil(M/2)+1),'Color',colorMode(1+mod(mm-1,length(colorMode))))
-        end
-        
-        end
-        close(writerObj);
+            close(writerObj);
         
         end
 
@@ -252,8 +293,9 @@ while next(1)
 
         N=length(x_ok);
         time=(0:N-1)/Fs;
-
-        [~,Nmode,choice,filt] = modeSelect(x_ok,Fs,N,Nww,r_guess,c1,clims,filt);
+        
+        % Mode selection
+        [~,Nmode,choice,filt] = mode_select3(x_ok,Fs,N,params.Nww,r_guess,c1,params.clims,filt);
         
             if choice<3
                 next(choice+1:end)=0;
@@ -261,28 +303,23 @@ while next(1)
             next(1:choice)=1;
             
             while next(3)
-        %% Source reconvolution (add the initial source phase that was removed)
+        %% Mode extraction & source reconvolution (add the initial source phase that was removed)
 
             if Nmode~=0
-
-                source_phase=angle(fft(source,N));
                 filt.mode_stack=zeros(N,Nmode,Nhydros);
                 
                 % Apply for each hydrophone
-                for NN=1:Nhydros     
+                for NN=hydros_ok     
                     for mm=1:Nmode
                         M=length(xw_multi(:,NN));
-                        rtf=tfrstft(xw_multi(:,NN),1:M,M,hamming(Nww));
+                        rtf=tfrstft(xw_multi(:,NN),1:M,M,hamming(params.Nww));
                         rtf(floor(M/2):end,:)=[];
+                        mode_rtf_warp=squeeze(filt.('mask')(mm,:,:)).*rtf;
 
-                        mode_rtf_warp=filt.(['mask' num2str(mm)]).*rtf;
-
-                        [mode_temp_warp]=real(sum(mode_rtf_warp,1))/M/max(hamming(Nww)/norm(hamming(Nww)))*2;
-
-                        filt.mode_stack(:,mm,NN)=ifft(fft(iwarp_temp_exa(mode_temp_warp,Fe_w,r_guess,c1,Fs,N)).*exp(1i*source_phase),N,1,'symmetric');
-
+                        [mode_temp_warp]=real(sum(mode_rtf_warp,1))*2/M/max(hamming(params.Nww)/norm(hamming(params.Nww)));
+                        tmp=iwarp_temp_exa(mode_temp_warp,Fe_w,r_guess,c1,Fs,N);
+                        filt.mode_stack(:,mm,NN)=ifft(fft(tmp).*exp(1i*source_phase),N,1,'symmetric');
                         clear mode_rtf_warp mode_temp_warp
-                        
                     end        
                 end
                 
@@ -314,9 +351,9 @@ while next(1)
                 end
 
                 % Plot received TFR+dispersion curves
-                tfr=tfrstft(x(x_min:end,1),1:N,NFFT,hamming(Nwindow));
+                tfr=tfrstft(x(x_min:end,hydro_ref),1:N,NFFT,hamming(Nwindow));
                 TFR=10*log10(abs(tfr));
-                FI=figure;
+                figure,
                 imagescFun(time,freq,TFR,'xy');
                 ylim(flims)
                 caxis([prctile(TFR(:),70) prctile(TFR(:),100)])
@@ -325,21 +362,17 @@ while next(1)
                 plot(tm,freq,'linewidth',2)
                 xlabel('Time [s]')
                 ylabel('Frequency [Hz]')
+                grid on
                 legend(leg)
 
                 temp=str2double(input(['\nAre you satisfied with the mode selection ? \n' ...
                 '1: Back to source deconvolution\n'...
                 '2: Back to time selection (for warping)\n'...
-                '3: Save and exit\n'...
-                '4: Exit\n'],'s'));
+                '3: Save and continue\n'...
+                '4: Continue\n'],'s'));
 
                 if temp==3
-                    save('filtered_modes.mat')
-                    try
-                        saveas(FI,'FI')
-                    catch
-                        disp('The figure was closed before it was saved')
-                    end
+                    save('filtered_modes.mat','filt','c1','stft_param','filt_param')
                 end
 
                 if temp<3

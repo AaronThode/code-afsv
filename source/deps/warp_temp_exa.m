@@ -20,13 +20,12 @@ Fe_w=1/dt_w;
 
 %% Step 4: new number of points
 t_w_max=iwarp_t(tmax,r,c);
-%M=ceil(t_w_max*Fe_w);
-M=2^nextpow2(floor(t_w_max*Fe_w));
+M=ceil(t_w_max*Fe_w);
 
 %% Step 5: warped signal computation
 
 % Warped time axis, uniform sampling
-t_w=(0:M-1)/Fe_w;
+t_w=(1:M)/Fe_w;
 
 % Warped time axis, non-uniform sampling (starts from r/c)
 t_ww=warp_t(t_w,r,c);
