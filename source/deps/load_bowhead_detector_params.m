@@ -25,6 +25,9 @@ cd(dirname);
 %%Attempt to guess site and year from directory name; assumme a substring
 %%like 'Shell14_Site5' exists near end of string...
 Ishell=max(strfind(dirname,'Shell'))+length('Shell');
+if isempty(Ishell)
+    uiwait(msgbox(sprintf('Cannot find string ''Shell'' in %s',dirname)));
+end
 year=num2str(2000+str2num(dirname(Ishell+(0:1))));
 Site=str2num(dirname(Ishell+7));
 

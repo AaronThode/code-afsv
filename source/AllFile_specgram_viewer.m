@@ -11065,18 +11065,23 @@ for Im=1:MM(2)
         end
         sim=real(tmp1);
      catch 
-        warning('error: remove this part of the script')
+        warning('Simulation does not exist!: %s','C:/Users/cedri_000/Desktop/Kraken/Sims/Separated/mode_t_sim ' );
         sim=0.1;
      end
     
-    col='rgbkyrgbkyrgbkyrgbky';
+    col='rgbkyrgbkyrgbkyrgbkyrgbkyrgbkyrgbkyrgbkyrgbkyrgbkyrgbkyrgbkyrgbkyrgbkyrgbkyrgbkyrgbkyrgbkyrgbkyrgbky';
     figure(19)
     subplot(1,MM(2),Im)
     ylim([0 55])
     hold on,grid on
     for ff=1:Nplot
         plot(Umode_shape(:,ff),hdr.geom.rd,'Color',col(ff)),
-        plot(sim(:,ff)*max(Umode_shape(:,ff))/max(sim(:,ff))-0.2,1:55,'--','Color',col(ff))
+        try
+            plot(sim(:,ff)*max(Umode_shape(:,ff))/max(sim(:,ff)),1:55,'--','Color',col(ff))
+        catch
+            warning('Simulation does not exist!: %s','C:/Users/cedri_000/Desktop/Kraken/Sims/Separated/mode_t_sim ' );
+       
+        end
     end
 %     plot(Umode_shape(:,:),hdr.geom.rd),
 %     plot(sim,1:55,'--')
@@ -11130,11 +11135,11 @@ for ff=1:Nplot
     mode_extract.(strrep(num2str(freq,'f%1.1f'),'.','_'))=squeeze(Umode_shape(:,ff,:));
 end
 
-save C:\Users\cedri_000\Desktop\Kraken\mat\mode_extract mode_extract
+%save mode_extract
 
 for II=18:20
     figure(II)
-    saveas(gcf,sprintf('C:/Users/cedri_000/Desktop/Kraken/ModeTiltWarpInversion_%i.jpg',II))
+    saveas(gcf,sprintf('ModeTiltWarpInversion_%i.jpg',II))
 end
 end
 
