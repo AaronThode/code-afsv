@@ -116,9 +116,9 @@ while II<=length(names)
             %Formats(7,1).items = {'*.itm','Auction Item File';'*.*','All Files'};
             Formats(8,1).span = [1 2];  % item is 1 field x 3 fields
             
-        case 'comments'  %%Always last field to add.
+        case 'comments'  %%May  be the last field
             
-            Irow=size(Formats,1)+1;
+            Irow=9;
             Icol=1;
             Formats(Irow,1).type = 'edit';
             Formats(Irow,1).format = 'text';

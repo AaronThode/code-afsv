@@ -28,7 +28,11 @@ N=length(x(:,1));
 Nwindow=stft_param.N_window;
 [r_guess,c1,c2]=deal(filt_param.r_guess,filt_param.c1,filt_param.c2);
 flims=filt_param.flims; % frequency bounds
-
+if min(flims)==0
+    uiwait(msgbox('Problem!  Warping requires a lower filtering limit.  Adjust minimum frequency'));
+    filt=[];
+    return
+end
 %% Check for bad hydrophones
 
 if Nhydros~=1

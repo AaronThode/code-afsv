@@ -3771,7 +3771,8 @@ if ~isempty(VA_cords)
     tmp=(VA_cords-[xg yg]);
     plot(tmp(1),tmp(2),'o');
     range=sqrt(sum((VA_cords-VM/1000).^2));
-    title(sprintf('Range of source from chosen location: %6.2f +/- %3.2f km, minor axis %3.2f km',range,A/1000,B/1000));
+    angg=bnorm(atan2((-VA_cords(1)+VM(1)/1000),(-VA_cords(2)+VM(2)/1000))*180/pi);
+    title(sprintf('Range of source from chosen location: %6.2f deg,,%6.2f +/- %3.2f km,  minor axis %3.2f km',angg,range,A/1000,B/1000));
 end
 fprintf('Position of location (can copy for annotation): %s\n',mat2str(VM,10));
 yes=menu('Print and Save?','Yes','No');
@@ -5836,7 +5837,16 @@ end
 %	Only save if changed
 if	~handles.notes.saved
     GUI_params		=	save_gui_params(handles);
-    save(file_path, 'Data', 'GUI_params');
+    try
+        
+        save(file_path, 'Data', 'GUI_params');
+    catch
+        folder_name		=	uigetdir([], 'Designate an annotation folder to save in:');
+        handles.notes.folder_name	=	folder_name;
+        handles.notes.file_path		=	fullfile(folder_name, handles.notes.file_name	);
+        save(handles.notes.file_path, 'Data', 'GUI_params');
+        
+    end
     set(hObject,'Enable','off');
     handles.notes.saved	=	true;
     guidata(hObject, handles)
@@ -10950,6 +10960,9 @@ else
     if ~isfield(tmp,'f_points'); param_file='';end;
 
     modes=Whale_main_fun(x0,stft_param,filt_param,hdr,handles,param_file,tmp);
+    if isempty(modes)
+        return
+    end
     Nchan=modes.Nchan;
     hdr.geom.rd=hdr.geom.rd(Nchan);
     
