@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="3885957525" file="/Users/thode/repos/code-afsv/Ulysses_Mac.prj" location="/Users/thode/repos/code-afsv" name="Ulysses_Mac" preferred-package-location="/Users/thode/repos/code-afsv/Ulysses_Mac/for_redistribution" preferred-package-type="package.type.app" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
+  <configuration build-checksum="1816677015" file="/Users/thode/repos/code-afsv/Ulysses_Mac.prj" location="/Users/thode/repos/code-afsv" name="Ulysses_Mac" preferred-package-location="/Users/thode/repos/code-afsv/Ulysses_Mac/for_redistribution" preferred-package-type="package.type.app" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
     <param.appname>Ulysses_Mac</param.appname>
     <param.icon>${PROJECT_ROOT}/Ulysses_Mac_resources/icon.icns</param.icon>
     <param.icons>
@@ -120,6 +120,7 @@
       <file>${PROJECT_ROOT}/source/deps/get_DASARA_filter.m</file>
       <file>${PROJECT_ROOT}/source/deps/get_SUDAR_time.m</file>
       <file>${PROJECT_ROOT}/source/deps/get_level_metrics_simple.m</file>
+      <file>${PROJECT_ROOT}/source/deps/get_start_time_MP4.m</file>
       <file>${PROJECT_ROOT}/source/deps/get_vmests.m</file>
       <file>${PROJECT_ROOT}/source/deps/getcgeneral.m</file>
       <file>${PROJECT_ROOT}/source/deps/getcgeneral_crude.m</file>
@@ -147,6 +148,7 @@
       <file>${PROJECT_ROOT}/source/deps/load_program_location.m</file>
       <file>${PROJECT_ROOT}/source/deps/merge_structure.m</file>
       <file>${PROJECT_ROOT}/source/deps/modeSelect.m</file>
+      <file>${PROJECT_ROOT}/source/deps/mode_select3.m</file>
       <file>${PROJECT_ROOT}/source/deps/modes_rect.m</file>
       <file>${PROJECT_ROOT}/source/deps/momftfr.m</file>
       <file>${PROJECT_ROOT}/source/deps/munkcalc.m</file>
