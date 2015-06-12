@@ -3346,20 +3346,39 @@ lineNo=1;
 answer=inputdlg(prompt,'',lineNo,def);
 Np=str2num(answer{1});
 tmp=ginput(Np);
+y_unit_amp=handles.radiobutton_timeseries.Value;
 msg=[];
 for If=1:Np
-    msg=sprintf('%s Point %i Time: %8.6f Frequency: %6.2f Hz \n',msg,If,tmp(If,1),1000*tmp(If,2));
+    if y_unit_amp
+        msg=sprintf('%s Point %i Time: %8.6f Amplitude: %6.6g uPa \n',msg,If,tmp(If,1),tmp(If,2));
+        
+    else
+        msg=sprintf('%s Point %i Time: %8.6f Frequency: %6.2f Hz \n',msg,If,tmp(If,1),1000*tmp(If,2));
+    end
 end
 
 msg=sprintf('%s\n Absolute time at min time: %s \n' ,msg, datestr(start_time+datenum(0,0,0,0,0,min(tmp(:,1))),0));
 
 duration=max(tmp(:,1))-min(tmp(:,1));
 bandwidth=max(tmp(:,2))-min(tmp(:,2));
-msg=sprintf('%s Duration: %6.2f sec \n Bandwidth: %6.2f Hz \n Slope: %6.2f Hz/sec\n', ...
-    msg,duration,1000*bandwidth,1000*bandwidth/duration);
+if y_unit_amp
+    msg=sprintf('%s Duration: %6.2f sec \n pk-pk Amplitide: %6.6g uPa, or %6.2f dB \n Slope: %6.2f uPa/sec\n', ...
+        msg,duration, bandwidth,20*log10(bandwidth), bandwidth/duration);
+    fprintf('Bandwidth is %6.6g uPa, or %6.2f dB re 1 uPa\n',bandwidth,20*log10(bandwidth))
+    fprintf('Duration is %6.3f sec\n',duration)
+    fprintf('Slope is %6.2f uPa/sec\n',bandwidth/duration)
+else
+    msg=sprintf('%s Duration: %6.2f sec \n Bandwidth: %6.2f Hz \n Slope: %6.2f Hz/sec\n', ...
+        msg,duration,1000*bandwidth,1000*bandwidth/duration);
+    fprintf('Bandwidth is %6.6g Hz\n',bandwidth)
+    fprintf('Duration is %6.3f sec\n',duration)
+    fprintf('Slope is %6.2f Hz/sec\n',1000*bandwidth/duration)
+    
+end
 uiwait(msgbox(msg,'Modal'));
 
-disp(sprintf('Slope is %6.2f Hz/sec',1000*bandwidth/duration))
+
+
 % disp('Absolute times:')
 % disp(datestr(start_time+datenum(0,0,0,0,0,tmp(:,1)),0));
 % disp('Relative times and frequencies:');
