@@ -126,6 +126,9 @@ end
 handles.filetype	=	'mt';
 [handles,errorflag] =	set_slider_controls(handles,handles.filetype); %#ok<*NASGU>
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%Group controls%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Group controls into multielement (arrays) and linked (distributed array)
 %categories, for easier times in hiding or disabling buttons
 
@@ -144,6 +147,7 @@ handles.buttongroup.multichan(2)=handles.edit_chan;
 
 handles.buttongroup.GSI(1)=handles.pushbutton_GSIbearing;
 handles.buttongroup.GSI(2)=handles.pushbutton_GSI_localization;
+handles.buttongroup.GSI(3)=handles.radiobutton_directionality;
 %Set default template 
 if strfind(getenv('USER'),'thode')
     handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
@@ -8125,6 +8129,17 @@ function	handles	=	load_and_display_spectrogram(handles)
 
 cla;
 
+%What type of Display?
+handles.old_display_view=[];
+if isfield(handles,'display_view')
+    handles.old_display_view=handles.display_view;
+end
+
+handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
+
+   
+%%Read off parameters from figure...
+
 %tdate_start		=	handles.tdate_start;
 tlen	=	handles.tlen;
 %if tlen<1e-2 %somehow window length is way too short
@@ -8137,7 +8152,12 @@ if isempty(tlen)
     handles.tlen=tlen;
 end
 mydir	=	pwd;
-Ichan	=	eval(get(handles.edit_chan,'String'));
+
+if strcmp(handles.display_view,'Directionality')
+    Ichan='all';
+else
+    Ichan	=	eval(get(handles.edit_chan,'String'));
+end
 
 try
     % [x,t,Fs,tmin,tmax,head]	=	...
@@ -8224,14 +8244,11 @@ else
     
 end  %if PSD
 
-handles.old_display_view=[];
-if isfield(handles,'display_view')
-    handles.old_display_view=handles.display_view;
-end
+%%%%Select different views
 
-handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
-
-if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New Fig')
+if strcmp(handles.display_view,'Directionality')
+    display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr);
+elseif strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New Fig')
     
     if strcmp(handles.display_view,'Spectrogram')
         axes(handles.axes1);
@@ -8316,118 +8333,13 @@ if strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New 
         title(get(handles.text_filename,'String'));
     end
 elseif strcmp(handles.display_view,'Time Series') %%Time series
+    display_time_series(handles,x,Fs,hdr);
     
     
-    %%Check that we are looking at acoustic data and are in spectrogram
-    %%mode
-    if isempty(strfind(handles.myfile,'Press'))
-        % msgbox('Enter min and max frequency, or hit return to skip filtering:','modal');
-        
-        if strcmp(handles.old_display_view,'Spectrogram')
-            ButtonName = questdlg('Filter? (If yes, click on two frequency values in spectrogram)');
-        else
-            ButtonName='No';
-        end
-        
-        %if ~isempty(tmp)&&size(tmp,1)==2
-        %%Check that are on current spectrogram view
-        if strcmp(ButtonName,'Yes')
-            tmp=ginput(2);
-            
-            freq=sort(tmp(:,2))*1000;
-            minfreq=freq(1);maxfreq=freq(2);
-            %y=quick_filter(x(:,1),Fs,freq(1),freq(2))
-            frange=[0.8*minfreq minfreq maxfreq maxfreq+0.2*minfreq];
-            [N,Fo,Ao,W] = firpmord(frange,[0 1 0],[0.05 0.01 0.1],Fs);
-            B = firpm(N,Fo,Ao,W);
-            
-            y=filter(B,1,x(:,1)-mean(x(:,1)));
-        else
-            %y=x(:,1)-mean(x(:,1));
-            y=x(:,1);
-        end
-    else
-        y=x(:,1)/1000; %Pressure conversion
-    end
-    
-    t=(1:length(x(:,1)))/Fs;
-    xlabel('Time (sec)');
-    if isfield(hdr,'calunits')&&~isempty(strfind(hdr.calunits,'mPa'))
-        plot(handles.axes1,t,1000*y);grid on;
-        ylabel('uPa');
-    else
-        plot(handles.axes1,t,y);grid on;
-        try
-            ylabel(hdr.calunits);
-        catch
-        ylabel('Amplitude');
-    end
-    end
 elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
-    fmax=1000*str2double(get(handles.edit_fmax,'String'));
-    fmin=1000*str2double(get(handles.edit_fmin,'String'));
-    param.ovlap=ovlap;
-    param.Nfft=Nfft;
-    prompt1={'ICI range (s)','Correlation sample time (s)','Teager-Kaiser treatment?','Incoherent=1, Coherent=0 ?'};
-    dlgTitle1='Parameters for correlogram...';
-    def1={'[0.01 .25]', '0.25','0','1'};
-    answer=inputdlg(prompt1,dlgTitle1,1,def1);
-    param.ici_range=eval(answer{1});
-    param.time_sample=str2double(answer{2});
-    param.teager=str2double(answer{3});
-    alg_chc=str2double(answer{4});
+    display_correlogram_series(handles,x,Fs,hdr,ovlap,Nfft)
     
-    if alg_chc==1
-        contents=get(handles.popupmenu_WindowSize,'String');
-        Nfft_window=str2double(contents{get(handles.popupmenu_WindowSize,'Value')});
-    
-        [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs);
-        [mean_corr_org,tindex,TT_plot,pwr,pwr_tot,yscale]= create_incoherent_correlogram(TT,FF,B,param,fmin,fmax);
-        
-        
-    else
-        param.Nfft=round(param.time_sample*Fs);
-        [mean_corr_eq,mean_corr_org,tindex,TT_plot,pwr]= create_coherent_correlogram(x(:,1),Fs,param,fmin,fmax);
-        
-        %
-        
-    end
-    
-    dX=tindex(2)-tindex(1);  %X axis of new correlation image
-    Ntime=length(tindex)-1;
-    imagesc(tindex(1:(end-1)),TT_plot,mean_corr_org);caxis([0 0.3]);
-    
-    %colorbar('east','ycolor','w');
-    axis('xy')
-    % title(sprintf('mean correlation value extracted between %6.2f and %6.2f Hz, %6.2f overlap',freq(Ifreq),freq(Ifreq+1),param.ovlap));
-    climm(1)=str2double(get(handles.edit_mindB,'String'));
-    climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
-    
-    if climm(1)>1
-        climm(1)=0;
-        set(handles.edit_mindB,'String','0');
-    end
-    if climm(2)>1
-        climm(2)=1;
-        set(handles.edit_dBspread,'String','1');
-    end
-    caxis(climm);
-    
-    if alg_chc==0  %coherent Correlogram
-        caxis([-20 0]);
-        set(handles.edit_mindB,'String','-20');
-        set(handles.edit_dBspread,'String','20');
-    end
-    
-    if get(handles.checkbox_grayscale,'Value')==1,
-        colormap(flipud(gray));
-    else
-        colormap(jet);
-    end
-    colorbar;
-    % set(gcf,'pos',[30   322  1229   426])
-    set(gca,'fontweight','bold','fontsize',14);
-    xlabel('Time (sec)');ylabel('Correlation lag (sec)');
+   
 end  %Spectrogram, new fig
 
 handles.x	=	x;
@@ -8502,6 +8414,7 @@ else
     set(handles.pushbutton_save,'vis','on');
     set(handles.radiobutton_correlogram,'vis','on');
     set(handles.radiobutton_timeseries,'vis','on');
+    set(handles.radiobutton_directionality,'vis','on');
     
 end
 end %function load_and_display_spectrogram
@@ -8668,723 +8581,6 @@ end
 
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% function load_data.m%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-function [x,t,Fs,tmin,tmax,head]	=	...
-    load_data(filetype,tdate_start,tlen,Ichan,handles)
-
-%%% tmin,tmax, t are datenumbers
-%   x rows are samples, columns are channels
-%   head.geom.rd:  If multiple channels are present, this gives spacing
-persistent  Fs_keep keyword space
-
-mydir=handles.mydir;
-myfile=handles.myfile;
-teager=get(handles.checkbox_teager,'Value');
-set(handles.edit_normal_rotation,'Vis','Off');  %Set off for the moment
-set(handles.text_normal_rotation,'Vis','Off');  %Set off for the moment
-
-Fs=[];
-x=[];
-t=[];
-tmin=[];
-tmax=[];
-head=[];
-head.multichannel=false;
-head.linked=false;
-
-filetype	=	upper(filetype);
-
-switch filetype
-    case 'PSD'
-        [x,F,t,Tabs,params]=read_Java_PSD(fullfile(mydir,myfile),tdate_start,tlen);
-        if ~isempty(t)&&length(t)>1
-            Fs=1./(t(2)-t(1));
-            t=t-t(1);
-        else
-            Fs=1;
-        end
-        head=params;
-        
-        tmin=head.tstart_file;
-        tmax=head.tend_file;
-    case 'MAT'
-        
-        simulated=load(fullfile(mydir,myfile));
-        Fs=simulated.fs;
-        
-        x=simulated.x_sweep';
-        if strcmp(Ichan,'all')
-            Ichan=1:size(x,2);
-        end
-        if max(Ichan)>max(size(x,2)),
-            disp(['Channel too high, restricting to ' int2str(max(size(x,2)))]);
-            Ichan=max(size(x,2));
-        end
-        
-        x=x(:,Ichan);
-        
-        
-        if tdate_start==-1
-            tmin=datenum(0);
-        elseif tdate_start>0 %We are trimming beginning time
-            tmin=tdate_start;
-            tmp=datevec(tdate_start);
-            dn=1+floor(Fs*tmp(end));
-            x=x(dn:end,:);
-            t=t(dn:end);
-        else
-            tmin=tdate_start;
-        end
-        
-        if tlen*Fs<size(x,1)
-            x=x(1:floor(tlen*Fs),:);
-        end
-        t=(1:length(x))/Fs;
-        
-        tmax=tmin+datenum(0,0,0,0,0,max(t));
-        head.geom.rd=simulated.rd;
-        head.Nchan=size(x,2);
-        x=x';
-    case 'GSI'
-        
-         
-        
-        button_chc=get(handles.togglebutton_ChannelBeam,'String');
-        beamform_data=0;
-        get_geometry=0;
-        if strcmpi(button_chc,'angle')&&~strcmpi(Ichan,'all')
-            beamform_data=1;
-            get_geometry=1;
-        elseif strcmpi(Ichan,'all')
-            Ichan=1:3;
-            beamform_data=0;
-            get_geometry=1;
-        end
-        
-        if beamform_data==1
-            thta=Ichan;
-            Ichan=1:3;
-        end
-        
-        if beamform_data==0
-            if max(Ichan)>3
-                disp('Channel too high, restricting to 3');
-                Ichan=3;
-            end
-            
-            if min(Ichan)<1
-                disp('Channel too low, restricting to 1');
-                Ichan=1;
-            end
-        end
-        
-        [x,t,head]=readGSIfile([mydir '/' myfile],tdate_start,tlen,Ichan,'datenum','nocalibrate');
-        head.multichannel=true;
-        head.linked=true;
-        head.Nchan=3;
-        
-        if isempty(keyword)
-            prompt = {'Enter a keyword for GSI calibration [DASARC]:'};
-            dlg_title = 'DASAR calibration';
-            num_lines = 1;
-            def = {'DASARC'};
-            answer = inputdlg(prompt,dlg_title,num_lines,def);
-            keyword=answer{1};
-        end
-        % keyword=input('Enter a keyword for GSI calibration [DASARC]:','s');
-        %             if isempty(keyword)
-        %                 keyword='DASARC';
-        %             end
-        %         end
-        x=calibrate_GSI_signal(x, keyword);
-        
-        Fs=head.Fs;
-        
-        tmin=datenum(1970,1,1,0,0,head.ctbc);
-        tmax=tmin+datenum(0,0,1,0,0,0);
-        %head.Nchan=length(Ichan);
-       if beamform_data==1
-             %y=x(:,1)-fudge_factor_velocity*(cos(angles(I)*pi/180)*x(:,3)+sin(angles(I)*pi/180)*x(:,2)); %switch x and y to get compass bearing
-   
-             thta=thta-head.brefa;
-             x=x(:,1)+sin(thta*pi/180)*x(:,2)+cos(thta*pi/180)*x(:,3);
-             x=x/2; %Turn into equivalent of one channel.
-           
-       end
-        
-        
-    case 'MT'
-        %[x,t,Fs]=load_mt_mult(handles.mydir,tdate_start,tlen);
-        %head=read_mt_header([mydir filesep myfile]);
-        head=read_mt_header(fullfile(mydir, myfile));
-        
-        tmin=head.tstart;
-        tmax=head.tend;
-        Fs=head.Fs;
-        
-        if tdate_start>0
-            tdate_vec=datevec(tdate_start-tmin);
-            nsec=tdate_vec(6)+60*tdate_vec(5)+3600*tdate_vec(4);
-        else
-            %uiwait(msgbox('No start time requested'));
-            head.multichannel=false;
-            head.linked=false;
-            
-            return
-        end
-        %Load accelerometer data as desired
-        %% Template: CB_Accel_X_2014_02100958.mt
-        if strfind(head.abbrev,'Accel')
-            mystr='XYZ';
-            Ispace=strfind(myfile,'_');
-            Ispace=Ispace(2)+1;
-            x=[];
-            for Iacc=1:3
-                myfile_temp=myfile;
-                myfile_temp(Ispace)=mystr(Iacc);
-                try
-                    [x0,t]=load_mt([mydir filesep myfile_temp],nsec,tlen);
-                    if isempty(x)
-                        x=zeros(length(x0),3);
-                    end
-                    x(:,Iacc)=x0;
-                catch
-                    fprintf('Channel %s of %s not available...\n',mystr(Iacc),myfile_temp);
-                    
-                end
-                
-            end
-            head.Nchan=3;
-            
-            %%Select channel requested...or rotate channels...
-            % Axis conventions assume 2011 definitons: X is long axis, Y
-            % and Z are normal.
-            
-            set(handles.edit_normal_rotation,'Vis','On');
-            set(handles.text_normal_rotation,'Vis','On');
-            normal_angle=(pi/180)*str2num(get(handles.edit_normal_rotation,'String'));
-            
-            if normal_angle~=0
-                xrot=x;
-                xrot(:,2)=x(:,2)*cos(normal_angle)+x(:,3)*sin(normal_angle);
-                xrot(:,3)=-x(:,2)*sin(normal_angle)+x(:,3)*cos(normal_angle);
-                x=xrot;
-                head.normal_rotation=(180/pi)*normal_angle;
-                head.transformation.description{1}=' Normal Rotation: %6.2f deg';
-                head.transformation.value{1}=head.normal_rotation;
-            else
-                head.transformation.description{1}=' No rotation';
-                head.transformation.value{1}=[];
-            end
-            
-            x=x(:,Ichan);
-            %myfile(Ispace)=mystr(Ichan);
-            
-            head.myfile=myfile;
-            
-            % guidata(handles.myfile);  %Saves new file name...
-            %guidata(hObject, handles);  %Saves new file name...
-            %guidata(hObject, handles);
-            %
-        else
-            if Ichan>1
-                disp('WARNING: load_data: MT can only have one channel');
-                Ichan=1;
-            end
-            if tdate_start>0
-                [x,t]=load_mt(fullfile(mydir , myfile),nsec,tlen);
-            end
-            head.Nchan=1;
-        end
-    case 'SIO'
-        %x,t,Fs,tmin,tmax,head
-        %load_data(filetype,tstart_min,tdate_start,tlen,Ichan,handles)gff
-        %set(handles.text_channel,'String','Channel [-angle (deg)]');
-        sio_chc=get(handles.togglebutton_ChannelBeam,'String');
-        [~, head] = sioread(fullfile(mydir,myfile));
-        head.multichannel=true;
-        
-        %Extract start date and time
-        %if ~exist('tstart_min') || isempty(tstart_min) || tstart_min < 0
-        Idot=strfind(myfile,'.');
-        
-        if isfield(head,'date')
-            tmin=head.date;
-        else
-            success=0;
-            for II=1:(length(Idot)-1)
-                if success || Idot(II+1)-Idot(II)~= 12
-                    continue
-                end
-                template=myfile((Idot(II)+1):(Idot(II+1)-1));
-                try
-                    tmin=datenum(2000+str2num(template(1:2)),0,str2num(template(3:5)), ...
-                        str2num(template(6:7)),str2num(template(8:9)),str2num(template(10:11)));
-                    %tstart_min=tmin;
-                    success=1;
-                catch
-                    tmin= now;
-                end
-            end
-        end
-        %end
-        
-        if isfield(head,'Fs')
-            Fs=head.Fs;
-        else
-            Fs_default=25000;
-            if isempty(Fs_keep)
-                Fs=input('Enter a sampling frequency in Hz per channel [25000]:','s');
-                if isempty(Fs),Fs=Fs_default;end
-                head.Fs=Fs;
-                Fs_keep=Fs;
-            else
-                Fs=Fs_keep;
-            end
-        end
-        
-        %%	Data parameters needed
-        head.np		=	head.PperChan;
-        tmax =tmin+datenum(0,0,0,0,0,head.np/Fs);
-        head.Nchan	=	head.N_Chan;
-        
-        if ~exist('tdate_start') || isempty(tdate_start) || tdate_start < 0
-            x=[];
-            return
-        end
-        
-        if tdate_start>0
-            np_start=1+round((tdate_start-tmin)*24*3600*Fs);
-        else
-            
-            np_start=1;
-        end
-        if np_start>head.np
-            errordlg('load_data:  SIO start time exceeds points available!');
-            return
-        end
-        
-        
-        %%%If beamforming is desired for a look at a given direction...
-        beamform_data=0;
-        get_geometry=0;
-        if strcmpi(sio_chc,'angle')&&~strcmpi(Ichan,'all')
-            beamform_data=1;
-            get_geometry=1;
-        elseif strcmpi(Ichan,'all')
-            Ichan=1:head.Nchan;
-            beamform_data=0;
-            get_geometry=1;
-        end
-        
-        if beamform_data==1
-            thta=-Ichan;
-            Ichan=1:head.Nchan;
-        end
-        
-        %If loading single channel, check that request is reasonable...
-        if beamform_data==0
-            if max(Ichan)>head.Nchan
-                errordlg(sprintf('load_data:  SIO channel request: %i, max channels: %i',max(Ichan),head.Nchan));
-                return
-            end
-            
-            if max(Ichan)<1
-                errordlg(sprintf('load_data:  SIO channel request: %i is less than 1',max(Ichan)));
-                return
-            end
-            
-        end
-        
-        npi=round(tlen*Fs);
-        if np_start+npi>head.np
-            errordlg('load_data:  SIO end time exceeds points available!');
-            return
-        end
-        
-        
-        
-        if get_geometry==1
-            if isempty(space)
-                prompt = {'Enter spacing[m] between elements for SIO file:'};
-                dlg_title = 'SIO file spacing';
-                num_lines = 1;
-                def = {'0.1'};
-                answer = inputdlg(prompt,dlg_title,num_lines,def);
-                space=eval(answer{1});
-                fprintf('Half-wavelength frequency: %6.2f Hz\n',1500/(2*space));
-            end
-            head.geom.rd=(0:(head.Nchan-1))*space;
-            
-            
-        end
-        
-        
-        [x,~]=sioread(fullfile(mydir,myfile),np_start,npi,Ichan);
-        %Data arranged so that time are rows, columns are channels
-        
-        %Flip data ....
-        
-        if size(x,2)>1
-            x=fliplr(x);
-        end
-        
-        if beamform_data==1
-            try
-                space=head.geom.rd(2)-head.geom.rd(1);
-                xtot=delaynsum(x,thta,space,Fs,Ichan);
-                x=xtot;
-                head.thta=thta;
-            catch
-                disp('load_data: sioread beamform failure');
-                keyboard
-            end
-        end
-        
-        %Set time
-        t=(1:size(x,1))/Fs;
-        
-        
-    case 'DAT'
-        [x,tmin,tmax,fs]=read_dat_file(fullfile(mydir,myfile),[],-1,tlen,0);
-        
-        if isempty(fs)
-            fs=input('Enter sampling rate in Hz:');
-        end
-        Fs=fs;
-        [x,tmin,tmax]=read_dat_file([mydir '/' myfile],Fs,tdate_start,tlen,0); %output in uPa
-        %[x,tmin,tmax]=read_dat_file([mydir '/' myfile],Fs,tdate_start,tlen,1);  %Voltage output
-        t=(1:length(x))/fs;
-        
-        head.Nchan=1;
-        switch fs
-            case 50000
-                head.calcurv=[
-                    1.179288464673746e+06
-                    -3.417289147406752e+06
-                    3.972100408634462e+06
-                    -2.459193259685826e+06
-                    8.904700994689314e+05
-                    -1.924134277822444e+05
-                    2.476608484423531e+04
-                    -2.235739303825218e+03
-                    2.904887584919255e+02
-                    -5.381149759460806e+00
-                    7.841554559708414e-03
-                    ];
-            case 6250
-                head.calcurv=[
-                    -9.864342626384007e+06
-                    2.675183405132254e+07
-                    -3.072255757018830e+07
-                    1.946983114345214e+07
-                    -7.445224085881455e+06
-                    1.766054734429601e+06
-                    -2.570588847834060e+05
-                    2.188411119767746e+04
-                    -9.803725367146685e+02
-                    1.959124505642275e+01
-                    -2.811936435415921e-01];
-            case 12500
-                head.calcurv=[
-                    9.262441626302190e+07
-                    -2.151487191990283e+08
-                    2.069375942078056e+08
-                    -1.063702102525421e+08
-                    3.153159716612202e+07
-                    -5.458152352141772e+06
-                    5.382152297627985e+05
-                    -2.765563363629215e+04
-                    6.113088605208859e+02
-                    -1.301582987521525e+00
-                    -1.634557871607174e-01];
-        end
-        
-    case 'ADI'
-        [x,tmin,tmax,fs]=read_adi_file(mydir,myfile,[],0,tlen,0);
-        
-        if isempty(fs)
-            fs=input('Enter sampling rate in Hz:');
-        end
-        Fs=fs;
-        [x,tmin,tmax]=read_adi_file(mydir,myfile,Fs,tdate_start,tlen,0); %Output in uPa
-        %[x,tmin,tmax]=read_adi_file(mydir,myfile,Fs,tdate_start,tlen,1);  %Output in voltage
-        t=(1:length(x))/fs;
-        head.Nchan=1;
-        
-    case 'MDAT'
-        
-        
-        [x,head]=read_synchronized_mdat_files(fullfile(mydir,myfile),tdate_start,tlen);
-        Fs=head.fs;
-        sio_chc=get(handles.togglebutton_ChannelBeam,'String');
-        head.multichannel=true;
-        t=(1:length(x))/Fs;
-        
-        tmin=head.tfs;
-        tmax=head.tfe;
-        head.Nchan=size(x,2);
-        beamform_data=0;
-        get_geometry=1;
-        
-        if strcmpi(sio_chc,'angle')&&~strcmpi(Ichan,'all')
-            beamform_data=1;
-            get_geometry=1;
-        elseif strcmp(Ichan,'all')
-            Ichan=1:head.Nchan;
-            beamform_data=0;
-            get_geometry=1;
-        end
-        
-        if beamform_data==1
-            thta=-Ichan;
-            Ichan=1:head.Nchan;
-        end
-
-        if max(Ichan)>head.Nchan
-            disp(sprintf('Channel too high, max channel %i',head.Nchan));
-            Ichan=head.Nchan;
-        end
-
-        try
-            x=x(:,Ichan);
-            for II=Ichan
-                fprintf('Logged depth of channel %i is %6.2f m\n',II,head.geom.rd(II));
-            end
-        end
-        
-        x=x';
-        
-        if beamform_data==1
-            try
-                space=head.geom.rd(2)-head.geom.rd(1);
-                xtot=delaynsum(x',thta,space,Fs,Ichan);
-                x=xtot;
-                head.thta=thta;
-            catch
-                disp('load_data: MDAT beamform failure');
-                keyboard
-            end
-        end
-        
-        %Set time
-        t=(1:length(x))/Fs;
-        head.calcurv=[
-            -3.826740371096994e+07
-            8.955964717194067e+07
-            -9.041409824956748e+07
-            5.195683344725087e+07
-            -1.873830725900567e+07
-            4.336813690670102e+06
-            -6.251710636164501e+05
-            5.339062841084976e+04
-            -2.452316303554637e+03
-            5.178423592184026e+01
-            -1.229223450332553e+00];
-        
-    case {'M4V','MP4'}
-        info	=	audioinfo(fullfile(mydir,myfile));
-        info_vid = mmfileinfo(fullfile(mydir,myfile));
-        %[~,Fs]		=	audioread(fullfile(mydir,myfile),1,'native');
-        Nsamples	=	info.TotalSamples;
-        handles.Fs	=	info.SampleRate;
-        Fs=info.SampleRate;
-        
-        %Attempt to get date
-        tmin=get_start_time_MP4(mydir,myfile,info);
-        %tmin=datenum([1970 1 1 0 0 0]);
-        tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
-        %tlen=Nsamples/handles.Fs;
-        
-        %a 2 V pk-pk signal yields 0.9 pk-pak amp at 3 kHz or channel 2
-        %(audio)
-        sens=2/0.9;  %Convert to volts
-        sens_hydro=170; %dB re uPa/V
-        sens=sens*10.^(sens_hydro/20);
-        %sens=1;
-        
-       
-        
-        tdate_vec	=	datevec(tdate_start - tmin);
-        nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);  %Ignores differences in days
-        N1			=	1 + round(nsec*handles.Fs);
-        N2			=	N1 + round(tlen*handles.Fs);
-        
-        try
-            [x,Fs]		=	audioread(fullfile(mydir,myfile),[N1 N2],'native');
-            %Quick adjust for 6 dB rolloff of ultrasonic (channel 1)
-            
-            
-        catch
-            x=[];
-            
-            t=[];
-            head.Nchan=0;
-            return
-        end
-        
-        head.Nchan	=	size(x,2);
-        if head.Nchan>1
-            head.multichannel=true;
-        end
-        
-        %%Option for "adaptive processing" to remove interference...
-        % Set channel equal to -1 to give difference between signal
-        
-        if ~strcmp(Ichan,'all')&Ichan>0
-            try
-                x(:,1)=[0; diff(x(:,1))];
-            end
-            x		=	x(:,Ichan);
-            
-        elseif Ichan<0  %for audio channel will be correct response
-            x=x(:,2)-x(:,1);
-        end
-        
-        t	=	(1:length(x))/Fs;
-        
-        x			=	double(x)*sens;
-    case 'WAV' %% Includes SUDAR data
-        
-        
-        info	=	audioinfo(fullfile(mydir,myfile));
-        %[~,Fs]		=	audioread(fullfile(mydir,myfile),1,'native');
-        Nsamples	=	info.TotalSamples;
-        handles.Fs	=	info.SampleRate;
-        Fs=info.SampleRate;
-        
-        [head.cable_factor,sens]=get_ADAT24_cable_factor;
-        
-        
-        try
-            [SUDAR_true,tmin,tmax,FsSUDAR]=get_SUDAR_time(mydir,myfile); %Check whether a sUDAR file exists
-            if SUDAR_true
-                sens=(10^(186/20))/(2^15);
-                Fs=FsSUDAR;
-                
-            end
-            if ~SUDAR_true
-                tmin	=	convert_date(myfile,'_');
-                if isempty(tmin)
-                    tmin=datenum([1970 1 1 0 0 0]);
-                end
-                tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
-            end
-        catch
-            disp([myfile ': convert_date failure']);
-            try
-                tmin=datenum(get(handles.text_mintime,'String'));
-            catch
-                minn	=	input('Enter start date in format [yr mo day hr min sec] or hit return: ');
-                if isempty(minn)
-                    minn=[1970 1 1 0 0 0];
-                end
-                tmin	=	datenum(minn);
-            end
-            tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
-        end
-        
-        
-        tdate_vec	=	datevec(tdate_start - tmin);
-        nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);  %Ignores differences in days
-        N1			=	1 + round(nsec*handles.Fs);
-        N2			=	N1 + round(tlen*handles.Fs);
-        
-        try
-            [x,Fs]		=	audioread(fullfile(mydir,myfile),[N1 N2],'native');
-            
-            
-        catch
-            x=[];
-            
-            t=[];
-            head.Nchan=0;
-            return
-        end
-        
-        head.Nchan	=	size(x,2);
-        if head.Nchan>1
-            head.multichannel=true;
-        end
-        if ~strcmp(Ichan,'all')
-            x		=	x(:,Ichan);
-        end
-        
-        t	=	(1:length(x))/Fs;
-        
-        x			=	double(x)*sens;
-        
-end
-
-if isempty(tmin) || isempty(tmax)
-    disp('load_data: Warning, tmin and tmax should never be empty when exiting..');
-end
-
-
-%%Store whether multichannel data, regardless of original file format.
-if min(size(x))>1
-    head.multichannel=true;
-end
-
-if ~isfield(head,'linked')
-    head.linked=false;
-end
-
-if ~isfield(head,'multichannel')
-    head.multichannel=false;
-end
-
-%%%Optional Teager-Kaiser filtering...
-if teager
-    %%Assume that x is in form [ channel time]
-    x=x(:,2:end-1).^2-x(:,1:end-2).*x(:,3:end);
-end
-
-
-end  %function load_data
-
-
-function [y,t,head]=readGSIfile(rawfile,cbegin,tlen,nchan,formatt,calibrate)
-%function [y,t,head]=readGSIfile(rawfile,cbegin,tlen,nchan,formatt,calibrate)
-% Input Parameters:
-% rawfile = Include extension;
-% cbegin = Start time;
-% tlen = Length of sample to load;
-% nchan = Index of desired channel, 1 for sound;
-% formatt = Describes time input, string 'ctime' or 'datenum';
-% calibrate = String 'calibrate' to convert Volts to microP;
-
-if strfind(rawfile,'.sio')
-    
-    [y,t,head]=readsiof(rawfile,cbegin,tlen,formatt);
-    y=y-0.5*(2^16);  %Remove DC bias in A/D converter
-    
-elseif strfind(rawfile,'.gsi')
-    [y,t,head]=readgsi(rawfile,cbegin,tlen,formatt);
-    if isempty(y)  %request time is befine file start
-        dt=cbegin-head.ctbc;
-        tlen=tlen+dt;
-        [y,t,head]=readgsi(rawfile,0,tlen,formatt);
-        
-    end
-    y=y(nchan,:);
-    if strcmp(calibrate,'calibrate'),
-        y=y-0.5*(2^16);  %Remove DC bias in A/D converter
-        
-        y=y*(2.5/65535)*(10^(150/20));
-    end
-    y=y.';
-    
-    if (abs(size(y,1)-floor(head.Fs*tlen))>2),
-        disp('End of file reached, setting y to empty');
-        y=[];
-    end
-end
-
-end  %function readGSIfile
 
 function [thet,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,tmp)
 % Freq or temp in kiloHz
@@ -9560,14 +8756,6 @@ end
 
 
 
-function bearings=bnorm(bearings)
-Ibig=find(bearings>=360);
-bearings(Ibig)=bearings(Ibig)-360;
-
-Ilow=find(bearings<0);
-bearings(Ilow)=bearings(Ilow)+360;
-
-end
 
 function [Ksout,Ns,EE_sort,VV]=extractKsbest_contour(x,ovlap,Nfft,chann, frange,fr,fbad,Fs,M,keep_zeros,nowin)
 %%%%%%%%%%%%%%%%%%%%%%%extractKsbest_contour.m%%%%%%%%%%%
