@@ -148,6 +148,7 @@ handles.buttongroup.multichan(2)=handles.edit_chan;
 handles.buttongroup.GSI(1)=handles.pushbutton_GSIbearing;
 handles.buttongroup.GSI(2)=handles.pushbutton_GSI_localization;
 handles.buttongroup.GSI(3)=handles.radiobutton_directionality;
+handles.buttongroup.GSI(4)=handles.radiobutton_reactive;
 %Set default template 
 if strfind(getenv('USER'),'thode')
     handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
@@ -3325,7 +3326,9 @@ tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 chan=get(handles.edit_chan,'String');
 Idot=strfind(handles.myfile,'.')-1;
-save_name=sprintf('soundsamp_%s_%s_%s',handles.myfile(1:Idot),datestr(tdate_start,30),chan);
+save_name=sprintf('soundsamp_%s_%s_%s_%s', ...
+    handles.myfile(1:Idot),datestr(tdate_start,30),chan,handles.display_view);
+
 save_path	=	fullfile(handles.outputdir, save_name);
 disp(['Printing %s ...' save_name]);
 
@@ -8153,7 +8156,8 @@ if isempty(tlen)
 end
 mydir	=	pwd;
 
-if strcmp(handles.display_view,'Directionality')
+
+if strcmp(handles.display_view,'Directionality')||strcmpi(handles.display_view,'ReactiveRatio')
     Ichan='all';
 else
     Ichan	=	eval(get(handles.edit_chan,'String'));
@@ -8246,7 +8250,7 @@ end  %if PSD
 
 %%%%Select different views
 
-if strcmp(handles.display_view,'Directionality')
+if strcmpi(handles.display_view,'Directionality')||strcmpi(handles.display_view,'ReactiveRatio')
     display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr);
 elseif strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New Fig')
     
@@ -8356,6 +8360,25 @@ handles.Fs	=	Fs;
 %set(handles.pushbutton_next_linked_annotation,'enable','on');
 %set(handles.pushbutton_previous_linked_annotation,'enable','on');
 
+if strcmpi(handles.filetype,'psd')
+    set(handles.pushbutton_binary,'vis','off');
+    set(handles.pushbutton_pausesound,'vis','off');
+    set(handles.pushbutton_playsound,'vis','off');
+    set(handles.pushbutton_save,'vis','off');
+    set(handles.radiobutton_correlogram,'vis','off');
+    set(handles.radiobutton_timeseries,'vis','off');
+    
+else
+    set(handles.pushbutton_binary,'vis','on');
+    set(handles.pushbutton_pausesound,'vis','on');
+    set(handles.pushbutton_playsound,'vis','on');
+    set(handles.pushbutton_save,'vis','on');
+    set(handles.radiobutton_correlogram,'vis','on');
+    set(handles.radiobutton_timeseries,'vis','on');
+    %set(handles.radiobutton_directionality,'vis','on');
+    
+end
+
 if handles.file_flags.multichannel
     status='on';
 else
@@ -8399,24 +8422,7 @@ end
 %    set(handles.pushbutton_CSDM,'vis','on');
 %end
 
-if strcmpi(handles.filetype,'psd')
-    set(handles.pushbutton_binary,'vis','off');
-    set(handles.pushbutton_pausesound,'vis','off');
-    set(handles.pushbutton_playsound,'vis','off');
-    set(handles.pushbutton_save,'vis','off');
-    set(handles.radiobutton_correlogram,'vis','off');
-    set(handles.radiobutton_timeseries,'vis','off');
-    
-else
-    set(handles.pushbutton_binary,'vis','on');
-    set(handles.pushbutton_pausesound,'vis','on');
-    set(handles.pushbutton_playsound,'vis','on');
-    set(handles.pushbutton_save,'vis','on');
-    set(handles.radiobutton_correlogram,'vis','on');
-    set(handles.radiobutton_timeseries,'vis','on');
-    set(handles.radiobutton_directionality,'vis','on');
-    
-end
+
 end %function load_and_display_spectrogram
 
 function [handles,errorflag]	=	set_slider_controls(handles,filetype)
