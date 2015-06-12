@@ -48,10 +48,10 @@ elseif strcmpi(handles.display_view,'ReactiveRatio')
     vy=squeeze(imag((B(1,:,:).*conj(B(3,:,:)))));
     reactive=sqrt(vx.^2+vy.^2);
     total=(reactive+active);
-    imagesc(TT,FF/1000,10*log10(abs(reactive./total)));
+    imagesc(TT,FF/1000,10*log10(abs(active./total)));
     climm=[-10 0];
     caxis(climm);
-    titstr='Reactive/Total (dB)';
+    titstr='active fraction (dB)';
     if get(handles.checkbox_grayscale,'Value')==1,
         colormap(flipud(gray));
     else
