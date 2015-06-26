@@ -528,8 +528,8 @@ switch filetype
         
         %a 2 V pk-pk signal yields 0.9 pk-pak amp at 3 kHz or channel 2
         %(audio)
-        sens=2/0.9;  %Convert to volts
-        sens_hydro=170; %dB re uPa/V
+        sens=.9*2/0.9;  %Convert to volts
+        sens_hydro=172; %dB re uPa/V
         sens=sens*10.^(sens_hydro/20);
         %sens=1;
         

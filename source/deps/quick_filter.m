@@ -1,4 +1,4 @@
-%function [y,B]=quick_filter(x,Fs,minfreq,maxfreq)
+%function [y,B]=quick_filter(x,Fs,minfreq,maxfreq,B)
 %%minfreq and maxfreq in Hz
 function [y,B]=quick_filter(x,Fs,minfreq,maxfreq,B)
 df=maxfreq-minfreq;
