@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="1816677015" file="/Users/thode/repos/code-afsv/Ulysses_Mac.prj" location="/Users/thode/repos/code-afsv" name="Ulysses_Mac" preferred-package-location="/Users/thode/repos/code-afsv/Ulysses_Mac/for_redistribution" preferred-package-type="package.type.app" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
+  <configuration build-checksum="353605887" file="/Users/thode/repos/code-afsv/Ulysses_Mac.prj" location="/Users/thode/repos/code-afsv" name="Ulysses_Mac" preferred-package-location="/Users/thode/repos/code-afsv/Ulysses_Mac/for_redistribution" preferred-package-type="package.type.app" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
     <param.appname>Ulysses_Mac</param.appname>
     <param.icon>${PROJECT_ROOT}/Ulysses_Mac_resources/icon.icns</param.icon>
     <param.icons>
@@ -78,6 +78,7 @@
       <file>${PROJECT_ROOT}/source/deps/SplashScreen.m</file>
       <file>${PROJECT_ROOT}/source/deps/Whale_main_fun.m</file>
       <file>${PROJECT_ROOT}/source/deps/Whale_multi_hydro.m</file>
+      <file>${PROJECT_ROOT}/source/deps/bnorm.m</file>
       <file>${PROJECT_ROOT}/source/deps/boxplot.m</file>
       <file>${PROJECT_ROOT}/source/deps/boxplot_percentile.m</file>
       <file>${PROJECT_ROOT}/source/deps/brickwall_bpf.m</file>
@@ -100,6 +101,9 @@
       <file>${PROJECT_ROOT}/source/deps/dat2play.m</file>
       <file>${PROJECT_ROOT}/source/deps/delaynsum.m</file>
       <file>${PROJECT_ROOT}/source/deps/diffkr.m</file>
+      <file>${PROJECT_ROOT}/source/deps/display_correlogram_series.m</file>
+      <file>${PROJECT_ROOT}/source/deps/display_directional_diagram.m</file>
+      <file>${PROJECT_ROOT}/source/deps/display_time_series.m</file>
       <file>${PROJECT_ROOT}/source/deps/dwindow.m</file>
       <file>${PROJECT_ROOT}/source/deps/ellipse.m</file>
       <file>${PROJECT_ROOT}/source/deps/ellipsparms.m</file>
@@ -128,6 +132,7 @@
       <file>${PROJECT_ROOT}/source/deps/getcmunk.m</file>
       <file>${PROJECT_ROOT}/source/deps/hist2D.m</file>
       <file>${PROJECT_ROOT}/source/deps/imagescFun.m</file>
+      <file>${PROJECT_ROOT}/source/deps/input_batchparams.m</file>
       <file>${PROJECT_ROOT}/source/deps/inputsdlg.m</file>
       <file>${PROJECT_ROOT}/source/deps/inputsdlg_demo.m</file>
       <file>${PROJECT_ROOT}/source/deps/inputsdlg_demo_contactinfo.m</file>
@@ -143,6 +148,7 @@
       <file>${PROJECT_ROOT}/source/deps/load_MFP_scenario.m</file>
       <file>${PROJECT_ROOT}/source/deps/load_airgun_detector_params.m</file>
       <file>${PROJECT_ROOT}/source/deps/load_bowhead_detector_params.m</file>
+      <file>${PROJECT_ROOT}/source/deps/load_data.m</file>
       <file>${PROJECT_ROOT}/source/deps/load_default_annotation_template.m</file>
       <file>${PROJECT_ROOT}/source/deps/load_mt.m</file>
       <file>${PROJECT_ROOT}/source/deps/load_program_location.m</file>
@@ -166,6 +172,7 @@
       <file>${PROJECT_ROOT}/source/deps/readEnergySnips.m</file>
       <file>${PROJECT_ROOT}/source/deps/readEnergySummary.m</file>
       <file>${PROJECT_ROOT}/source/deps/readEnergy_header.m</file>
+      <file>${PROJECT_ROOT}/source/deps/readGSIfile.m</file>
       <file>${PROJECT_ROOT}/source/deps/read_Java_PSD.m</file>
       <file>${PROJECT_ROOT}/source/deps/read_Java_SEL.m</file>
       <file>${PROJECT_ROOT}/source/deps/read_adi_file.m</file>

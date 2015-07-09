@@ -6756,7 +6756,7 @@ file_found	=	true(Nf,1);
 
 for ii	=	1:Nf  %For every file type...
     %	Find all existing files
-    file_listings{ii}	=	dir(fullfile(folder_name, [fname '*' file_exts{ii}]));
+    file_listings{ii}	=	dir(fullfile(folder_name, [fname '*notes*' file_exts{ii}]));
     if isempty(file_listings{ii})
         file_found(ii)	=	false;
     end

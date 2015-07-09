@@ -39,8 +39,39 @@ switch filetype
         
         tmin=head.tstart_file;
         tmax=head.tend_file;
+        t=linspace(tmin,tmax,length(x));
     case 'MAT'
         
+        
+        %%Look at THAW data
+        if ~isempty(strfind(myfile,'rcv'))
+            data=load(fullfile(mydir,myfile));
+            Fs=data.sample_rate;
+            x=data.rcvx;
+            
+            day=str2num(myfile(5:7));
+            hour=str2num(myfile(8:9));
+            minn=str2num(myfile(10:11));
+            secc=str2num(myfile(12:13));
+            tmin=datenum(2012,0,day,hour,minn,secc);
+            tmax=tmin+datenum(0,0,0,0,0,length(x)/Fs);
+            head.Nchan=1;
+            head.Fs=Fs;
+            
+            if tdate_start==-1
+                tdate_start=tmin;
+                
+            end
+            dt=datevec(tdate_start-tmin);
+            
+            dt=dt(:,6)+60*dt(:,5)+3600*dt(:,4)+24*3600*dt(:,3);
+            Istart=1+round(dt*Fs);
+            Iend=Istart+(round(tlen*Fs));
+            x=x(Istart:Iend);
+            
+            %keyboard
+            return
+        end
         simulated=load(fullfile(mydir,myfile));
         Fs=simulated.fs;
         
@@ -133,14 +164,14 @@ switch filetype
         tmin=datenum(1970,1,1,0,0,head.ctbc);
         tmax=tmin+datenum(0,0,1,0,0,0);
         %head.Nchan=length(Ichan);
-       if beamform_data==1
-             %y=x(:,1)-fudge_factor_velocity*(cos(angles(I)*pi/180)*x(:,3)+sin(angles(I)*pi/180)*x(:,2)); %switch x and y to get compass bearing
-   
-             thta=thta-head.brefa;
-             x=x(:,1)+sin(thta*pi/180)*x(:,2)+cos(thta*pi/180)*x(:,3);
-             x=x/2; %Turn into equivalent of one channel.
-           
-       end
+        if beamform_data==1
+            %y=x(:,1)-fudge_factor_velocity*(cos(angles(I)*pi/180)*x(:,3)+sin(angles(I)*pi/180)*x(:,2)); %switch x and y to get compass bearing
+            
+            thta=thta-head.brefa;
+            x=x(:,1)+sin(thta*pi/180)*x(:,2)+cos(thta*pi/180)*x(:,3);
+            x=x/2; %Turn into equivalent of one channel.
+            
+        end
         
         
     case 'MT'
@@ -470,12 +501,12 @@ switch filetype
             thta=-Ichan;
             Ichan=1:head.Nchan;
         end
-
+        
         if max(Ichan)>head.Nchan
             disp(sprintf('Channel too high, max channel %i',head.Nchan));
             Ichan=head.Nchan;
         end
-
+        
         try
             x=x(:,Ichan);
             for II=Ichan
@@ -533,7 +564,7 @@ switch filetype
         sens=sens*10.^(sens_hydro/20);
         %sens=1;
         
-       
+        
         
         tdate_vec	=	datevec(tdate_start - tmin);
         nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);  %Ignores differences in days
