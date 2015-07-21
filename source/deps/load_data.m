@@ -607,24 +607,42 @@ switch filetype
         x			=	double(x)*sens;
     case 'WAV' %% Includes SUDAR data
         
+        %Check version of MATLAB
         
-        info	=	audioinfo(fullfile(mydir,myfile));
-        %[~,Fs]		=	audioread(fullfile(mydir,myfile),1,'native');
-        Nsamples	=	info.TotalSamples;
-        handles.Fs	=	info.SampleRate;
-        Fs=info.SampleRate;
-        
+        if verLessThan('matlab', '8.2.0.29')
+            [~,Fs]=wavread(fullfile(mydir,myfile),3);
+            Nsamples=max(wavread(fullfile(mydir,myfile),'size') );
+            handles.Fs=Fs;
+    
+            % Put code to run under MATLAB older than MATLAB 7.0.1 here
+        else
+            % Put code to run under MATLAB 7.0.1 and newer here
+            info	=	audioinfo(fullfile(mydir,myfile));
+            %[~,Fs]		=	audioread(fullfile(mydir,myfile),1,'native');
+            Nsamples	=	info.TotalSamples;
+            handles.Fs	=	info.SampleRate;
+            Fs=info.SampleRate;
+        end
+   
         [head.cable_factor,sens]=get_ADAT24_cable_factor;
-        
-        
+          
         try
+            done=false;
             [SUDAR_true,tmin,tmax,FsSUDAR]=get_SUDAR_time(mydir,myfile); %Check whether a sUDAR file exists
+           
             if SUDAR_true
                 sens=(10^(186/20))/(2^15);
                 Fs=FsSUDAR;
+                done=true;
                 
             end
-            if ~SUDAR_true
+            [Berchok_true,tmin,tmax]=get_Berchok_time(mydir,myfile,Nsamples,Fs); %Check whether a Catherine Berchok file exists
+            if Berchok_true
+                sens=1;
+               
+                done=true;
+            end
+            if ~done
                 tmin	=	convert_date(myfile,'_');
                 if isempty(tmin)
                     tmin=datenum([1970 1 1 0 0 0]);
@@ -652,9 +670,11 @@ switch filetype
         N2			=	N1 + round(tlen*handles.Fs);
         
         try
-            [x,Fs]		=	audioread(fullfile(mydir,myfile),[N1 N2],'native');
-            
-            
+            if verLessThan('matlab', '8.2.0.29')
+                [x,Fs]		=	wavread(fullfile(mydir,myfile),[N1 N2],'native');
+            else
+                [x,Fs]		=	audioread(fullfile(mydir,myfile),[N1 N2],'native');
+            end
         catch
             x=[];
             

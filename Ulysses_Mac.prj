@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration build-checksum="353605887" file="/Users/thode/repos/code-afsv/Ulysses_Mac.prj" location="/Users/thode/repos/code-afsv" name="Ulysses_Mac" preferred-package-location="/Users/thode/repos/code-afsv/Ulysses_Mac/for_redistribution" preferred-package-type="package.type.app" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
+  <configuration build-checksum="4034500279" file="/Users/thode/repos/code-afsv/Ulysses_Mac.prj" location="/Users/thode/repos/code-afsv" name="Ulysses_Mac" preferred-package-location="/Users/thode/repos/code-afsv/Ulysses_Mac/for_redistribution" preferred-package-type="package.type.app" target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications">
     <param.appname>Ulysses_Mac</param.appname>
     <param.icon>${PROJECT_ROOT}/Ulysses_Mac_resources/icon.icns</param.icon>
     <param.icons>
@@ -121,6 +121,7 @@
       <file>${PROJECT_ROOT}/source/deps/gaussian_asym_filter.m</file>
       <file>${PROJECT_ROOT}/source/deps/generalcalc.m</file>
       <file>${PROJECT_ROOT}/source/deps/get_ADAT24_cable_factor.m</file>
+      <file>${PROJECT_ROOT}/source/deps/get_Berchok_time.m</file>
       <file>${PROJECT_ROOT}/source/deps/get_DASARA_filter.m</file>
       <file>${PROJECT_ROOT}/source/deps/get_SUDAR_time.m</file>
       <file>${PROJECT_ROOT}/source/deps/get_level_metrics_simple.m</file>
@@ -234,7 +235,7 @@
       <vista>false</vista>
       <linux>false</linux>
       <solaris>false</solaris>
-      <osver>10.10.3</osver>
+      <osver>10.10.4</osver>
       <os32>false</os32>
       <os64>true</os64>
       <arch>maci64</arch>

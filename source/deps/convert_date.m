@@ -7,7 +7,7 @@
 
 
 function tstart=convert_date(data,delimiter)
-
+tstart=[];
 mt_style_flag=~isempty(findstr('Sound',data));
 fname_bounds=findstr(data,delimiter);
 
