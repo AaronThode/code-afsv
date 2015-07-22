@@ -7257,6 +7257,7 @@ close(hh);
 full_snips_name=fullfile(pathstr,[fname '.snips']);
 snips_name=dir(full_snips_name);
 if isempty(snips_name)
+    fprintf('No %s snips file found, exiting...\n',snips_name)
     return
     
 end
@@ -7275,12 +7276,16 @@ if get_dialog || isempty(filter_transition_band)  %If this is the first file loa
         'minimum passband frequency for FIR filters (Hz):', ...
         'maximum passband frequency for FIR filters (Hz):', ...
         'passband frequency spacing (Hz)', ...
-        'Debug plotting (1=yes; 0=no)'};
+        'Debug plotting (1=yes; 0=no)', ...
+        'No snips processing (1=yes; 0=no)'};
     name='Parameters for importing JAVA snips file';
     numlines=1;
-    defaultanswer={'500','2',num2str(min_freq_events),num2str(max_freq_events),num2str(freq_spacing),'0'};
+    defaultanswer={'500','2',num2str(min_freq_events),num2str(max_freq_events),num2str(freq_spacing),'0','1'};
     answer=inputdlg(prompt,name,numlines,defaultanswer);
     
+    if eval(answer{end})==1
+        return
+    end
     
     run_options.Ncalls_to_sample=str2double(answer{1});
     filter_transition_band=str2double(answer{2});

@@ -1,11 +1,12 @@
-function [N,printname,Ibin,hout,hprint]=hist2D(X,axis1,axis2,feature_names,contour_chc)
-%function [N,printname,Ibin]=hist2D(X,axis1,axis2,feature_names,contour_chc)
+function [N,printname,Ibin,hout,hprint]=hist2D(X,axis1,axis2,feature_names,contour_chc,scale_chc)
+%function [N,printname,Ibin]=hist2D(X,axis1,axis2,feature_names,contour_chc,scale_chc)
 %
 %  Input:
 %% X: [2 Npoint] data sample;
 %%  axis1, axis2: desired histogram bins..
 %%  feature_names: cell array of names of featurs for plotting
 %%  contour_chc: if 1, image, if 2, contourf
+%%  scale_chc:  if 1, linear, if 2, log10.  Default is log10
 %% Output:
 %% N : matrix of binned counts; rows with axis1, columns with axis2
 %%      Note that 'x' axis is axis2 feature, etc.
@@ -20,6 +21,9 @@ Ibin=zeros(size(X));
 
 if ~exist('contour_chc')
    contour_chc=1; 
+end
+if ~exist('scale_chc')
+   scale_chc=2; 
 end
 
 for I=1:length(axis1)
@@ -75,20 +79,33 @@ set(gca,'pos',poss);
 
 %%%%%%%%%%%%
 subplot(2,2,2)
-rangee=0:0.5:ceil(max(max((log10(N)))));
+
+if scale_chc==2  %log10
+    rangee=0:0.5:ceil(max(max((log10(N)))));
+    if contour_chc==1
+        imagesc(axis2,axis1,log10(N));
+    else
+        contourf(axis2,axis1,log10(N),rangee);
+    end
     
-if contour_chc==1
-    imagesc(axis2,axis1,log10(N));
 else
-    contourf(axis2,axis1,log10(N),rangee);
-   
+    rangee=1:1:ceil(max(max(N)));
+    if contour_chc==1
+        imagesc(axis2,axis1,N);
+    else
+        contourf(axis2,axis1,N,rangee);
+    end
+    
 end
+
 hout(2)=gca;
 set(gca,'fontweight','bold','fontsize',14);
 set(gca,'xminorgrid','on','yminorgrid','on');
 
 hh=colorbar('east');
-set(hh,'fontweight','bold','fontsize',14,'DecorationColor','w','DecorationColor','k');
+%set(hh,'fontweight','bold','fontsize',14,'DecorationColor','w','DecorationColor','k');
+set(hh,'fontweight','bold','fontsize',14);
+
 poss=get(hh,'pos');
 poss(1)=.94;
 set(hh,'pos',poss);
