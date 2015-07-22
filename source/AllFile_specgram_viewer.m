@@ -2145,7 +2145,7 @@ switch	Batch_mode
         if isempty(param)
             return
         end
-        
+        cd(handles.outputdir);
         script_name=writeEnergyDetectorCshell(param);
         pause(1);
         eval(sprintf('!./%s > outt_click.txt &',script_name));
@@ -2162,7 +2162,7 @@ switch	Batch_mode
         %h	=	msgbox(info_str);
         
         dialog_title	=	'Select location for Event Detector import file(s):';
-        start_path		=	handles.mydir;
+        start_path		=	handles.outputdir;
         folder_name		=	uigetdir(start_path, dialog_title);
         
         if isnumeric(folder_name)
@@ -2214,7 +2214,7 @@ switch	Batch_mode
         handles.notes.saved	=	true;
         set(handles.pushbutton_notes_stats,'Enable','on');
         handles.mydir=mydir;
-        cd(handles.mydir);
+        cd(handles.outputdir);
         
         guidata(hObject, handles);
         
@@ -2252,7 +2252,7 @@ end
                 param.exten=['*' handles.myext];
             end
             param_desc{K}='Filename or file extension to process';K=K+1;
-            data_folder_name		=	uigetdir('.', 'Select a folder to store analysis results:');
+            data_folder_name		=	uigetdir(handles.outputdir, 'Select a folder to store analysis results:');
             
             param.dir_out=data_folder_name;         param_desc{K}='Output directory';K=K+1;
             param.file_dir=handles.mydir;   param_desc{K}='Directory containing files';K=K+1;
@@ -6756,7 +6756,12 @@ file_found	=	true(Nf,1);
 
 for ii	=	1:Nf  %For every file type...
     %	Find all existing files
-    file_listings{ii}	=	dir(fullfile(folder_name, [fname '*notes*' file_exts{ii}]));
+    if ii==1
+        file_listings{ii}	=	dir(fullfile(folder_name, [fname '*notes*' file_exts{ii}]));
+    else
+        file_listings{ii}	=	dir(fullfile(folder_name, [fname '*' file_exts{ii}]));
+        
+    end
     if isempty(file_listings{ii})
         file_found(ii)	=	false;
     end
@@ -6789,7 +6794,8 @@ end
 
 if nargin>2 && ~isempty(annotation_file_name)  %if annotation_file_name has been fed in...
     %cd(handles.outputdir)  %Should already be here, but just in case
-    mydirr=pwd;
+    %mydirr=pwd;
+    
     cd(folder_name)
     if exist(annotation_file_name,'file')==2
         file_name	=	annotation_file_name;
@@ -6799,7 +6805,7 @@ if nargin>2 && ~isempty(annotation_file_name)  %if annotation_file_name has been
         fprintf('Requested annotation file %s does not exist!\n',annotation_file_name);
         sel_names=[];
     end
-    cd(mydirr);
+    cd(handles.notes.folder_name);
 else  %have user select annotation file interactively
     sel_names	=	[];
     if	~isempty(listing)
@@ -7249,6 +7255,7 @@ for JJ = 1:length(auto.ctime)
     Data.Events(JJ).duration	=	num2str(auto.features(end,JJ));
     Data.Events(JJ).min_freq	=	num2str(auto.features(Iminn,JJ));
     Data.Events(JJ).max_freq	=	num2str(auto.features(Imaxx,JJ));
+    Data.Events(JJ).sig_type = 'FM';
 end
 close(hh);
 
@@ -7257,7 +7264,7 @@ close(hh);
 full_snips_name=fullfile(pathstr,[fname '.snips']);
 snips_name=dir(full_snips_name);
 if isempty(snips_name)
-    fprintf('No %s snips file found, exiting...\n',snips_name)
+    fprintf('No %s \n snips file found, exiting...\n',full_snips_name)
     return
     
 end
