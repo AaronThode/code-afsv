@@ -3066,7 +3066,7 @@ try
     for Ichan=1:size(x,2)
         xfilt(:,Ichan)=filter(handles.b,1,x(:,Ichan));
     end
-    audiowrite(save_path,xfilt/(1.1*max(max(abs(xfilt)))),Fs);
+    audiowrite(save_path,xfilt/(1.1*max(max(abs(xfilt)))),round(Fs));
     
 catch
     disp('No filtering desired... exists; saving raw acoustic data to WAV');
@@ -3074,9 +3074,9 @@ catch
     matVers=version('-release');
     
     if(str2double(matVers(1:4))>2012 || strcmp(matVers,'2012b'))
-        audiowrite([save_path '.wav'],(x/(1.1*max(max(abs(x))))),Fs);
+        audiowrite([save_path '.wav'],(x/(1.1*max(max(abs(x))))),round(Fs));
     else
-        wavwrite(x/(1.1*max(max(abs(x)))),Fs,[save_path '.wav']);
+        wavwrite(x/(1.1*max(max(abs(x)))),round(Fs),[save_path '.wav']);
     end
     
 end
