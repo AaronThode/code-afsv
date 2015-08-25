@@ -3753,9 +3753,12 @@ fmax=str2double(get(handles.edit_fmax,'String'));
 chann=1:head.Nchan; %We now assume that any bad channels are marked in the LOG files.
 %end
 
-Ichc=menu('Enter type of frequency processing:','Contour','All (averaged)','Individual Frames (and ray tracing)','Time delay and sum');
+Ichc=menu('Enter type of frequency processing:','Contour', ...
+    'All (averaged)','Individual Frames (and ray tracing)', ...
+    'Time delay and sum','Cross correlation between two phones');
 
 delay_and_sum_flag=false;  %Boolean variable is true if delay and sum option selected
+correlation_flag=false;
 if Ichc==1
     Nf=input('Enter number of harmonics:');
     if isempty(Nf)
@@ -3872,11 +3875,43 @@ elseif Ichc==4 %% simple time and delay on filtered signal...
     %fvtool(bpFilt);
     x=filter(bpFilt,x);
     
+elseif Ichc==5 %% simple cross correlation on filtered signal...
+    
+    correlation_flag=true;
+    disp('Select bounding box for time and range:');
+    ftmp=ginput(2);
+    
+    %Trim x...
+    Igood=( t>=min(ftmp(:,1))&t<=max(ftmp(:,1)));
+    x=x(Igood,:);
+    t=t(Igood);
+    
+    frange=sort(ftmp(:,2)*1000);
+    fprintf('frange: %6.2f to %6.2f Hz\n',frange);
+    prompt1={'Min Freq (Hz)', 'Max Freq (Hz)','Max delay (msec)', ...
+        'scale option [biased, unbiased, coeff]'};
+    def1={num2str(frange(1)),num2str(frange(2)),num2str(1000*2*head.geom.spacing(2)/1472),'unbiased'};
+    answer=inputdlg(prompt1,'Check Xcorr selections',1,def1);
+    
+    if isempty(answer)
+        return
+    end
+    frange=[eval(answer{1}) eval(answer{2})];
+    maxlag=ceil(eval(answer{3})*Fs/1000);
+    scaleopt=answer{4};
+    %maxopt=answer{5};
+    
+    bpFilt = designfilt('bandpassiir', 'FilterOrder', 20, ...
+        'HalfPowerFrequency1', frange(1), 'HalfPowerFrequency2', frange(2),...
+        'SampleRate', Fs);
+    
+    %fvtool(bpFilt);
+    x=filtfilt(bpFilt,x);
     
 end
 
 
-if ~delay_and_sum_flag
+if ~delay_and_sum_flag&~correlation_flag
     yes=menu('Beamform?','No','Conventional','MV','Both','Reflection Coefficient Estimation','MFP');
 else
     yes=2;
@@ -3884,7 +3919,7 @@ end
 yes_eigen=0;
 while yes>1
     
-    if yes<6
+    if yes<6&~correlation_flag
         
         prompt1={'Vector of angles (deg) [(-20:0.2:20)]','Vector of sin angles (deg) [(-0.2:0.005:0.2)]','hydrophone indicies [all]','sound speed (m/sec)', ...
             };
@@ -3907,12 +3942,16 @@ while yes>1
             
         end
     end
+    
+     %%Assign beam_str value based on earlier choices   
     switch yes
         case 2
             beam_str='CV';
             
             if delay_and_sum_flag
                 beamchc='delaynsum';
+            elseif correlation_flag
+                beamchc='timedomaincorrelation';
             else
                 Ndim=ndims(Ksout.Kstot);
                 
@@ -3922,7 +3961,32 @@ while yes>1
                     beamchc='angvstime';  %migration
                 end
             end
-            if strcmp(beamchc,'freqvspwr')
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%%%%%%  Main beamforming decision loop  %%%%%%
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            if strcmp(beamchc,'timedomaincorrelation')
+                %%Simple time domain cross-correlation
+                [cc,lags]=xcov(x(:,1),x(:,2),maxlag,scaleopt);
+                figure('Name',sprintf('%s Xcov result',scaleopt));
+                for I=1:2
+                    subplot(3,1,I)
+                    plot(t,x(:,I));
+                    grid on;title(sprintf('Signal %i',I));
+                end
+                subplot(3,1,3);
+                plot(1000*lags/Fs,cc,'k',1000*lags/Fs,abs(hilbert(cc)),'r');
+                [maxx,Ishifth]=max(abs(hilbert(cc)));
+                
+                [maxx,Ishift]=max(cc);
+                
+            
+                grid on;xlabel('Delay (msec)');ylabel('Amplitude');
+                title(sprintf('Max lag is %8.4f msec, %8.4f msec hilbert',1000*lags(Ishift)/Fs,1000*lags(Ishifth)/Fs));
+                
+                
+            elseif strcmp(beamchc,'freqvspwr')
                 B=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
                 
                 figure(20);
@@ -4169,12 +4233,17 @@ while yes>1
             return
     end
     
-    plot_beamforming_results(true); %ppeak picking
-    
-    
-    yes=menu('Beamform?','No','Conventional','MV','Both','Reflection Coefficient Estimation','MFP');
-    
+    if ~correlation_flag
+        plot_beamforming_results(true); %ppeak picking
+        yes=menu('Beamform?','No','Conventional','MV','Both','Reflection Coefficient Estimation','MFP');
+    else
+        yes=0;
+    end
 end  %while yes
+
+if correlation_flag
+    return
+end
 
 yes=menu('Save CSDM?','Yes','No');
 if yes==1

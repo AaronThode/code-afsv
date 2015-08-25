@@ -60,6 +60,9 @@ fparms=fparms_bot;
 
 if isempty(fparms.synch.file)
     x=xbot;
+    if size(x,2)>1
+        x=x';
+    end
     cd(thisdir);
     return
 end
@@ -82,7 +85,7 @@ else
 end
 
 toffset=fparms_bot.synch.offset+fparms_bot.synch.drift*nsec/(3600*1000);
-
+fprintf('Toffset is %5.6f msec\n',toffset*1000);
 try  %Look for corresponding file
     [xtop,~,~,~,fparms_top]=read_dat_file(fparms.synch.file,tstart+datenum(0,0,0,0,0,toffset),ns,units_voltage);
     

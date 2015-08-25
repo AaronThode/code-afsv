@@ -202,11 +202,11 @@ while 1
     elseif strfind(tline,'time offset:')>0
         Idot=1+strfind(tline,':');
         Iend=strfind(tline,'sec')-1;
-        synch.offset=str2double(tline(Idot:Iend));
+        synch.offset=eval(tline(Idot:Iend));
     elseif strfind(tline,'time drift:')>0
         Idot=1+strfind(tline,':');
         Iend=strfind(tline,'ms')-1;
-        synch.drift=str2double(tline(Idot:Iend));
+        synch.drift=eval(tline(Idot:Iend));
     elseif  strfind(tline,'seconds')
         Is          =   strfind(tline,'seconds')-1;
         secs        =   str2double(tline(1:Is));
