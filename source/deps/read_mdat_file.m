@@ -179,7 +179,10 @@ while 1
     elseif findstr(tline,'sample rate:')>0
         Idot=1+findstr(tline,':');
         Iend=findstr(tline,'hz')-1;
-        fs=str2num(tline(Idot:Iend));
+         if isempty(Iend)
+            Iend    =   strfind(tline,'0');
+        end
+        fs=str2num(tline(Idot:Iend(end)));
     elseif findstr(tline,'sensitivity:')>0
         Idot=1+findstr(tline,':');
         Iend=findstr(tline,'db')-1;

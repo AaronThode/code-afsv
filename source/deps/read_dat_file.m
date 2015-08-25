@@ -1,5 +1,5 @@
-function [x, tfs, tfe, fs]    =...
-        read_dat_file(file_name, fs, tstart, ns, units_voltage, sens, raw)
+function [x, tfs, tfe, fs,fparms]    =...
+    read_dat_file(file_name, tstart, ns, units_voltage, sens, raw)
 %READ_DAT_FILE     Read in a DAT file
 %
 %   WARNING!  LOG file must be in same location.
@@ -49,8 +49,8 @@ function [x, tfs, tfe, fs]    =...
 
 
 %%  Input parameter checking, and default values
-                                                    %   dB re 1uPa/V
-if ~exist('sens', 'var') || isempty(sens),      sens    =	-172;	end 
+%   dB re 1uPa/V
+if ~exist('sens', 'var') || isempty(sens),      sens    =	-172;	end
 if ~exist('units_voltage', 'var') || isempty(units_voltage),
     units_voltage   =   0;      end
 if ~exist('fs', 'var'),                         fs      =   [];     end
@@ -65,68 +65,37 @@ VREF    =   2.5;
 nc      =   1;
 
 %   An input voltage of 0.05 V p-p produces a 1.2 V p-p at A/D
-scale   =   (0.038/1.0)*VREF/(2^16-1);  
+scale   =   (0.038/1.0)*VREF/(2^16-1);
 
 
 %%  Parse input file name and associated log file
 [pathstr, name, ~]    =   fileparts(file_name);
-
+ pathstr=strtrim(pathstr);
+ name=strtrim(name);
 %   Check that associated log file exists
+
 log_file    =   fullfile(pathstr, [name '.log']);
+%Create full path name
+
 if ~exist(log_file, 'file')
     log_file    =   fullfile(pathstr, [name '.LOG']); % check upper case ext
     if ~exist(log_file, 'file')
         error('%s does not exist in same directory as %s',...
-            log_file,                               file_name); 
+            log_file, file_name);
     end
 end
 
-fid	=	fopen(log_file, 'r');
+%[tfs,tfe,fs,nc,sens,Igood,geom,synch]=load_mdat_header(fname);
+[tfs,tfe,fs,nc,sens0,Igood,geom,synch]=load_dat_header(log_file);
 
-line.fs     =   [];
-tfs         =   0;    tfe=0;
-sec_flag    =   0;
-
-while 1
-    tline	=	fgetl(fid);
-    
-    if ~ischar(tline), break, end
-    %   ??  Date parsing can be done with inbuilt matlab functions
-    if      strfind(tline, 'Start time')
-        line.start  =   tline;
-        tfs         =   parse_date(line.start);
-        sec_flag    =   1;
-    elseif  strfind(tline, 'Stop time')
-        line.end    =   tline;
-        tfe         =   parse_date(line.end);
-        sec_flag    =   2;
-    elseif  strfind(tline, 'Sample rate:')>0,
-        Idot        =   1 + strfind(tline,':');
-        Iend        =   strfind(tline,'Hz')-1;
-        if isempty(Iend)
-            Iend    =   strfind(tline,'0');
-        end
-        fs  =   str2double(tline(Idot:Iend(end)));
-    elseif  strfind(tline,'Sensitivity:')>0,
-        Idot        =   1 + strfind(tline,':');
-        Iend        =   strfind(tline,'dB')-1;
-        sens        =   str2double(tline(Idot:Iend));
-        
-    elseif  strfind(tline,'seconds')
-        Is          =   strfind(tline,'seconds')-1;
-        secs        =   str2double(tline(1:Is));
-        if sec_flag == 1
-            tfs     =   tfs + datenum(0,0,0,0,0,secs);
-        elseif sec_flag == 2
-            tfe     =   tfe + datenum(0,0,0,0,0,secs);
-        end
-        sec_flag = 0;
-    end
+if ~isempty(sens0)
+    sens=sens0;
 end
-fclose(fid);
+fparms=struct('tfs',tfs,'tfe',tfe,'fs',fs,'nc',nc,'geom',geom,'synch',synch,'sensitivity',sens,'Igood',Igood);
+
 
 if (tfs==0 || tfe==0)
-	fprintf('Could not understand %s',log_file);
+    fprintf('Could not understand %s',log_file);
 end
 
 
@@ -144,7 +113,7 @@ end
 try
     if tstart > tfs
         offset  =   etime(datevec(tstart), datevec(tfs));
-%        offset  =   (offset(:,6)+60*offset(:,5)+3600*offset(:,4)+24*3600*offset(:,3));  %offset in seconds from file
+        %        offset  =   (offset(:,6)+60*offset(:,5)+3600*offset(:,4)+24*3600*offset(:,3));  %offset in seconds from file
         %disp(sprintf('%i second offset from file start',offset));
     elseif tstart > 0
         %error('cannot read this time from this file');
@@ -161,7 +130,7 @@ catch    %#ok<CTCH>
 end
 
 %%  Open binary data file and read in requeste points
-fid     =   fopen(file_name,'r','ieee-be');
+fid     =   fopen(strtrim(file_name),'r','ieee-be');
 fskip   =   2*nc*round(fs*offset);
 res     =   fseek(fid,fskip,-1);
 if res<0,
@@ -185,10 +154,104 @@ else
     double(x);
 end
 
-
-
 end
 
+function [tfs,tfe,fs,nc,sens,Igood,geom,synch]=load_dat_header(log_file)
+fid	=	fopen(log_file, 'r');
+
+line.fs     =   [];
+tfs         =   0;    tfe=0;
+sec_flag    =   0;
+nc=1;  %Channels in DAT file are always 1!
+Igood=[];
+synch=struct('file',[],'time',[],'offset',[],'drift',[]);
+geom=struct('rd',[],'D',[],'spacing',[],'tiltx',[],'tilty',[]);
+sens=[];
+
+while 1
+    tline	=	fgetl(fid);
+    if ~ischar(tline),break,end
+    tline_org=tline;
+    tline=lower(tline);
+    if ~ischar(tline), break, end
+    %   ??  Date parsing can be done with inbuilt matlab functions
+    if      strfind(tline, 'start time')
+        line.start  =   tline;
+        tfs         =   parse_date(line.start);
+        sec_flag    =   1;
+    elseif  strfind(tline, 'stop time')
+        line.end    =   tline;
+        tfe         =   parse_date(line.end);
+        sec_flag    =   2;
+    elseif strfind(tline,'synch time')>0
+        line.synch=tline;
+        synch.time=parse_date(line.synch);
+        sec_flag=3;
+    elseif  strfind(tline, 'sample rate:')>0,
+        Idot        =   1 + strfind(tline,':');
+        Iend        =   strfind(tline,'hz')-1;
+        if isempty(Iend)
+            Iend    =   strfind(tline,'0');
+        end
+        fs  =   str2double(tline(Idot:Iend(end)));
+        
+    elseif  strfind(tline,'sensitivity:')>0,
+        Idot        =   1 + strfind(tline,':');
+        Iend        =   strfind(tline,'db')-1;
+        sens        =   str2double(tline(Idot:Iend));
+    elseif strfind(tline,'time offset:')>0
+        Idot=1+strfind(tline,':');
+        Iend=strfind(tline,'sec')-1;
+        synch.offset=str2double(tline(Idot:Iend));
+    elseif strfind(tline,'time drift:')>0
+        Idot=1+strfind(tline,':');
+        Iend=strfind(tline,'ms')-1;
+        synch.drift=str2double(tline(Idot:Iend));
+    elseif  strfind(tline,'seconds')
+        Is          =   strfind(tline,'seconds')-1;
+        secs        =   str2double(tline(1:Is));
+        if sec_flag == 1
+            tfs     =   tfs + datenum(0,0,0,0,0,secs);
+        elseif sec_flag == 2
+            tfe     =   tfe + datenum(0,0,0,0,0,secs);
+        elseif sec_flag ==3
+            synch.time     =   synch.time + datenum(0,0,0,0,0,secs);
+        end
+        sec_flag = 0;
+    elseif strfind(tline,'channels:')>0
+        Idot=1+strfind(tline,':');
+        nc=str2num(tline(Idot:end));
+        
+    elseif strfind(tline,'tilt-x')>0,
+        Idot=strfind(tline,':')+1;
+        Iend=strfind(tline,'tilt-y')-1;
+        geom.tiltx=str2num(tline(Idot:Iend));
+        Idot=Iend+8;
+        Iend=strfind(tline,'degrees')-1;
+        geom.tilty=str2num(tline(Idot:Iend));
+    elseif strfind(tline,'synch file:')>0
+        Idot=1+strfind(tline,':');
+        synch.file=(tline_org(Idot:end));
+        
+    elseif strfind(tline,'channel depths')>0
+        Idot=1+strfind(tline,':');
+        geom.rd=str2num(tline(Idot:end));
+    elseif strfind(tline,'channel spacing')>0
+        Idot=1+strfind(tline,':');
+        geom.spacing=str2num(tline(Idot:end));
+    elseif strfind(tline,'water depth:')>0
+        Idot=1+strfind(tline,':');
+        Iend=strfind(tline,'m')-1;
+        geom.D=str2double(tline(Idot:Iend));
+    elseif strfind(tline,'channel quality:')>0
+        Idot=1+strfind(tline,':');
+        Igood=str2num(tline(Idot:end));
+    end
+    
+end
+fclose(fid);
+
+end %header
 
 
 %%  ??  This can be done directly with datenum
@@ -200,29 +263,29 @@ tm=datenum(str((end-13):(end-5)),14)-datenum('00:00:00',14);
 day=str2double(str((end-15):(end-14)));
 month=(str((end-19):(end-16)));
 switch deblank(month),
-    case 'Jan'
+    case 'jan'
         mn=1;
-    case 'Feb'
+    case 'feb'
         mn=2;
-    case 'Mar'
+    case 'mar'
         mn=3;
-    case 'Apr'
+    case 'apr'
         mn=4;
-    case 'May'
+    case 'may'
         mn=5;
-    case 'Jun'
+    case 'jun'
         mn=6;
-    case 'Jul'
+    case 'jul'
         mn=7;
-    case 'Aug'
+    case 'aug'
         mn=8;
-    case 'Sep'
+    case 'sep'
         mn=9;
-    case 'Oct'
+    case 'oct'
         mn=10;
-    case 'Nov'
+    case 'nov'
         mn=11;
-    case 'Dec'
+    case 'dec'
         mn=12;
 end
 

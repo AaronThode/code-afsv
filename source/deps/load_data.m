@@ -407,18 +407,63 @@ switch filetype
         
         
     case 'DAT'
-        [x,tmin,tmax,fs]=read_dat_file(fullfile(mydir,myfile),[],-1,tlen,0);
         
-        if isempty(fs)
-            fs=input('Enter sampling rate in Hz:');
-        end
-        Fs=fs;
-        [x,tmin,tmax]=read_dat_file([mydir '/' myfile],Fs,tdate_start,tlen,0); %output in uPa
+        %           [x,head]=read_synchronized_mdat_files(fullfile(mydir,myfile),tdate_start,tlen);
+        %         Fs=head.fs;
+        %         sio_chc=get(handles.togglebutton_ChannelBeam,'String');
+        %         head.multichannel=true;
+        %         t=(1:length(x))/Fs;
+        %
+        %         tmin=head.tfs;
+        %         tmax=head.tfe;
+        %         head.Nchan=size(x,2);
+        %         beamform_data=0;
+        %         get_geometry=1;
+        
+        dat_chc=get(handles.togglebutton_ChannelBeam,'String');
+        [x,tmin,tmax,Fs,head]=read_synchronized_dat_file([mydir '/' myfile],tdate_start,tlen,0); %output in uPa
         %[x,tmin,tmax]=read_dat_file([mydir '/' myfile],Fs,tdate_start,tlen,1);  %Voltage output
-        t=(1:length(x))/fs;
+        t=(1:size(x,1))/Fs;
+       
+       
+        head.Nchan=size(x,2);
         
-        head.Nchan=1;
-        switch fs
+        if head.Nchan>1
+             head.multichannel=true;
+        end
+         %%%If beamforming is desired for a look at a given direction...
+        beamform_data=0;
+        get_geometry=0;
+        if strcmpi(dat_chc,'angle')&&~strcmpi(Ichan,'all')
+            beamform_data=1;
+            get_geometry=1;
+        elseif strcmpi(Ichan,'all')
+            Ichan=1:head.Nchan;
+            beamform_data=0;
+            get_geometry=1;
+        end
+        
+        if beamform_data==1
+            thta=-Ichan;
+            Ichan=1:head.Nchan;
+            try
+                space=head.geom.rd(2)-head.geom.rd(1);
+                xtot=delaynsum(x,thta,space,Fs,Ichan);
+                x=xtot;
+                head.thta=thta;
+            catch
+                disp('load_data: sioread beamform failure');
+                keyboard
+            end
+        else
+            if ~strcmp(Ichan,'all')
+                x		=	x(:,Ichan);
+            end
+        end
+        
+        
+        
+        switch Fs
             case 50000
                 head.calcurv=[
                     1.179288464673746e+06
@@ -613,7 +658,7 @@ switch filetype
             [~,Fs]=wavread(fullfile(mydir,myfile),3);
             Nsamples=max(wavread(fullfile(mydir,myfile),'size') );
             handles.Fs=Fs;
-    
+            
             % Put code to run under MATLAB older than MATLAB 7.0.1 here
         else
             % Put code to run under MATLAB 7.0.1 and newer here
@@ -623,13 +668,13 @@ switch filetype
             handles.Fs	=	info.SampleRate;
             Fs=info.SampleRate;
         end
-   
+        
         [head.cable_factor,sens]=get_ADAT24_cable_factor;
-          
+        
         try
             done=false;
             [SUDAR_true,tmin,tmax,FsSUDAR]=get_SUDAR_time(mydir,myfile); %Check whether a sUDAR file exists
-           
+            
             if SUDAR_true
                 sens=(10^(186/20))/(2^15);
                 Fs=FsSUDAR;
@@ -639,7 +684,7 @@ switch filetype
             [Berchok_true,tmin,tmax]=get_Berchok_time(mydir,myfile,Nsamples,Fs); %Check whether a Catherine Berchok file exists
             if Berchok_true
                 sens=1;
-               
+                
                 done=true;
             end
             if ~done
