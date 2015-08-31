@@ -620,7 +620,6 @@ switch filetype
             [x,Fs]		=	audioread(fullfile(mydir,myfile),[N1 N2],'native');
             %Quick adjust for 6 dB rolloff of ultrasonic (channel 1)
             
-            
         catch
             x=[];
             

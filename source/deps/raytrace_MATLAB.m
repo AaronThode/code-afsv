@@ -1,7 +1,7 @@
-%function [x,dt,dz]=raytrace_MATLAB(ang_meas,dt_meas,ssp_chc,scenario_chc)
+%function [x,dt,dz]=raytrace_MATLAB(ang_meas,dt_meas,scenario_chc)
 %  If called with no arguments, returns allowable scenarios
 
-function [x,dt,dz]=raytrace_MATLAB(ang_meas,dt_meas,scenario_chc,ssp_chc)
+function [x,dt,dz]=raytrace_MATLAB(ang_meas,dt_meas,scenario_chc)
 
 global NB NT  %number of bottom and top bounces registered by ode45ray
 
@@ -16,7 +16,7 @@ prompt = {'Water depth (m)','Source depth (m)','Profile choice (munk,linear,MURI
 dlg_title = 'Ray tracing parameters';
 num_lines = 1;
 
-scenarios={'MURI_Feb2014' };
+scenarios={'MURI_Feb2014' ,'Sitka_Aug2010'};
 %scenarios={'MURI_Feb2014', 'MURI_Feb2014_20140218T134800', 'MURI_Feb2014_20140218T134000','MURI_Feb2014_20140218T134200',  ...
     %'MURI_Feb2014_20140218T134800','MURI_Feb2014_20140218T140039', 'MURI_Feb2014_Humpback' };
 
@@ -29,7 +29,8 @@ switch scenario_chc
     case 'MURI_Feb2014'
         
         def = {'4000','330','MURI_Feb2014','200',mat2str(ang_meas,3),mat2str(dt_meas,3),'-1:1','2','50','1000'};
-   
+    case 'Sitka_Aug2010'
+        def = {'1200','300','Sitka_Aug2010','10',mat2str(ang_meas,3),mat2str(dt_meas,3),'0','2','50','1000'};
     otherwise
         def = {'4000','330','MURI_Feb2014','200',mat2str(ang_meas,3),mat2str(dt_meas,3),'-1:1','2','50','1000'};
         %errdlg(sprintf('Scenario %s not in database!',scenario_chc));
@@ -58,6 +59,10 @@ switch choice,
         c=getcgeneral_crude(z0);
         funname='generalcalc';
         chctit='MURI profile';
+    case 'Sitka_Aug2010'
+        c=getcgeneral_Sitka(z0);
+        funname='generalcalc_Sitka';
+        chctit='Sitka 2010 profile';
         
 end
 disp(chctit);

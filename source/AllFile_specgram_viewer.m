@@ -3272,13 +3272,13 @@ if y_unit_amp
     msg=sprintf('%s Duration: %6.2f sec \n pk-pk Amplitide: %6.6g uPa, or %6.2f dB \n Slope: %6.2f uPa/sec\n', ...
         msg,duration, bandwidth,20*log10(bandwidth), bandwidth/duration);
     fprintf('Bandwidth is %6.6g uPa, or %6.2f dB re 1 uPa\n',bandwidth,20*log10(bandwidth))
-    fprintf('Duration is %6.3f sec\n',duration)
+    fprintf('Duration is %7.4f sec\n',duration)
     fprintf('Slope is %6.2f uPa/sec\n',bandwidth/duration)
 else
     msg=sprintf('%s Duration: %6.2f sec \n Bandwidth: %6.2f Hz \n Slope: %6.2f Hz/sec\n', ...
         msg,duration,1000*bandwidth,1000*bandwidth/duration);
     fprintf('Bandwidth is %6.6g Hz\n',bandwidth)
-    fprintf('Duration is %6.3f sec\n',duration)
+    fprintf('Duration is %7.4f sec\n',duration)
     fprintf('Slope is %6.2f Hz/sec\n',1000*bandwidth/duration)
     
 end
@@ -3921,9 +3921,10 @@ while yes>1
     
     if yes<6&~correlation_flag
         
-        prompt1={'Vector of angles (deg) [(-20:0.2:20)]','Vector of sin angles (deg) [(-0.2:0.005:0.2)]','hydrophone indicies [all]','sound speed (m/sec)', ...
+        prompt1={'Vector of angles (deg) [(-20:0.2:20)]','Vector of sin angles (deg) [(-0.2:0.005:0.2)]', ...
+            'hydrophone indicies [all]','sound speed (m/sec)', 'matched filter? (1=yes, 0=no)' ...
             };
-        def1={'-10:0.2:10', '-0.3:0.005:0.3',sprintf('[1:%i]',length(chann)),'1480'};
+        def1={'-10:0.2:10', '-0.3:0.005:0.3',sprintf('[1:%i]',length(chann)),'1480','1'};
         
         answer=inputdlg(prompt1,'Beamforming parameters',1,def1);
         try
@@ -3935,6 +3936,18 @@ while yes>1
             end
             Igood_el=eval(answer{3});
             cc=eval(answer{4});
+            
+            %matched filter--Ludovic
+            if eval(answer{5})==1
+                prompt1={'Signal type [Chirp]:','Frequency range (Hz):', ...
+                    'Duration (sec):'};
+                def1={'chirp','[3000 9000]','1'};
+                
+                answer=inputdlg(prompt1,'Beamforming parameters',1,def1);
+                ff=eval(answer{2});
+                tau=eval(answer{3});
+                matched_filter=chirp(0:1/Fs:tau,ff(1),tau,ff(2))';
+            end
             
         catch
             errdlg('Could not understand your beamforming parameters');
@@ -4068,6 +4081,18 @@ while yes>1
                     Bsum(Isnap,:)=xtot';
                 end
                 
+                
+                %Optional matched filter Ludovic...
+                if exist('matched_filter','var')
+                    %x_filt=zeros(N,Nel);
+                    %h=waitbar(0,'Filtering data ...');
+                    %Bsum_org=filter(flipud(matched_filter),1,Bsum')';
+                    for K=1:size(Bsum,1)
+                       Bsum(K,:)=filter(flipud(matched_filter),1,Bsum(K,:)');
+                    end
+
+                    
+                end
                 Bsum_org=Bsum;
                 Bsum=abs(hilbert(Bsum.'))';
                 Bsum=Bsum/max(max(Bsum));
@@ -4084,14 +4109,19 @@ while yes>1
                 titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
                 title(titstr);grid on;orient landscape
                 xlimm=xlim;
-                set(gca,'xtick',0:5:xlimm(2));
+                 if diff(xlimm)<100
+                    set(gca,'xtick',0:5:xlimm(2));
+                else
+                    set(gca,'xtick',0:100:xlimm(2));
+                    
+                end
                 printstr=sprintf('SinAngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
                 print(gcf,'-djpeg','-r300',[printstr '.jpg']);
                 saveas(gcf,[printstr '.fig'],'fig')
                 
                 %plot migration angle...
                 figure(21);clf;
-                imagesc(tt*1000,angles,Bsum)
+                pcolor(tt*1000,angles,Bsum);shading flat;axis('ij')
                 caxis([-20 0]);colorbar
                 set(gca,'fontweight','bold','fontsize',14)
                 xlabel('Time (msec)');ylabel('Elevation angle (deg)');
