@@ -2,7 +2,7 @@ function [SUDAR_true,tmin,tmax,Fs]=get_SUDAR_time(mydir,myfile) %Check whether a
   SUDAR_true=false;
           
 [pathstr,fname,~] = fileparts(myfile);
-fname_log=fullfile(mydir,[fname '.log.txt']);
+fname_log=fullfile(mydir,[fname '.log.xml']);
 fname_found=dir(fname_log);
 
 if isempty(fname_found)
@@ -19,11 +19,11 @@ while 1
     
     if ~ischar(tline), break, end
     %   ??  Date parsing can be done with inbuilt matlab functions
-    if      strfind(tline, '<Sampling Start Time>')>0
-        tmin         =  datenum(parse_data(tline));
+    if      strfind(tline, 'SamplingStartTimeLocal=')>0
+        tmin         =  datenum(parse_time(tline));
         
-    elseif  strfind(tline, '<Sampling Stop Time>')>0
-         tmax         =   datenum(parse_data(tline));
+    elseif  strfind(tline, 'SamplingStopTimeLocal=')>0
+         tmax         =   datenum(parse_time(tline));
        
     elseif  strfind(tline, '<FS>')>0
         Fs  =   str2double(parse_data(tline));
@@ -63,4 +63,14 @@ right=max(strfind(tline,'</'))-1;
 tm=(tline(left:right));
 
 end
+function tm=parse_time(tline)
+left=min(strfind(tline,'"'))+1;
+
+right=max(strfind(tline,'"'))-1;
+tm=(tline(left:right));
+
+end
+
+
+
 

@@ -1,4 +1,4 @@
-function [N,printname,Ibin,hout,hprint]=hist2D(X,axis1,axis2,feature_names,contour_chc,scale_chc)
+function [N,printname,Ibin,hout,hprint]=hist2D(X,axis1,axis2,feature_names,contour_chc,scale_chc,trim_chc)
 %function [N,printname,Ibin]=hist2D(X,axis1,axis2,feature_names,contour_chc,scale_chc)
 %
 %  Input:
@@ -7,6 +7,7 @@ function [N,printname,Ibin,hout,hprint]=hist2D(X,axis1,axis2,feature_names,conto
 %%  feature_names: cell array of names of featurs for plotting
 %%  contour_chc: if 1, image, if 2, contourf
 %%  scale_chc:  if 1, linear, if 2, log10.  Default is log10
+%%  trim_chc:   if 1 don't remove data outside axis1 or axis2.  If 2 remove outlier data from  histograms.
 %% Output:
 %% N : matrix of binned counts; rows with axis1, columns with axis2
 %%      Note that 'x' axis is axis2 feature, etc.
@@ -24,6 +25,16 @@ if ~exist('contour_chc')
 end
 if ~exist('scale_chc')
    scale_chc=2; 
+end
+
+if ~exist('trim_chc')
+    trim_chc=1;
+end
+
+if trim_chc==2
+   Igood=find(X(1,:)>=axis1(1)&X(1,:)<=axis1(end)&X(2,:)>=axis2(1)&X(2,:)<=axis2(end));
+   X=X(:,Igood);
+    
 end
 
 for I=1:length(axis1)

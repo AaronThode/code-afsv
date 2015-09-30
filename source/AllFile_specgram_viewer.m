@@ -3932,8 +3932,9 @@ while yes>1
                 angles=eval(answer{1});
             else
                 angles=180*asin(eval(answer{2}))/pi;
-                fprintf('Angular range is %6.2f to %6.2f degrees\n',min(angles),max(angles));
+                
             end
+            fprintf('Angular range is %i points between %6.2f to %6.2f degrees\n',length(angles),min(angles),max(angles));
             Igood_el=eval(answer{3});
             cc=eval(answer{4});
             
@@ -4101,7 +4102,7 @@ while yes>1
                 %plot vs sin angle
                 tt=(1:length(xtot))/Fs;
                 figure(20);clf;
-                imagesc(tt*1000,sin(angles*pi/180),Bsum);
+                pcolor(tt*1000,sin(angles*pi/180),Bsum);shading flat
                 caxis([-20 0]);colorbar
                 set(gca,'fontweight','bold','fontsize',14)
                 xlabel('Time (msec)');ylabel('sine of Elevation angle');
