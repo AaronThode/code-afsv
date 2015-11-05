@@ -29,6 +29,7 @@ fid = fopen(char(fn),'r','ieee-be');
 
 if head.ctbc>ctstart&ctstart>0,
     %disp('Start time less than file start');
+    fclose(fid);
     return;
 end
 
@@ -42,8 +43,12 @@ end
 fseek(fid,512+head.nc*floor(tsec*fs)*2,-1);
 
 omi = fread(fid,[head.nc floor(head.Fs*tlen)],'uint16');
-fclose(fid);
-
+try
+    fclose(fid);
+catch
+    disp('readgsi.m: couldn''t close file');
+    fclose('all');
+end
 t=(1:size(omi,2))/head.Fs;
 
 %N = 128;

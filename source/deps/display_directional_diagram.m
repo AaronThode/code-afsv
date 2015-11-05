@@ -54,6 +54,7 @@ end
 %vy=squeeze(imag((B(1,:,:).*conj(B(3,:,:)))));
 
 if strcmpi(handles.display_view,'Directionality')
+    
     mu = 180/pi*atan2(vx,vy);
     azi=bnorm(hdr.brefa+mu);
     imagesc(TT,FF/1000,azi);
@@ -63,6 +64,7 @@ if strcmpi(handles.display_view,'Directionality')
     else
         colormap(hsv);
     end
+    
 elseif strcmpi(handles.display_view,'ReactiveRatio')
     %Uncomment to show reactive intensity
     active=sqrt(vx.^2+vy.^2);
@@ -93,7 +95,40 @@ elseif strcmpi(handles.display_view,'ReactiveRatio')
     else
         colormap(jet);
     end
+elseif strcmpi(handles.display_view,'Impedance')
+    %Uncomment to show reactive intensity
+    
+   
+    vx=squeeze(B(2,:,:));
+    vy=squeeze(B(3,:,:));
+    v=sqrt(abs(vx).^2+abs(vy).^2);
+    p=abs(squeeze(B(1,:,:)));
+    
+    if ~isempty(sec_avg)&&sec_avg>0
+        v_avg=zeros(Nfft/2,Nsnap);
+        p_avg=v_avg;
+        for J=1:Nsnap
+            index=floor((J-1)*Navg*(1-ovlap))+(1:Navg);
+            v_avg(:,J)=mean(v(:,index),2);
+            p_avg(:,J)=mean(p(:,index),2);
+        end
+        v=v_avg;
+        p=p_avg;
+        TT=TT_avg;
+    end
+    
+    
+    imagesc(TT,FF/1000,20*log10(abs(v./p)));
+    climm=[-6 10];
+    caxis(climm);
+    titstr='Acoustic impedance (dB)';
+    if get(handles.checkbox_grayscale,'Value')==1,
+        colormap(flipud(gray));
+    else
+        colormap(jet);
+    end
 end
+
 grid on
 axis('xy')
 fmax=str2double(get(handles.edit_fmax,'String'));
@@ -105,8 +140,6 @@ else
     ylim([fmin fmax]);
 end
 %ylim([0 1]);axis('xy')
-
-
 
 
 colorbar;

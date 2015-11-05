@@ -6451,7 +6451,7 @@ switch filetype
         
         %Check that everything makes sense
         if ~strcmp(current_file_name,link_names(Iarray_org,:))
-            fprintf('%s in notes files does not match %s in link file names \n', file_name,link_names(Iarray_org,:));
+            fprintf('%s in notes files does not match %s in link file names \n', current_file_name,link_names(Iarray_org,:));
             
         end
         
