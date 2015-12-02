@@ -44,7 +44,7 @@ close all
 flag_suppress_io=0;
 Icase_all=-1;  %selects a scenario without menu input.  If -1, establish menu input
 %case_output='TL_I';  %time_series, TL, or group_velocity..
-case_output='TL_C';  %ray, time_series, TL, or group_velocity..
+case_output='time_series';  %ray, time_series, TL, or group_velocity..
 run_options.max_kr=79;
 %run_options.incoherent_addition=1;  %If one, add modes incoherently.
 
@@ -69,8 +69,8 @@ setenv('DYLD_LIBRARY_PATH', '/usr/local/bin/');
 %setenv('GFORTRAN_STDOUT_UNIT', '6') ;
 %setenv('GFORTRAN_STDERR_UNIT', '0');
 
-%setenv(?GFORTRAN_STDIN_UNIT?, ?-1?) 
-%setenv(?GFORTRAN_STDOUT_UNIT?, ?-1?) 
+%setenv(?GFORTRAN_STDIN_UNIT?, ?-1?)
+%setenv(?GFORTRAN_STDOUT_UNIT?, ?-1?)
 %setenv(?GFORTRAN_STDERR_UNIT?, ?-1?)
 
 %%%THESE NEVER CHANGE-ARE HISTORICAL VARIABLES
@@ -128,10 +128,10 @@ for Icase=Icase_all
     
     
     
-    %%There are two ways of storing environmental sound speed profiles.
-    %% The svp variable can store a complex sound speed profile (e.g. CTD)
-    %% Otherwise, for isovelocity or linear gradient profiles cmedtop and cmedbot
-    %%  are used (see TOC_env.m)
+    %%%There are two ways of storing environmental sound speed profiles.
+    %%% The svp variable can store a complex sound speed profile (e.g. CTD)
+    %%% Otherwise, for isovelocity or linear gradient profiles cmedtop and cmedbot
+    %%%  are used (see TOC_env.m)
     if ~isempty(svp)
         %%%Clean it up
         [cc,Iunq]=unique(svp(:,1));
@@ -152,19 +152,12 @@ for Icase=Icase_all
         answer=inputdlg(prompt,tittle,1,def);
         dr_factor=str2num(answer{1});
         dz_factor=str2num(answer{2});
-    
-        
     end
-    
     
     for Id=1:size(bath,1)
         kr{Id}=zeros(nfreq,run_options.max_kr);
     end
-%     if strcmp(case_output,'group_velocity')
-%         run_options.nofield=1;
-%     else
-%         run_options.nofield=0;
-%     end
+    
     run_options.nofield=strcmpi('group_velocity',case_output);
     run_options.incoherent_addition=strcmpi('tl_i',case_output);
     run_options.case_output=case_output;
@@ -203,78 +196,94 @@ for Icase=Icase_all
     close(h)
     
     try
-    switch case_output
-        case 'group_velocity'
-            
-            compute_and_plot_group_velocity;
-            
-        case {'TL_C','TL_I','TL_S','TL_CG','TL_IG','TL_SG'}
-            Iazi=length(azi);
-            TLdB0=(-20*log10(abs(TL(:,:,:,Iazi))+eps));
-            
-            plotTL;
-            
-            keyboard
-            %save([savename '_TL.mat'],'TLdB0','zplot','ro','freq');
-        case 'time_series'
-            range_normalization=0;
-            
-            %%Create FM sweep if desired
-            for Isource=2:2
-                if Isource==1  %FM Sweep
-                    def1={sprintf('[%i %i]',fl,fu),'1','2','20'};
-                    
-                    if flag_suppress_io==0
-                        prompt1={'[min_freq max_freq](Hz)','duration (s)','start time (s)', 'dB SNR'};
-                        dlgTitle1='Parameters for scenario selection';
-                        answer=inputdlg(prompt1,dlgTitle1,1,def1);
+        switch case_output
+            case 'group_velocity'
+                
+                compute_and_plot_group_velocity;
+                
+            case {'TL_C','TL_I','TL_S','TL_CG','TL_IG','TL_SG'}
+                Iazi=length(azi);
+                TLdB0=(-20*log10(abs(TL(:,:,:,Iazi))+eps));
+                
+                plotTL;
+                
+                keyboard
+                %save([savename '_TL.mat'],'TLdB0','zplot','ro','freq');
+            case 'time_series'
+                
+                %%Create FM sweep if desired
+                for Isource=2:2
+                    if Isource==1  %FM Sweep
+                        def1={sprintf('[%i %i]',fl,fu),'1','2','20'};
+                        
+                        if flag_suppress_io==0
+                            prompt1={'[min_freq max_freq](Hz)','duration (s)','start time (s)', 'dB SNR'};
+                            dlgTitle1='Parameters for scenario selection';
+                            answer=inputdlg(prompt1,dlgTitle1,1,def1);
+                            
+                        else
+                            close all
+                            answer=def1;
+                        end
+                        tmp=str2num(answer{1});
+                        fstart=tmp(1);fend=tmp(2);
+                        tduration=str2num(answer{2});
+                        tstartt=str2num(answer{3});
+                        SNRR=str2num(answer{4});
+                        
+                        ysource=simulate_FMsweep_with_noise(fs,fstart,fend,Tmax-Tmin,tduration,tstartt,SNRR,'PSD');
+                        figure
+                        spectrogram(ysource,hanning(2048),round(0.7*2048),2048,fs,'yaxis')
+                        title('source signature')
+                        x_sweep=plot_time_series(TL,sd,rplot,zplot,azi,Tmin,Nsamp,fs,freq,nfreq,flo,fhi,0,ysource,tilt);
                         
                     else
-                        close all
-                        answer=def1;
-                    end
-                    tmp=str2num(answer{1});
-                    fstart=tmp(1);fend=tmp(2);
-                    tduration=str2num(answer{2});
-                    tstartt=str2num(answer{3});
-                    SNRR=str2num(answer{4});
-                    
-                    ysource=simulate_FMsweep_with_noise(fs,fstart,fend,Tmax-Tmin,tduration,tstartt,SNRR,'PSD');
-                    figure
-                    spectrogram(ysource,hanning(2048),round(0.7*2048),2048,fs,'yaxis')
-                    title('source signature')
-                    x_sweep=plot_time_series(TL,sd,rplot,zplot,azi,Tmin,Nsamp,fs,freq,nfreq,flo,fhi,range_normalization,ysource,tilt);
-                    
-                else
-                    ysource=[];
-                    x_pulse=plot_time_series(TL,sd,rplot,zplot,azi,Tmin,Nsamp,fs,freq,nfreq,flo,fhi,range_normalization,ysource,tilt);
-%                     Nfft=4*1024;
-%                     [S,FF,TT,B] = spectrogram(x_pulse,hanning(Nfft/4),round(.9*Nfft/4),Nfft,fs);
-%                     figure('name','Pulse spectrogram');
-%                     imagesc(TT,FF/1000,10*log10(B));%
-%                     grid on
-%                     axis('xy');
-%                     ylim([min(freq) max(freq)]/1000);colormap(jet);caxis([-200 -130]);xlim([1 2]);
-%     
-                end
-            end
-            
-            %keyboard
-        
-            
-    end  %case_output, Icase
-    end
-    %savename=input('Enter a name to save this data under:','s');
+                        ysource=[];
+                        tlimm=plot_time_series(TL,sd,rplot,zplot,azi,Tmin,Nsamp,fs,freq,nfreq,flo,fhi,0,ysource,tilt);
+                        [x, Tmin]=plot_time_series_all(TL,rplot,zplot,azi,Tmin,Nsamp,fs,freq,nfreq,flo,fhi,ysource,tilt,tlimm);
+                        Tmax=Tmin+diff(tlimm);
+                        %Quick check
+                        Nfft=2048;
+                        Icount=1;
+                        for I=1:size(x,1)
+                            for J=1:size(x,2)
+                                subplot(size(x,1),size(x,2),Icount);
+                                Icount=Icount+1;
+                                x0=squeeze(x(I,J,:));
+                                [~,FF,TT,B] = spectrogram(x0,hanning(Nfft/4),round(.9*Nfft/4),Nfft,fs);
+                                %figure('name','Pulse spectrogram');
+                                B=10*log10(B);
+                                imagesc(TT,FF/1000,B-max(max(B)));%
+                                set(gca,'fontweight','bold')
+                                grid on
+                                axis('xy');
+                                %spectrogram(x(Ir,:),hanning(2048),round(0.9*2048),2048,fs,'yaxis')
+                                ylim([min(freq) max(freq)]/1000);
+                                %ylim([0 .25]);
+                                colormap(jet);caxis([-20 0]);
+                                xlabel('Time (sec)');ylabel('kHz');
+                                title(sprintf('zs: %6.2f m rs: %6.2f km',zplot(I),rplot(J)/1000));
+                            end
+                        end
+                        orient landscape
+                        print('-djpeg','-r300',[savename '.jpg']);
+                    end %if Isource==1
+                end  %for Isource
+                
+                %Save data to file
+                clear extrct Xfft Xsource Xfft B x0
+                %rplot and zplot describe dimensions of x
+                %rd=sd;
+                save([savename '.mat']);
+                
+                
+        end  %case_output, Icase
+    end %try
     
-    
-%     if ~isempty(savename)
-%         clear extrct Xfft Xsource Xfft
-%         save([savename '.mat']);
-%     end
 end
 
-    
 
-    
+
+
 %
 

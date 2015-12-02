@@ -6,7 +6,7 @@
 %
 % function x=plot_time_series(TL,sd,rplot,zplot,azi,Tmin,Nsamp,fs,freq,nfreq,flo,fhi,range_normalization,xsource,tilt)
 
-function x=plot_time_series(TL,sd,rplot,zplot,azi,Tmin,Nsamp,fs,freq,nfreq,flo,fhi,range_normalization,xsource,tilt)
+function tlimm=plot_time_series(TL,sd,rplot,zplot,azi,Tmin,Nsamp,fs,freq,nfreq,flo,fhi,range_normalization,xsource,tilt)
 %
 %%First, check if have a range/depth grid and force selection of a row or
 %%column...
@@ -42,7 +42,7 @@ for Iazi=1:length(azi)
         rfactor=ro(end)*ones(1,length(rd)); %geometric removal factor
         %if length(ro)>1,disp('Can''t plot multiple range and depths for time series, using value for max range');end
         nplots=length(rd);
-    else choice==1 %multiple ranges
+    elseif choice==1 %multiple ranges
         extrct=squeeze(TL(Iz_slice,Ir_slice,:,Iazi));
         rfactor=ro;
         nplots=length(ro);
@@ -57,7 +57,7 @@ for Iazi=1:length(azi)
     if length(rd)>1
         tiltt=tilt*(rd-min(rd))./(max(rd)-min(rd));
     else
-        tiltt=0; %tilt has no meaning for a single phone...
+        tiltt=zeros(size(rd)); %tilt has no meaning for a single phone...
     end
     kk=2*pi*freq/1495;
     for Ir=1:nplots
@@ -82,17 +82,21 @@ for Iazi=1:length(azi)
         %subplot(nplots,1,Ir)
         
         %%%Create tilt matrix...
-        tilt_matrix=exp(1i*tiltt(Ir)*kk);
+        if length(rd)>1
+            tilt_matrix=exp(1i*tiltt(Ir)*kk);
+        else
+            tilt_matrix=exp(1i*tiltt*kk);
+        end
         %extrct is [nel nfreq]
         if size(extrct,1)==nfreq
-           extrct=extrct.'; 
+            extrct=extrct.';
         end
         Xfft(flo:fhi)=extrct(Ir,1:nfreq).*tilt_matrix.*exp(-1i*2*pi*freq*Tminn);
         x0(Ir,1:Nsamp)=(2/Nsamp)*real(fft(Xfft,Nsamp));%Factor of two to account for negative frequencies
         
         %%%Include source signal
         
-        if exist('xsource')&&~isempty(xsource)
+        if exist('xsource','var')&&~isempty(xsource)
             x(Ir,:)=conv(x0(Ir,1:Nsamp),xsource','full');
         else
             x(Ir,1:Nsamp)=x0(Ir,1:Nsamp);
@@ -105,17 +109,44 @@ for Iazi=1:length(azi)
         else
             %plot(t_axis,x(Ir,:)*1e-6,'k');
             %plot(t_axis,x(Ir,:),'k');
-             Nfft=4*1024;
-            [S,FF,TT,B] = spectrogram(x(Ir,:),hanning(Nfft/4),round(.9*Nfft/4),Nfft,fs);
-            %figure('name','Pulse spectrogram');
-            B=10*log10(B);
-            imagesc(TT,FF/1000,B-max(max(B)));%
-            grid on
-            axis('xy');
-            %spectrogram(x(Ir,:),hanning(2048),round(0.9*2048),2048,fs,'yaxis')
-            ylim([min(freq) max(freq)]/1000);
-            ylim([0 .25]);
-            colormap(jet);caxis([-20 0]);xlim([4.5 5.5]);colorbar
+            if Ir==1
+                nothappy=true;
+                Nfft=input('Enter a FFT size:');
+            end
+            while (nothappy || Ir>1)
+                [~,FF,TT,B] = spectrogram(x(Ir,:),hanning(Nfft/4),round(.9*Nfft/4),Nfft,fs);
+                %figure('name','Pulse spectrogram');
+                B=10*log10(B);
+                imagesc(TT,FF/1000,B-max(max(B)));%
+                grid on
+                axis('xy');
+                %spectrogram(x(Ir,:),hanning(2048),round(0.9*2048),2048,fs,'yaxis')
+                ylim([min(freq) max(freq)]/1000);
+                %ylim([0 .25]);
+                colormap(jet);caxis([-20 0]);
+                if Ir==1
+                    disp('Click on two points to zoom in in time:');
+                    tmp=ginput(2);
+                end
+                if ~isempty(tmp)
+                     tlimm=tmp(:,1);
+                     xlim(tlimm);
+                else
+                    tlimm=xlim;
+                end
+                colorbar
+                if Ir==1
+                    nothappy=input('Not happy?');
+                    if isempty(nothappy)
+                        nothappy=false;
+                        break
+                    end
+                else
+                    break
+                end
+            end
+            
+            
         end
         ylabel('Hz','fontweight','bold');xlabel('Time (s)','fontweight','bold');
         set(gca,'fontweight','bold');

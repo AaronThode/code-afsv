@@ -25,7 +25,9 @@ end
 if nargin<2
     case_output='time_series';
 end
-scenario_list={'CedricArctic55mModel';'ShallowBeaufortCloseWhaleInversionSSP';'ShallowBeaufortMidWhaleInversionSSP';'ShallowBeaufortFarWhaleInversionSSP'; ...
+scenario_list={'BeaufortVaBenchmark';'CedricArctic55mModel'; ...
+    'ShallowBeaufortCloseWhaleInversionSSP';'ShallowBeaufortMidWhaleInversionSSP'; ...
+    'ShallowBeaufortFarWhaleInversionSSP'; ...
     'ShallowBeaufortUltraWhaleInversionSSP'; 'SoCalDeepWater';'Sitka2010';...
     'Computational_Ocean_Acoustics_Pekeris_demo';'bellhop_test';'ram_test_2km'; ...
     'bellhop_test_5km';'bellhop_slope_test2'; ...
@@ -54,8 +56,20 @@ dlgTitle1='Parameters for scenario selection';
 dlgTitle2='Parameters for scenario geometry';
 
 switch case_scenario
+    case 'BeaufortVaBenchmark'
+        [rd,D]=get_VA_2010_depths_and_offset(2010,[],case_scenario);
+        rd=rd-2;  %Consistent with Cedric model
+        switch case_output
+            case 'time_series'
+                %def2={'1000','40','rd','[10 500]','6250','ro/1600','Tmin+2','5'};  %Second item is source depth...
+                %For Beaufort Sea, multilayer bottom, complex sound speed
+                %   profile
+                def1={'time_series','KRAKEN','D','arcticSSP_TwoClosestMFPAvg','sand_Arctic_inversionSSP_TwoClosestMFPAvg','0','flat'}; 
+                def2={'[1000 5000 10000 20000]','2:10:D','rd','[20 500]','6250','-0.5+ro/1500','Tmin+2','5'};
+              
+        end
     case 'CedricArctic55mModel'
-        def1={case_output,'KRAKEN','D','arcticSSP','sand_Arctic_inversionSSP','0','flat'};
+        def1={case_output,'KRAKEN','D','arcticSSP','sand_Arctic_inversionSSP_1p5km','0','flat'};
         % def1={case_output,'KRAKEN','D','pekeris','sand_Arctic_inversionSSP','0','flat'};
         %def1={case_output,'KRAKEN','D','arctic_pekeris','pekeris1707','0','flat'};
         [rd,D]=get_VA_2010_depths_and_offset(2010,[],case_scenario);
@@ -75,9 +89,9 @@ switch case_scenario
         %def1={case_output,'KRAKEN','D','arctic_pekeris','pekeris1707','0','flat'};
         
         [rd,D]=get_VA_2010_depths_and_offset(2010,[],case_scenario);
-         D=53;
-        D=47;
-        D=37;
+        D=53;
+       % D=47;
+        %D=37;
         
         switch case_output
             case 'time_series'
@@ -85,10 +99,10 @@ switch case_scenario
             case 'group_velocity'
                 def2={'[50:100:40000]','2','0:1:55','[10 500]','6250','zeros(size(ro))','4','5'};
             case 'TL_C'  %For source level modeling...
-               def2={'[50:25:20000]','D-0.5','0:1:D','[10 300]','6250','zeros(size(ro))','4','5'};
+                def2={'[50:25:20000]','D-0.5','0:1:D','[10 300]','6250','zeros(size(ro))','4','5'};
         end
-       
-                
+        
+        
     case 'ShallowBeaufortMidWhaleInversionSSP'
         
         [rd,D]=get_VA_2010_depths_and_offset(2010,[],case_scenario);
@@ -96,9 +110,9 @@ switch case_scenario
         def1={case_output,'KRAKEN','D','arcticSSP_7kmWhale','sand_Arctic_inversion_7kmWhale','5','flat'};
         % def1={case_output,'KRAKEN','D','pekeris','sand_Arctic_inversion_7kmWhale','5','flat'};
         %def1={case_output,'KRAKEN','D','arctic_pekeris','pekeris1707','5','flat'};
-         D=53;
-        D=47;
-        D=37;
+        D=53;
+        %D=47;
+        %D=37;
         switch case_output
             case 'time_series'
                 def2={'7000','40','rd','[10 500]','6250','ro/1600','Tmin+2','5'};
@@ -238,11 +252,11 @@ switch case_scenario
         D=53;
         %D=47;
         D=37;
-      
+        
         def1={'group_velocity','KRAKEN',num2str(D),'arctic','pekeris1707','0','flat'};
         def2={'17000','40','rd','[75 125]','6250','ro/1450','Tmin+4','0'};
         
-         switch case_output
+        switch case_output
             case 'time_series'
                 def2={'1000','40','rd','[10 500]','6250','ro/1600','Tmin+2','5'};  %Second item is source depth...
             case 'group_velocity'
@@ -252,9 +266,21 @@ switch case_scenario
                 def2={'[50:25:8000]','D-0.5','0:1:D','[10 300]','6250','zeros(size(ro))','4','5'};
         end
     case 'ShallowBeringPekeris'
-        %For Bering Sea
-        def1={'time_series','KRAKEN','51','pekeris','pekeris1650','0','flat'};
-        def2={'9000','44','2:10:D','[30 250]','10000','3','Tmin+4','0'};
+        %For Bering Sea, Pekeris
+        def1={'time_series','KRAKEN','51','arctic_pekeris','pekeris1650','0','flat'};
+        def2={'[1000 5000 10000 20000]','44','2:10:D','[30 500]','10000','-0.5+ro/1442','Tmin+1.5','0'};
+        
+        %For Bering Sea, multilayer bottom, isovelocity sound speed
+        def1={'time_series','KRAKEN','51','arctic_pekeris','sand_Arctic_inversion','0','flat'};
+        def2={'[1000 5000 10000 20000]','44','2:10:D','[30 500]','10000','-0.5+ro/1442','Tmin+1.5','0'};
+        
+         %For Bering Sea, bottom half-space, upward sound speed
+        def1={'time_series','KRAKEN','51','arcticSSP','pekeris1650','0','flat'};
+        def2={'[1000 5000 10000 20000]','44','2:10:D','[30 500]','10000','-0.5+ro/1442','Tmin+1.5','0'};
+        
+        %For Bering Sea, multilayer bottom, upward sound speed
+        def1={'time_series','KRAKEN','51','arcticSSP','sand_Arctic_inversion','0','flat'};
+        def2={'[1000 5000 10000 20000]','44','2:10:D','[30 500]','10000','-0.5+ro/1442','Tmin+1.5','0'};
         
     case 'Cabo_granite',
         

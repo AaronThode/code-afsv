@@ -115,9 +115,18 @@ else
             rho=[1 1.23 1.23 1.23 2.16];
             %pwavatten=[0 0.2 0.5]; %dB/lamb
             %  rho=[1 1.9 3.0];
-            pwavatten=[0 1.09 1.09 1.09 0.817]; %dB/lamb
+            pwavatten=[0 0.8 0.8 0.8 0.817]; %dB/lamb
             lthick=[D 10 10 10];
-        case 'sand_Arctic_inversionSSP' %derived from 1.5 km range call on CSDM_Nfft2048_20100820T014239_eigenvector.in
+            
+        case 'sand_Arctic_inversionSSP_TwoClosestMFPAvg' %Average of 1.5 and 7 km inversions below,
+            %               used for warping benchmarek
+             cmedtop=[-1 1519 2086 2888 4211];
+            cmedbot=[-1 2086 2888  3506 0];
+            rho=[1 [1 1 1]*1.45 2.0];
+            pwavatten=[0 0.98*[1 1 1] 0.4]; %dB/lamb my tweak for source level calculations on Oct. 2015
+            
+            lthick=[D 10 10 10];
+        case 'sand_Arctic_inversionSSP_1p5km' %derived from 1.5 km range call on CSDM_Nfft2048_20100820T014239_eigenvector.in
             %Arctic_2010/ShortRangeMFPInversion.dir/15dBSNR_allparams.dir/BestResult.dir
             %Water Depth 57 m
             % ShallowBeaufortWhaleInversionSSP_ShortRange_CSDM_Nfft2048_20100820T014239_eigenvector_flat57m_10to500Hz
@@ -333,6 +342,16 @@ switch case_ssp
         %cmedtop
         
         svp=[];
+    case 'arcticSSP_TwoClosestMFPAvg'  %Average of two closest MPF inversions
+        %       (1.5 and 7 km), with three point SSP.
+        %       Using in warping benchmarking studies.
+        
+        plottitle = 'arctic';
+        lthick(1)=D;
+        
+                svp=[0 1438;
+                    8 1455;
+                    D 1445];
     case 'arcticSSP'
         
         %Original inversion with linear profile
@@ -345,8 +364,10 @@ switch case_ssp
         plottitle = 'arctic';
         lthick(1)=D;
         svp=[0 1441;
-            8 1464;
-            55 1452];
+            D 1452];
+%         svp=[0 1441;
+%             8 1464;
+%             55 1452];
     case 'arcticSSP_7kmWhale'
         %Original inversion with linear profile
         %         plottitle = 'arctic_7kmWhale';

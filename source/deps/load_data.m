@@ -672,7 +672,7 @@ switch filetype
         
         try
             done=false;
-            [SUDAR_true,tmin,tmax,FsSUDAR]=get_SUDAR_time(mydir,myfile); %Check whether a sUDAR file exists
+            [SUDAR_true,tmin,tmax,FsSUDAR]=get_SUDAR_time(mydir,myfile); %Check whether a SUDAR file exists
             
             if SUDAR_true
                 sens=(10^(186/20))/(2^15);
@@ -682,13 +682,23 @@ switch filetype
             end
             
             if ~done
-                [Berchok_true,tmin,tmax]=get_Berchok_time(mydir,myfile,Nsamples,Fs); %Check whether a Catherine Berchok file exists
-                if Berchok_true
-                    sens=1;
-                    
-                    done=true;
+                try
+                    [Berchok_true,tmin,tmax]=get_Berchok_time(mydir,myfile,Nsamples,Fs); %Check whether a Catherine Berchok file exists
+                    if Berchok_true
+                        sens=1;
+                        
+                        done=true;
+                    end
+                catch
+                    %keyboard
                 end
             end
+            
+            
+            if ~isempty(strfind(myfile,'LL017_Set4_3min.wav.x.wav'))
+                sens=3162;
+            end
+            
             
             if ~done
                 tmin	=	convert_date(myfile,'_');
