@@ -1,6 +1,7 @@
 
 function varargout = AllFile_specgram_viewer(varargin)
 %Edited considerably by Jit Sarkar
+% Original version Aaron Thode
 %	Version history is in associated GIT repository
 %
 %
