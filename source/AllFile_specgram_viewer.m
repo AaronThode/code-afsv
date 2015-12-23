@@ -6062,7 +6062,7 @@ Event.signal_se_dB		=	params_extract.signal_se_dB;
 Event.signal_rms_dB		=	params_extract.signal_rms_dB;
 Event.signal_peakpsd_dB	=	params_extract.signal_peakpsd_dB;
 Event.SNR_rms_dB		=	params_extract.SNR_rms_dB;
-
+Event.freq_peakpsd      =   num2str(params_extract.freq_peakpsd); % Aaron added
 
 
 %	modified defualts for other signal types
@@ -6073,7 +6073,7 @@ switch sig_type
         Event.num_harmonics	=	-1;
     case	'FM'
         Event.call_type		=	'moan';
-        Event.num_pulses	=	-1;
+        Event.num_pulses	=	1;
         Event.num_harmonics	=	1;
     otherwise
         warning('Signal type not recognized for defaults');
@@ -6150,7 +6150,7 @@ end
 
 if	~isempty(Event)
     %	Add new event to data store
-    [Data.Events, ii]	=	add_event(Data.Events, Event);
+    [Data.Events, ii,Data.Description]	=	add_event(Data.Events, Event,Data.Description);
     handles.notes.Data	=	Data;
     
     handles.notes.saved	=	false;
@@ -7219,7 +7219,7 @@ end
 %answer		=	inputdlg(Description, dlgTitle, num_lines, defaults, options);
 %answer		=	newid(Description, dlgTitle, num_lines, defaults, options);
 
-prep_inputsdlg;
+prep_inputsdlg;  %Annotation edit window setup
 [answer,Cancelled] = inputsdlg(Prompt,dlgTitle,Formats,DefAns,Options);
 %
 
@@ -7249,6 +7249,7 @@ dT		=	T(2) - T(1);
 B		=	handles.sgram.B;
 i_time	=	(min(Times) <= T) & (T <= max(Times));
 i_freq	=	(min(Freq) <= F) & (F <= max(Freq));
+F=F(i_freq);
 PSD		=	(B(i_freq, i_time));
 
 %Estimating the signal-to-noise ratio in terms of rms power/rms power
@@ -7269,7 +7270,10 @@ PSD		=	(B(i_freq, i_time));
 
 signal_rms		=	mean(sum(dF*PSD)); %note not technically root mean square, actually mean square
 signal_se		=	signal_rms*duration;
-signal_peakpsd	=	max(PSD(:));
+temp=max(PSD,[],2);
+[signal_peakpsd,Ipeak]	=	max(temp);
+freq_peakpsd=F(Ipeak);
+%signal_peakpsd	=	max(PSD(:));
 
 signal_se_dB		=	10*log10(signal_se);
 signal_rms_dB		=	10*log10(signal_rms);  %not 20 log because actually mean sqaure
@@ -7318,6 +7322,7 @@ params_extract.noise_peakpsd_dB	=	noise_peakpsd_dB;
 params_extract.signal_se_dB		=	signal_se_dB;
 params_extract.signal_rms_dB	=	signal_rms_dB;  %not 20 log because actually mean sqaure
 params_extract.signal_peakpsd_dB=	signal_peakpsd_dB;
+params_extract.freq_peakpsd=freq_peakpsd;
 
 %params_extract.SNR_rms=SNR_rms;
 params_extract.SNR_rms_dB		=	SNR_rms_dB;
@@ -7446,13 +7451,41 @@ close(hh);
 end %import_JAVA_Energy_into_notes
 
 %	Adds new event to notes structure and re-sorts chronologically
-function	[Event_set, ii]		=	add_event(Event_set, Event)
+function	[Event_set, ii,Description]		=	add_event(Event_set, Event,Description)
+
+
 
 %	If new set, just return the single event
 if	isempty(Event_set)
     Event_set	=	Event;
     ii			=	1;
 else
+    
+    %Check that new Event doesn't have different fields than
+    %  existing events
+    
+    new_names=fieldnames(Event);
+    old_names=fieldnames(Event_set(1));
+    %something_changed=false;
+    
+    if length(new_names)>length(old_names)  %If an old annotation file is being used.
+        %something_changed=true;
+        %We will assume that the new fields are appended on the end of the
+        %structure...
+        new_indicies=(length(old_names)+1):length(new_names);
+        for JJ=1:length(new_indicies)
+           II=new_indicies(JJ);
+           Description{II}=new_names{II};
+           for Ievent=1:length(Event_set)
+              Event_set(Ievent).(new_names{II})=Event.(new_names{II}); 
+              
+           end
+            
+        end
+    end
+    
+    
+    
     %	Append new event(s)
     N			=	length(Event_set) + 1;
     Event_set	=	[Event_set(:); Event(:)];
@@ -7580,7 +7613,7 @@ for ii	=	1:length(i2)
 end
 
 %	Merge records, now that they are field consistent
-Data.Events	=	add_event(Data1.Events, Data2.Events);
+[Data.Events,~,Data.Description]	=	add_event(Data1.Events, Data2.Events, Data.Description);
 
 
 %	Manually sort field names so that start_time is always first, and
@@ -7773,6 +7806,7 @@ Message	=	[Description(:).'; names(:).'];
 %%'automated' or 'localization'.
 Ibad=[];
 for	ii	=	1:length(names)
+     
     if isstruct(Event.(names{ii}))
         Ibad=[Ibad ii];
         continue
@@ -7787,14 +7821,20 @@ for	ii	=	1:length(names)
     temp			=	num2str(Event.(names{ii}));
     if size(temp,1)>1
         Ibad=[Ibad ii];
+        if strcmp(names{ii},'comments')
+            Message{2,ii}	=	temp;
+        end
         continue
     end
+    
+    
     Message{2,ii}	=	[char(9) char(9) temp(:).'];
+    
     
 end
 Igood=setdiff(1:length(names),Ibad);
 %	comments don't need to be indented
-Message{2,ii}	=	temp;
+
 %	start_time should be formated
 Message{2,1}	=	datestr(Event.(names{1}), 'yyyy-mm-dd HH:MM:SS.FFF');
 

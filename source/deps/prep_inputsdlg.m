@@ -38,15 +38,20 @@ while II<=length(names)
             % Formats(7,1).span = [2 1];  % item is 2 field x 1 fields
             
         case 'call_type'
-            Formats(2,2).type = 'list';
-            Formats(2,2).format = 'text';
-            Formats(2,2).style = 'radiobutton';
-            Formats(2,2).items = {'upsweep' 'downsweep' 'U-shaped' 'N-shaped','other'};
-            % Formats(7,1).span = [2 1];  % item is 2 field x 1 fields
-            %DefAns.(names{II}) = 'downsweep';
-            if ~any(strcmp(DefAns.(names{II}),Formats(2,2).items))
-                DefAns.(names{II}) = 'downsweep';
-            end
+            
+            Formats(5,1).type = 'edit';
+            Formats(5,1).format = 'text';
+            Formats(5,1).span = [1 1];
+           
+%             Formats(2,2).type = 'list';
+%             Formats(2,2).format = 'text';
+%             Formats(2,2).style = 'radiobutton';
+             Formats(2,2).items = {'upsweep' 'downsweep' 'U-shaped' 'N-shaped','other'};
+%             % Formats(7,1).span = [2 1];  % item is 2 field x 1 fields
+%             %DefAns.(names{II}) = 'downsweep';
+             if ~any(strcmp(DefAns.(names{II}),Formats(2,2).items))
+                 DefAns.(names{II}) = 'downsweep';
+             end
             
         case 'min_freq'
             Formats(3,1).type = 'edit';
@@ -80,11 +85,12 @@ while II<=length(names)
             %Formats(2,1).size = 200; % automatically assign the height
             
         case 'num_harmonics'
-            Formats(5,2).type = 'list';
+            Formats(5,2).type = 'edit';
             Formats(5,2).format = 'text';
-            Formats(5,2).style = 'radiobutton';
-            Formats(5,2).items = {'0' '1' '2' '3','4','5','6'};
-            DefAns.(names{II}) = '0';
+            Formats(5,1).span=[1 1];
+            %Formats(5,2).style = 'radiobutton';
+            %Formats(5,2).items = {'0' '1' '2' '3','4','5','6'};
+            %DefAns.(names{II}) = '0';
             
         case 'multipath'
             Formats(6,1).type = 'list';
