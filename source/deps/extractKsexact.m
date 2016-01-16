@@ -22,7 +22,7 @@ function [Kstot,f,VV,EE_sort]=extractKsexact(x,ovlap,Nfft,chann,frange,Fs,Isnap,
 % tiltdata: tilt: estimated vertical tilt of array in degrees.
 %           rd: element depths in m
 % Output: Kstot-CSDM
-%          %VV: eigenvectors of CSDM
+%          %VV: eigenvectors of CSDM, arranged as columns
 %          % f: vector of frequencies
 %          %EE_sort: eigenvalues of CSDM
 %  April 1, 2004: normalize CSDM to have units of power spectral density:

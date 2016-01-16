@@ -1,4 +1,5 @@
 function [B,wout]=conventional_beamforming(Ks,angles,freq,Lz,c,yesnorm)
+% output: wout(element,freq,angle));
 B=zeros(length(freq),length(angles));
 if size(Lz,2)>1
     Lz=Lz.';

@@ -3035,6 +3035,14 @@ tlen=handles.tlen;
 mydir=pwd;
 try
     chan=eval(get(handles.edit_chan,'String'));
+    if strcmpi(handles.filetype,'SIO')
+        choice=menu('Store all channels?','Yes','No');
+        if choice==1
+            chan=1;
+        else
+            chan=-input('Which channel?');
+        end
+    end
     if chan<0
         Ichan=chan;
     else
