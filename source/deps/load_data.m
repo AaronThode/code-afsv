@@ -75,7 +75,19 @@ switch filetype
         simulated=load(fullfile(mydir,myfile));
         Fs=simulated.fs;
         
-        x=simulated.x_sweep';
+        %%Uncomment to conduct Bering Sea call selection
+        prompt={sprintf('Depths: %s',mat2str(simulated.zplot)), ...
+            sprintf('Ranges: %s',mat2str(simulated.rplot))};
+        name='Bering Sea Simulations';
+        numlines=1;
+        defaultanswer={'2','10000'};
+        answer=inputdlg(prompt,name,numlines,defaultanswer);
+        [~,Iz]=min(abs(eval(answer{1})-simulated.zplot));
+        [~,Ir]=min(abs(eval(answer{2})-simulated.rplot));
+        x=squeeze(simulated.x(Iz,Ir,:));
+        
+   
+        %x=simulated.x_sweep';
         if strcmp(Ichan,'all')
             Ichan=1:size(x,2);
         end
