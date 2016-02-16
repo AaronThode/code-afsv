@@ -10182,12 +10182,14 @@ else
         WindowSize=contents{get(handles.popupmenu_WindowSize,'Value')};
         fmax=1000*eval(get(handles.edit_fmax,'String'));
         Rest=ceil(Fs/fmax/2.5);
+        Rest=10;
         tempWindow=str2double(get(handles.edit_winlen,'String'));
+        deconv_chc='0';
 
         %Load saved parameters, select new ones
         prompt={'Range guess(m)','water speed (m/s)','bottom speed (m/s)','Nfft','N_window', ...
-            'Decimation factor:','Number of FM contour points:'};
-        def={'15000','1439','1690',Nfft,WindowSize,num2str(Rest),'3'};
+            'Decimation factor:','Number of FM contour points:','Deconvolve? (yes=1)'};
+        def={'10000','1439','1690',Nfft,WindowSize,num2str(Rest),'3',deconv_chc};
         dlgTitle	=	sprintf('Warping parameters');
         lineNo		=	ones(size(prompt));
         answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
@@ -10203,9 +10205,10 @@ else
         N_window=round(eval(answer{5}));
         R=eval(answer{6});
         Ncontour=eval(answer{7});
+        deconv_chc=eval(answer{8});
         
         tmp=struct('tdate_start',tdate_start,'tlen',tlen,'Ichan',Ichan,'Nchan',Nchan,'R',R,'Nfft',Nfft,'Fs',Fs,'N_window'...
-        ,N_window,'Ncontour',Ncontour,'r_guess',r_guess,'c1',c1,'c2',c2);
+        ,N_window,'Ncontour',Ncontour,'r_guess',r_guess,'c1',c1,'c2',c2,'deconv_chc',deconv_chc);
        
         [minfreq,maxfreq]=deal(1000*str2double(handles.edit_fmin.String),1000*str2double(handles.edit_fmax.String));
     end
@@ -10233,7 +10236,8 @@ else
     
     if ~isfield(tmp,'f_points'); param_file='';end;
 
-    modes=Whale_main_fun(x0,stft_param,filt_param,hdr,handles,param_file,tmp);
+    %%%%Function to call warping
+    modes=Frequency_warping(x0,stft_param,filt_param,hdr,handles,param_file,tmp);
     if isempty(modes)
         return
     end
@@ -10245,6 +10249,9 @@ else
 end
 
 MM=size(squeeze(mode_stack(:,:,1)));
+
+keyboard;
+
 
 %depth_shift=-2;  %How much to shift my estimated depth by
 %freq_want=[84 104];
