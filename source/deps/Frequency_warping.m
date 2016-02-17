@@ -1,8 +1,8 @@
 function [filt]=Frequency_warping(x,stft_param,filt_param,hdr,handles,param_file,var_temp)
 
-Nmodes=3;                           % Number of modes to search and localize
+Nmodes=5;                           % Number of modes to search and localize
 D=51;  %Depth for modeling Pekeris frequencies...
-%% Create a folder to save the results
+%%% Create a folder to save the results
 saveFold=[strjoin(strsplit(handles.outputdir,'\'),'/') '/' datestr(handles.tdate_start,30)];
 
 if exist(saveFold,'dir')~=7
@@ -11,7 +11,7 @@ end
 
 cd(saveFold)
 
-%% General parameters and variables
+%%% General parameters and variables
 filt=struct('hdr',hdr); % Save the filtering process to apply it on the other hydrophones
 
 set(0,'DefaultAxesFontName', 'Californian FB')
@@ -26,7 +26,8 @@ end
 next=zeros(1,4)+1;      % A boolean vector used to go back and forward in the program
 Nhydros=max([ 1 1*(strcmp(handles.filetype,'GSI'))+15*(strcmp(handles.filetype,'MDAT'))]); % DASAR or VLA
 [Fs,NFFT]=deal(stft_param.Fs,stft_param.Nfft);
- %Pad x
+
+%%%%Pad x
  
 Nx=length(x(:,1));
 N=2^nextpow2(Nx);
@@ -43,7 +44,7 @@ if min(flims)==0
     filt=[];
     return
 end
-%% Check for bad hydrophones
+%%% Check for bad hydrophones
 
 if Nhydros~=1
     norm_tmp=x/norm(x(:,hydro_ref));
@@ -55,7 +56,7 @@ end
 Nhydros=length(hydros_ok);
 filt.Nchan=hydros_ok;
 
-%% Signal selection
+%%%% Signal selection  %%%
 
 for Nh=hydros_ok
     [x(:,Nh),~]=quick_filter(x(:,Nh),Fs,flims(1),flims(2));
@@ -64,10 +65,10 @@ end
 filt.Fs=Fs;
 freq=(0:NFFT-1)/NFFT*Fs;
 
-%% Source deconvolution
+%%%% Source deconvolution %%%%%%%
 
 while next(1)
-    if strcmp(param_file,'')&var_temp.deconv_chc==1 % If the user didn't select a file for deconvolution
+    if strcmp(param_file,'')&&var_temp.deconv_chc==1 % If the user didn't select a file for deconvolution
         [x_deconv,source_phase,t_points,f_points] = sourceDeconv_dB(x(:,hydro_ref),Fs,NFFT,Nwindow,flims,filt_param.Ncontour);
         
     elseif (var_temp.deconv_chc==1) %otherwise we take the selected points from the file
@@ -101,11 +102,10 @@ while next(1)
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%
-    %% Time selection (for warping)
-    %%%%%%%%%%%%
+    %%% Time selection (for warping)
+    %%%%%%%%%%%%%%%%%%%%%%%%%%
     while next(2)
         next(2:end)=1;
-        
         
         [x_ok,filtt,params]=get_start_time(x_deconv,NFFT,N,Nwindow,Fs,flims,r_guess,c1,c2,D,Nmodes);
         disp('End of time selection')
@@ -148,7 +148,7 @@ while next(1)
         time=(0:N-1)/Fs;
         
         % Mode selection
-        [~,Nmode,choice,filtt] = mode_select3(x_ok,Fs,N,params.Nww,r_guess,c1,params.clims,filtt);
+        [~,Nmode,choice,filtt] = extract_warped_modes(x_ok,Fs,N,params.Nww,r_guess,c1,params.clims,filtt);
         
         if choice<3
             next(choice+1:end)=0;
@@ -244,7 +244,8 @@ end
 
 function  [x_ok,filtt,params]=get_start_time(x_deconv,NFFT,N,Nwindow,Fs,flims,r_guess,c1,c2,D,Nmodes)
 
-
+ %%filtt.xmin is final shift..
+ 
 TFR=10*log10(abs(tfrstft(x_deconv,1:N,NFFT,hamming(Nwindow))));
 fig=figure;
 imagescFun((1:N)/Fs,Fs*(1:NFFT)/NFFT,TFR,'xy');
@@ -260,7 +261,7 @@ j=j(1);
 dt=j/Fs;
 close(fig)
 
-%% Choose a list of samples near the selected one
+%%% Choose a list of samples near the selected one
 frac=1/100;
 dj=max(1,ceil(j/2*(1-(1-frac)^2)*(1-(c1*j/Fs/r_guess)^2))); % Step (calculated so that the modes shift is about 1/50 of the distance between 2 pekeris cutoff frequencies
 nj=20;                                       % Number of steps in each direction
@@ -268,7 +269,7 @@ j_list=max(1,j-nj*dj):dj:max(1,j+nj*dj);    % List of delay around the selected 
 
 % Make a video
 
-modes_value=zeros(4,Nmodes,length(j_list)); % 2 estimators of the warping quality
+%modes_value=zeros(1,Nmodes,length(j_list)); % 2 estimators of the warping quality
 
 % Set the axis scale for the whole video
 fig=figure;
@@ -277,7 +278,8 @@ fig=figure;
 close(fig)
 
 % Starting the video
-mov=figure('units','normalized','outerposition',[0 0 1 1]);
+%mov=figure('units','normalized','outerposition',[0 0 1 1]);
+figure
 
 for jj = 1:length(j_list) % try several time instants
     [~,vals,slice]=choose_instant(x_deconv,params,j_list(jj),Fs,r_guess,c1,c2,D,Nmodes);
@@ -286,78 +288,54 @@ for jj = 1:length(j_list) % try several time instants
        slice_sum=zeros(length(slice),length(j_list));
     end
     slice_sum(:,jj)=slice;
-    modes_value(:,:,jj)=vals;
+    %modes_value(:,:,jj)=vals;
     title(['delay : ' num2str((j_list(jj)-j)/Fs) ' s'])
+    pause(0.05);
     %F(jj) = getframe(mov); % Movie
 end
 
-% commandwindow;
-% replay=input('\n Replay ? (y/n) ','s');
 
-% while(replay~='n')
-%     shg
-%     movie(mov,F,1,1) % Replay the movie once with 1 image/sec
-%     commandwindow;
-%     replay=input('Replay ? (y/n) ','s');
-% end
 
-% f1_opt=squeeze(prod(squeeze(modes_value(1,:,:)),1)); % First optimisation function (Mode energy)
-% f2_opt=squeeze(prod(squeeze(modes_value(2,:,:)),1)); % Second optimisation function (Slope)
+%[~,opt_delay]=max(sum(squeeze(modes_value(4,:,:)),1));
 
-% figure,hold on
-% plot((j_list-j)/Fs,f1_opt/max(f1_opt))
-% plot((j_list-j)/Fs,1-f2_opt/max(f2_opt))
-% xlabel('Delay (s)')
-% legend('Modes energy','Modes sparsity')
-% title('Warping efficiency')
-
-figure
-subplot(2,1,1);hold on
-for mm=1:Nmodes
-    plot((j_list-j)/Fs,squeeze(modes_value(3,mm,:)))
-    xlabel('Delay (s)')
-    ylabel('Slope')
-    title('Warping efficiency')
-end
-
-legend(cellstr(num2str((1:Nmodes)', 'Mode %i')))
-
-subplot(2,1,2);
-plot((j_list-j)/Fs,squeeze(modes_value(4,1,:)));
-xlabel('Delay (s)')
-ylabel('Radon kurtosis')
-grid on
-
-[~,opt_delay]=max(sum(squeeze(modes_value(4,:,:)),1));
-
-disp(['The delay that optimize the slope is :' num2str((j_list(opt_delay)-j)/Fs)])
 
 figure;
+
+Fe_max=250;
 delayy=(j_list-j)/Fs;
 subplot(2,1,1)
-imagesc(delayy,params.f_w,10*log10(slice_sum));
+pcolor(delayy,params.f_w(1:size(slice_sum,1)),10*log10(slice_sum));
+shading flat
+colorbar;colormap(jet);
+%caxis([-35 -15])
+axis('xy');
+ylim([0 Fe_max]);
+
+%%%Kurtosis computation
+Fe_window=100;
+Irow=1;
+II=find(params.f_w<=Fe_window);
+II_step=floor(0.25*median(II));
+[~,Imax]=min(abs(Fe_max-params.f_w));
+while max(II)<=Imax
+    kurtosis_val(Irow,:)=kurtosis(slice_sum(II,:));
+    kurtosis_fw(Irow)=params.f_w(floor(median(II)));
+    
+    Irow=Irow+1;
+    II=II_step+II;
+    %max_window=params.f_w(max(II));
+end
+
+kurtosis_val(Irow,:)=kurtosis(slice_sum);
+kurtosis_fw(Irow)=Fe_max;
 subplot(2,1,2);
-plot(delayy,squeeze(modes_value(4,1,:)));
+pcolor(delayy,kurtosis_fw,(kurtosis_val))
 xlabel('Delay (s)')
-ylabel('Radon kurtosis')
+ylabel(sprintf('Kurtosis: %6.2f Hz width',Fe_window))
 grid on
+ylim([0 Fe_max])
+colorbar
 
-keyboard
-
-% commandwindow;
-% saveMov=input('\n Do you want to save the movie ? (y/n) ','s');
-% 
-% if saveMov == 'y' % Saving the movie
-%     writerObj = VideoWriter('warping.avi');
-%     writerObj.FrameRate=5;
-%     open(writerObj);
-%     for jj=1:length(j_list)
-%         writeVideo(writerObj,F(jj));
-%     end
-%     close(writerObj);
-% end
-
-%clear F x_multi modes_value writerObj
 
 % We let the user choose the first time instant
 Ncount=input('Number of picks:');
@@ -368,12 +346,22 @@ tmp=tmp(:,1);
 %if isnan(j_min)
 %    j_min=j_list(opt_delay);
 %end
+figure;
 for I=1:Ncount
+    
+    subplot(ceil(Ncount/2),2,I)
     j_min=round(j+Fs*tmp(I));
-    figure;
+    
     [~,vals]=choose_instant(x_deconv,params,j_min,Fs,r_guess,c1,c2,D,Nmodes);
-    title(tmp(I))
+    caxis('auto')
+    ylim([0 Fe_max]);
+    title(sprintf('Choice: %i, Offset: %6.2f',I,tmp(I)));
 end
+gtext(sprintf('Range guess: %6.2f km, water depth: %6.2f m',r_guess/1000,D))
+
+Ichc=input('Enter final choice: ');
+j_min=round(j+Fs*tmp(Ichc));
+
 %j_min=round(j+x_min*Fs);
 
 %% Save the filtering process to apply it to the other hydrophones
@@ -381,11 +369,12 @@ end
 filtt.xmin=j_min;
 filtt.flims=flims;
 filtt.fwlims=params.fwlims;
+%N=2^nextpow2(length(x_deconv));
+%x_ok=ifft(fft(x_deconv,N).*exp(1i*2*pi*j_min/N*(1:N)'),'symmetric');
+x_ok=[x_deconv(j_min:end); zeros(j_min-1,1)];
 
-x_ok=ifft(fft(x_deconv,N).*exp(1i*2*pi*j_min/N*(1:N)'),'symmetric');
-
-%% end test
-end
+%%% end test
+end  %get_start_time
 
 function writerObj=make_movie(writerObj,s_w,M,t_w,f_w,params,Nmodes,c1,c2,D)
 RTF=abs(tfrstft(s_w,1:M,M,hamming(params.Nww)));

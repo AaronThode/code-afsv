@@ -80,7 +80,7 @@ switch filetype
             sprintf('Ranges: %s',mat2str(simulated.rplot))};
         name='Bering Sea Simulations';
         numlines=1;
-        defaultanswer={'2','10000'};
+        defaultanswer={'12','10000'};
         answer=inputdlg(prompt,name,numlines,defaultanswer);
         [~,Iz]=min(abs(eval(answer{1})-simulated.zplot));
         [~,Ir]=min(abs(eval(answer{2})-simulated.rplot));

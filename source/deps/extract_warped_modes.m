@@ -1,4 +1,4 @@
-function [modes,Nmode,choice,filt] = mode_select3(x_ok,Fe,N,Nww,r,c,clims,filt)
+function [modes,Nmode,choice,filt] = extract_warped_modes(x_ok,Fe,N,Nww,r,c,clims,filt)
 
 % Warping
 [s_w, Fe_w]=warp_temp_exa(x_ok,Fe,r,c);    % s_w: warped signal, Fe_w: new warping frequency

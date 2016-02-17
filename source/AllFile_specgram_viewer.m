@@ -10189,7 +10189,7 @@ else
         %Load saved parameters, select new ones
         prompt={'Range guess(m)','water speed (m/s)','bottom speed (m/s)','Nfft','N_window', ...
             'Decimation factor:','Number of FM contour points:','Deconvolve? (yes=1)'};
-        def={'10000','1439','1690',Nfft,WindowSize,num2str(Rest),'3',deconv_chc};
+        def={'10000','1442','1650',Nfft,WindowSize,num2str(Rest),'3',deconv_chc};
         dlgTitle	=	sprintf('Warping parameters');
         lineNo		=	ones(size(prompt));
         answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
