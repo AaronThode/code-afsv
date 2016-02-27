@@ -6,7 +6,7 @@ TFR=10*log10(abs(tfrstft(x(:,1),1:N,NFFT,hamming(Nwindow))));
 figure('units','normalized','outerposition',[0 0 1 1]);
 imagescFun((1:N)/Fs,Fs*(1:NFFT)/NFFT,TFR,'xy');
 ylim(flims)
-caxis([prctile(TFR(:),70) prctile(TFR(:),100)])
+%caxis([prctile(TFR(:),70) prctile(TFR(:),100)])
 
 %% Selecting points
 disp('Beginning source deconvolution')
@@ -30,8 +30,8 @@ for ii=1:Npoint-2
 end
 
 % Let the user adjust his selection before going on
-msgbox('Press any key to continue')
-pause()
+uiwait(msgbox('Press any key to continue'))
+%pause()
 
 % Link fonctions
 function link1(h,pos,nn)

@@ -10184,12 +10184,12 @@ else
         Rest=ceil(Fs/fmax/2.5);
         Rest=10;
         tempWindow=str2double(get(handles.edit_winlen,'String'));
-        deconv_chc='0';
+        deconv_chc='1';
 
         %Load saved parameters, select new ones
         prompt={'Range guess(m)','water speed (m/s)','bottom speed (m/s)','Nfft','N_window', ...
             'Decimation factor:','Number of FM contour points:','Deconvolve? (yes=1)'};
-        def={'10000','1442','1650',Nfft,WindowSize,num2str(Rest),'3',deconv_chc};
+        def={'10000','1442','1650',Nfft,WindowSize,num2str(Rest),'2',deconv_chc};
         dlgTitle	=	sprintf('Warping parameters');
         lineNo		=	ones(size(prompt));
         answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
@@ -10231,16 +10231,22 @@ else
 
     N_window=1+2*floor(N_window/2);
 
-    stft_param=struct('Nfft',Nfft,'N_window',N_window,'Fs',Fs);
+    stft_param=struct('Nfft',Nfft,'N_window',N_window,'Fs',Fs,'R',R);
     filt_param=struct('Ncontour',Ncontour,'r_guess',r_guess,'c1',c1,'c2',c2,'flims',[minfreq maxfreq]);
     
     if ~isfield(tmp,'f_points'); param_file='';end;
 
     %%%%Function to call warping
-    modes=Frequency_warping(x0,stft_param,filt_param,hdr,handles,param_file,tmp);
+    [modes,filtt]=Frequency_warping(x0,stft_param,filt_param,hdr,handles,param_file,tmp);
     if isempty(modes)
         return
     end
+    
+    yes=menu('Save Result?','Yes','No');
+    if yes==1
+       save FrequencyWarpingResult modes filtt filt_param stft_param 
+    end
+    keyboard
     Nchan=modes.Nchan;
     hdr.geom.rd=hdr.geom.rd(Nchan);
     

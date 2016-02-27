@@ -47,12 +47,11 @@ if ~isfield(params,'fwlims')
 end
 
 %subplot(2,1,1)
-imagescFun(t_w,f_w,RTF,'ij')
+imagescFun(t_w,f_w,20*log10(abs(RTF)),'ij')
 ylim(params.fwlims)
 xlim([0 params.xmax])
+%caxis(params.clims)
 
-caxis(params.clims)
-colorbar
 toc
 
 %%% Pekeris cutoff frequencies
