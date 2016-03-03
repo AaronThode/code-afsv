@@ -114,6 +114,36 @@ delays=filtt.xmin;
 %%%%filtt.min are times to start extracting...
 disp('End of time selection')
 
+% Apply for all the hydrophones
+
+%         writerObj = VideoWriter('warping_Nhydros.avi'); % Show all the warping in a movie
+%         writerObj.FrameRate=5;
+%         open(writerObj);
+
+%if Nhydros>1
+
+for NN=1:Nhydros
+    % Source phase removal
+    x_multi=ifft(fft(x(:,hydros_ok(NN)),N).*exp(1i*(-source_phase+2*pi*filtt.xmin*(1:N)'/N)),N,'symmetric');
+    
+    % Warping
+    [s_w, Fe_w]=warp_temp_exa(x_multi,Fs,r_guess,c1);     % s_w: warped signal, Fe_w: new warping frequency
+    
+    if NN==1
+        M=length(s_w);
+        xw_multi=zeros(M,Nhydros);
+    end
+    
+    xw_multi(:,hydros_ok(NN))=s_w;
+    
+    t_w=(0:M-1)/Fe_w;        % Warped time
+    f_w=(0:M-1)*Fe_w/M;      % Warped frequencies
+    
+    %writerObj=make_movie(writerObj,s_w,M,t_w,f_w,params,Nmodes,c1,c2,D);
+    
+end %NN
+%close(writerObj);
+
 %end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%% Warping%%%%%%%%%%
@@ -125,47 +155,37 @@ time=(0:N-1)/Fs;
 
 % Mode selection
 while redo
-    modes_ok=[];
-    mode_index=[];
-    Nmode=0;
+    
     for I=1:length(delays)
-        x_ok=[x_deconv(delays(I):end); zeros(delays(I)-1,1)];
-        [modes,Nm,filtt] = extract_warped_modes(x_ok,Fs,N,params.Nww,r_guess,c1,params.clims,filtt);
-        
-        temp=input('Enter mode numbers:');
-        if isempty(temp)||Nm==0
-            continue
+     x_ok=[x_deconv(delay(I):end); zeros(delay(I)-1,1)];
+    [~,Nmode,filtt] = extract_warped_modes(x_ok,Fs,N,params.Nww,r_guess,c1,params.clims,filtt);
+    
+     
+    if Nmode==0
+        redo=false;
+        continue
+    end
+    
+    filtt.mode_stack=zeros(N,Nmode,Nhydros);
+    
+    % Apply for each hydrophone
+    for NN=hydros_ok
+        for mm=1:Nmode
+            M=length(xw_multi(:,NN));
+            rtf=tfrstft(xw_multi(:,NN),1:M,M,hamming(params.Nww));
+            rtf(floor(M/2):end,:)=[];
+            mode_rtf_warp=squeeze(filtt.('mask')(mm,:,:)).*rtf;
+            
+            [mode_temp_warp]=real(sum(mode_rtf_warp,1))*2/M/max(hamming(params.Nww)/norm(hamming(params.Nww)));
+            tmp=iwarp_temp_exa(mode_temp_warp,Fe_w,r_guess,c1,Fs,N);
+            filtt.mode_stack(:,mm,NN)=ifft(fft(tmp).*exp(1i*source_phase),N,1,'symmetric');
+            clear mode_rtf_warp mode_temp_warp
         end
-        modes=[zeros(Nm,delays(I)-1) modes];
-        modes=modes(:,1:N);
-        modes_ok=[modes_ok;modes];
-        mode_index=[mode_index temp];
-        Nmode=Nmode+Nm;
-        
-    end  %delays
+    end
     
-    [mode_index,Isort]=sort(mode_index);
-    modes_ok=modes_ok(Isort,:);
+    modes_ok=filtt.mode_stack(:,:,hydro_ref)';
     
-    
-%     filtt.mode_stack=zeros(N,Nmode,Nhydros);
-%     
-%     % Apply for each hydrophone
-%     for NN=hydros_ok
-%         for mm=1:Nmode
-%             M=length(xw_multi(:,NN));
-%             rtf=tfrstft(xw_multi(:,NN),1:M,M,hamming(params.Nww));
-%             rtf(floor(M/2):end,:)=[];
-%             mode_rtf_warp=squeeze(filtt.('mask')(mm,:,:)).*rtf;
-%             
-%             [mode_temp_warp]=real(sum(mode_rtf_warp,1))*2/M/max(hamming(params.Nww)/norm(hamming(params.Nww)));
-%             tmp=iwarp_temp_exa(mode_temp_warp,Fe_w,r_guess,c1,Fs,N);
-%             filtt.mode_stack(:,mm,NN)=ifft(fft(tmp).*exp(1i*source_phase),N,1,'symmetric');
-%             clear mode_rtf_warp mode_temp_warp
-%         end
-%     end
-%     
-%     modes_ok=filtt.mode_stack(:,:,hydro_ref)';
+    end
     %% Extraction dispersion curves
     
     tm=zeros(Nmode,NFFT);
@@ -192,11 +212,9 @@ while redo
     end
     
     % Plot received TFR+dispersion curves
-    % tfr=tfrstft(x(filtt.xmin:end,hydro_ref),1:N,NFFT,hamming(Nwindow));
-    tfr=tfrstft(x(1:end,hydro_ref),1:N,NFFT,hamming(Nwindow));
-    
+    tfr=tfrstft(x(filtt.xmin:end,hydro_ref),1:N,NFFT,hamming(Nwindow));
     TFR=20*log10(abs(tfr));
-    figure
+    figure,
     imagescFun(time,freq,TFR,'xy');
     ylim(flims)
     %caxis([prctile(TFR(:),70) prctile(TFR(:),100)])
