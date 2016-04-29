@@ -4,7 +4,7 @@ while repeat==1
     
     if flag_suppress_io==0
         %yess=menu('TL slice:','range-frequency','range_depth','power-law fit');
-        yess=3;
+        yess=2;
     else
         yess=2;
     end
@@ -173,7 +173,7 @@ while repeat==1
         %plotname=sprintf('%s_source%5.2fmRcvr%5.2fmDepth%5.2fmBottom%s_Incoh%i.jpg',case_output,sd,zplot(Iwant),D,case_bottom,run_options.incoherent_addition);
         figure(2);
        % pcolor(freq,zplot,prop_law);shading flat; caxis([15 25]);colormap(jet);colorbar
-        [cc,hh]=contourf(freq,zplot,prop_law,10:2:20);
+        [cc,hh]=contourf(freq,zplot,prop_law,8:1:20);
         clabel(cc,hh);colorbar
         axis('ij')
         title(sprintf('Power-law coefficient fit to coherent transmission loss: %s',savename));

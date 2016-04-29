@@ -339,7 +339,8 @@ for I=1:Ncount
     [~,vals]=choose_instant(x_deconv,params,j_min,Fs,r_guess,c1,c2,D,Nmodes);
     %caxis('auto');
     axis('xy')
-    ylim([0 100]);
+    ylim([0 200]);
+    caxis([-20 0]);
     title(sprintf('Choice: %i, Offset: %6.2f',I,tmp(I)));
 end
 gtext(sprintf('Range guess: %6.2f km, water depth: %6.2f m',r_guess/1000,D))

@@ -10182,7 +10182,7 @@ else
         WindowSize=contents{get(handles.popupmenu_WindowSize,'Value')};
         fmax=1000*eval(get(handles.edit_fmax,'String'));
         Rest=ceil(Fs/fmax/2.5);
-        Rest=10;
+        %Rest=10;
         tempWindow=str2double(get(handles.edit_winlen,'String'));
         deconv_chc='1';
 

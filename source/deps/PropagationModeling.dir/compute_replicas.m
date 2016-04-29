@@ -1,18 +1,22 @@
 %%%%compute_replicas.m%%%%%%%%%%%
 %[TL,rplot,zplot,sd,kr,Umode]=compute_replicas(code_chc,case_bottom,freq,nfreq,sspopt,lthick,cmedtop,cmedbot, rho, pwavatten, ...
-%    svp,bath,ro,rd,sd,dr_factor,dz_factor,fu,rms_roughness,run_options)%% Output:
-%%  TL: transmission loss, dimensions of  [length(rd),length(ro)];
+%    svp,bath,ro,rd,sd,dr_factor,dz_factor,fu,rms_roughness,run_options)% Output:
+%  TL: transmission loss, dimensions of  [length(rd),length(ro), length(sd)];
+%      if separate_modes, dimensions of  [length(rd), length(ro), length(Nmodes)];
 %
 % Input:
 %       run_options:
+%           max_kr:  maximum number of modes to use
 %           nofield: do not compute field for KRAKEN
 %           incoherent_addition: compute TL incoherently
+%           arrival
 %
-%%          case_output specifies type of acoustic output.  Categoreis include
+%          case_output specifies type of acoustic output.  Categoreis include
 %                TL_C:  coherent transmission loss
 %                TL_I:  incoherent transmission loss
 %                TL_S:  semicoherent transmission loss (Lloyd mirror source pattern)-BELLHOP
 %                time_series:  time series
+%                separate_modes:  create a separate time series for each modal
 %                group_velocity:  group velocity curves
 %                ray:  ray tracing.
 
@@ -21,15 +25,29 @@ function [TL,rplot,zplot,sd,Umode]=compute_replicas(code_chc,case_bottom,freq,ss
     svp,bath,ro,rd,sd,dr_factor,dz_factor,fu,rms_roughness,run_options)
 
 if ~isempty(dir('inp_file*'))
-   !rm inp_file.*
+    !rm inp_file.*
 end
 TL=[];rplot=[];
 zplot=[];Umode=[];
+
 %%%**  START FREQUENCY LOOP ************
 
 incoherent_addition=run_options.incoherent_addition;
 nofield=run_options.nofield;
 case_output=run_options.case_output;
+if strcmp(case_output,'separate_modes')
+    separate_modes=true;
+else
+    separate_modes=false;
+end
+
+if separate_modes
+    TL=zeros(length(rd),length(ro),length(run_options.max_kr));
+    if length(sd)>1
+        error('When separate modes option selected, length(sd) must be 1...');
+        return
+    end
+end
 
 compute_own_field=1;  %If one, compute field in MATLAB using modes...
 Umode=[];
@@ -94,6 +112,9 @@ if strcmpi(code_chc,'RAM')
     TL=p.*(ones(size(zplot))*exp(i*2*pi*freq*rplot./1500));
     
     %keyboard;
+    %%%%%%%%%%%%%%%%%%%%%%%
+    %%%Normal modes%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%
 elseif ~isempty(findstr(lower(code_chc),lower('KRAKEN')))
     
     if isempty(bath)
@@ -132,11 +153,11 @@ elseif ~isempty(findstr(lower(code_chc),lower('KRAKEN')))
             
             %Check normalization
             %dz=ztab(2)-ztab(1);
-           % dz*trapz(phi.^2)
-           
+            % dz*trapz(phi.^2)
+            
             Nkr=min([run_options.max_kr length(kr)]);
             Umode{Id}.z=ztab;
-            Umode{Id}.phi=phi;
+            Umode{Id}.phi=phi(:,1:Nkr);
             Umode{Id}.kr=kr(1:Nkr);
             %disp(sprintf('Number modes: %i',length(kr)));
             kraken_fail=false;
@@ -165,43 +186,64 @@ elseif ~isempty(findstr(lower(code_chc),lower('KRAKEN')))
             if size(rplot,1)>1,rplot=rplot';end
             
         else
-            for Iz=1:length(sd)
-                [~,Is]=min(abs(Umode{Id}.z-sd(Iz)));
-                %a = squeeze(model.U( isd, Iwant(If), : ));
-                %phi = squeeze(model.U(:,Iwant(If),:)) * diag( a, 0 );	% scale modes by a
-                
-                a=phi(Is,:);
-                phis=phi*diag(a,0);
-                
-                % ******************************************************
-                % form pressure field
-                % ******************************************************
-                
-                phase = diag( 1.0 ./ sqrt( Umode{Id}.kr ) ) * exp( 1i * Umode{Id}.kr * ro ) * diag( sqrt( 2 * pi ./ ro ) );
-                
-                Ibad = find(isnan(real(phase)));
-                phase(Ibad)=0;
-                
-                TL = 1i*exp(-1i*pi/4)*phis * phase;  % [rd Nm] x [Nm ranges] = [rd ranges]
-                zplot=rd;
-                rplot=ro;
-                
+            toll=1e-3;
+            clear Isd Ird
+            for J=1:length(sd)
+                [~,Isd(J)]=min(abs(sd(J)-ztab));
+            end
+            for J=1:length(rd)
+                [~,Ird(J)]=min(abs(rd(J)-ztab));
             end
             
-            %             figure
-            %             subplot(2,1,1)
-            %             imagesc(20*log10(abs(TL)))
-            %             subplot(2,1,2)
-            %             imagesc(20*log10(abs(TL2)))
             %
-            %              figure
-            %             subplot(2,1,1)
-            %             imagesc(angle(TL))
-            %             subplot(2,1,2)
-            %             imagesc(angle(TL2))
-            %keyboard
-        end %compute_own_fiel
+            %[length(rd), length(ro), length(Nmodes)];
+            if separate_modes
+                [~,Is]=min(abs(Umode{Id}.z-sd));
+                a=Umode{Id}.phi(Is,:);
+                phis=Umode{Id}.phi(Ird,:)*diag(a,0);
+                
+                Nm=length(Umode{Id}.kr);
+                for Im=1:Nm
+                    phase = ( 1.0 ./ sqrt( Umode{Id}.kr(Im) ) ) * exp( 1i * Umode{Id}.kr(Im) * ro ) .* ( sqrt( 2 * pi ./ ro ) );
+                    Ibad = isnan(real(phase));
+                    phase(Ibad)=0;
+                    TL(:,:,Im) = 1i*exp(-1i*pi/4)*phis(:,Im) * phase;  % [rd Nm] x [Nm ranges] = [rd ranges]
+                    
+                end
+                
+            else
+                for Iz=1:length(sd)
+                    [~,Is]=min(abs(Umode{Id}.z-sd(Iz)));
+                    %a = squeeze(model.U( isd, Iwant(If), : ));
+                    %phi = squeeze(model.U(:,Iwant(If),:)) * diag( a, 0 );	% scale modes by a
+                    
+                    a=Umode{Id}.phi(Is,:);
+                    
+                    phis=Umode{Id}.phi(Ird,:)*diag(a,0);
+                    
+                    % ******************************************************
+                    % form pressure field
+                    % ******************************************************
+                    
+                    
+                    phase = diag( 1.0 ./ sqrt( Umode{Id}.kr ) ) * exp( 1i * Umode{Id}.kr * ro ) * diag( sqrt( 2 * pi ./ ro ) );
+                    
+                    Ibad = isnan(real(phase));
+                    phase(Ibad)=0;
+                    
+                    TL(:,:,Iz) = 1i*exp(-1i*pi/4)*phis * phase;  % [rd Nm] x [Nm ranges] = [rd ranges]
+                    
+                    
+                end
+            end
+            
+            zplot=ztab(Ird);
+            rplot=ro;
+            
+        end %compute_own_field
     end  %bathymetry step
+    
+    
 elseif strcmpi(code_chc,'scooter')
     writeKRAKEN(sd,rd,max(ro/1000),'inp_file',freq, Nmesh, lthick, cmedtop, ...
         cmedbot, rho, pwavatten,svp)
@@ -283,7 +325,7 @@ elseif strcmpi(code_chc,'bellhop')
     if strcmp(run_type,'AG')|strcmp(run_type,'AB') %if a delay amplitude file
         close all
         [arr,pos]=plot_bellhop_arr('inp_file');
-         %[ Arr, Pos ] = read_arrivals_asc( 'inp_file.arr',10 );  %For A
+        %[ Arr, Pos ] = read_arrivals_asc( 'inp_file.arr',10 );  %For A
         
         pause;
         
@@ -291,8 +333,21 @@ elseif strcmpi(code_chc,'bellhop')
         return
         
     end
-    [TL,rplot,sd,zplot,totime]=readshd('inp_file', 1);
-    %[ title, freq, nsd, nrd, nrr, sd, rplot, rr, tlt ] = read_shd_bin( 'inp_file.shd' );
+    %[TL,rplot,sd,zplot,totime]=readshd('inp_file', 1);
+    %[p,r,sd,rd,totime]=readshd(filename, Isource)
+    [ title, ~, freq, atten,Pos,TL ] = read_shd_bin( 'inp_file.shd' );
+    % pressure = zeros( Ntheta, Nsd, Nrd, Nrr );
+       
+    zplot=Pos.r.depth;
+    rplot=Pos.r.range;
+    sd=Pos.s.depth;
+    
+    %[rd ro sd nfreq]
+    TL=squeeze(TL(1,:,:,:));
+   % TL=permute(TL,[2 1] );
+    
+    
+    %[ title, plottype, freq, atten, Pos, pressure ] = read_shd_bin( filename )
     %keyboard;
     if length(zplot)>1,
         Igood=find(diff(zplot)>0);
@@ -314,10 +369,10 @@ else
     error('propagation code not correct.')
 end
 
-if ~isempty(TL)
-    nr=length(rplot);
-    nz=length(zplot);
-    TL=TL(1:nz,1:nr);
-end
+% if ~isempty(TL)
+%     nr=length(rplot);
+%     nz=length(zplot);
+%     TL=TL(1:nz,1:nr);
+% end
 
 

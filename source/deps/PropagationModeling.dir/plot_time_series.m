@@ -3,7 +3,7 @@
 %
 % Inputs:
 %       tilt: horizontal offset between shallowest and deepest element in meters
-%
+%       sd: source depth, a scalar only..
 % function x=plot_time_series(TL,sd,rplot,zplot,azi,Tmin,Nsamp,fs,freq,nfreq,flo,fhi,range_normalization,xsource,tilt)
 
 function tlimm=plot_time_series(TL,sd,rplot,zplot,azi,Tmin,Nsamp,fs,freq,nfreq,flo,fhi,range_normalization,xsource,tilt)
@@ -63,6 +63,8 @@ for Iazi=1:length(azi)
     for Ir=1:nplots
         Iplots=Iplots+1;
         if Iplots>Nplots_total
+            orient tall
+            print('-djpeg','-r300',sprintf('Simulated_Dispersion_%i', Ir));
             figure
             Iplots=1;
         end
@@ -162,6 +164,10 @@ for Iazi=1:length(azi)
         
         
     end
+    
+    
+    orient tall
+    print('-djpeg','-r300',sprintf('Simulated_Dispersion_%i', Ir));
     
     %     ylimm=input('Enter frequency range if desired:');
     %     if ~isempty(ylimm),

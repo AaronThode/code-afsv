@@ -16,6 +16,7 @@ close all
 %       TL_I:  incoherent transmission loss
 %       TL_S:  semicoherent transmission loss (Lloyd mirror source pattern)-BELLHOP
 %       time_series:  time series
+%       separate_modes: times series with separate modes broken out
 %       group_velocity:  group velocity curves
 %       ray:  ray tracing.
 
@@ -44,34 +45,12 @@ close all
 flag_suppress_io=0;
 Icase_all=-1;  %selects a scenario without menu input.  If -1, establish menu input
 %case_output='TL_I';  %time_series, TL, or group_velocity..
-case_output='time_series';  %ray, time_series, TL, or group_velocity..
-run_options.max_kr=79;
+case_output='group_velocity';  %ray, time_series, TL, or group_velocity..
+run_options.max_kr=8;
 %run_options.incoherent_addition=1;  %If one, add modes incoherently.
 
-%This loads original UNIX path
-path1=getenv('PATH');
-path1=sprintf('%s:%s','/usr/local/bin',path1);
-
-path1=sprintf('%s:%s',path1,'/Users/thode/Projects/PropagationCodes/at/UnixScripts');
-path1=sprintf('%s:%s',path1,'/Users/thode/Projects/PropagationCodes/at/bin');
-path1=sprintf('%s:%s',path1,'/Users/thode/Projects/PropagationCodes/RAM');
-
-setenv('PATH',path1)
-%setenv('PATH', [getenv('PATH') ';D:\Perl\bin']);
-
-
-%%Allow gfortran compiled programs to run within MATLAB shell
-%http://www.mathworks.com/matlabcentral/answers/12822-shell-command-on-matlab-command-line-shows-error
-setenv('DYLD_LIBRARY_PATH', '/usr/local/bin/');
-
-%  From: http://www.mathworks.co.uk/matlabcentral/answers/44388-or-system-or-unix-input-redirection
-%setenv('GFORTRAN_STDIN_UNIT', '5') ;
-%setenv('GFORTRAN_STDOUT_UNIT', '6') ;
-%setenv('GFORTRAN_STDERR_UNIT', '0');
-
-%setenv(?GFORTRAN_STDIN_UNIT?, ?-1?)
-%setenv(?GFORTRAN_STDOUT_UNIT?, ?-1?)
-%setenv(?GFORTRAN_STDERR_UNIT?, ?-1?)
+%Set environmental variables...
+setup_environment;
 
 %%%THESE NEVER CHANGE-ARE HISTORICAL VARIABLES
 case_array='single_element'; %single_element, Fairfield_1680, Kondor_3930, Ewing_20
@@ -83,9 +62,10 @@ for Icase=Icase_all
     [case_output,savename,code_chc,case_bath, ...
         case_ssp,case_bottom,~,ro,sd,rd,D,fl,fu,fs,Tmin,Tmax,tilt]=TOC_scenario(Icase,case_output,flag_suppress_io);
     
+    separate_modes=strcmp(case_output,'separate_modes');
     %To ensure that number of time series points are a power of 2,
     %  adjust the freqeuncy spacing, and thus the upper time limit...
-    if strcmp(case_output,'time_series')||strcmp(case_output,'group_velocity')
+    if strcmp(case_output,'time_series')||separate_modes||strcmp(case_output,'group_velocity')
         df = 1./max(Tmax-Tmin);
         Nsamp =   floor(fs/df);
         Nsamp=2^ceil(log10(Nsamp)/log10(2));
@@ -183,13 +163,18 @@ for Icase=Icase_all
         end
         nr=length(rplot);
         nz=length(zplot);
-        
+        ns=length(sd);
         if ~isempty(p)&&first_time
-            TL=zeros(nz,nr,nfreq);
+            if separate_modes
+                TL=zeros(nz,nr,run_options.max_kr,nfreq); %TL dimensions are [rd ro sd nfreq]
+            else
+                TL=zeros(nz,nr,ns,nfreq); %TL dimensions are [rd ro sd nfreq] 
+       
+            end
             first_time=false;
         end
         if ~isempty(p)
-            TL(:,:,If)=p;
+            TL(:,:,1:size(p,3),If)=p;  %TL dimensions are [rd ro sd nfreq], or [rd ro nkr nfreq], if run_options.separate_modes
         end
         %if rem(If,500)==0,save(savename);end
     end %If frequency
@@ -200,16 +185,22 @@ for Icase=Icase_all
             case 'group_velocity'
                 
                 compute_and_plot_group_velocity;
+                clear extrct Xfft Xsource Xfft B x0
+                save([savename '.mat']);
                 
             case {'TL_C','TL_I','TL_S','TL_CG','TL_IG','TL_SG'}
-                Iazi=length(azi);
-                TLdB0=(-20*log10(abs(TL(:,:,:,Iazi))+eps));
+                if size(TL,4)>1
+                    disp('TL_C assumes one frequency, squeezing out source depth');
+                end
+                for Is=1:length(sd)
+                    TLdB0=(-20*log10(abs(squeeze(TL(:,:,Is,:)))+eps));  %Assumes single frequency
+                    plotTL;
+                    disp('Warning!  TL_C under multiple source depths has not been checked...');
+                    keyboard
+                end
                 
-                plotTL;
-                
-                keyboard
                 %save([savename '_TL.mat'],'TLdB0','zplot','ro','freq');
-            case 'time_series'
+            case {'time_series','separate_modes'}
                 
                 %%Create FM sweep if desired
                 for Isource=2:2
@@ -237,47 +228,71 @@ for Icase=Icase_all
                         title('source signature')
                         x_sweep=plot_time_series(TL,sd,rplot,zplot,azi,Tmin,Nsamp,fs,freq,nfreq,flo,fhi,0,ysource,tilt);
                         
-                    else
+                    else  %No source spectrum
                         ysource=[];
-                        tlimm=plot_time_series(TL,sd,rplot,zplot,azi,Tmin,Nsamp,fs,freq,nfreq,flo,fhi,0,ysource,tilt);
-                        [x, Tmin]=plot_time_series_all(TL,rplot,zplot,azi,Tmin,Nsamp,fs,freq,nfreq,flo,fhi,ysource,tilt,tlimm);
-                        Tmax=Tmin+diff(tlimm);
-                        %Quick check
-                        Nfft=2048;
-                        Icount=1;
-                        for I=1:size(x,1)
-                            for J=1:size(x,2)
-                                subplot(size(x,1),size(x,2),Icount);
-                                Icount=Icount+1;
-                                x0=squeeze(x(I,J,:));
-                                [~,FF,TT,B] = spectrogram(x0,hanning(Nfft/4),round(.9*Nfft/4),Nfft,fs);
-                                %figure('name','Pulse spectrogram');
-                                B=10*log10(B);
-                                imagesc(TT,FF/1000,B-max(max(B)));%
-                                set(gca,'fontweight','bold')
-                                grid on
-                                axis('xy');
-                                %spectrogram(x(Ir,:),hanning(2048),round(0.9*2048),2048,fs,'yaxis')
-                                ylim([min(freq) max(freq)]/1000);
-                                %ylim([0 .25]);
-                                colormap(jet);caxis([-20 0]);
-                                xlabel('Time (sec)');ylabel('kHz');
-                                title(sprintf('zs: %6.2f m rs: %6.2f km',zplot(I),rplot(J)/1000));
-                            end
+                        Tmin0=Tmin;
+                        
+                        if separate_modes
+                            nloops=run_options.max_kr;
+                        else
+                            nloops=length(sd);
                         end
-                        orient landscape
-                        print('-djpeg','-r300',[savename '.jpg']);
+                            
+                          
+                        for Is=1:nloops
+                            Tmin=Tmin0;
+                            if Is==1
+                                tlimm=plot_time_series(squeeze(TL(:,:,Is,:)),sd,rplot,zplot,azi,Tmin,Nsamp,fs,freq,nfreq,flo,fhi,0,ysource,tilt);
+                            end
+                            [x, Tmin]=plot_time_series_all(squeeze(TL(:,:,Is,:)),rplot,zplot,azi,Tmin,Nsamp,fs,freq,nfreq,flo,fhi,ysource,tilt,tlimm);
+                            Tmax=Tmin+diff(tlimm);
+                            xall(:,:,Is,:)=x;
+                            %Quick check
+                            Nfft=2048;
+                            Icount=1;
+                            figure
+                            for I=1:size(x,1)
+                                for J=1:size(x,2)
+                                    try
+                                    subplot(size(x,1),size(x,2),Icount);
+                                    catch
+                                        keyboard
+                                    end
+                                    Icount=Icount+1;
+                                    x0=squeeze(x(I,J,:));
+                                    [~,FF,TT,B] = spectrogram(x0,hanning(Nfft/4),round(.9*Nfft/4),Nfft,fs);
+                                    %figure('name','Pulse spectrogram');
+                                    B=10*log10(B);
+                                    imagesc(TT,FF/1000,B-max(max(B)));%
+                                    set(gca,'fontweight','bold')
+                                    grid on
+                                    axis('xy');
+                                    %spectrogram(x(Ir,:),hanning(2048),round(0.9*2048),2048,fs,'yaxis')
+                                    ylim([min(freq) max(freq)]/1000);
+                                    
+                                    colormap(jet);caxis([-20 0]);
+                                    %xlabel('Time (sec)');ylabel('kHz');
+                                    %title(sprintf('zs: %6.2f zr: %6.2f m rs: %6.2f km',sd(Is), zplot(I),rplot(J)/1000));
+                                end
+                            end
+                            orient landscape
+                            print('-djpeg','-r300',sprintf('%s_%i.jpg',savename,Is));
+                            
+                        end %sd
+                        x=xall;clear xall
                     end %if Isource==1
                 end  %for Isource
                 
                 %Save data to file
-                clear extrct Xfft Xsource Xfft B x0
+                clear extrct Xfft Xsource Xfft B x0 
                 %rplot and zplot describe dimensions of x
                 %rd=sd;
                 save([savename '.mat']);
                 
                 
         end  %case_output, Icase
+    catch
+        disp('crash')
     end %try
     
 end
