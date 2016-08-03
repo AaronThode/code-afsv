@@ -87,12 +87,14 @@ try
                 continue
             end
             
+            fmin=min([data.locations{I}.feature.robust_fmin]);
+            Igood(I)=(fmin>=filter_params.freq_range(1))&(fmin<=filter_params.freq_range(2));
             %Does succesfull localization fit?
             pos=data.locations{I}.position.location;
             poss(I,:)=pos;
             tmp=[pos(1)-filter_params.UTM_center(1) pos(2)-filter_params.UTM_center(2)];
             rangee(I)=sqrt(sum(tmp.^2));
-            Igood(I)=(filter_params.range>=rangee(I));
+            Igood(I)=Igood(I) && (filter_params.range>=rangee(I));
             
             
         end
@@ -121,6 +123,8 @@ try
             pos=data.locations{I}.position.location;
             poss(I,:)=pos;
             Igood(I)= pos(1)>=filter_params.easting(1) && pos(1)<=filter_params.easting(2);
+            Igood(I)=Igood(I)&& (fmin>=filter_params.freq_range(1))&&(fmin<=filter_params.freq_range(2));
+           
             Igood(I)= Igood(I) && pos(2)>=filter_params.northing(1) && pos(2)<=filter_params.northing(2);
             
         end

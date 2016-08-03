@@ -68,37 +68,3 @@ hold off
 
 end
 
-% subplot(2,1,2);
-% theta = 80:1:100;
-% [R,xp] = radon(RTF,theta);
-% % imshow(R,[],'Xdata',theta,'Ydata',xp,...
-% %             'InitialMagnification','fit')
-% imagesc(theta,xp,R);
-% caxis([0 3e-3])
-% xlabel('\theta (degrees)')
-% ylabel('x''')
-% 
-% [~,I90]=min(abs(theta-90));
-% slicee=R(:,I90);
-
-
-%subplot(2,1,1);
-
-%%% Pekeris cutoff frequencies
-%%D=55;
-% pek_cutoff=c1*c2/2/D/sqrt(c2^2-c1^2);
-% threshold=4*[1 3]; % thresholds to determine the height and the width of the modes (dB)
-% zone=struct('dpek',pek_cutoff*M1/Fe_w,'pek_cutoff',pek_cutoff*M1/Fe_w);
-% 
-% 
-% hold on
-% 
-% for mm=1:Nmode
-%     [x_rect,y_rect,zone]=modes_rect(RTF,threshold,zone);
-%     plot(x_rect/Fe_w,y_rect*Fe_w/M1,'Color','k','LineWidth',2)
-%     plot(t_w(ceil(M/2):end),linspace(pek_cutoff*(mm-0.5),pek_cutoff*(mm-0.5),M-ceil(M/2)+1),'Color',colorMode(1+mod(mm-1,length(colorMode))))
-%     values(:,mm)=evalWarp(RTF,x_rect,y_rect,Fe_w,M1);
-% end
-% 
-
-%values(end+1,:)=ones(size(values(end,:)))*kurtosis(slice);

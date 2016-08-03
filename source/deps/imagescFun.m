@@ -7,7 +7,7 @@ z=z-max(max(z));
 imagesc(x,y,z)
 colormap(jet)
 colorbar
-caxis([-30 0]);
+caxis([-20 0]);
 if strcmp(axOrientation,'xy')
     axis xy
 else

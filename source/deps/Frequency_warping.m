@@ -1,6 +1,7 @@
-function [modes_ok,filtt]=Frequency_warping(x,stft_param,filt_param,hdr,handles,param_file,var_temp)
-%function [modes_ok,filtt]=Frequency_warping(x,stft_param,filt_param,hdr,handles,param_file,var_temp)
-
+function [modes_ok,filtt,modes_signal]=Frequency_warping(x,stft_param,filt_param,hdr,handles,param_file,var_temp)
+%function [modes_ok,filtt,modes_signal]=Frequency_warping(x,stft_param,filt_param,hdr,handles,param_file,var_temp)
+%  modes_ok: [Nmodes Ntime] of mode time series without source phase
+%  modes_signal:  [Nmodes Ntime] of mode time series with source phase added back
 Nmodes=5;                           % Number of modes to search and localize
 D=51;  %Depth for modeling Pekeris frequencies...
 %%% Create a folder to save the results
@@ -148,6 +149,15 @@ while redo
     modes_ok=modes_ok(Isort,:);
     
     
+    %Add back original deconvolved source spectrum...
+    for I=1:size(modes_ok)
+        N=size(modes_ok,2);
+        x_f=fft(modes_ok(I,:).',N);
+        modes_signal(I,:)=ifft(x_f.*exp(1i*source_phase),N,'symmetric').';
+
+        
+    end
+    
 %     filtt.mode_stack=zeros(N,Nmode,Nhydros);
 %     
 %     % Apply for each hydrophone
@@ -166,21 +176,19 @@ while redo
 %     end
 %     
 %     modes_ok=filtt.mode_stack(:,:,hydro_ref)';
-    %% Extraction dispersion curves
+    %%%%% Extract dispersion curves for impulse respons
     
     tm=zeros(Nmode,NFFT);
-    
     for m=1:Nmode
         [~, mode_rtfr,~]=tfrrsp(hilbert(modes_ok(m,:).'),1:N,NFFT,hamming(Nwindow));
         [tm(m,:),~]=momftfr(mode_rtfr,1,N,time);
     end
     
-    %% Last figures
     
-    % Legend
     leg=repmat(' ',Nmode,7);
     figure
     
+    %%%%%Plot impulse response mode estimates
     for m=1:Nmode
         leg_i=['Mode ' num2str(m)];
         leg(m,1:length(leg_i))=leg_i;
@@ -191,14 +199,48 @@ while redo
         title(leg_i)
     end
     
-    % Plot received TFR+dispersion curves
-    % tfr=tfrstft(x(filtt.xmin:end,hydro_ref),1:N,NFFT,hamming(Nwindow));
-    tfr=tfrstft(x(1:end,hydro_ref),1:N,NFFT,hamming(Nwindow));
-    
+    %%%Plot impulse mode dispersion curve
+    tfr=tfrstft(x_deconv(1:end,hydro_ref),1:N,NFFT,hamming(Nwindow));
     TFR=20*log10(abs(tfr));
+    
     figure
     imagescFun(time,freq,TFR,'xy');
     ylim(flims)
+    %caxis([prctile(TFR(:),70) prctile(TFR(:),100)])
+    title('Impulse response estimate and extracted dispersion curves')
+    hold on
+    plot(tm,freq,'linewidth',2)
+    xlabel('Time [s]')
+    ylabel('Frequency [Hz]')
+    grid on
+    legend(leg)
+    
+    %%%%%Plot orignal signal components
+    leg=repmat(' ',Nmode,7);
+    figure
+    for m=1:Nmode
+        leg_i=['Mode ' num2str(m)];
+        leg(m,1:length(leg_i))=leg_i;
+        subplot(ceil(sqrt(Nmode)),ceil(sqrt(Nmode)),m)
+        tfr_modes=tfrstft(modes_signal(m,:)',1:N,NFFT,hamming(Nwindow));
+        imagescFun(time,freq,20*log10(abs(tfr_modes)),'xy')
+        ylim(flims)
+        title(leg_i)
+    end
+ 
+    tm=zeros(Nmode,NFFT);
+    for m=1:Nmode
+        [~, mode_rtfr,~]=tfrrsp(hilbert(modes_signal(m,:).'),1:N,NFFT,hamming(Nwindow));
+        [tm(m,:),~]=momftfr(mode_rtfr,1,N,time);
+    end
+    
+     %%%Plot original mode dispersion curve
+    tfr=tfrstft(x(1:end,hydro_ref),1:N,NFFT,hamming(Nwindow));
+    TFR=20*log10(abs(tfr));
+    
+    figure
+    imagescFun(time,freq,TFR,'xy');
+     ylim(flims)
     %caxis([prctile(TFR(:),70) prctile(TFR(:),100)])
     title('Received signal and extracted dispersion curves')
     hold on
@@ -207,7 +249,6 @@ while redo
     ylabel('Frequency [Hz]')
     grid on
     legend(leg)
-    
     redo=input('Enter 1 to redo mode selection:');
     if isempty(redo)
         redo=0;
@@ -339,7 +380,7 @@ for I=1:Ncount
     [~,vals]=choose_instant(x_deconv,params,j_min,Fs,r_guess,c1,c2,D,Nmodes);
     %caxis('auto');
     axis('xy')
-    ylim([0 200]);
+    ylim([0 250]);
     caxis([-20 0]);
     title(sprintf('Choice: %i, Offset: %6.2f',I,tmp(I)));
 end

@@ -36,18 +36,19 @@ GSI_location_dir=sprintf(GSI_location_dir_template,year,year);
 prompt={'Enter a template string for a location output file:', ...
     'Enter geographical restriction (Range, West,Center,East), 2x2 UTC matrix, or ''All'':', ...
     'UTM location to use if ''Range'' selected above (''2010 array'',''2012 array'',''2014 array'',or two-element vector):', ...
-    'Range (km) [used only if ''Range'' selected above]:'};
+    'Range (km) [used only if ''Range'' selected above]:','Min Frequency range (Hz)'};
 name='File Template';
 numlines=1;
 options.Resize='on';
 options.WindowStyle='normal';
-defaultanswer={sprintf('S%i*_BearingInterval_Huber_FilteredLocations.mat',Site),'Range',sprintf('%s array',year),'10'};
+defaultanswer={sprintf('S%i*_BearingInterval_Huber_FilteredLocations.mat',Site),'Range',sprintf('%s array',year),'10','[30 50]'};
 
 answer=inputdlg(prompt,name,numlines,defaultanswer,options);
 fnames=dir(answer{1});
 loc_keyword=answer{2};
 UTM_keyword=answer{3};
 filter_params.range=eval(answer{4})*1000;
+filter_params.freq_range=eval(answer{5});
 
 filter_params.keyword=loc_keyword;
 filter_params.UTM_keyword=UTM_keyword;

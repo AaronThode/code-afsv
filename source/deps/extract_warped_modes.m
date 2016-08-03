@@ -12,24 +12,27 @@ rtf(floor(M/2):end,:)=[];                   % Delete negative frequencies
 M1=M/2;
 RTF=abs(rtf);
 
-RTFdB=10*log10(RTF);
+RTFdB=20*log10(RTF);
 workspace;
 
 disp('Beginning warping')
 % Mode number
 Nmode=nan;
 while isnan(Nmode) % if the user make a misclic in the mode selection, press esc to do it again
-    figure(10);
+    figure(10);clf;
+    
     imagescFun(t_w,f_w,RTFdB-max(max(RTFdB)),'ij')
     axis('xy');
     ylim(filt.fwlims)
     %caxis(clims)
     title('Enter a mode number:')
     Nmode=str2double(input('Number of modes ? ','s'));
-    caxis([-20 0]);
-    climm=input('Enter visual range [-20 0]');
+    caxis([-20 0])
+    climm=input('Enter visual range ([-20 0]):');
     if ~isempty(climm)
         caxis(climm);
+    else
+        caxis([-20 0]);
     end
     %close(fig)
 end

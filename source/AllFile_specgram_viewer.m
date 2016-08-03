@@ -51,7 +51,7 @@ end
 if nargout
     [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
 else
-    gui_mainfcn(gui_State, varargin{:});
+     gui_mainfcn(gui_State, varargin{:});
 end
 
 end
@@ -7878,6 +7878,10 @@ if isfield(Event,'localization')&&~isempty(getfield(Event,'localization'))
     Istation=str2num(Event.Istation);
     
     DASAR_coords=[Event.localization.station_position.easting Event.localization.station_position.northing];
+    if ~isfield(Event.localization,'bearings_all')
+        disp('No localization exists')
+        return
+    end
     bearings=Event.localization.bearings_all;
     Igood=find(~isnan(bearings));
     
@@ -10237,14 +10241,14 @@ else
     if ~isfield(tmp,'f_points'); param_file='';end;
 
     %%%%Function to call warping
-    [modes,filtt]=Frequency_warping(x0,stft_param,filt_param,hdr,handles,param_file,tmp);
+    [modes,filtt,modes_source]=Frequency_warping(x0,stft_param,filt_param,hdr,handles,param_file,tmp);
     if isempty(modes)
         return
     end
     
     yes=menu('Save Result?','Yes','No');
     if yes==1
-       save FrequencyWarpingResult modes filtt filt_param stft_param 
+       save FrequencyWarpingResult modes modes_source filtt filt_param stft_param 
     end
     keyboard
     Nchan=modes.Nchan;
