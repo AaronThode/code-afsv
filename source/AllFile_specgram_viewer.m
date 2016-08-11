@@ -10188,12 +10188,12 @@ else
         Rest=ceil(Fs/fmax/2.5);
         %Rest=10;
         tempWindow=str2double(get(handles.edit_winlen,'String'));
-        deconv_chc='1';
+        deconv_chc='0';
 
         %Load saved parameters, select new ones
         prompt={'Range guess(m)','water speed (m/s)','bottom speed (m/s)','Nfft','N_window', ...
-            'Decimation factor:','Number of FM contour points:','Deconvolve? (yes=1)'};
-        def={'10000','1442','1650',Nfft,WindowSize,num2str(Rest),'2',deconv_chc};
+            'Decimation factor:','Number of FM contour points:','Deconvolve? (yes=1)','Beta transform? (no=0, yes= beta value'};
+        def={'22000','1442','1650',Nfft,WindowSize,num2str(Rest),'2',deconv_chc,'-3'};
         dlgTitle	=	sprintf('Warping parameters');
         lineNo		=	ones(size(prompt));
         answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
@@ -10210,9 +10210,12 @@ else
         R=eval(answer{6});
         Ncontour=eval(answer{7});
         deconv_chc=eval(answer{8});
+        beta=eval(answer{9});
+        beta_transform=logical(beta~=0);
         
         tmp=struct('tdate_start',tdate_start,'tlen',tlen,'Ichan',Ichan,'Nchan',Nchan,'R',R,'Nfft',Nfft,'Fs',Fs,'N_window'...
-        ,N_window,'Ncontour',Ncontour,'r_guess',r_guess,'c1',c1,'c2',c2,'deconv_chc',deconv_chc);
+        ,N_window,'Ncontour',Ncontour,'r_guess',r_guess,'c1',c1,'c2',c2,'deconv_chc',deconv_chc, ...
+        'beta_transform',beta_transform,'beta',beta);
        
         [minfreq,maxfreq]=deal(1000*str2double(handles.edit_fmin.String),1000*str2double(handles.edit_fmax.String));
     end

@@ -13,7 +13,19 @@ x_min=max(1,delay);
 x_ok=[x_deconv(x_min:end); zeros(x_min-1,1)];
 
 %% Warping
-[s_w, Fe_w]=warp_temp_exa(x_ok,Fs,r,c1);     % s_w: warped signal, Fe_w: new warping frequency
+
+if isfield(params,'beta_transform')
+    if ~params.beta_transform
+        [s_w, Fe_w]=warp_temp_exa(x_ok,Fs,r,c1);    % s_w: warped signal, Fe_w: new warping frequency
+    else
+        [s_w, Fe_w]=warp_temp_exa_beta(x_ok,Fs,r,c1,params.beta);
+    end
+    
+else
+     [s_w, Fe_w]=warp_temp_exa(x_ok,Fs,r,c1);
+end
+
+%[s_w, Fe_w]=warp_temp_exa(x_ok,Fs,r,c1);     % s_w: warped signal, Fe_w: new warping frequency
 clear x_ok
 M=length(s_w);
 

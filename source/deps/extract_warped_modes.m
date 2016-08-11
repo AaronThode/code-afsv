@@ -1,9 +1,13 @@
-%function [modes,Nmode,filt] = extract_warped_modes(x_ok,Fe,N,Nww,r,c,clims,filt)
+%function [modes,Nmode,filt] = extract_warped_modes(x_ok,Fe,N,Nww,r,c,clims,filt,,beta_transform,beta)
 
-function [modes,Nmode,filt] = extract_warped_modes(x_ok,Fe,N,Nww,r,c,clims,filt)
+function [modes,Nmode,filt] = extract_warped_modes(x_ok,Fe,N,Nww,r,c,clims,filt,beta_transform,beta)
 
 %%% Warping
-[s_w, Fe_w]=warp_temp_exa(x_ok,Fe,r,c);    % s_w: warped signal, Fe_w: new warping frequency
+if ~beta_transform
+    [s_w, Fe_w]=warp_temp_exa(x_ok,Fe,r,c);    % s_w: warped signal, Fe_w: new warping frequency
+else
+   [s_w, Fe_w]=warp_temp_exa_beta(x_ok,Fe,r,c,beta); 
+end
 M=length(s_w);
 t_w=(0:M-1)/Fe_w;                           % Warped time
 f_w=(0:M-1)*Fe_w/M;                         % Warped frequencies
@@ -145,7 +149,13 @@ for mm=1:Nmode
     % selection is done only on the positive frequencies:
     [mode_temp_warp]=real(sum(mode_rtf_warp,1))/M1/max(hamming(Nww)/norm(hamming(Nww)));
     
-    modes(mm,:)=iwarp_temp_exa(mode_temp_warp,Fe_w,r,c,Fe,N);
+    if ~beta_transform
+        modes(mm,:)=iwarp_temp_exa(mode_temp_warp,Fe_w,r,c,Fe,N);
+        % s_w: warped signal, Fe_w: new warping frequency
+    else
+        %(s_w,Fe_w,r,c,beta,Fe,N)
+        modes(mm,:)=iwarp_temp_exa_beta(mode_temp_warp,Fe_w,r,c,beta,Fe,N);
+    end
     disp(strcat('Mode ',int2str(mm),' filtered'))
     clear mode_rtf_warp mode_temp_warp
 end  %%mm

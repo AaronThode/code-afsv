@@ -1,7 +1,10 @@
 function [modes_ok,filtt,modes_signal]=Frequency_warping(x,stft_param,filt_param,hdr,handles,param_file,var_temp)
 %function [modes_ok,filtt,modes_signal]=Frequency_warping(x,stft_param,filt_param,hdr,handles,param_file,var_temp)
 %  modes_ok: [Nmodes Ntime] of mode time series without source phase
-%  modes_signal:  [Nmodes Ntime] of mode time series with source phase added back
+%  modes_signal:  [Nmodes Ntime] of mode time series with source phase
+%  added back
+%
+% var_temp: structure of variables for warping
 Nmodes=5;                           % Number of modes to search and localize
 D=51;  %Depth for modeling Pekeris frequencies...
 %%% Create a folder to save the results
@@ -93,7 +96,7 @@ end
 
 next(1:end)=1;
 
-if strcmp(param_file,'')&var_temp.deconv_chc==1 % If the user didn't select a file for deconvolution
+if strcmp(param_file,'')&&var_temp.deconv_chc==1 % If the user didn't select a file for deconvolution
     saveDeconv=input('Do you want to save the deconvolution ?  (y/n) ','s');
     if saveDeconv=='y'
         var_temp.t_points=t_points;
@@ -104,13 +107,19 @@ if strcmp(param_file,'')&var_temp.deconv_chc==1 % If the user didn't select a fi
     end
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Time selection (for warping)
-%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% If beta transform is desired, go ahead and time reverse the signal
+%%% before selecting the start time
+if var_temp.beta_transform&&var_temp.beta<0
+    x_deconv=flipud(x_deconv);
+end
 
 next(2:end)=1;
 
-[filtt,params]=get_start_time(x_deconv,NFFT,N,Nwindow,Fs,flims,r_guess,c1,c2,D,Nmodes,filtt);
+[filtt,params]=get_start_time(x_deconv,NFFT,N,Nwindow,Fs,flims,r_guess,c1,c2,D,Nmodes,filtt,var_temp.beta_transform,var_temp.beta);
 delays=filtt.xmin;
 %%%%filtt.min are times to start extracting...
 disp('End of time selection')
@@ -131,7 +140,7 @@ while redo
     Nmode=0;
     for I=1:length(delays)
         x_ok=[x_deconv(delays(I):end); zeros(delays(I)-1,1)];
-        [modes,Nm,filtt] = extract_warped_modes(x_ok,Fs,N,params.Nww,r_guess,c1,params.clims,filtt);
+        [modes,Nm,filtt] = extract_warped_modes(x_ok,Fs,N,params.Nww,r_guess,c1,params.clims,filtt,var_temp.beta_transform,var_temp.beta);
         
         temp=input('Enter mode numbers:');
         if isempty(temp)||Nm==0
@@ -265,7 +274,7 @@ end
 
 
 
-function  [filtt,params]=get_start_time(x_deconv,NFFT,N,Nwindow,Fs,flims,r_guess,c1,c2,D,Nmodes,filtt)
+function  [filtt,params]=get_start_time(x_deconv,NFFT,N,Nwindow,Fs,flims,r_guess,c1,c2,D,Nmodes,filtt,beta_transform,beta)
 
 %%filtt.xmin is final shift..
 
@@ -296,7 +305,10 @@ j_list=max(1,j-nj*dj):dj:max(1,j+nj*dj);    % List of delay around the selected 
 
 % Set the axis scale for the whole video
 fig=figure;
-[params,~]=choose_instant(x_deconv,struct(),j_list(1),Fs,r_guess,c1,c2,D,Nmodes);
+params.beta=beta;
+params.beta_transform=beta_transform;
+
+[params,~]=choose_instant(x_deconv,params,j_list(1),Fs,r_guess,c1,c2,D,Nmodes);
 
 close(fig)
 
