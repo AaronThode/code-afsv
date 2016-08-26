@@ -10191,6 +10191,7 @@ else
         deconv_chc='0';
 
         %Load saved parameters, select new ones
+        %%% JULIEN, here is where you specify arbitrary beta %%%
         prompt={'Range guess(m)','water speed (m/s)','bottom speed (m/s)','Nfft','N_window', ...
             'Decimation factor:','Number of FM contour points:','Deconvolve? (yes=1)','Beta transform? (no=0, yes= beta value'};
         def={'22000','1442','1650',Nfft,WindowSize,num2str(Rest),'2',deconv_chc,'-3'};
@@ -10210,6 +10211,8 @@ else
         R=eval(answer{6});
         Ncontour=eval(answer{7});
         deconv_chc=eval(answer{8});
+        
+        %%JULIEN
         beta=eval(answer{9});
         beta_transform=logical(beta~=0);
         

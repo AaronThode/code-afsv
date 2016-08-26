@@ -1,6 +1,7 @@
 function [params,values,slice] = choose_instant(x_deconv,params,delay,Fs,r,c1,c2,D,Nmode)
 % input: 
-%  x_deconv: time series
+%  x_deconv: time series.  If beta<0 time series has already been
+%  time-reversed
 %  delay: sample at which to begin warping...
 % slice: sum of frequency-warped spectrogram along time axis
 
@@ -9,16 +10,19 @@ values=zeros(3,Nmode); % 3 evaluation function (assess the quality of the warpin
 
 x_min=max(1,delay);               
 
+%Strip signal of parts before (or after, for beta<0) signal5
 %x_ok=ifft(fft(x_deconv,N).*exp(1i*2*pi*x_min/N*(1:N)'),'symmetric'); % x_deconv is delayed by x_min
 x_ok=[x_deconv(x_min:end); zeros(x_min-1,1)];
 
 %% Warping
 
+%%%JULIEN
 if isfield(params,'beta_transform')
     if ~params.beta_transform
         [s_w, Fe_w]=warp_temp_exa(x_ok,Fs,r,c1);    % s_w: warped signal, Fe_w: new warping frequency
     else
-        [s_w, Fe_w]=warp_temp_exa_beta(x_ok,Fs,r,c1,params.beta);
+        [s_w, Fe_w]=warp_temp_exa_beta(x_ok,Fs,r,c1,params.beta,params.jmax/Fs);
+        % Note that s_w is no longer time-reversed
     end
     
 else
@@ -26,6 +30,14 @@ else
 end
 
 %[s_w, Fe_w]=warp_temp_exa(x_ok,Fs,r,c1);     % s_w: warped signal, Fe_w: new warping frequency
+figure(50)
+subplot(211)
+plot(x_ok)
+subplot(212)
+plot(s_w)
+pause(0.1);
+
+
 clear x_ok
 M=length(s_w);
 
@@ -53,12 +65,16 @@ if ~isfield(params,'fwlims')
     fw_thresh=1e-2;
     while(max(RTF(fw_max,:))/max(RTF(:))<=fw_thresh)
         fw_max=fw_max-1;
+        if fw_max<0
+            keyboard
+        end
     end
     params.fwlims=[0 fw_max]*Fe_w/M1;
     params.clims=[0 max(RTF(:))];
 end
 
 %subplot(2,1,1)
+figure(200)
 imagescFun(t_w,f_w,20*log10(abs(RTF)),'ij')
 ylim(params.fwlims)
 xlim([0 params.xmax])
@@ -67,16 +83,17 @@ xlim([0 params.xmax])
 toc
 
 %%% Pekeris cutoff frequencies
-hold on
-pek_cutoff=c1*c2/(2*D*sqrt(c2^2-c1^2));
-colorMode=['r','w','c','y','g','m'];
-for mm=1:Nmode
-     %[x_rect,y_rect,zone]=modes_rect(RTF,threshold,zone);
-     %plot(x_rect/Fe_w,y_rect*Fe_w/M1,'Color','k','LineWidth',2)
-     plot(t_w(ceil(M/2):end),linspace(pek_cutoff*(mm-0.5),pek_cutoff*(mm-0.5),M-ceil(M/2)+1),'Color',colorMode(1+mod(mm-1,length(colorMode))))
-     %values(:,mm)=evalWarp(RTF,x_rect,y_rect,Fe_w,M1);
- end
-hold off
-
+if params.beta>=0
+    hold on
+    pek_cutoff=c1*c2/(2*D*sqrt(c2^2-c1^2));
+    colorMode=['r','w','c','y','g','m'];
+    for mm=1:Nmode
+        %[x_rect,y_rect,zone]=modes_rect(RTF,threshold,zone);
+        %plot(x_rect/Fe_w,y_rect*Fe_w/M1,'Color','k','LineWidth',2)
+        plot(t_w(ceil(M/2):end),linspace(pek_cutoff*(mm-0.5),pek_cutoff*(mm-0.5),M-ceil(M/2)+1),'Color',colorMode(1+mod(mm-1,length(colorMode))))
+        %values(:,mm)=evalWarp(RTF,x_rect,y_rect,Fe_w,M1);
+    end
+    hold off
+end
 end
 

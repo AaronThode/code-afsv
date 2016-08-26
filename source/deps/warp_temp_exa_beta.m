@@ -1,5 +1,8 @@
-%function [s_w, Fe_w]=warp_temp_exa_beta(s,Fe,r,c,beta)
-function [s_w, Fe_w]=warp_temp_exa_beta(s,Fe,r,c,beta)
+%function [s_w, Fe_w]=warp_temp_exa_beta(s,Fe,r,c,beta,tmax)
+% tmax in seconds, r in meters, c in c/sec
+function [s_w, Fe_w]=warp_temp_exa_beta(s,Fe,r,c,beta,tmax)
+
+%%% If beta<0, signal has been time-reversed
 
 if iscolumn(s)
     s=s.';
@@ -12,25 +15,50 @@ dt=1/Fe;
 
 %tmin=0;
 %tmax=(N-1)/Fe;
-
-tmin=r/c;
-tmax=(N-1)/Fe+r/c;
-
 %% Step 2: new time step
-dt_w=iwarp_t_beta(tmax,r,c,beta)-iwarp_t_beta(tmax-dt,r,c,beta);
+
+if beta>0
+    tmin=r/c;
+    tmax=(N-1)/Fe+r/c;
+    dt_w=iwarp_t_beta(tmax,r,c,beta)-iwarp_t_beta(tmax-dt,r,c,beta);
+
+else
+    %tmax=r/c;
+    if isempty(tmax)
+        error('warp_temp_exa_beta:  tmax is empty, although beta is < 0');
+        return
+    end
+    tmin=r/c-(N-1)/Fe;  %tmin is defined by the first time point in Ulysses window
+    tmax=r/c-tmax; %Input tmax is defined relative to start of signal
+    dt_w=abs(iwarp_t_beta(tmin,r,c,beta)-iwarp_t_beta(tmin+dt,r,c,beta));
+
+end
 
 %% Step 3: new sampling frequency
 Fe_w=2/dt_w;
 
 %% Step 4: new number of points
-t_w_max=iwarp_t_beta(tmax,r,c,beta);
-M=ceil(t_w_max*Fe_w);
+if beta>0
+    t_w_max=iwarp_t_beta(tmax,r,c,beta);
+    M=ceil(t_w_max*Fe_w);
+
+else
+    t_w_max=iwarp_t_beta(tmax,r,c,beta);  %Should be the same for all j_list
+    t_w_min=iwarp_t_beta(tmin,r,c,beta);
+    M=ceil((t_w_max-t_w_min)*Fe_w);
+
+end
 
 
 %% Step 5: warped signal computation
 
 % Warped time axis, uniform sampling
-t_w=(0:M-1)/Fe_w;
+if beta>0
+    t_w=(1:M)/Fe_w;
+else
+    t_w=t_w_min+(1:M)/Fe_w;
+    s=fliplr(s);  %un time-reverse signal. 
+end
 
 % Warped time axis, non-uniform sampling (starts from r/c)
 t_ww=warp_t_beta(t_w,r,c,beta);

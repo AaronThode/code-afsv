@@ -84,12 +84,12 @@ switch filetype
             prompt={sprintf('Depths: %s',mat2str(simulated.zplot)), ...
                 sprintf('Ranges: %s',mat2str(simulated.rplot)), ...
                 sprintf('Modes: %s', mat2str(1:size(simulated.x,3)))};
-            defaultanswer={'2','22000',' '};
+            defaultanswer={'22','22000',' '};
             
         else
             prompt={sprintf('Depths: %s',mat2str(simulated.zplot)), ...
                 sprintf('Ranges: %s',mat2str(simulated.rplot))};
-            defaultanswer={'2','22000'};
+            defaultanswer={'22','22000'};
         end
         answer=inputdlg(prompt,name,numlines,defaultanswer);
         [~,Iz]=min(abs(eval(answer{1})-simulated.zplot));
