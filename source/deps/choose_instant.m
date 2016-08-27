@@ -82,11 +82,11 @@ params.f_w=f_w;
 
 %subplot(2,1,1)
 figure(200)
-subplot(2,1,1)
-%,WINDOW,NOVERLAP,NFFT,Fs
-Nfft=128;
-spectrogram(x_ok,Nfft,round(0.9*Nfft),Nfft,Fs,'yaxis');
-subplot(2,1,2)
+% subplot(2,1,1)
+% %,WINDOW,NOVERLAP,NFFT,Fs
+% Nfft=128;
+% spectrogram(x_ok,Nfft,round(0.9*Nfft),Nfft,Fs,'yaxis');
+% subplot(2,1,2)
 imagescFun(t_w,f_w,20*log10(abs(RTF)),'ij')
 ylim(params.fwlims)
 %xlim([0 params.xmax])

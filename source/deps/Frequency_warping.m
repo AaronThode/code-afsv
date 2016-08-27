@@ -289,31 +289,31 @@ disp('Time selection')
 
 if beta<0
     
-    
-    %title('Signal after source deconvolution');   
-    title('Signal after source deconvolution: choose two times (tmax, and then t=r/c)')
-    tmp=ginput(2);
-    
-    
-    disp('Select two points to test r/c estimation:');
-tmp=ginput(2);
-f=tmp(:,2);
-tt=tmp(:,1);
-rr=(f(2)/f(1)).^alpha;
-Trc=(rr*tt(2)-tt(1))/(rr-1);
-fprintf('Estimated rc time is %8.6f seconds\n',Trc);
+    nothappy=1;
+    while ~isempty(nothappy)
+        %title('Signal after source deconvolution');
+        %         title('Signal after source deconvolution: choose two times (tmax, and then t=r/c)')
+        %         tmp=ginput(2);
+        %
+        disp('Select two points to estimate r/c estimation, last point is tmax:');
+        tmp=ginput(2);
+        f=tmp(:,2);
+        tt=tmp(:,1);
+        rr=(f(2)/f(1)).^((1+beta)/beta);
+        Trc=(rr*tt(2)-tt(1))/(rr-1);
+        fprintf('Estimated rc time is %8.6f seconds\n',Trc);
+        hold on
+        line([1 1]*Trc,[0.8*flims(1) 1.2*flims(2)],'linewidth',2,'color','w')
+        line([1 1]*tt(2),[0.8*flims(1) 1.2*flims(2)],'linewidth',2,'color','g')
+        
+        nothappy=input('Not happy?');
+    end
 
-
-    j=max(1,ceil(Fs*tmp(2,1))); % r/c estimate
-    params.jmax=max(1,ceil(Fs*tmp(1,1)));  %index of tmax 
+    j=max(1,ceil((Fs*Trc))); % r/c estimate
+    params.jmax=max(1,ceil(Fs*tt(2)));  %index of tmax 
     params.j=j;
     %Convert into time-reversed units
-    params.dj=max(1,ceil(diff(tmp(:,1))*Fs));
-    hold on
-    line([1 1]*tmp(1,1),[0.8*flims(1) 1.2*flims(2)],'linewidth',2,'color','w')
-    line([1 1]*tmp(2,1),[0.8*flims(1) 1.2*flims(2)],'linewidth',2,'color','g')
-    
-    
+    params.dj=max(1,ceil(diff(tt)*Fs));
     
 else    
     title('Signal after source deconvolution: choose the first time instant (for warping)')
@@ -341,7 +341,7 @@ else %beta<0
     j_list=max(1,j-nj*dj):dj:max(1,j+nj*dj);    % List of delay around the selected time
 
     %params.jmax_list=params.jmax0-j_list;   %tmax should be a constant                                           
-    j_list=j_list(j_list>params.jmax);
+    j_list=j_list(j_list>params.jmax&j_list<length(x_deconv));
 end
 
 
@@ -386,13 +386,11 @@ for jj = 1:length(j_list) % try several time instants
 end
 
 
-figure;
-
+figure(6);
 Fe_max=max(params.fwlims);
 delayy=(j_list-j)/Fs;
 subplot(2,1,1)
 slicedB=10*log10(slice_sum);
-figure(6)
 pcolor(delayy,params.f_w(1:size(slice_sum,1)),slicedB-max(max(slicedB)));
 shading flat
 colorbar;colormap(jet);
@@ -417,6 +415,7 @@ end
 
 kurtosis_val(Irow,:)=kurtosis(slice_sum);
 kurtosis_fw(Irow)=Fe_max;
+
 subplot(2,1,2);
 pcolor(delayy,kurtosis_fw,10*log10(kurtosis_val))
 xlabel('Delay (s)')
