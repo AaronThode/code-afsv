@@ -114,9 +114,9 @@ end
 %JULIEN
 %%% If beta transform is desired, go ahead and time reverse the signal
 %%% before selecting the start time
-if var_temp.beta_transform&&var_temp.beta<0
-    x_deconv=flipud(x_deconv);
-end
+% if var_temp.beta_transform&&var_temp.beta<0
+%     x_deconv=flipud(x_deconv);
+% end
 
 next(2:end)=1;
 
@@ -280,7 +280,7 @@ function  [filtt,params]=get_start_time(x_deconv,NFFT,N,Nwindow,Fs,flims,r_guess
 %%filtt.xmin is final shift..
 
 TFR=20*log10(abs(tfrstft(x_deconv,1:N,NFFT,hamming(Nwindow))));
-fig=figure;
+fig=figure(5);
 imagescFun((1:N)/Fs,Fs*(1:NFFT)/NFFT,TFR,'xy');
 ylim([0.8*flims(1) 1.2*flims(2)]);
 clear TFR
@@ -288,25 +288,44 @@ clear TFR
 disp('Time selection')
 
 if beta<0
-    title('Signal after source deconvolution, time-reversed');   
-    title('Signal after source deconvolution, time-reversed: choose two times (t=r/c, and then time where signal seems to begin)')
+    
+    
+    %title('Signal after source deconvolution');   
+    title('Signal after source deconvolution: choose two times (tmax, and then t=r/c)')
     tmp=ginput(2);
-    j=max(1,ceil(Fs*tmp(1,1))); % First time instant guess
-    params.jmax0=max(1,ceil(Fs*tmp(2,1)));  %index of tmax in time-reversed signal
+    
+    
+    disp('Select two points to test r/c estimation:');
+tmp=ginput(2);
+f=tmp(:,2);
+tt=tmp(:,1);
+rr=(f(2)/f(1)).^alpha;
+Trc=(rr*tt(2)-tt(1))/(rr-1);
+fprintf('Estimated rc time is %8.6f seconds\n',Trc);
+
+
+    j=max(1,ceil(Fs*tmp(2,1))); % r/c estimate
+    params.jmax=max(1,ceil(Fs*tmp(1,1)));  %index of tmax 
+    params.j=j;
     %Convert into time-reversed units
-    params.dj=params.jmax0-j;
-    params.jmax=max(1,params.dj);  %Index is now location of tmax for normal signal.
+    params.dj=max(1,ceil(diff(tmp(:,1))*Fs));
+    hold on
+    line([1 1]*tmp(1,1),[0.8*flims(1) 1.2*flims(2)],'linewidth',2,'color','w')
+    line([1 1]*tmp(2,1),[0.8*flims(1) 1.2*flims(2)],'linewidth',2,'color','g')
+    
+    
     
 else    
     title('Signal after source deconvolution: choose the first time instant (for warping)')
     tmp=ginput(1);
     params.jmax=[];
+    j=max(1,ceil(Fs*tmp(1,1))); % First time instant guess
+
 end
 %caxis([prctile(TFR(:),60) prctile(TFR(:),100)]);
-j=max(1,ceil(Fs*tmp(1,1))); % First time instant guess
 j=j(1);
 dt=j/Fs;
-close(fig)
+%close(fig)
 
 %%% Choose a list of samples near the selected one
 frac=1/100;
@@ -316,13 +335,13 @@ if beta>=0
     j_list=max(1,j-nj*dj):dj:max(1,j+nj*dj);    % List of delay around the selected time
 
 else %beta<0
-    dj=max(1,ceil(2*frac*abs(params.dj)));
+    dj=max(1,ceil(10*frac*abs(params.dj)));
     nj=20;                                       % Number of steps in each direction
+    j_list=max(1,j:dj:max(1,j+2*nj*dj));    % List of delay around the selected time
     j_list=max(1,j-nj*dj):dj:max(1,j+nj*dj);    % List of delay around the selected time
-                                                % Note this is relative to
-                                                % time-reversed signal
-    params.jmax_list=params.jmax0-j_list;   %tmax should be a constant                                           
 
+    %params.jmax_list=params.jmax0-j_list;   %tmax should be a constant                                           
+    j_list=j_list(j_list>params.jmax);
 end
 
 
@@ -334,7 +353,7 @@ end
 fig=figure;
 params.beta=beta;
 params.beta_transform=beta_transform;
-params.jmax=params.jmax_list(1);
+%params.jmax=params.jmax_list(1);
 [params,~]=choose_instant(x_deconv,params,j_list(1),Fs,r_guess,c1,c2,D,Nmodes);
 
 close(fig)
@@ -345,18 +364,21 @@ figure
 
 for jj = 1:length(j_list) % try several time instants
     try
-    if beta<0
-        params.jmax=params.jmax_list(jj);
-    end
+%     if beta<0
+%         params.jmax=params.jmax_list(jj);
+%     end
     [~,~,slice]=choose_instant(x_deconv,params,j_list(jj),Fs,r_guess,c1,c2,D,Nmodes);
     
     if jj==1
         slice_sum=zeros(length(slice),length(j_list));
     end
-    slice_sum(:,jj)=slice(1:size(slice_sum,1));
-    %modes_value(:,:,jj)=vals;
-    title(['delay : ' num2str((j_list(jj)-j)/Fs) ' s'])
+    title(sprintf('delay : %6.2f s', ((j_list(jj)-j)/Fs)));
     pause(0.05);
+    
+    Np=min(size(slice_sum,1),length(slice));
+    slice_sum(1:Np,jj)=slice(1:Np);
+    %modes_value(:,:,jj)=vals;
+   
     %F(jj) = getframe(mov); % Movie
     catch
        continue 
@@ -370,6 +392,7 @@ Fe_max=max(params.fwlims);
 delayy=(j_list-j)/Fs;
 subplot(2,1,1)
 slicedB=10*log10(slice_sum);
+figure(6)
 pcolor(delayy,params.f_w(1:size(slice_sum,1)),slicedB-max(max(slicedB)));
 shading flat
 colorbar;colormap(jet);
@@ -399,7 +422,7 @@ pcolor(delayy,kurtosis_fw,10*log10(kurtosis_val))
 xlabel('Delay (s)')
 ylabel(sprintf('Kurtosis: %6.2f Hz width',Fe_window))
 grid on
-ylim([0 Fe_max])
+ylim([0 Fe_max]);
 colorbar
 
 
@@ -422,9 +445,9 @@ for I=1:Ncount
     
     subplot(ceil(Ncount/2),2,I)
     j_min=round(j+Fs*tmp(I));
-    if beta<0
-        params.jmax=params.jmax0-j_min;
-    end
+%     if beta<0
+%         params.jmax=params.jmax0-j_min;
+%     end
     [~,vals]=choose_instant(x_deconv,params,j_min,Fs,r_guess,c1,c2,D,Nmodes);
     %caxis('auto');
     axis('xy')

@@ -21,7 +21,10 @@ if isfield(params,'beta_transform')
     if ~params.beta_transform
         [s_w, Fe_w]=warp_temp_exa(x_ok,Fs,r,c1);    % s_w: warped signal, Fe_w: new warping frequency
     else
-        [s_w, Fe_w]=warp_temp_exa_beta(x_ok,Fs,r,c1,params.beta,params.jmax/Fs);
+        nzero=length(x_deconv)-x_min;
+        x_ok=[x_deconv(1:x_min); zeros(nzero,1)];
+        %dj=(params.j-x_min)+params.jmax;
+        [s_w, Fe_w]=warp_temp_exa_beta(x_ok,Fs,r,c1,params.beta,params.jmax/Fs,x_min/Fs);
         % Note that s_w is no longer time-reversed
     end
     
@@ -30,15 +33,15 @@ else
 end
 
 %[s_w, Fe_w]=warp_temp_exa(x_ok,Fs,r,c1);     % s_w: warped signal, Fe_w: new warping frequency
-figure(50)
-subplot(211)
-plot(x_ok)
-subplot(212)
-plot(s_w)
-pause(0.1);
+% figure(50)
+% subplot(211)
+% plot(x_ok)
+% subplot(212)
+% plot(s_w)
+% pause(0.1);
 
 
-clear x_ok
+%clear x_ok
 M=length(s_w);
 
 if ~isfield(params,'xmax')
@@ -60,27 +63,38 @@ params.f_w=f_w;
 
 % Adjust the size of the window and keep the same for each
 % time instant
-if ~isfield(params,'fwlims')
-    fw_max=M1-1;
+%if ~isfield(params,'fwlims')
+    temp=max(RTF,[],2)./max(RTF(:));
     fw_thresh=1e-2;
-    while(max(RTF(fw_max,:))/max(RTF(:))<=fw_thresh)
-        fw_max=fw_max-1;
-        if fw_max<0
-            keyboard
-        end
-    end
+    Igood=find(temp>=fw_thresh,1,'last');
+    fw_max=max(Igood);
+    %fw_max=M1-1;
+    %fw_thresh=1e-2;
+    %while(max(RTF(fw_max,:))/max(RTF(:))<=fw_thresh)
+    %    fw_max=fw_max-1;
+    %    if fw_max<0
+     %       keyboard
+    %    end
+   % end
     params.fwlims=[0 fw_max]*Fe_w/M1;
     params.clims=[0 max(RTF(:))];
-end
+%end
 
 %subplot(2,1,1)
 figure(200)
+subplot(2,1,1)
+%,WINDOW,NOVERLAP,NFFT,Fs
+Nfft=128;
+spectrogram(x_ok,Nfft,round(0.9*Nfft),Nfft,Fs,'yaxis');
+subplot(2,1,2)
 imagescFun(t_w,f_w,20*log10(abs(RTF)),'ij')
 ylim(params.fwlims)
-xlim([0 params.xmax])
+%xlim([0 params.xmax])
+fprintf('M: %i, delay: %i sec\n',M, delay/Fs);
+axis('xy');
 %caxis(params.clims)
 
-toc
+
 
 %%% Pekeris cutoff frequencies
 if params.beta>=0
