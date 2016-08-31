@@ -1,6 +1,8 @@
-%function [s_w, Fe_w]=warp_temp_exa_beta(s,Fe,r,c,beta,dtmax,dt_rc)
+%function [s_w, Fe_w,t_w_min]=warp_temp_exa_beta(s,Fe,r,c,beta,dtmax,dt_rc)
 % dtmax and dt_rc are times of tmax and r/c in seconds relative to s(1), r in meters, c in c/sec
-function [s_w, Fe_w]=warp_temp_exa_beta(s,Fe,r,c,beta,dtmax,dt_rc)
+%  beta is waveguide invariant.  If zero, use Bonnel's ideal waveguide
+%  warping
+function [s_w, Fe_w,t_w]=warp_temp_exa_beta(s,Fe,r,c,beta,dtmax,dt_rc)
 
 %%% If beta<0, signal has been time-reversed
 
@@ -61,7 +63,7 @@ else
     %s=fliplr(s);  %un time-reverse signal. 
 end
 
-% Warped time axis, non-uniform sampling (starts from r/c)
+%  non-uniform sampling of physical time (starts from r/c)
 t_ww=warp_t_beta(t_w,r,c,beta);
 
 % factor for energy conservation
@@ -74,7 +76,8 @@ coeff=sqrt(Fe/Fe_w)*sqrt(t_w./t_ww);
 
 s_aux=repmat(s,M,1);
 aux1=repmat(t_ww',1,N); % size=(M,1) -> repmat(1,N)
-aux2=repmat(tmin+(0:N-1)/Fe,M,1);       % size=(1,N) -> repmat(M,1)
+aux2=repmat(tmin+(0:N-1)/Fe,M,1); %physical times associated with s
+            % size=(1,N) -> repmat(M,1)
 
 aux=sinc(Fe*(aux1-aux2));           % size=(M,N)
 % end of exact interpolation --> interpolated signal is sum(s_aux.*aux,2)

@@ -111,17 +111,12 @@ end
 %%% Time selection (for warping)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%JULIEN
-%%% If beta transform is desired, go ahead and time reverse the signal
-%%% before selecting the start time
-% if var_temp.beta_transform&&var_temp.beta<0
-%     x_deconv=flipud(x_deconv);
-% end
 
 next(2:end)=1;
 
 [filtt,params]=get_start_time(x_deconv,NFFT,N,Nwindow,Fs,flims,r_guess,c1,c2,D,Nmodes,filtt,var_temp.beta_transform,var_temp.beta);
 delays=filtt.xmin;
+
 %%%%filtt.min are times to start extracting...
 disp('End of time selection')
 
@@ -132,7 +127,7 @@ disp('End of time selection')
 
 redo=1;
 N=length(x_deconv);
-time=(0:N-1)/Fs;
+%time=(0:N-1)/Fs;
 
 % Mode selection
 while redo
@@ -141,7 +136,14 @@ while redo
     Nmode=0;
     for I=1:length(delays)
         x_ok=[x_deconv(delays(I):end); zeros(delays(I)-1,1)];
-        [modes,Nm,filtt] = extract_warped_modes(x_ok,Fs,N,params.Nww,r_guess,c1,params.clims,filtt,var_temp.beta_transform,var_temp.beta);
+        if var_temp.beta<0
+            %nzero=length(x_deconv)-delays(I);
+            %x_ok=[x_deconv(1:delays(I)); zeros(nzero,1)];
+            x_ok=x_deconv;
+         
+        end
+        [modes,Nm,filtt] = extract_warped_modes(x_ok,Fs,N,params.Nww,r_guess,c1,params.clims,filtt,  ...
+           var_temp.beta_transform,var_temp.beta,params.dtmax,params.dt_rc);
         
         temp=input('Enter mode numbers:');
         if isempty(temp)||Nm==0
@@ -155,6 +157,8 @@ while redo
         
     end  %delays
     
+    %N=size(modes,1);
+    
     [mode_index,Isort]=sort(mode_index);
     modes_ok=modes_ok(Isort,:);
     
@@ -165,9 +169,9 @@ while redo
         x_f=fft(modes_ok(I,:).',N);
         modes_signal(I,:)=ifft(x_f.*exp(1i*source_phase),N,'symmetric').';
 
-        
     end
-    
+    time=(0:N-1)/Fs;
+
 %     filtt.mode_stack=zeros(N,Nmode,Nhydros);
 %     
 %     % Apply for each hydrophone
@@ -186,15 +190,13 @@ while redo
 %     end
 %     
 %     modes_ok=filtt.mode_stack(:,:,hydro_ref)';
-    %%%%% Extract dispersion curves for impulse respons
+    %%%%% Extract dispersion curves for impulse response
     
     tm=zeros(Nmode,NFFT);
     for m=1:Nmode
         [~, mode_rtfr,~]=tfrrsp(hilbert(modes_ok(m,:).'),1:N,NFFT,hamming(Nwindow));
         [tm(m,:),~]=momftfr(mode_rtfr,1,N,time);
-    end
-    
-    
+    end 
     leg=repmat(' ',Nmode,7);
     figure
     
@@ -210,7 +212,12 @@ while redo
     end
     
     %%%Plot impulse mode dispersion curve
-    tfr=tfrstft(x_deconv(1:end,hydro_ref),1:N,NFFT,hamming(Nwindow));
+    if var_temp.beta>=0
+        tfr=tfrstft(x_deconv(1:end,hydro_ref),1:N,NFFT,hamming(Nwindow));
+    else
+        tfr=tfrstft(sum(modes_ok,1)',1:N,NFFT,hamming(Nwindow));
+    end
+    
     TFR=20*log10(abs(tfr));
     
     figure
@@ -237,6 +244,13 @@ while redo
         ylim(flims)
         title(leg_i)
     end
+    
+    %subplot(ceil(sqrt(Nmode)),ceil(sqrt(Nmode)),m+1)
+    figure(300)
+    tfr_modes=tfrstft(sum(modes_signal,1)',1:N,NFFT,hamming(Nwindow));
+    imagescFun(time,freq,20*log10(abs(tfr_modes)),'xy')
+    ylim(flims)
+    title('All modes')
  
     tm=zeros(Nmode,NFFT);
     for m=1:Nmode
@@ -275,205 +289,6 @@ end
 
 
 
-function  [filtt,params]=get_start_time(x_deconv,NFFT,N,Nwindow,Fs,flims,r_guess,c1,c2,D,Nmodes,filtt,beta_transform,beta)
-
-%%filtt.xmin is final shift..
-
-TFR=20*log10(abs(tfrstft(x_deconv,1:N,NFFT,hamming(Nwindow))));
-fig=figure(5);
-imagescFun((1:N)/Fs,Fs*(1:NFFT)/NFFT,TFR,'xy');
-ylim([0.8*flims(1) 1.2*flims(2)]);
-clear TFR
-
-disp('Time selection')
-
-if beta<0
-    
-    nothappy=1;
-    while ~isempty(nothappy)
-        %title('Signal after source deconvolution');
-        %         title('Signal after source deconvolution: choose two times (tmax, and then t=r/c)')
-        %         tmp=ginput(2);
-        %
-        disp('Select two points to estimate r/c estimation, last point is tmax:');
-        tmp=ginput(2);
-        f=tmp(:,2);
-        tt=tmp(:,1);
-        rr=(f(2)/f(1)).^((1+beta)/beta);
-        Trc=(rr*tt(2)-tt(1))/(rr-1);
-        fprintf('Estimated rc time is %8.6f seconds\n',Trc);
-        hold on
-        line([1 1]*Trc,[0.8*flims(1) 1.2*flims(2)],'linewidth',2,'color','w')
-        line([1 1]*tt(2),[0.8*flims(1) 1.2*flims(2)],'linewidth',2,'color','g')
-        
-        nothappy=input('Not happy?');
-    end
-
-    j=max(1,ceil((Fs*Trc))); % r/c estimate
-    params.jmax=max(1,ceil(Fs*tt(2)));  %index of tmax 
-    params.j=j;
-    %Convert into time-reversed units
-    params.dj=max(1,ceil(diff(tt)*Fs));
-    
-else    
-    title('Signal after source deconvolution: choose the first time instant (for warping)')
-    tmp=ginput(1);
-    params.jmax=[];
-    j=max(1,ceil(Fs*tmp(1,1))); % First time instant guess
-
-end
-%caxis([prctile(TFR(:),60) prctile(TFR(:),100)]);
-j=j(1);
-dt=j/Fs;
-%close(fig)
-
-%%% Choose a list of samples near the selected one
-frac=1/100;
-if beta>=0
-    dj=max(1,ceil(j/2*(1-(1-frac)^2)*(1-(c1*j/Fs/r_guess)^2))); % Step (calculated so that the modes shift is about 1/50 of the distance between 2 pekeris cutoff frequencies
-    nj=20;                                       % Number of steps in each direction
-    j_list=max(1,j-nj*dj):dj:max(1,j+nj*dj);    % List of delay around the selected time
-
-else %beta<0
-    dj=max(1,ceil(10*frac*abs(params.dj)));
-    nj=20;                                       % Number of steps in each direction
-    j_list=max(1,j:dj:max(1,j+2*nj*dj));    % List of delay around the selected time
-    j_list=max(1,j-nj*dj):dj:max(1,j+nj*dj);    % List of delay around the selected time
-
-    %params.jmax_list=params.jmax0-j_list;   %tmax should be a constant                                           
-    j_list=j_list(j_list>params.jmax&j_list<length(x_deconv));
-end
-
-
-% Make a video
-
-%modes_value=zeros(1,Nmodes,length(j_list)); % 2 estimators of the warping quality
-
-% Set the axis scale for the whole video
-fig=figure;
-params.beta=beta;
-params.beta_transform=beta_transform;
-%params.jmax=params.jmax_list(1);
-[params,~]=choose_instant(x_deconv,params,j_list(1),Fs,r_guess,c1,c2,D,Nmodes);
-
-close(fig)
-
-% Starting the video
-%mov=figure('units','normalized','outerposition',[0 0 1 1]);
-figure
-
-for jj = 1:length(j_list) % try several time instants
-    try
-%     if beta<0
-%         params.jmax=params.jmax_list(jj);
-%     end
-    [~,~,slice]=choose_instant(x_deconv,params,j_list(jj),Fs,r_guess,c1,c2,D,Nmodes);
-    
-    if jj==1
-        slice_sum=zeros(length(slice),length(j_list));
-    end
-    title(sprintf('delay : %6.2f s', ((j_list(jj)-j)/Fs)));
-    pause(0.05);
-    
-    Np=min(size(slice_sum,1),length(slice));
-    slice_sum(1:Np,jj)=slice(1:Np);
-    %modes_value(:,:,jj)=vals;
-   
-    %F(jj) = getframe(mov); % Movie
-    catch
-       continue 
-    end
-end
-
-
-figure(6);
-Fe_max=max(params.fwlims);
-delayy=(j_list-j)/Fs;
-subplot(2,1,1)
-slicedB=10*log10(slice_sum);
-pcolor(delayy,params.f_w(1:size(slice_sum,1)),slicedB-max(max(slicedB)));
-shading flat
-colorbar;colormap(jet);
-%caxis([-35 -15])
-axis('xy');
-ylim([0 Fe_max]);
-
-%%%Kurtosis computation
-Fe_window=100;
-Irow=1;
-II=find(params.f_w<=Fe_window);
-II_step=floor(0.25*median(II));
-[~,Imax]=min(abs(Fe_max-params.f_w));
-while max(II)<=Imax
-    kurtosis_val(Irow,:)=kurtosis(slice_sum(II,:));
-    kurtosis_fw(Irow)=params.f_w(floor(median(II)));
-    
-    Irow=Irow+1;
-    II=II_step+II;
-    %max_window=params.f_w(max(II));
-end
-
-kurtosis_val(Irow,:)=kurtosis(slice_sum);
-kurtosis_fw(Irow)=Fe_max;
-
-subplot(2,1,2);
-pcolor(delayy,kurtosis_fw,10*log10(kurtosis_val))
-xlabel('Delay (s)')
-ylabel(sprintf('Kurtosis: %6.2f Hz width',Fe_window))
-grid on
-ylim([0 Fe_max]);
-colorbar
-
-
-% We let the user choose the first time instant
-colorrange=input('Enter caxis for top window:');
-if ~isempty(colorrange)
-    subplot(2,1,1)
-    caxis(colorrange);
-end
-Ncount=input('Number of picks:');
-tmp=ginput(Ncount);
-tmp=tmp(:,1);
-
-%j_min=round(j+str2double(input('\n Choose a time instant: ','s'))*Fs);
-%if isnan(j_min)
-%    j_min=j_list(opt_delay);
-%end
-figure;
-for I=1:Ncount
-    
-    subplot(ceil(Ncount/2),2,I)
-    j_min=round(j+Fs*tmp(I));
-%     if beta<0
-%         params.jmax=params.jmax0-j_min;
-%     end
-    [~,vals]=choose_instant(x_deconv,params,j_min,Fs,r_guess,c1,c2,D,Nmodes);
-    %caxis('auto');
-    axis('xy')
-    %ylim([0 250]);
-    ylim([0 max(params.fwlims)]);
-    caxis([-20 0]);
-    title(sprintf('Choice: %i, Offset: %6.2f',I,tmp(I)));
-end
-gtext(sprintf('Range guess: %6.2f km, water depth: %6.2f m',r_guess/1000,D))
-
-Ichc=input('Enter choices for selection; e.g [1 3]: ');
-j_min=round(j+Fs*tmp(Ichc));
-
-%j_min=round(j+x_min*Fs);
-
-%%% Save the filtering process to apply it to the other hydrophones
-
-filtt.xmin=j_min;
-filtt.flims=flims;
-filtt.fwlims=params.fwlims;
-%N=2^nextpow2(length(x_deconv));
-%x_ok=ifft(fft(x_deconv,N).*exp(1i*2*pi*j_min/N*(1:N)'),'symmetric');
-
-%x_ok=[x_deconv(j_min:end); zeros(j_min-1,1)];
-
-%%% end test
-end  %get_start_time
 
 function writerObj=make_movie(writerObj,s_w,M,t_w,f_w,params,Nmodes,c1,c2,D)
 RTF=abs(tfrstft(s_w,1:M,M,hamming(params.Nww)));

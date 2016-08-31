@@ -1,15 +1,18 @@
-%function [modes,Nmode,filt] = extract_warped_modes(x_ok,Fe,N,Nww,r,c,clims,filt,,beta_transform,beta)
+%function [modes,Nmode,filt] = extract_warped_modes(x_ok,Fe,N,Nww,r,c,clims,t_w_min,filt,beta_transform,beta)
 
-function [modes,Nmode,filt] = extract_warped_modes(x_ok,Fe,N,Nww,r,c,clims,filt,beta_transform,beta)
+function [modes,Nmode,filt] = extract_warped_modes(x_ok,Fe,N,Nww,r,c,clims,filt, ...
+   beta_transform,beta,dtmax,dt_rc)
 
 %%% Warping
 if ~beta_transform
     [s_w, Fe_w]=warp_temp_exa(x_ok,Fe,r,c);    % s_w: warped signal, Fe_w: new warping frequency
+    t_w=(0:M-1)/Fe_w;                           % Warped time
+
 else
-   [s_w, Fe_w]=warp_temp_exa_beta(x_ok,Fe,r,c,beta); 
+    [s_w, Fe_w, t_w]=warp_temp_exa_beta(x_ok,Fe,r,c,beta,dtmax,dt_rc); 
+    
 end
 M=length(s_w);
-t_w=(0:M-1)/Fe_w;                           % Warped time
 f_w=(0:M-1)*Fe_w/M;                         % Warped frequencies
 rtf=tfrstft(s_w,1:M,M,hamming(Nww));
 rtf(floor(M/2):end,:)=[];                   % Delete negative frequencies
@@ -25,7 +28,7 @@ Nmode=nan;
 while isnan(Nmode) % if the user make a misclic in the mode selection, press esc to do it again
     figure(10);clf;
     
-    imagescFun(t_w,f_w,RTFdB-max(max(RTFdB)),'ij')
+    imagescFun((0:M-1)/Fe_w,f_w,RTFdB-max(max(RTFdB)),'ij')
     axis('xy');
     ylim(filt.fwlims)
     %caxis(clims)
@@ -52,7 +55,7 @@ hold on
 % The user selects approximately the peak of mode m
 [peaks_x,peaks_y,button]=ginput(Nmode);
 Nmode=length(peaks_x);
-peaks=round([peaks_x*Fe_w peaks_y*M1/Fe_w]);
+peaks=round([round((peaks_x)*Fe_w) peaks_y*M1/Fe_w]);
 modes=zeros(Nmode,N);
 filt.('mask')=zeros(Nmode,length(rtf(:,1)),M);
 
@@ -154,7 +157,8 @@ for mm=1:Nmode
         % s_w: warped signal, Fe_w: new warping frequency
     else
         %(s_w,Fe_w,r,c,beta,Fe,N)
-        modes(mm,:)=iwarp_temp_exa_beta(mode_temp_warp,Fe_w,r,c,beta,Fe,N);
+        tmp=iwarp_temp_exa_beta(mode_temp_warp,t_w,Fe_w,r,c,beta,Fe);
+        modes(mm,1:N)=[tmp zeros(1,N-length(tmp))];
     end
     disp(strcat('Mode ',int2str(mm),' filtered'))
     clear mode_rtf_warp mode_temp_warp
