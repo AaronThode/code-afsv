@@ -169,8 +169,9 @@ colorbar
 
 
 % We let the user choose the first time instant
-colorrange=input('Enter caxis for top window:');
-if ~isempty(colorrange)
+%colorrange=input('Enter caxis for top window:');
+colorrange=[-10 0];
+if ~isempty(colorrange)&&length(colorrange)==2
     subplot(2,1,1)
     caxis(colorrange);
 end

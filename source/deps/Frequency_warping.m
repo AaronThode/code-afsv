@@ -149,7 +149,10 @@ while redo
         if isempty(temp)||Nm==0
             continue
         end
-        modes=[zeros(Nm,delays(I)-1) modes];
+        
+        if var_temp.beta>0
+            modes=[zeros(Nm,delays(I)-1) modes];
+        end
         modes=modes(:,1:N);
         modes_ok=[modes_ok;modes];
         mode_index=[mode_index temp];
@@ -258,7 +261,9 @@ while redo
         [tm(m,:),~]=momftfr(mode_rtfr,1,N,time);
     end
     
+    %%%%%%%%%%%%%%%%%%%%%
      %%%Plot original mode dispersion curve
+     %%%%%%%%%%%%%%
     tfr=tfrstft(x(1:end,hydro_ref),1:N,NFFT,hamming(Nwindow));
     TFR=20*log10(abs(tfr));
     
