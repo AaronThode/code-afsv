@@ -1,0 +1,3214 @@
+{\rtf1\ansi\ansicpg1252\cocoartf949\cocoasubrtf540
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fmodern\fcharset0 Courier;\f2\fnil\fcharset0 LucidaGrande;
+\f3\fmodern\fcharset0 Courier-Bold;\f4\fmodern\fcharset0 CourierNewPSMT;\f5\fmodern\fcharset0 Courier-Oblique;
+}
+{\colortbl;\red255\green255\blue255;\red160\green32\blue240;\red34\green139\blue34;\red0\green0\blue255;
+\red255\green92\blue134;\red47\green255\blue54;\red6\green6\blue6;}
+\margl1440\margr1440\vieww19800\viewh21120\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf0 12/08 notes\
+\
+After  31.95 sec interval check 6306 regular signals, 5224 out of 11530 detections remain\
+After  31.28 sec interval check 6760 regular signals, 5043 out of 11803 detections remain\
+After  29.71 sec interval check 6502 regular signals, 4975 out of 11477 detections remain\
+After  23.89 sec interval check 6377 regular signals, 4288 out of 10665 detections remain\
+After  26.93 sec interval check 6261 regular signals, 4642 out of 10903 detections remain\
+After  19.55 sec interval check 6801 regular signals, 3178 out of 9979 detections remain\
+After  16.79 sec interval check 6353 regular signals, 2984 out of 9337 detections remain\
+\
+\
+tolerance =1 sec:\
+1479 out of 2214, or  67.00 percent of manual locations aligned with location times\
+1021 out of 2214, or  46.00 percent of manual locations also aligned with location features\
+8467 locations remain, or false/true ratio of   5.72 \
+\
+tol=2 sec;\
+1584 out of 2214, or  72.00 percent of manual locations aligned with location times\
+1097 out of 2214, or  50.00 percent of manual locations also aligned with location features\
+8362 locations remain, or false/true ratio of   5.28 \
+\
+12/09 notes\
+\
+Initial evaluation of 8/21/08 data:\
+\
+ 2457 Manual results , 9946 automated localizations.\
+1734 out of 2457, or  71.00 percent of manual locations aligned with location times\
+1190 out of 2457, or  48.00 percent of manual locations also aligned with location features\
+8212 locations remain, or false/true ratio of   4.74 \
+\
+With successful localizations only:\
+\
+1180 out of 2214, or  53.00 percent of manual locations aligned with location times\
+826 out of 2214, or  37.00 percent of manual locations also aligned with location features\
+4170 locations remain, or false/true ratio of   3.53 \
+\
+\
+Dec 11\
+\
+Half-day analysis of 8/31/2008:  (after changing energy detector, interval, and broadband adjustment)\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\
+%%%%%%%%%%%%%%% evaluate_miss_fraction.m%%%%%%%%%%%%\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\
+ 2295 Manual results , 5790 automated localizations.\
+700 out of 801, or  87.00 percent of manual locations aligned with location times\
+542 out of 801, or  68.00 percent of manual locations also aligned with location features\
+5090 locations remain, or false/true ratio of   7.27  (tol=2 seconds)\
+\
+2295 Manual results , 5790 automated localizations.\
+671 out of 801, or  84.00 percent of manual locations aligned with location times\
+517 out of 801, or  65.00 percent of manual locations also aligned with location features\
+5119 locations remain, or false/true ratio of   7.63  (tol=1 seconds)\
+\
+Succesful localizations only:\
+ 2214 Manual results , 3183 automated localizations.\
+510 out of 770, or  66.00 percent of manual locations aligned with location times\
+407 out of 770, or  53.00 percent of manual locations also aligned with location features\
+2673 locations remain, or false/true ratio of   5.24 \
+\
+Found I have to eliminate "outcome: 'successful; 2 bearings; no Kappa'\
+2214 Manual results , 2096 automated localizations.\
+484 out of 770, or  63.00 percent of manual locations aligned with location times\
+396 out of 770, or  51.00 percent of manual locations also aligned with location features\
+1612 locations remain, or false/true ratio of   3.33 \
+\
+__________\
+If I change criteria to being on three stations (manual and automated)...\
+\
+Out of 2572  manual locations, 2457 are whales.\
+Out of 2457  manual whale locations, 2295 used 2 or greater DASARS.\
+Out of 2295 remaining manual locations, 2214 were successfully tracked.\
+>> run_options.min_stations=3\
+\
+>> [manual.localized,manual.individual]=load_manual_results_crosschecked(manualdir, ...\
+goodDASAR,date_range,run_options);\
+Loading wc0821S508.mat\
+Out of 2572  manual locations, 2457 are whales.\
+Out of 2457  manual whale locations, 1918 used 3 or greater DASARS.\
+Out of 1918 remaining manual locations, 1892 were successfully tracked.\
+______________\
+\
+Complete reform of call evaluation completed...\
+\
+
+\i\b If successful  localizations not required...\
+
+\i0\b0 \
+Out of 2572  manual locations, 2457 are whales.\
+Out of 2457  manual whale locations, 1918 used 3 or greater DASARS.\
+\
+Out of 5790 automated locations, 3812 linked 3 or more DASARS\
+ 1918 Manual results , 3812 automated localizations.\
+ 694 Manual results less than 2008-08-21 12:00:09, 3812 automated localizations.\
+
+\b 562 out of 694, or  81.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+460 out of 694, or  66.00 percent of manual locations have more than 3 matches with an automated localization\
+469 out of 694, or  68.00 percent of manual locations also aligned with location features\
+
+\b0 3250 locations remain, or false/true ratio of   5.78 \
+\
+.....................\
+
+\i\b Using successful localizations on manual and automated only...\
+
+\i0\b0 Out of 2572  manual locations, 2457 are whales.\
+Out of 2457  manual whale locations, 1918 used 3 or greater DASARS.\
+Out of 1918 remaining manual locations, 1892 were successfully tracked.\
+\
+Out of 5790 automated locations, 3812 linked 3 or more DASARS\
+Out of 3812 automated surviving locations, 2096 successfully localized\
+USING PARAMETER VALUES STORED WITH AUTOMATIC RESULTS\
+ \
+ 1892 Manual results , 2096 automated localizations.\
+ 687 Manual results less than 2008-08-21 12:00:09, 2096 automated localizations.\
+
+\b 446 out of 687, or  65.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+382 out of 687, or  56.00 percent of manual locations have more than 3 matches with an automated localization\
+381 out of 687, or  55.00 percent of manual locations also aligned with location features\
+1
+\b0 650 locations remain, or false/true ratio of   3.70 \
+\
+\
+_______________\
+feedback from group:  2 DASAR localizations OK..\
+\
+ 2295 Manual results , 5790 automated localizations.\
+ 801 Manual results less than 2008-08-21 12:00:09, 5790 automated localizations.\
+
+\i\b 671 out of 801, or  84.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+678 out of 801, or  85.00 percent of manual locations have more than 2 matches with an automated localization\
+517 out of 801, or  65.00 percent of manual locations also aligned with location features\
+
+\i0\b0 5119 locations remain, or false/true ratio of   7.63 \
+\
+Out of 2572  manual locations, 2457 are whales.\
+Out of 2457  manual whale locations, 2295 used 2 or greater DASARS.\
+Out of 2295 remaining manual locations, 2214 were successfully tracked.\
+loading automated detection results from /Volumes/macmussel1/Arctic_2008/Processed/Site_05/Shell08_Site5_test/morph\
+Out of 5790 automated locations, 5790 linked 2 or more DASARS\
+Out of 5790 automated surviving locations, 2096 successfully localized\
+\
+
+\i\b 484 out of 770, or  63.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+498 out of 770, or  65.00 percent of manual locations have more than 2 matches with an automated localization\
+396 out of 770, or  51.00 percent of manual locations also aligned with location features\
+
+\i0\b0 1612 locations remain, or false/true ratio of   3.33 \
+\
+Dec. 14-after improved energy detector and interval sorting (with feature matching):\
+All localizations...\
+ 2295 Manual results , 3639 automated localizations.\
+ 801 Manual results less than 2008-08-21 12:00:09, 3639 automated localizations.\
+
+\i\b 640 out of 801, or  80.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+645 out of 801, or  81.00 percent of manual locations have more than 2 matches with an automated localization\
+493 out of 801, or  62.00 percent of manual locations also aligned with location features\
+
+\i0\b0 2999 locations remain, or false/true ratio of   4.69 \
+\
+2214 Manual results , 2290 automated localizations.\
+ 770 Manual results less than 2008-08-21 12:00:09, 2290 automated localizations.\
+
+\i\b 519 out of 770, or  67.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+540 out of 770, or  70.00 percent of manual locations have more than 2 matches with an automated localization\
+409 out of 770, or  53.00 percent of manual locations also aligned with location features\
+
+\i0\b0 1771 locations remain, or false/true ratio of   3.41 \
+\
+
+\b\fs28 After attempts to improve spectrogram equalization...\
+
+\b0\fs24  2295 Manual results , 3553 automated localizations.\
+ 801 Manual results less than 2008-08-21 12:00:09, 3553 automated localizations.\
+
+\i\b 627 out of 801, or  78.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+637 out of 801, or  80.00 percent of manual locations have more than 2 matches with an automated localization\
+484 out of 801, or  60.00 percent of manual locations also aligned with location features\
+
+\i0\b0 2926 locations remain, or false/true ratio of   4.67 \
+ \
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\
+%%%%%%%%%%%%%%% evaluate_miss_fraction.m%%%%%%%%%%%%\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\
+ 2214 Manual results , 2308 automated localizations.\
+ 770 Manual results less than 2008-08-21 12:00:09, 2308 automated localizations.\
+
+\i\b 516 out of 770, or  67.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+539 out of 770, or  70.00 percent of manual locations have more than 2 matches with an automated localization\
+411 out of 770, or  53.00 percent of manual locations also aligned with location features\
+
+\i0\b0 1792 locations remain, or false/true ratio of   3.47 \
+\
+
+\b\fs28 \AppleTypeServicesU1 After feature filtering by setting Centroid >75 < 200 Hz and eccentricity > 0.95...\
+SNR=8 (reference run)\
+
+\b0\fs24  Out of 2572  manual locations, 2457 are whales.\
+Out of 2457  manual whale locations, 2295 used 2 or greater DASARS.\
+loading automated detection results from /Volumes/macmussel1/Arctic_2008/Processed/Site_05/Shell08_Site5_test/morph\
+Out of 1716 automated locations, 1716 linked 2 or more DASARS\
+2295 Manual results , 1716 automated localizations.\
+ 801 Manual results less than 2008-08-21 12:00:09, 1716 automated localizations.\
+
+\i\b 586 out of 801, or  73.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+605 out of 801, or  76.00 percent of manual locations have more than 2 matches with an automated localization\
+457 out of 801, or  57.00 percent of manual locations also aligned with location features\
+
+\i0\b0 1111 locations remain, or false/true rati\AppleTypeServicesU0 o of   1.84 \
+\
+586 out of 801, or  73.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+605 out of 801, or  76.00 percent of manual locations have more than 2 matches with an automated localization\
+457 out of 801, or  57.00 percent of manual locations also aligned with location features\
+1111 locations remain, or false/true ratio of   1.84 \
+\
+Out of 2572  manual locations, 2457 are whales.\
+Out of 2457  manual whale locations, 2295 used 2 or greater DASARS.\
+Out of 2295 remaining manual locations, 2214 were successfully tracked.\
+loading automated detection results from /Volumes/macmussel1/Arctic_2008/Processed/Site_05/Shell08_Site5_test/morph\
+Out of 1716 automated locations, 1716 linked 2 or more DASARS\
+Out of 1716 automated surviving locations, 1280 successfully localized\
+USING PARAMETER VALUES STORED WITH AUTOMATIC RESULTS\
+ \
+ 2214 Manual results , 1280 automated localizations.\
+ 770 Manual results less than 2008-08-21 12:00:09, 1280 automated localizations.\
+
+\i\b 509 out of 770, or  66.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+535 out of 770, or  69.00 percent of manual locations have more than 2 matches with an automated localization\
+403 out of 770, or  52.00 percent of manual locations also aligned with location features\
+
+\i0\b0 745 locations remain, or false/true ratio of   1.39 \
+\
+Individual station breakdown for first case (no successful localization required)\
+Date: 20080821  Station: S508A0 number of true calls: 676\
+Station results: false_alarms: 713 false alarm fraction: 1.0547 missed calls: 100, missed fraction: 0.1479 \
+\
+Date: 20080821  Station: S508B0 number of true calls: 682\
+Station results: false_alarms: 794 false alarm fraction: 1.1642 missed calls: 141, missed fraction: 0.2067 \
+\
+Date: 20080821  Station: S508C0 number of true calls: 645\
+Station results: false_alarms: 793 false alarm fraction: 1.2295 missed calls: 138, missed fraction: 0.2140 \
+\
+Date: 20080821  Station: S508D0 number of true calls: 553\
+Station results: false_alarms: 660 false alarm fraction: 1.1935 missed calls: 129, missed fraction: 0.2333 \
+\
+Date: 20080821  Station: S508E0 number of true calls: 499\
+Station results: false_alarms: 617 false alarm fraction: 1.2365 missed calls: 137, missed fraction: 0.2745 \
+\
+Date: 20080821  Station: S508F0 number of true calls: 280\
+Station results: false_alarms: 391 false alarm fraction: 1.3964 missed calls: 103, missed fraction: 0.3679 \
+\
+Date: 20080821  Station: S508G0 number of true calls: 153\
+Station results: false_alarms: 328 false alarm fraction: 2.1438 missed calls: 52, missed fraction: 0.3399 \
+\
+Fisher Discriminant analysis\
+projection vector onto robust_fmin is -0.1272\
+projection vector onto robust_fmax is 0.0420\
+projection vector onto BoundingBox is 0.7534\
+projection vector onto slope is 0.0150\
+projection vector onto robust_bandwidth is -0.3807\
+projection vector onto curv is 0.0019\
+projection vector onto Centroid_freq is 0.0003\
+projection vector onto SNR is 0.0602\
+projection vector onto Eccentricity is 0.5149\
+projection vector onto Solidity is 0.0255\
+9774 manual calls: Before filtering, 2688 true and 4296 false alarms\
+ 0.5950 threshold\
+9774 manual calls: After filtering, 2551 true and 2669 false alarms\
+\
+
+\b\fs28 What if energy detector threshold set to 5 dB? during 12 hour period?\
+
+\b0\fs24  0.5950 threshold\
+9774 manual calls: After filtering, 2551 true and 2669 false alarms
+\b\fs28 \
+
+\b0\fs24 Out of 2572  manual locations, 2457 are whales.\
+Out of 2457  manual whale locations, 2295 used 2 or greater DASARS.\
+USING PARAMETER VALUES STORED WITH AUTOMATIC RESULTS\
+ \
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\
+%%%%%%%%%%%%%%% evaluate_miss_fraction.m%%%%%%%%%%%%\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\
+ 2295 Manual results , 3859 automated localizations.\
+ 801 Manual results less than 2008-08-21 12:00:09, 3859 automated localizations.\
+656 out of 801, or  82.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+
+\i\b 660 out of 801, or  82.00 percent of manual locations have more than 2 matches with an automated localization\
+
+\i0\b0 512 out of 801, or  64.00 percent of manual locations also aligned with location features\
+3199 locations remain, or false/true ratio of   4.85 \
+\
+If successful localization required..\
+ 2214 Manual results , 2099 automated localizations.\
+ 770 Manual results less than 2008-08-21 12:00:09, 2099 automated localizations.\
+501 out of 770, or  65.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+
+\i\b 512 out of 770, or  66.00 percent of manual locations have more than 2 matches with an automated localization\
+
+\i0\b0 397 out of 770, or  52.00 percent of manual locations also aligned with location features\
+1587 locations remain, or false/true ratio of   3.10 \
+\
+vvvvvvvvvvvvv Begin Station S508A0 vvvvvvvvv\
+Raw detection comparison...\
+\
+Date: 20080821  Station: S508A0 number of true calls: 676\
+Station results: false_alarms: 5996 false alarm fraction: 8.8698 missed calls: 60, missed fraction: 0.0888 \
+\
+Interval detection comparison...\
+\
+Date: 20080821  Station: S508A0 number of true calls: 676\
+Station results: false_alarms: 3730 false alarm fraction: 5.5178 missed calls: 64, missed fraction: 0.0947 \
+\
+Image detection comparison\
+\
+Date: 20080821  Station: S508A0 number of true calls: 676\
+Station results: false_alarms: 2136 false alarm fraction: 3.1598 missed calls: 81, missed fraction: 0.1198 \
+\
+^^^^^^^^^ End Station S508A0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508B0 vvvvvvvvv\
+Raw detection comparison...\
+\
+Date: 20080821  Station: S508B0 number of true calls: 682\
+Station results: false_alarms: 5907 false alarm fraction: 8.6613 missed calls: 107, missed fraction: 0.1569 \
+\
+Interval detection comparison...\
+\
+Date: 20080821  Station: S508B0 number of true calls: 682\
+Station results: false_alarms: 3441 false alarm fraction: 5.0455 missed calls: 116, missed fraction: 0.1701 \
+\
+Image detection comparison\
+\
+Date: 20080821  Station: S508B0 number of true calls: 682\
+Station results: false_alarms: 1678 false alarm fraction: 2.4604 missed calls: 114, missed fraction: 0.1672 \
+\
+^^^^^^^^^ End Station S508B0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508C0 vvvvvvvvv\
+Raw detection comparison...\
+\
+Date: 20080821  Station: S508C0 number of true calls: 645\
+Station results: false_alarms: 5782 false alarm fraction: 8.9643 missed calls: 126, missed fraction: 0.1953 \
+\
+Interval detection comparison...\
+\
+Date: 20080821  Station: S508C0 number of true calls: 645\
+Station results: false_alarms: 4075 false alarm fraction: 6.3178 missed calls: 132, missed fraction: 0.2047 \
+\
+Image detection comparison\
+\
+Date: 20080821  Station: S508C0 number of true calls: 645\
+Station results: false_alarms: 2006 false alarm fraction: 3.1101 missed calls: 110, missed fraction: 0.1705 \
+\
+^^^^^^^^^ End Station S508C0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508D0 vvvvvvvvv\
+Raw detection comparison...\
+\
+Date: 20080821  Station: S508D0 number of true calls: 553\
+Station results: false_alarms: 5404 false alarm fraction: 9.7722 missed calls: 105, missed fraction: 0.1899 \
+\
+Interval detection comparison...\
+\
+Date: 20080821  Station: S508D0 number of true calls: 553\
+Station results: false_alarms: 4023 false alarm fraction: 7.2749 missed calls: 116, missed fraction: 0.2098 \
+\
+Image detection comparison\
+\
+Date: 20080821  Station: S508D0 number of true calls: 553\
+Station results: false_alarms: 1780 false alarm fraction: 3.2188 missed calls: 91, missed fraction: 0.1646 \
+\
+^^^^^^^^^ End Station S508D0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508E0 vvvvvvvvv\
+Raw detection comparison...\
+\
+Date: 20080821  Station: S508E0 number of true calls: 499\
+Station results: false_alarms: 5539 false alarm fraction: 11.1002 missed calls: 40, missed fraction: 0.0802 \
+\
+Interval detection comparison...\
+\
+Date: 20080821  Station: S508E0 number of true calls: 499\
+Station results: false_alarms: 4519 false alarm fraction: 9.0561 missed calls: 44, missed fraction: 0.0882 \
+\
+Image detection comparison\
+\
+Date: 20080821  Station: S508E0 number of true calls: 499\
+Station results: false_alarms: 2113 false alarm fraction: 4.2345 missed calls: 80, missed fraction: 0.1603 \
+\
+^^^^^^^^^ End Station S508E0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508F0 vvvvvvvvv\
+Raw detection comparison...\
+\
+Date: 20080821  Station: S508F0 number of true calls: 280\
+Station results: false_alarms: 5339 false alarm fraction: 19.0679 missed calls: 38, missed fraction: 0.1357 \
+\
+Interval detection comparison...\
+\
+Date: 20080821  Station: S508F0 number of true calls: 280\
+Station results: false_alarms: 3860 false alarm fraction: 13.7857 missed calls: 44, missed fraction: 0.1571 \
+\
+Image detection comparison\
+\
+Date: 20080821  Station: S508F0 number of true calls: 280\
+Station results: false_alarms: 1472 false alarm fraction: 5.2571 missed calls: 73, missed fraction: 0.2607 \
+\
+^^^^^^^^^ End Station S508F0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508G0 vvvvvvvvv\
+Raw detection comparison...\
+\
+Date: 20080821  Station: S508G0 number of true calls: 153\
+Station results: false_alarms: 5022 false alarm fraction: 32.8235 missed calls: 22, missed fraction: 0.1438 \
+\
+Interval detection comparison...\
+\
+Date: 20080821  Station: S508G0 number of true calls: 153\
+Station results: false_alarms: 3470 false alarm fraction: 22.6797 missed calls: 25, missed fraction: 0.1634 \
+\
+Image detection comparison\
+\
+Date: 20080821  Station: S508G0 number of true calls: 153\
+Station results: false_alarms: 1172 false alarm fraction: 7.6601 missed calls: 38, missed fraction: 0.2484 \
+\
+^^^^^^^^^ End Station S508G0 ^^^^^^^\
+\
+
+\b\fs28 Rerun over entire 24 hour period...\
+\
+
+\b0 not necessarily localized successfully...
+\b \
+
+\b0\fs24 2295 Manual results , 4938 automated localizations.\
+ 2295 Manual results less than Inf, 4938 automated localizations.\
+1575 out of 2295, or  69.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+
+\i\b 1613 out of 2295, or  70.00 percent of manual locations have more than 2 matches with an automated localization\
+
+\i0\b0 1154 out of 2295, or  50.00 percent of manual locations also aligned with location features\
+3325 locations remain, or false/true ratio of   2.06 \
+\
+ 2214 Manual results , 3445 automated localizations.\
+ 2214 Manual results less than Inf, 3445 automated localizations.\
+1320 out of 2214, or  60.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+
+\i\b 1380 out of 2214, or  62.00 percent of manual locations have more than 2 matches with an automated localization\
+
+\i0\b0 991 out of 2214, or  45.00 percent of manual locations also aligned with location features\
+2065 locations remain, or false/true ratio of   1.50 \
+\
+vvvvvvvvvvvvv Begin Station S508A0 vvvvvvvvv\
+Raw detection comparison...\
+\
+Date: 20080821  Station: S508A0 number of true calls: 1861\
+Station results: false_alarms: 9843 false alarm fraction: 5.2891 missed calls: 255, missed fraction: 0.1370 \
+\
+Interval detection comparison...\
+\
+Date: 20080821  Station: S508A0 number of true calls: 1861\
+Station results: false_alarms: 4688 false alarm fraction: 2.5191 missed calls: 277, missed fraction: 0.1488 \
+\
+Image detection comparison\
+\
+Date: 20080821  Station: S508A0 number of true calls: 1861\
+Station results: false_alarms: 2465 false alarm fraction: 1.3246 missed calls: 375, missed fraction: 0.2015 \
+\
+^^^^^^^^^ End Station S508A0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508B0 vvvvvvvvv\
+Raw detection comparison...\
+\
+Date: 20080821  Station: S508B0 number of true calls: 1733\
+Station results: false_alarms: 10271 false alarm fraction: 5.9267 missed calls: 238, missed fraction: 0.1373 \
+\
+Interval detection comparison...\
+\
+Date: 20080821  Station: S508B0 number of true calls: 1733\
+Station results: false_alarms: 4994 false alarm fraction: 2.8817 missed calls: 275, missed fraction: 0.1587 \
+\
+Image detection comparison\
+\
+Date: 20080821  Station: S508B0 number of true calls: 1733\
+Station results: false_alarms: 2351 false alarm fraction: 1.3566 missed calls: 413, missed fraction: 0.2383 \
+\
+^^^^^^^^^ End Station S508B0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508C0 vvvvvvvvv\
+Raw detection comparison...\
+\
+Date: 20080821  Station: S508C0 number of true calls: 1771\
+Station results: false_alarms: 10449 false alarm fraction: 5.9001 missed calls: 300, missed fraction: 0.1694 \
+\
+Interval detection comparison...\
+\
+Date: 20080821  Station: S508C0 number of true calls: 1771\
+Station results: false_alarms: 5012 false alarm fraction: 2.8300 missed calls: 321, missed fraction: 0.1813 \
+\
+Image detection comparison\
+\
+Date: 20080821  Station: S508C0 number of true calls: 1771\
+Station results: false_alarms: 2065 false alarm fraction: 1.1660 missed calls: 423, missed fraction: 0.2388 \
+\
+^^^^^^^^^ End Station S508C0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508D0 vvvvvvvvv\
+Raw detection comparison...\
+\
+Date: 20080821  Station: S508D0 number of true calls: 1486\
+Station results: false_alarms: 9874 false alarm fraction: 6.6447 missed calls: 292, missed fraction: 0.1965 \
+\
+Interval detection comparison...\
+\
+Date: 20080821  Station: S508D0 number of true calls: 1486\
+Station results: false_alarms: 4821 false alarm fraction: 3.2443 missed calls: 315, missed fraction: 0.2120 \
+\
+Image detection comparison\
+\
+Date: 20080821  Station: S508D0 number of true calls: 1486\
+Station results: false_alarms: 1734 false alarm fraction: 1.1669 missed calls: 408, missed fraction: 0.2746 \
+\
+^^^^^^^^^ End Station S508D0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508E0 vvvvvvvvv\
+Raw detection comparison...\
+\
+Date: 20080821  Station: S508E0 number of true calls: 1378\
+Station results: false_alarms: 9999 false alarm fraction: 7.2562 missed calls: 246, missed fraction: 0.1785 \
+\
+Interval detection comparison...\
+\
+Date: 20080821  Station: S508E0 number of true calls: 1378\
+Station results: false_alarms: 4606 false alarm fraction: 3.3425 missed calls: 271, missed fraction: 0.1967 \
+\
+Image detection comparison\
+\
+Date: 20080821  Station: S508E0 number of true calls: 1378\
+Station results: false_alarms: 1728 false alarm fraction: 1.2540 missed calls: 394, missed fraction: 0.2859 \
+\
+^^^^^^^^^ End Station S508E0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508F0 vvvvvvvvv\
+Raw detection comparison...\
+\
+Date: 20080821  Station: S508F0 number of true calls: 822\
+Station results: false_alarms: 8972 false alarm fraction: 10.9148 missed calls: 191, missed fraction: 0.2324 \
+\
+Interval detection comparison...\
+\
+Date: 20080821  Station: S508F0 number of true calls: 822\
+Station results: false_alarms: 3933 false alarm fraction: 4.7847 missed calls: 213, missed fraction: 0.2591 \
+\
+Image detection comparison\
+\
+Date: 20080821  Station: S508F0 number of true calls: 822\
+Station results: false_alarms: 1039 false alarm fraction: 1.2640 missed calls: 311, missed fraction: 0.3783 \
+\
+^^^^^^^^^ End Station S508F0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508G0 vvvvvvvvv\
+Raw detection comparison...\
+\
+Date: 20080821  Station: S508G0 number of true calls: 527\
+Station results: false_alarms: 9167 false alarm fraction: 17.3947 missed calls: 157, missed fraction: 0.2979 \
+\
+Interval detection comparison...\
+\
+Date: 20080821  Station: S508G0 number of true calls: 527\
+Station results: false_alarms: 3509 false alarm fraction: 6.6584 missed calls: 166, missed fraction: 0.3150 \
+\
+Image detection comparison\
+\
+Date: 20080821  Station: S508G0 number of true calls: 527\
+Station results: false_alarms: 900 false alarm fraction: 1.7078 missed calls: 216, missed fraction: 0.4099 \
+\
+^^^^^^^^^ End Station S508G0 ^^^^^^^\
+\
+Station 1\
+1.219293675216891e+09\
+ 1.219277390503453e+09\
+ 1.219301242518587e+09\
+ 1.219277527467031e+09\
+1.219317858632683e+09\
+1.219278932303733e+09\
+\
+Station 2\
+\
+1.219312302694237e+09\
+     1.219312670181722e+09\
+     1.219278930965012e+09\
+     1.219319528540109e+09\
+     1.219300745846436e+09\
+     1.219304394737321e+09\
+     1.219277592342888e+09\
+     1.219277525782981e+09\
+     1.219310920168175e+09\
+     1.219319493852158e+09\
+\
+2008-08-21 09:51:42\
+2008-08-21 09:57:50\
+2008-08-21 00:35:30\
+2008-08-21 11:52:08\
+2008-08-21 06:39:05\
+2008-08-21 07:39:54\
+2008-08-21 00:13:12\
+2008-08-21 00:12:05\
+2008-08-21 09:28:40\
+2008-08-21 11:51:33\
+\
+Station 3\
+2008-08-21 07:24:58\
+2008-08-21 11:43:07\
+2008-08-21 11:45:58\
+2008-08-21 11:57:53\
+2008-08-21 07:34:23\
+2008-08-21 07:32:09\
+2008-08-21 11:09:29\
+2008-08-21 01:32:08\
+2008-08-21 11:10:01\
+2008-08-21 11:18:36\
+\
+\
+     1.219303498828780e+09\
+     1.219318987445651e+09\
+     1.219319158454809e+09\
+     1.219319873979654e+09\
+     1.219304063824605e+09\
+     1.219303929935699e+09\
+     1.219316969255986e+09\
+     1.219282328765441e+09\
+     1.219317001896207e+09\
+     1.219317516715693e+09\
+\
+Dec. 16\
+\
+\
+
+\i\b\fs30 Ran SNR=8 case overnight with no feature cutoffs and with many features extracted (including feature ellipse) for a 12 hour period...\
+
+\i0\b0\fs24 net result, about a 5% reduction in missed call rate.\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\
+ 2295 Manual results , 4940 automated localizations.\
+ 801 Manual results less than 2008-08-21 12:00:09, 4940 automated localizations.\
+650 out of 801, or  81.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+
+\b 649 out of 801, or  81.00 percent of manual locations have more than 2 matches with an automated localization\
+
+\b0 500 out of 801, or  62.00 percent of manual locations also aligned with location features\
+4291 locations remain, or false/true ratio of   6.61 \
+%%%%%%%%%%%%%%%%\
+\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\
+%%%%%%%%%%%%%%% evaluate_miss_fraction.m%%%%%%%%%%%%\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\
+ 2214 Manual results , 3062 automated localizations.\
+ 770 Manual results less than 2008-08-21 12:00:09, 3062 automated localizations.\
+503 out of 770, or  65.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+
+\b 523 out of 770, or  68.00 percent of manual locations have more than 2 matches with an automated localization\
+
+\b0 400 out of 770, or  52.00 percent of manual locations also aligned with location features\
+2539 locations remain, or false/true ratio of   4.85 \
+\
+\
+What if I do FDA on all the extra features?\
+projection vector onto robust_fmin is -0.2635\
+\
+projection vector onto robust_fmax is 0.1260\
+\
+projection vector onto BoundingBox is -0.1795\
+\
+projection vector onto slope is 0.0267\
+\
+projection vector onto robust_bandwidth is -0.0662\
+\
+projection vector onto curv is -0.0010\
+\
+projection vector onto Centroid_freq is 0.2371\
+\
+projection vector onto SNR is -0.0631\
+\
+projection vector onto Eccentricity is -0.0654\
+\
+projection vector onto Solidity is 0.0779\
+\
+projection vector onto fmin is -0.2725\
+\
+projection vector onto fmax is 0.1538\
+\
+projection vector onto Orientation is 0.0148\
+\
+projection vector onto local_bandwidth is -0.3107\
+\
+projection vector onto SEL is 0.2650\
+\
+projection vector onto Perimeter_ratio is 0.1390\
+\
+projection vector onto MajorAxisLength is 0.1053\
+\
+projection vector onto MinorAxisLength is -0.7152\
+\
+\
+
+\i\b\fs30 Effect of applying trained neural net on above dataset (so no independent data, first 12 hours only)...\
+
+\i0\b0\fs24 \
+2295 Manual results , 1378 automated localizations.\
+ 801 Manual results less than 2008-08-21 12:00:09, 1378 automated localizations.\
+610 out of 801, or  76.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+619 out of 801, or  77.00 percent of manual locations have more than 2 matches with an automated localization\
+471 out of 801, or  59.00 percent of manual locations also aligned with location features\
+759 locations remain, or false/true ratio of   1.23 \
+%%%%%%%%%%%%%%%%\
+Enter desired index [1-191]:\
+??? Operation terminated by user during ==> master_evaluation at 165\
+\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\
+%%%%%%%%%%%%%%% evaluate_miss_fraction.m%%%%%%%%%%%%\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\
+ 2214 Manual results , 1107 automated localizations.\
+ 770 Manual results less than 2008-08-21 12:00:09, 1107 automated localizations located succesfully.\
+532 out of 770, or  69.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+553 out of 770, or  72.00 percent of manual locations have more than 2 matches with an automated localization\
+416 out of 770, or  54.00 percent of manual locations also aligned with location features\
+554 locations remain, or false/true ratio of   1.00 \
+\
+Thus same missed fraction, but false alarm rate down to 50%.\
+\
+
+\i\b Jan 5, 2008\
+Incorporating WEST calculations..\
+\
+Jan 6, 2008\
+Attempting to reproduce original results...\
+
+\i0\b0 Set energy threshold to 8, run '
+\f1 \cf2 Shell08_initial\cf0 ' parameters on 8/21, first 12 hours, then train neural net.\
+50% error rate obtained.\
+Stored result in 
+\f2 Shell08_Jan6_2009_SNR8_CrudeFeatureFiltering.\
+\
+Note that I pre-filter following parameters:\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0 param.morph.duration.min=0.2;\
+        param.morph.duration.max=param.energy.MaxTime;\
+ \
+        param.morph.time_band_product.min=9.529000000000001e-01;\
+        param.morph.time_band_product.max=Inf;\
+ \
+        param.morph.robust_fmin.min=20;\
+        param.morph.robust_fmin.max=250;\
+ \
+        param.morph.robust_fmax.min=50;\
+        param.morph.robust_fmax.max=410;\
+ \
+        param.morph.local_bandwidth.max=60;\
+        param.morph.local_bandwidth.min=0;\
+ \
+        param.morph.Orientation.max=45;\
+        param.morph.Orientation.min=-45;\
+ \
+        \cf3 %param.morph.Centroid_freq.max=200;\cf0 \
+        \cf3 %param.morph.Centroid_freq.min=85;\cf0 \
+\cf3  \cf0 \
+        param.morph.Centroid_freq.max=500;\
+        param.morph.Centroid_freq.min=0;\
+ \
+ \
+        param.morph.Eccentricity.max=1;\
+        param.morph.Eccentricity.min=0.95;\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0\i\b \cf0 \
+
+\i0\b0 and I obtain following individual results..\
+vvvvvvvvvvvvv Begin Station S508A0 vvvvvvvvv\
+Station results: false_alarms: 4626 false alarm fraction: 6.8432 missed calls: 49, missed fraction: 0.0725 -energy\
+Station results: false_alarms: 1571 false alarm fraction: 2.3240 missed calls: 61, missed fraction: 0.0902 -interval\
+Station results: false_alarms: 1185 false alarm fraction: 1.7530 missed calls: 73, missed fraction: 0.1080 -morph filtering\
+\
+^^^^^^^^^  Station S508B0 ^^^^^^^\
+Station results: false_alarms: 4963 false alarm fraction: 7.2771 missed calls: 63, missed fraction: 0.0924 \
+Station results: false_alarms: 1892 false alarm fraction: 2.7742 missed calls: 82, missed fraction: 0.1202 \
+Station results: false_alarms: 1314 false alarm fraction: 1.9267 missed calls: 102, missed fraction: 0.1496 \
+\
+vvvvvvvvvvvvv Begin Station S508C0 vvvvvvvvv\
+Station results: false_alarms: 5171 false alarm fraction: 8.0171 missed calls: 102, missed fraction: 0.1581 \
+Station results: false_alarms: 2082 false alarm fraction: 3.2279 missed calls: 114, missed fraction: 0.1767 \
+Station results: false_alarms: 1801 false alarm fraction: 2.7922 missed calls: 104, missed fraction: 0.1612 \
+\
+vvvvvvvvvvvvv Begin Station S508D0 vvvvvvvvv\
+Station results: false_alarms: 5052 false alarm fraction: 9.1356 missed calls: 84, missed fraction: 0.1519 \
+Station results: false_alarms: 2229 false alarm fraction: 4.0307 missed calls: 96, missed fraction: 0.1736 \
+Station results: false_alarms: 1608 false alarm fraction: 2.9078 missed calls: 102, missed fraction: 0.1844 \
+\
+vvvvvvvvvvvvv Begin Station S508E0 vvvvvvvvv\
+Station results: false_alarms: 5057 false alarm fraction: 10.1343 missed calls: 76, missed fraction: 0.1523 \
+Station results: false_alarms: 1997 false alarm fraction: 4.0020 missed calls: 89, missed fraction: 0.1784 \
+Station results: false_alarms: 1470 false alarm fraction: 2.9459 missed calls: 119, missed fraction: 0.2385\
+ \
+vvvvvvvvvvvvv Begin Station S508F0 vvvvvvvvv\
+Station results: false_alarms: 4478 false alarm fraction: 15.9929 missed calls: 68, missed fraction: 0.2429 \
+Station results: false_alarms: 1826 false alarm fraction: 6.5214 missed calls: 78, missed fraction: 0.2786 \
+Station results: false_alarms: 947 false alarm fraction: 3.3821 missed calls: 95, missed fraction: 0.3393 \
+\
+vvvvvvvvvvvvv Begin Station S508G0 vvvvvvvvv\
+Station results: false_alarms: 4691 false alarm fraction: 30.6601 missed calls: 41, missed fraction: 0.2680 --\
+Station results: false_alarms: 1560 false alarm fraction: 10.1961 missed calls: 47, missed fraction: 0.3072 \
+Station results: false_alarms: 1045 false alarm fraction: 6.8301 missed calls: 53, missed fraction: 0.3464 
+\i\b \
+
+\i0\b0 \
+\
+Next logical step, why are 26% of calls being missed on Station G, energy detection?\
+\
+1/08/ Revised evaluation scripts to incorporate long-term background noise level equalization.\
+\
+DASAR B: 1219277559.071000099182\
+DASAR C: 1219277558.505000114441\
+\
+Jan 12\
+\
+Implemented matched filter, failure of filter approach at 1.219277052311645e+09 between A and B only .36 correlation\
+	(wider bandwidth makes worse).\
+\
+changed Nfft to 256 from 128\
+local bandwidth 100 Hz\
+gap_t now 0.2 instead of 0.15\
+\
+Change back (only one thing at a time!)\
+\
+Jan 13, 2009\
+\
+Matched filter implemented, now working on merging individual segments into single call (harmonics).\
+\
+Then work on improving matched filter, spectrogram correlation and improved feature matching...\
+\
+Jan 15, 2009\
+Finished readjusting 'station' object, replaced 'SNR' with 'SEL'  as feature used to determine anchor station in localization construction.\
+\
+Realized that when splicing signals, have to update features and eliminate one segment.\
+\
+Add matched filter to test localization...\
+\
+Next, add contours and combine when splicing.\
+\
+\
+Jan 16, 2009\
+Goal is to have working code with matched filter, to ensure that station and localization objects are complete and let code run to completion.\
+\
+Katherine Kim mentioned similarity functions which lead to computer vision\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
+\cf0 Edge extraction is usually done with one of the many edge detectors known in image processing, such as Canny edge detector, Laplacian, Sobel, etc. After applying  
+\b Rucklidge's
+\b0  algorithm that minimizes 
+\b Hausdorff
+\b0  distance between two images, the computer found a best match :\
+\
+Jan 17, 2009\
+four hours to run cross-channel match, but inefficent version of algorithm used.\
+Hausdorff algorithm (efficent translated version) implemented and tested.  Two-way conducted (i.e. no assumptions about which image is model or target)\
+\
+Jan 18, 2009\
+Running into memory problems with system, variables being replaced on me.\
+\
+No, actually I am misunderstanding the nature of nested functions...\
+Like other functions, a nested function has its own workspace. But it also has access to the workspaces of all functions in which it is nested. So, for example, a variable that has a value assigned to it by the primary function can be read or overwritten by a function nested at any level within the primary.\
+\
+In other words, variables in the main function 
+\i CAN be
+\i0  modified by the nested function.  It is only variables DEFINED in nested function that do not influence upper levels..\
+\
+Original motivation for using nested functions was concern about passing large variables by value.  However, \
+\
+"When you pass arguments to a function in MATLAB, the data is passed by value and not passed by reference (as can be done in C). (See Function Arguments in the MATLAB documentation). However, MATLAB only makes a copy of the data if it is modified by the function. This is called the "copy on write" behavior of MATLAB. This means you can safely pass any large arrays as arguments as long as they are not modified in the function.  This is true even for assignment (copying of variables). For example,"\
+\
+Thus no need for nested functions if one is simply 
+\i extracting
+\i0  data from a 'station' or 'location'.\
+\
+Jan 19, 2008\
+\
+Improved manual/automated matching by including duration of detection and measuring overlap....\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+\cf0 Jan 21,2009\
+\
+Fixed bug in matched-stations--if one than one candidate available to match, tol_test did not become a vector, so wrong link chosen...\
+\
+Location 9-two unrelated calls connected.\
+\
+Taking trimmed hausdorff metric instead of complete max (remove 10% of max set before taking max, removes outliers from image).\
+%Increasing gap_f for splicing from 10 Hz to 30 Hz.\
+\
+Jan 22, 2009\
+\
+Ran 8/21, 8/28 and 9/13 without neural net to see how miss rate changes (better than the 65%)\
+\
+Icall-100, why simple link fails?\
+\
+Also, why is a feature with narrow bandwidth rejected?\
+	Fixed--if image produced by regionprops has only one row, get a problem.\
+\
+Next, corrected merge_features in postprocessor_morph:  When splicing two segments, final_image should be comprised of only '1' and not higher integers.\
+This aligns station.Nseg and the final_image features.\
+\
+Also needed to add a tie-breaker rule for Hausdorff transformation--now the longer detection with minimum hausdorff distance wins.\
+\
+Jan 23, 2009\
+Found bug when loading TSV file--I don't get rid of manual calls that have no weights associated--reduced miss rate by nearly 8%.\
+Also problems with stored equalization curve.  At frequencies below what is measured by the energy detector, we still have to equalize.  \
+Thus commented code in postprocessor_morph/equalize_background \
+\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0  \
+\cf3 %             Igood=find((f_coarse>=min(F))&(f_coarse<=max(F)));\cf0 \
+\cf3 %             f_coarse=[min(F); f_coarse(Igood); max(F)];\cf0 \
+\cf3 %             eq_coarse=[Bmean1(1);eq_coarse(Igood);Bmean1(end)];\cf0 \
+\cf3 % \cf0 \
+\cf3 %             [f_coarse,Iu]=unique(f_coarse);\cf0 \
+\cf3 %             eq_coarse=eq_coarse(Iu);\cf0 \
+\cf3 %             Bmean=interp1(f_coarse,eq_coarse,F);\cf0 \
+            \
+becomes\
+            Bmean=Bmean1;\
+            Iedit=find(F>=min(f_coarse)&(F<=max(f_coarse)));\
+            Bmean(Iedit)=interp1(f_coarse,eq_coarse,F(Iedit));\
+\
+end\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 \
+Now a much better equalization curve that used estimated low-frequency field of signal to "fill in" gaps of long-term equalization curve.\
+param.energy.MaxTime raised from 3 to 5, since image segmenting now much better, and a forced eq update ruins the curve for subsequent detections.\
+\
+Now ran 12 hours of 8/21 without neural net (and more liberal filter features, along with code corrections).\
+	Restricting manual results to localized only reduces individual performance by only a percent or so across the board.\
+\
+
+\b Before neural net applied:\
+
+\b0 \
+loading automated detection results from /Volumes/macmussel1/Arctic_2008/Processed/Site_05/Shell08_Site5_test/morph\
+Out of 5030 automated locations, 5030 linked 2 or more DASARS\
+Loading wc0821S508.mat\
+Maximum time loaded is 2008-08-21 23:59:38\
+Out of 2572  manual locations, 2457 are whales, 70 are not whale, and 45 are uncertain.\
+1 sequences detected\
+Sequence 1: 1.000000e+00 instances of call type 1\
+USING PARAMETER VALUES STORED WITH AUTOMATIC RESULTS\
+vvvvvvvvvvvvv Begin Station S508A0 vvvvvvvvv\
+Raw detection comparison, max time for this and following is 2008-08-21 12:00:34\
+x trimmed: x was 6104 long, now 6103 points remain\
+Out of 5435 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 5435 false alarm fraction: 7.7643 missed calls: 14, missed fraction: 0.0200 \
+\
+Interval detection comparison...\
+x trimmed: x was 3341 long, now 3340 points remain\
+Out of 2685 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 2685 false alarm fraction: 3.8357 missed calls: 27, missed fraction: 0.0386 \
+\
+Morph detection comparison...\
+x trimmed: x was 3191 long, now 3186 points remain\
+Out of 2555 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 2555 false alarm fraction: 3.6500 missed calls: 66, missed fraction: 0.0943 \
+\
+Final detection comparison\
+x trimmed: x was 3191 long, now 3186 points remain\
+Out of 2555 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 2555 false alarm fraction: 3.6500 missed calls: 66, missed fraction: 0.0943 \
+\
+^^^^^^^^^ End Station S508A0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508B0 vvvvvvvvv\
+Raw detection comparison, max time for this and following is 2008-08-21 12:00:34\
+x trimmed: x was 6142 long, now 6140 points remain\
+Out of 5473 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 5473 false alarm fraction: 7.9204 missed calls: 12, missed fraction: 0.0174 \
+\
+Interval detection comparison...\
+x trimmed: x was 3317 long, now 3315 points remain\
+Out of 2670 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 2670 false alarm fraction: 3.8640 missed calls: 34, missed fraction: 0.0492 \
+\
+Morph detection comparison...\
+x trimmed: x was 3007 long, now 2998 points remain\
+Out of 2376 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 2376 false alarm fraction: 3.4385 missed calls: 66, missed fraction: 0.0955 \
+\
+Final detection comparison\
+x trimmed: x was 3007 long, now 2998 points remain\
+Out of 2376 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 2376 false alarm fraction: 3.4385 missed calls: 66, missed fraction: 0.0955 \
+\
+^^^^^^^^^ End Station S508B0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508C0 vvvvvvvvv\
+Raw detection comparison, max time for this and following is 2008-08-21 12:00:34\
+x trimmed: x was 6040 long, now 6033 points remain\
+Out of 5409 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 5409 false alarm fraction: 8.3088 missed calls: 10, missed fraction: 0.0154 \
+\
+Interval detection comparison...\
+x trimmed: x was 3802 long, now 3795 points remain\
+Out of 3185 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 3185 false alarm fraction: 4.8925 missed calls: 24, missed fraction: 0.0369 \
+\
+Morph detection comparison...\
+x trimmed: x was 3858 long, now 3850 points remain\
+Out of 3272 false matches, 1 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 3271 false alarm fraction: 5.0246 missed calls: 70, missed fraction: 0.1075 \
+\
+Final detection comparison\
+x trimmed: x was 3858 long, now 3850 points remain\
+Out of 3272 false matches, 1 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 3271 false alarm fraction: 5.0246 missed calls: 70, missed fraction: 0.1075 \
+\
+^^^^^^^^^ End Station S508C0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508D0 vvvvvvvvv\
+Raw detection comparison, max time for this and following is 2008-08-21 12:00:34\
+x trimmed: x was 5686 long, now 5680 points remain\
+Out of 5151 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 5151 false alarm fraction: 9.3146 missed calls: 12, missed fraction: 0.0217 \
+\
+Interval detection comparison...\
+x trimmed: x was 3666 long, now 3660 points remain\
+Out of 3155 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 3155 false alarm fraction: 5.7052 missed calls: 37, missed fraction: 0.0669 \
+\
+Morph detection comparison...\
+x trimmed: x was 3488 long, now 3484 points remain\
+Out of 3004 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 3004 false alarm fraction: 5.4322 missed calls: 72, missed fraction: 0.1302 \
+\
+Final detection comparison\
+x trimmed: x was 3488 long, now 3484 points remain\
+Out of 3004 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 3004 false alarm fraction: 5.4322 missed calls: 72, missed fraction: 0.1302 \
+\
+^^^^^^^^^ End Station S508D0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508E0 vvvvvvvvv\
+Raw detection comparison, max time for this and following is 2008-08-21 12:00:34\
+x trimmed: x was 5757 long, now 5746 points remain\
+Out of 5267 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 5267 false alarm fraction: 10.5340 missed calls: 17, missed fraction: 0.0340 \
+\
+Interval detection comparison...\
+x trimmed: x was 3911 long, now 3900 points remain\
+Out of 3435 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 3435 false alarm fraction: 6.8700 missed calls: 31, missed fraction: 0.0620 \
+\
+Morph detection comparison...\
+x trimmed: x was 3588 long, now 3579 points remain\
+Out of 3141 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 3141 false alarm fraction: 6.2820 missed calls: 60, missed fraction: 0.1200 \
+\
+Final detection comparison\
+x trimmed: x was 3588 long, now 3579 points remain\
+Out of 3141 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 3141 false alarm fraction: 6.2820 missed calls: 60, missed fraction: 0.1200 \
+\
+^^^^^^^^^ End Station S508E0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508F0 vvvvvvvvv\
+Raw detection comparison, max time for this and following is 2008-08-21 12:00:34\
+x trimmed: x was 5319 long, now 5281 points remain\
+Out of 5027 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 5027 false alarm fraction: 17.9536 missed calls: 24, missed fraction: 0.0857 \
+\
+Interval detection comparison...\
+x trimmed: x was 3238 long, now 3201 points remain\
+Out of 2956 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 2956 false alarm fraction: 10.5571 missed calls: 33, missed fraction: 0.1179 \
+\
+Morph detection comparison...\
+x trimmed: x was 2565 long, now 2524 points remain\
+Out of 2299 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 2299 false alarm fraction: 8.2107 missed calls: 55, missed fraction: 0.1964 \
+\
+Final detection comparison\
+x trimmed: x was 2565 long, now 2524 points remain\
+Out of 2299 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 2299 false alarm fraction: 8.2107 missed calls: 55, missed fraction: 0.1964 \
+\
+^^^^^^^^^ End Station S508F0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508G0 vvvvvvvvv\
+Raw detection comparison, max time for this and following is 2008-08-21 12:00:34\
+x trimmed: x was 4976 long, now 4841 points remain\
+Out of 4701 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 4701 false alarm fraction: 30.7255 missed calls: 11, missed fraction: 0.0719 \
+\
+Interval detection comparison...\
+x trimmed: x was 2628 long, now 2545 points remain\
+Out of 2411 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 2411 false alarm fraction: 15.7582 missed calls: 18, missed fraction: 0.1176 \
+\
+Morph detection comparison...\
+x trimmed: x was 2104 long, now 2037 points remain\
+Out of 1926 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 1926 false alarm fraction: 12.5882 missed calls: 42, missed fraction: 0.2745 \
+\
+Final detection comparison\
+x trimmed: x was 2104 long, now 2037 points remain\
+Out of 1926 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 1926 false alarm fraction: 12.5882 missed calls: 42, missed fraction: 0.2745 \
+\
+^^^^^^^^^ End Station S508G0 ^^^^^^^\
+\
+Jan 24, 2009\
+\
+Looking at 8/28, 2009.  New data!\
+\
+Icall=500;\
+Will use station 1, index 725 for anchor, with SEL 105.00.  SHould be matched with station 2, index 730\
+No signals pass   4.620763 sec time tolerance\
+station 1 signal 05:07:20.  Station 2, 05:07:34, a 13 second difference.\
+Possibility: mistake in manual result, incorrect drift in file\
+\
+manual index: 1051\
+Identified as user mistake...confused with two upsweeps.  But check others..\
+\
+call indix: 1057, a split call needed a param.merge.gap_f of 30 Hz.  Split ends were rejected by neural network.\
+\
+call index: 200: Another manual mistake.\
+\
+Looking at 8/28, 2009. \
+call_indicies(102)=204 (manual call 204)\
+station b, index 144: 01:03:03.\
+localization 141, 142\
+	Very strong signal on many stations yet failure.  Why?  Did I strip bad localizations?\
+station_indicies: [-1 144 96 164 105 61 30]\
+\
+Answer, Huber MLE method doesn't work,  one bad bearing ruins all...\
+If don't check localization\
+1452 out of 2196, or  66.00 percent of manual locations have more than 2 matches with an automated localization\
+\
+I loose another two hundred calls with localization...\
+1253 out of 2196, or  57.00 percent of manual locations have more than 2 matches with an automated localization\
+\
+if I only keep manual results succesfully localized:\
+1420 out of 1991, or  71.00 percent of manual locations have more than 2 matches with an automated localization\
+\
+should I use 'robust_bandwidth' instead of 'local_bandwidth'?  Yes\
+\
+Starting a run for stations only, four days.\
+\
+Jan 26, 2009\
+Switching robust_bandwidth for local_bandwidth a bit of a disaster..\
+robust_bandwidth often much narrower than local_bandwidth, so little streamlined\
+\
+Jan 27, 2009\
+\
+Problems on 9/06 arising from ship noise interference\
+Strong airguns on 9/13,\
+Finding numerous calls labeled as 'false' on individual DASARs.\
+Airgun signals getting through...\
+\
+Jan 28, 2009\
+\
+Parallel efforts:\
+	a) rerun neural network training on all six site 5 days.  Perhaps will remove more airgun signals.\
+		3 hidden neurons: error 0.2935, 2 false per 1 true.\
+		20 hidden neurons: out of memory\
+		10 hidden neurons: error 0.275,  1.7 false per 1 true\
+	b) compare hausdorff vs cross-corrleation linking methods.  Include plotting of error ellipse.\
+	c) add feature inputs to neural network: original Bounding Box arising from initial image conversion.\
+\
+After reading nn net, decided to try mapstd instead of mapminmax.  Then I discovered that SNR contained Inf values, which I then set to 30.\
+\
+FIxed correlation error in matched-stations.m, (xcov instead of proper xcorr), and commented out adjust_threshold_level in postprocessor_mroph\
+Am puzzled by large errors in localization.\
+\
+Jan 29, 2009\
+Desperation tactics, looking at image conversion.  Removed adjustment of threshold and retrained neural net to see if more effective cross-correlation results.\
+Results not too bad, but ellipse error area is still discouraging.\
+\
+Tried tol of 1-sqrt(1/1.25).\
+\
+Increased number of snips files read into memory from 40 to 200, took 12 minutes to process DASAR A on 8/28 last time, now what?\
+Could bearings be a problem?  Add a little buffer in frequency range?\
+\
+Found that manual results using a CRITVAL of 1.0, instead of the 4.5 I've been using...\
+\
+
+\b Further ideas:\
+	Loop over xcorr_tol and localization type...\
+	
+\f3  change param.merge.max_frequency_separation from 50 to a larger number to remove broadband airguns?\
+	Incorporate bearing uncertainties--may reduce error ellipse.\
+	Run median searcher to remove outliers before applying Huber.\
+	Save 'crosschecked' with additional title fields '_xcorrtol_method'.\
+	Cross-correlate a templated Beq instead of just a binary shape to ensure a better match.\
+	Try to merge localizations that share a common call, to reduce false alarm rate...\
+\
+
+\f1\b0 Jan 29, 2009\
+Implemented median outlier removal, and created 'master_rewrite_TSV.m' to reprocess localizations only.\
+Stage 5 almost completed on KatMac computer.\
+Incorporating bearing uncertinties via '\cf3 HuberCalibratedKappa\cf0 'keyword made situation worse.  So problem of large\
+error ellipse not due to bearing error estimates.\
+\
+\
+Jan 30, 2009\
+Now exploring code performance.  FIrst repproduce original 8/21 result for Huber algorithm:\
+Both manual and automated results restricted to succesful localization.\
+\
+Using original December TSV files, which had CRITVAL=1.\
+Huber algorithm only, Kappa estimated from data\
+\
+Out of 2457  manual whale locations, 2291 used 2 or greater DASARS.\
+Out of 2291  remaining locations, 2214 have at least one weight>0.\
+Out of 2214 remaining manual locations, 2214 were successfully tracked.\
+\
+ 2214 Manual results , 3848 automated localizations.\
+ 2214 Manual results less than Inf, 3848 automated localizations.\
+\
+1532 out of 2214, or  69.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f3\b \cf0 1647 out of 2214, or  74.00 percent of manual locations have more than 2 matches with an automated localization\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f1\b0 \cf0 1147 out of 2214, or  52.00 percent of manual locations also aligned with location features\
+2201 locations remain, or false/true ratio of   1.34 \
+\
+Now rerun with new TSV files, sent on 9/29 by Kat:\
+Out of 2457  manual whale locations, 2295 used 2 or greater DASARS.\
+Out of 2295  remaining locations, 2262 have at least one weight>0.\
+Out of 2262 remaining manual locations, 1906 were successfully tracked.\
+USING PARAMETER VALUES STORED WITH AUTOMATIC RESULTS\
+ \
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\
+%%%%%%%%%%%%%%% evaluate_miss_fraction.m%%%%%%%%%%%%\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\
+ 1906 Manual results , 3848 automated localizations.\
+ 1906 Manual results less than Inf, 3848 automated localizations.\
+\
+1318 out of 1906, or  69.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f3\b \cf0 1537 out of 1906, or  81.00 percent of manual locations have more than 2 matches with an automated localization\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f1\b0 \cf0 1023 out of 1906, or  54.00 percent of manual locations also aligned with location features\
+2311 locations remain, or false/true ratio of   1.50\
+\pard\pardeftab720\ql\qnatural
+\cf0        \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 What if I use median to strip outliers, then use Huber?\
+1329 out of 1906, or  70.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+1545 out of 1906, or  81.00 percent of manual locations have more than 2 matches with an automated localization\
+1032 out of 1906, or  54.00 percent of manual locations also aligned with location features\
+2092 locations remain, or false/true ratio of   1.35 \
+\
+Thus false alarm rate cut somewhat.\
+\
+Now restrict distances to less than 21 km from center of DASAR array: 8/21\
+Huber algorithm.\
+Out of 4398 automated locations, 4398 linked 2 or more DASARS\
+Enter maximum distance from DASAR center in km (default 11 km + 10 km= 21 km)\
+Localizations less than 21 km used.\
+Out of 4398 automated surviving locations, 2638 successfully localized and have distance less than 21 km\
+Out of 1906 remaining manual locations, 1451 were less than 21 km from center.\
+ 1451 Manual results , 2638 automated localizations.\
+ 1451 Manual results less than Inf, 2638 automated localizations.\
+933 out of 1451, or  64.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+1096 out of 1451, or  76.00 percent of manual locations have more than 2 matches with an automated localization\
+699 out of 1451, or  48.00 percent of manual locations also aligned with location features\
+1542 locations remain, or false/true ratio of   1.41 \
+\
+And medianHuber result if restricted to 21 km or less?\
+\
+
+\b 1451 Manual results less than Inf, 2778 automated localizations.\
+962 out of 1451, or  66.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+1129 out of 1451, or  78.00 percent of manual locations have more than 2 matches with an automated localization\
+719 out of 1451, or  50.00 percent of manual locations also aligned with location features\
+1649 locations remain, or false/true ratio of   1.46 
+\b0 \
+\
+Keep same paramters , check out 8/28\
+3306 Manual results , 4225 automated localizations.\
+ 3306 Manual results less than Inf, 4225 automated localizations.\
+2205 out of 3306, or  67.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+2672 out of 3306, or  81.00 percent of manual locations have more than 2 matches with an automated localization\
+1766 out of 3306, or  53.00 percent of manual locations also aligned with location features\
+1553 locations remain, or false/true ratio of   0.58 \
+\
+Keep same, check out 9/06\
+ 1844 Manual results , 3257 automated localizations.\
+ 722 out of 1844, or  39.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+1097 out of 1844, or  59.00 percent of manual locations have more than 2 matches with an automated localization\
+615 out of 1844, or  33.00 percent of manual locations also aligned with location features\
+2160 locations remain, or false/true ratio of   1.97 \
+\
+Keep same, check out 9/13\
+Out of 4255  manual locations, 4072 are whales, 104 are not whale, and 79 are uncertain.\
+Out of 4072  manual whale locations, 3754 used 2 or greater DASARS.\
+Out of 3754  remaining locations, 3673 have at least one weight>0.\
+Out of 3673 remaining manual locations, 3173 were successfully tracked.\
+Enter maximum distance from DASAR center in km (default 11 km + 10 km= 21 km)\
+Localizations less than 21 km used.\
+Out of 3173 remaining manual locations, 2954 were less than 21 km from center.\
+2954 Manual results , 4734 automated localizations.\
+ 2954 Manual results less than Inf, 4734 automated localizations.\
+1920 out of 2954, or  65.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+2370 out of 2954, or  80.00 percent of manual locations have more than 2 matches with an automated localization\
+1460 out of 2954, or  49.00 percent of manual locations also aligned with location features\
+2364 locations remain, or false/true ratio of   1.00 \
+\
+Keep same, check out 9/21\
+Maximum time loaded is 2008-09-21 23:50:43\
+Out of 871  manual locations, 555 are whales, 201 are not whale, and 115 are uncertain.\
+Out of 555  manual whale locations, 496 used 2 or greater DASARS.\
+Out of 496  remaining locations, 489 have at least one weight>0.\
+Out of 489 remaining manual locations, 365 were successfully tracked.\
+Enter maximum distance from DASAR center in km (default 11 km + 10 km= 21 km)\
+Localizations less than 21 km used.\
+Out of 365 remaining manual locations, 326 were less than 21 km from center.\
+326 Manual results , 834 automated localizations.\
+ 326 Manual results less than Inf, 834 automated localizations.\
+187 out of 326, or  57.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+232 out of 326, or  71.00 percent of manual locations have more than 2 matches with an automated localization\
+147 out of 326, or  45.00 percent of manual locations also aligned with location features\
+602 locations remain, or false/true ratio of   2.59 \
+Note presence of large numbers of bearded seal and uncertain calls\
+\
+Keep same, check out 9/29\
+Maximum time loaded is 2008-09-29 23:58:48\
+Out of 4293  manual locations, 3737 are whales, 305 are not whale, and 251 are uncertain.\
+2 sequences detected\
+Sequence 1: 1.000000e-01 instances of call type 1\
+Sequence 2: 1.000000e-01 instances of call type 1\
+Want succesfull localization only; begin with 3737 localizations.\
+Out of 3737  manual whale locations, 3558 used 2 or greater DASARS.\
+Out of 3558  remaining locations, 3116 have at least one weight>0.\
+Out of 3116 remaining manual locations, 2719 were successfully tracked.\
+Enter maximum distance from DASAR center in km (default 11 km + 10 km= 21 km)\
+Localizations less than 21 km used.\
+Out of 2719 remaining manual locations, 800 were less than 21 km from center.\
+ 800 Manual results , 1625 automated localizations.\
+ 800 Manual results less than Inf, 1625 automated localizations.\
+Strange..best frequency match not the same as best time match...\
+Strange..best frequency match not the same as best time match...\
+471 out of 800, or  59.00 percent of manual locations have a  50.00 percent match or greater with auto times\
+553 out of 800, or  69.00 percent of manual locations have more than 2 matches with an automated localization\
+385 out of 800, or  48.00 percent of manual locations also aligned with location features\
+1072 locations remain, or false/true ratio of   1.94 \
+%%%%%%%%%%%%%%%%\
+\
+Huber has only a tinier worse performance.\
+\
+Feb.1 , 2009\
+\
+Looks like miss rate 30%.  How to reduce false alarm rate?\
+\
+(1) Check to see how many false alarms include a true call.\
+(2) How many false alarms share repeated call \
+\
+(3) Programming:  extract a matrix from a location to see if any distinquishing features between false and true locations.\
+\
+12 hour evaluation ("official") of six days, same parameters as previous results above...\
+\
+ 1341 Manual results , 1128 automated localizations.\
+ 529 Manual results less than 2008-08-21 12:00:00, 1128 automated localizations.\
+442 out of 529, or  84.00 percent of manual locations have more than 2 matches with an automated localization\
+686 locations remain, or false/true ratio of   1.55 \
+\
+\
+ 1630 Manual results less than 2008-08-28 12:00:00, 2021 automated localizations.\
+1274 out of 1630, or  78.00 percent of manual locations have more than 2 matches with an automated localization\
+747 locations remain, or false/true ratio of   0.59 \
+\
+ 66 Manual results less than 2008-09-06 12:00:00, 1147 automated localizations.\
+44 out of 66, or  67.00 percent of manual locations have more than 2 matches with an automated localization\
+1103 locations remain, or false/true ratio of  25.07 \
+%%%%%%%%%%%%%%%%\
+\
+ 1185 Manual results less than 2008-09-13 12:00:00, 2165 automated localizations.\
+1055 out of 1185, or  89.00 percent of manual locations have more than 2 matches with an automated localization\
+1110 locations remain, or false/true ratio of   1.05 \
+\
+ 234 Manual results less than 2008-09-21 12:00:00, 662 automated localizations.\
+178 out of 234, or  76.00 percent of manual locations have more than 2 matches with an automated localization\
+484 locations remain, or false/true ratio of   2.72 \
+\
+\
+\
+ 361 Manual results less than 2008-09-29 12:00:00, 704 automated localizations.\
+264 out of 361, or  73.00 percent of manual locations have more than 2 matches with an automated localization\
+440 locations remain, or false/true ratio of   1.67 \
+%%%%%%%%%%%%%%%%\
+>> \
+\
+Feb. 3, 2009\
+\
+Added bearing error estimates.  Don't like the method of extracting from a filtered time series.  Instead, compute the active intensity of a spectrogram.\
+\
+Feb. 4, 2009\
+Debugging:  Look at harmonic call at 8/21 00:00:34 at Station 5A\
+Bearings on three DASARs (true):  177.7000  216.0000  173.2000\
+bref: 288.4000  218.1000  190.1000\
+\
+Location 2, 2008-08-21 00:00:34, DASAR 1 from alg_chc sel_ratio_FFT relative bearing: -71.54 true bearing: 177.71-SEL_RATIO_FFT\
+Location 2, 2008-08-21 00:00:34, DASAR 1 from alg_chc sel_ratio relative bearing: -71.61 true bearing: 177.64-SEL_RATIO \
+\
+ \
+Location 2, 2008-08-21 00:00:38, DASAR 2 from alg_chc sel_ratio_FFT relative bearing: -140.25 true bearing: 217.61\
+ \
+Discussion with Trent--implement time series bearing estimation for now.  Work on spectrogram method later.\
+\
+Using butterworth filter instead of FIR filter.\
+\
+SEL_RATIO:\
+Location 1, 2008-08-21 00:00:17, DASAR 4 from alg_chc sel_ratio relative bearing: -44.20 true bearing: 144.81 +/-   0.39\
+Location 1, 2008-08-21 00:00:22, DASAR 5 from alg_chc sel_ratio relative bearing:  98.84 true bearing: 142.04 +/-   0.46\
+Location 2, 2008-08-21 00:00:34, DASAR 1 from alg_chc sel_ratio relative bearing: -71.61 true bearing: 177.64 +/-   0.42\
+Location 2, 2008-08-21 00:00:38, DASAR 2 from alg_chc sel_ratio relative bearing: -140.12 true bearing: 217.75 +/-   0.36\
+\
+SEL_RATIO_FFT:\
+Location 1, 2008-08-21 00:00:17, DASAR 4 from alg_chc sel_ratio_FFT relative bearing: -43.51 true bearing: 145.49 +/- \
+Location 1, 2008-08-21 00:00:22, DASAR 5 from alg_chc sel_ratio_FFT relative bearing:  97.98 true bearing: 141.18 +/- \
+Location 2, 2008-08-21 00:00:34, DASAR 1 from alg_chc sel_ratio_FFT relative bearing: -71.54 true bearing: 177.71 +/- \
+Location 2, 2008-08-21 00:00:38, DASAR 2 from alg_chc sel_ratio_FFT relative bearing: -140.25 true bearing: 217.61 +/- \
+\
+SPECGRAM\
+Location 1, 2008-08-21 00:00:17, DASAR 4 from alg_chc spectrogram relative bearing: -44.01 true bearing: 144.99 +/-   0.39\
+Location 1, 2008-08-21 00:00:22, DASAR 5 from alg_chc spectrogram relative bearing:  98.39 true bearing: 141.59 +/-   0.83\
+Location 2, 2008-08-21 00:00:34, DASAR 1 from alg_chc spectrogram relative bearing: -71.23 true bearing: 178.03 +/-   0.24\
+Location 2, 2008-08-21 00:00:38, DASAR 2 from alg_chc spectrogram relative bearing: -140.14 true bearing: 217.72 +/-   0.24\
+\
+
+\f1 Cpvx=2*real(y\{1\}.*conj(y\{2\}) );
+\f0 \
+I had forgot to conjugate in above statement...\
+\
+Feb. 7, \
+\
+Been running bulk.  Exterior Site loop not working.  Idea: plot distribution of true, false locations.\
+\
+Feb 9, 2009\
+Attempting to start Site 3, learned DASAR D is bad for localizations.\
+Thus realized error in compute_position.m and load_DASAR_coords.m; the latter loads positions for all DASARS....\
+Even bigger error...\
+
+\f1 DASAR_locations_2008 not up to date...\
+\
+Feb 10, running Sites 1, 2, and 3.  First two on KatsMacPro, last on macmussel.\
+Beginning quality review of Site 5 results from Feb 6...\
+
+\f0 \
+\
+\
+Feb 20, found that compute_position is removing quite a few bearings due to Huber algorithm, because of high bearing precision.\
+\
+Feb 23--found that KatKim and macmussel are effectively running the same code and have same Site 5 *morph.mat files..\
+\
+Feb 27, 2009\
+\
+Reviewing Site 1--DASAR E 00:01:39.  Is it possible that dt> time tolerance for match, if only partial call detected?  Should I add a 1 second buffer to time_tol for this reason?\
+\
+Further refinements:\
+	-dt safety check to remove false alarms\
+	-adding features to MSE neural network, including some measure of local bandwidth\
+	-spatially filtering spectrogram to improve image segmentation;\
+	-watersheding? NO\
+	-region growing\
+	-locationalization merger and repair...\
+\
+March 4, 2009\
+Demo program 'image_threshold.m' created that seems to show improved thresholding via morph opening via reconstruction, h-dome repeated twice.  "March4.tar" contains code before\
+implementing new.\
+\
+reduced 'eq_time' for morph to 0.75, from 1.0.\
+Eccentricity 0.7\
+\
+Problem with offset nstart in energy detector found.  Is it a GSI_specgram_viewer issue or a JAVA issue.  Run energy detector twice, one with offset, one without.\
+\
+March 6, 2009-Exploring spatial filtering to reduce false alarms..set sigma=1 for gaussian filter..\
+\
+The issue--what if the calls are not FM-modulated sweeps, but literally "blobs"?\
+\
+Met Karim Sabra, told me about alternate time-frequency distributions\
+\
+\
+Changed param.energy.Nfft to 128, from 256, ovlap still 50%\
+\
+Trent Mc called about duplicates in time and space at site 1...\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f4 \cf0 \
+\
+\'a0\'a0\'a0\'a0\'a0\'a0 i\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0 obsid\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0\'a0 ctev\'a0 easting\'a0 northing\
+300\'a0\'a0\'a0 1 20080817100300 1219019013.54 582842.9 7870216.2\
+460\'a0\'a0\'a0 1 20080818100033 1219019013.54 580514.2 7869963.4\
+334\'a0\'a0\'a0 2 20080817100334 1219020406.27 584311.3 7865389.8\
+494\'a0\'a0\'a0 2 20080818100067 1219020406.27 584313.0 7865388.8\
+342\'a0\'a0\'a0 3 20080817100342 1219020481.08 584248.5 7865509.6\
+503\'a0\'a0\'a0 3 20080818100076 1219020481.08 584249.6 7865509.8\
+378\'a0\'a0\'a0 4 20080817100378 1219022819.92 584110.0 7859584.8\
+537\'a0\'a0\'a0 4 20080818100110 1219022819.92 584109.6 7859585.5\
+382\'a0\'a0\'a0 5 20080817100382 1219022839.34 584162.7 7859257.2\
+542\'a0\'a0\'a0 5 20080818100115 1219022839.34 584163.2 7859254.9\
+401\'a0\'a0\'a0 6 20080817100401 1219024046.54 581185.5 7856745.8\
+565\'a0\'a0\'a0 6 20080818100138 1219024046.54 581170.9 7856748.5\
+1135\'a0\'a0 7 20080819100184 1219121244.37 603351.9 7868660.3\
+1136\'a0\'a0 7 20080819100185 1219121244.37 603351.9 7868660.3\
+1393\'a0\'a0 8 20080819100442 1219180450.35 589568.9 7884453.2\
+1394\'a0\'a0 8 20080819100443 1219180450.35 589568.9 7884453.2\
+1491\'a0\'a0 9 20080822100057 1219421190.81 604140.9 7861688.2\
+1492\'a0\'a0 9 20080822100058 1219421190.81 604140.9 7861688.2\
+1719\'a0 10 20080823100053 1219493340.76 609072.5 7873702.5\
+1720\'a0 10 20080823100054 1219493340.76 609072.5 7873702.5\
+\ul 2336\'a0 11 20080826100230 1219766799.72 609984.0 7875252.7\
+2337\'a0 11 20080826100231 1219766799.72 609984.0 7875252.7\
+2381\'a0 12 20080826100275 1219769411.23 613304.3 7879841.8\
+2382\'a0 12 20080826100276 1219769411.23 613304.3 7879841.8\
+2407\'a0 13 20080826100301 1219770598.27 603450.0 7878171.9\
+2408\'a0 13 20080826100302 1219770598.27 603450.0 7878171.9\ulnone \
+3231\'a0 14 20080827100670 1219837139.83 592033.1 7873196.3\
+3233\'a0 14 20080827100672 1219837139.83 592033.1 7873196.3\
+3484\'a0 15 20080827100923 1219848882.32 591340.2 7868031.3\
+3485\'a0 15 20080827100924 1219848882.32 592539.9 7867652.6\
+3597\'a0 16 20080827101036 1219856670.45 585204.3 7877767.2\
+3598\'a0 16 20080827101037 1219856670.45 585204.3 7877767.2\
+4482\'a0 17 20080828100619 1219931367.47 574589.9 7873345.6\
+4483\'a0 17 20080828100620 1219931367.47 574588.4 7873344.5\
+4901\'a0 18 20080828101038 1219948019.85 594216.8 7871234.8\
+4903\'a0 18 20080828101040 1219948019.85 594218.6 7871233.7\
+5367\'a0 19 20080829100097 1219985806.36 573212.3 7869361.6\
+5368\'a0 19 20080829100098 1219985806.36 573212.3 7869361.6\
+14585 20 20080913100013 1221274023.50 606380.4 7877431.3\
+14586 20 20080913100014 1221274023.50 606380.4 7877431.3\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 \
+\
+Solution--first GSI file day goes 24 hours, spilling into next day.\
+\
+3/09/2009\
+\
+I have written following codes for counting exact duplicates at all sites.\
+\
+-rw-r--r--    1 thode  staff      522 Mar  9 15:31 remove_duplicates.m\
+-rw-r--r--    1 thode  staff     1172 Mar  9 15:31 strip_duplicates.m\
+\
+I am creating an modified unique_tol.m to quantify near duplicates...\
+-rw-r--r--    1 thode  staff     6060 Mar  8 15:06 unique_tol.m\
+\
+3/22/2009\
+Optimization code running.\
+\
+Optimized 8/21 site 5a,g first 12 hours, equal weighting for all calls regardless of SNR.\
+\
+Criteria 1:\
+Station results: false_alarms: 2928 false alarm fraction: 4.4771 matched calls 627, missed calls: 27, missed fraction: 0.0413\
+Station results: false_alarms: 2473 false alarm fraction: 17.1736 matched calls 118, missed calls: 26, missed fraction: 0.1806\
+Input vector: [10 5.25 9.42 0.0952 2.58 2.42]\
+ missed frac: 0.0664 false alarm ratio: 6.7682, current fit: 177.229732\
+\
+Criteria 2:\
+Station results: false_alarms: 2032 false alarm fraction: 3.1070 matched calls 595, missed calls: 59, missed fraction: 0.0902\
+Station results: false_alarms: 1867 false alarm fraction: 12.9653 matched calls 107, missed calls: 37, missed fraction: 0.2569\
+Input vector: [15.6 3.67 10.6 0.0262 2.58 2.42]\
+ missed frac: 0.1203 false alarm ratio: 4.8860, current fit: 26.434366\
+\
+Criteria3:\
+Station results: false_alarms: 1576 false alarm fraction: 2.4098 matched calls 528, missed calls: 126, missed fraction: 0.1927\
+Station results: false_alarms: 1784 false alarm fraction: 12.3889 matched calls 74, missed calls: 70, missed fraction: 0.4861\
+Input vector: [19.1 0.187 9.42 0.0381 0.719 3.91]\
+ missed frac: 0.2456 false alarm ratio: 4.2105, current fit: 19.512254\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+\cf0 \ul \ulc0 Trying same thing on 8/28 Site 1:\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+\cf0 \ulnone \
+ number of true calls: 54\
+Station results: false_alarms: 9669 false alarm fraction: 179.0556 matched calls 52, missed calls: 2, missed fraction: 0.0370 \
+\
+\
+ number of true calls: 810\
+Station results: false_alarms: 5117 false alarm fraction: 6.3173 matched calls 786, missed calls: 24, missed fraction: 0.0296 \
+\
+ number of true calls: 170\
+Station results: false_alarms: 8448 false alarm fraction: 49.6941 matched calls 100, missed calls: 70, missed fraction: 0.4118 \
+\
+Input vector: [7.92 4.35 11.2 0.05 2.58 2.42] \
+ missed frac: 0.0928 false alarm ratio: 22.4700, current fit: 1411.504589 \
+\
+3/26/2009\
+Optimization has been run for "reconstructive" threshold algorithm on 8/21 Site 5a,g and 8/28 Site 1c only.  Site 1a has many, many false alarms.\
+\
+Here are results for Site1c only:\
+\
+Criteria1:\
+number of true calls: 810\
+Station results: false_alarms: 2920 false alarm fraction: 3.6049 matched calls 769, missed calls: 41, missed fraction: 0.0506\
+Final Input vector: [17 6.38 10 0.0715 2.58 7.37]\
+ missed frac: 0.0506 false alarm ratio: 3.6049, current fit: 11.446131\
+\
+Criteria 2:\
+number of true calls: 810\
+Station results: false_alarms: 1584 false alarm fraction: 1.9556 matched calls 744, missed calls: 66, missed fraction: 0.0815\
+Final Input vector: [15.6 2.55 11.2 0.0619 3.19 3.04] \
+ missed frac: 0.0815 false alarm ratio: 1.9556, current fit: 3.900003\
+\
+Criteria 3:\
+number of true calls: 810\
+Station results: false_alarms: 1029 false alarm fraction: 1.2704 matched calls 660, missed calls: 150, missed fraction: 0.1852\
+Final Input vector: [11.9 5.36 10 0.05 2.95 2.42]\
+ missed frac: 0.1852 false alarm ratio: 1.2704, current fit: 2.868659\
+\
+
+\b March 27, 2009
+\b0 \
+Starting reconstruction/otsu comparison.\
+\
+Neural net, one station pass, (everything accepted)\
+1.75 false alarm ratio for 10% miss ratio, 3 hidden units\
+1.4 if 10 hidden units\
+1.5 if pca, 10 hidden units\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0 r
+\fs20 un_options.center_dist_limit=Inf;\
+ \
+run_options.max_hrs=12;\
+ \
+run_options.limit_manual_ctimes=0;  \cf3 %If one, limit manual ctimes load to maximum value of automated results\cf0 \
+run_options.debug_miss_compare=0;  \cf3 %If one, plot debug output of evaluate_miss_fraction\cf0 \
+\cf3  \cf0 \
+run_options.min_stations=1;  \cf3 %Minimum Number of DASARS that have detected a call for it to be considered under 'max SNR' criteria\cf0 \
+run_options.success_only=0;  \cf3 %Load only manual  results that have been succesfully localized..\cf0 \
+run_options.min_weight=0;  \cf3 %Minimum Huber weight required to include call in match...\cf0 \
+\cf3  \cf0 \
+run_options.auto_success_only=0; \cf3 %Load only auto  results that have been succesfully localized..\cf0 \
+run_options.Ikeep_only=0;\
+run_options.west_results=0;  \cf3 %If one, use WEST localization results and reject data that are less than 10 km from nearest DASAR.\cf0 \
+\cf3  \cf0 \
+run_options.plot_manual_statistics=0;  \cf3 %Histogram features from manual TSV files\cf0 \
+\cf3 %run_options.duplicate_time_tol=1; %Tolerance time for matching manual and automated detection\cf0 \
+run_options.tol=1;\
+\cf3 %run_options.frac_cutoff=0.5;  %Number of stations that must be present at a automated location to qualify as a match with a manual location.\cf0 \
+\cf3 %run_options.bad_stations='e';  %Stations that have bad data so should be excised from manual results...\cf0 \
+\cf3  \cf0 \
+\cf3  \cf0 \
+\cf3 %% Neural network options...\cf0 \
+run_options.train_chc=\cf2 'trainlm'\cf0 ;  \cf3 %'trainscg' or 'trainlm'\cf0 \
+run_options.plot_manual_statistics=0;\
+miss_fraction=0.1;\
+nhidden=10;\
+run_options.pca=0; \cf3 %Principal component analysis on inputs?\cf0 \
+run_options.debug_plot=0;\
+run_options.type=\cf2 'mse'\cf0 ; \cf3 %cross entropy, mse\cf0 \
+\cf3  \cf0 \
+%%%run_options.min_stations=2, same results\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf0 \
+If succesful localization for both manual and automated, 1.6 false alarm ratio for 10% miss ratio, 10 hidden units\
+\
+March 30\
+	Third segmentation candidate selected-select peaks... ready to optimize\
+	Need better choices for optimization, checking out 8/21 and 8/28 and 9/07 for both Site1 and 5.\
+\
+Came up with idea of a 'param.morph.SNRmin' outline to add additional features to contour.\
+\
+Many features are starting to emerge from the combo "contour/reconstruction" approach.\
+Future idea:  if features are related to previous detection, might be bounds for a new "match" feature?  If an IPI derived, include in mix...\
+\
+March 31--Ideas seem to be working pretty well.  The Apri1_2009.tar ball should be a good place to go forward...\
+\
+April 1\
+\
+2008-09-21 00:00:03: Good case study of how to image processing two different airgun signals..\
+\
+April 3\
+Looking over algorithm development at 5a 10:01:30 8/28, fascination airguns with echos following 5 seconds later?  No, two airgun surveys.  One survey has first arrival at 60 Hz, then slower arrivals at spectral components above and below--created a 'C' shape in spectrogram.  Many whale calls.\
+\
+April 16, 2009\
+\
+Backed up all old scripts to Apr16_2009.tar files, preparing to transfer modified postprocessor_morph.m from laptop to macmussel.  This new version has a partial implementation of\
+the combined "contour/ridge" trace that looks promising.\
+\
+Deciding how to merge two segments so that final eccentricity and other bulk properties are derivable.\
+Also changed logic of how to splice two segments together.  Below the first two commented lines are the original logic.\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf3 %test_splice1=abs(tstart(I)-tend(J))<=param.merge.gap_t & abs(max(feature(I).fstart)-(feature(J).fend))<=param.merge.gap_f;\cf0 \
+                \cf3 %test_splice2=abs(tstart(J)-tend(I))<=param.merge.gap_t & abs((feature(J).fstart)-max(feature(I).fend))<=param.merge.gap_f;\cf0 \
+                test_splice1=abs(tstart(I)-tend(J))<=param.merge.gap_t & min(abs(feature(I).fstart-feature(J).fend))<=param.merge.gap_f;\
+                test_splice2=abs(tstart(J)-tend(I))<=param.merge.gap_t & min(abs(feature(J).fstart-feature(I).fend))<=param.merge.gap_f;\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 Thus if feature(I) has harmonics, then any harmonic can splice feature(J), not just the highest frequency harmonic, as had been the case.\
+\
+April 20, 2009\
+Converging on three test times/dates/scenarios:\
+\
+Site 5a, 8/21, 23:00 double faint airguns\
+Site 1c, 9/06, 23:00 strong "false alarm" airguns.  Site c only has 12 calls entire day, b DASAR has  112, vast majority before 9 AM.\
+\
+April 21, 2009\
+Review of ICI results on 8/21--currently using\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0  param.interval_remove.Ndet=8;\
+        param.interval_remove.Nmiss=2;\
+        param.interval_remove.ICItol=1;\
+        param.interval_remove.names=\{\cf2 'peak_freq'\cf0 ,\cf2 'peak_duration'\cf0 \};\
+        param.interval_remove.tol_feature=[ 5+(0.5*param.energy.bandwidth) 0.75*1000];\
+       \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 \
+change to\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0 param.interval_remove.Ndet=10;
+\f0 \
+
+\f1        param.interval_remove.tol_feature=[ 5+(2*param.energy.bandwidth) 1*1000];\
+       \
+\
+Problem: when airgun activity heavy, detection duration about 5 seconds, but with variation greater than one second.\
+Solutions: when detection length greater than param.energy.MaxTime-param.interval.ICItol, neglect time feature matching.\
+	Or, use percent of total duration as a tolerance.\
+\
+Apr 23, 2009\
+Attempting different features (min and max frequency) for ICI detection, noticing bug in program.  flo is sometimes\
+greater than fhi.  Also think writeMe variable may be a mistake.\
+Nope, problem is energy detector lower band of 50 Hz.  Airgun precursor occasionally triggers.\
+\
+Located bug...  flo should be initialized to -1 and not zero.  Then the writeMe variable needs to be set\
+across all bands when total time exceeded.\
+\
+\
+\
+Interesting dates/times to test airgun/whale call discrimination:\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f3\b\fs26 \cf0 Site 1bcg, 23:00 Sept. 6:   Original problem flagged by Chris Nations in false detections.  Heavy airgun activity. G dasar is more difficult in that\
+reverberation is longer and thus duration of energy detections fluctuates more.\
+	New algorithm tested on Site 1b,1g.  Seems OK\
+ Site 1a 8/18 ship noise\
+\
+Site 5a,   23:00 August 21: Double faint airguns and many calls.  New algorithm tested--this will be a hard on.\
+		00:00 August 21: Many harmonic calls.  New algorithm tested--faint airguns still difficult.
+\f0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+\cf0 \
+Site 4d, Sept. 15, 3:00, 10:00 strong seismic activity, 17:20 weaker seismic with whale calls, 23:58:37 whale calls amidst strong airguns**.\
+	Possible faint downsweep at 10:02:15.\
+	New algorithm tested at 10:00,17:20 (good examples), 23:40:00 (where interval detector is working well too).\
+Site 4g, 10:00:30, has nice example of new algorithm correctly splicing a strong airgun signal with a propagation notch..\
+	   17:20:19, another example of succesful separation of dispersed airgun and whale call, followed by good interval detector.\
+\
+Site 4a Sept 13, 4:24:09  weak impulsive sounds that are not airguns..., 4:23:02 another excellent airgun plateau merger...\
+\
+Site 1A, Sept 21, 5:25:00 pinnipeds....Times that lie within 5 hour of 20080921 on DASAR S108A0...\
+5:05 in particular has a good mix of confusing sounds, including odd harmonic call at 5:06:55...\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\b0\fs24 \cf0 \
+Site 1A, 8/18 1:53:09-heavy ship noise...\
+\
+21-Sep-2008 05:00:58 8\
+21-Sep-2008 05:01:26 8\
+21-Sep-2008 05:02:20 9\
+21-Sep-2008 05:04:48 8\
+21-Sep-2008 05:05:29 8\
+21-Sep-2008 05:07:42 8\
+21-Sep-2008 05:08:08 8\
+21-Sep-2008 05:14:31 9\
+21-Sep-2008 05:16:27 9\
+21-Sep-2008 05:16:49 8\
+21-Sep-2008 05:17:46 8\
+21-Sep-2008 05:19:32 8\
+21-Sep-2008 05:20:48 8\
+21-Sep-2008 05:21:26 9\
+21-Sep-2008 05:21:38 8\
+21-Sep-2008 05:22:25 9\
+21-Sep-2008 05:23:50 9\
+21-Sep-2008 05:24:27 8\
+21-Sep-2008 05:25:26 8\
+21-Sep-2008 05:25:46 9\
+21-Sep-2008 05:26:11 8\
+21-Sep-2008 05:26:29 9\
+21-Sep-2008 05:27:24  9\
+21-Sep-2008 05:28:14  8\
+21-Sep-2008 05:30:54 8\
+21-Sep-2008 05:31:56 8\
+21-Sep-2008 05:33:33 9\
+21-Sep-2008 05:34:42 8\
+21-Sep-2008 05:36:09 8\
+21-Sep-2008 05:37:43 9\
+21-Sep-2008 05:42:43 8\
+21-Sep-2008 05:43:29 8\
+21-Sep-2008 05:43:52 9\
+21-Sep-2008 05:45:23 8\
+21-Sep-2008 05:46:23 9\
+21-Sep-2008 05:47:14 8\
+21-Sep-2008 05:49:32 8\
+21-Sep-2008 05:54:20  9\
+21-Sep-2008 05:56:52 8\
+21-Sep-2008 05:58:09 8\
+21-Sep-2008 05:59:43 8\
+\
+Wrote "review_manual_statistics.m"  in TSV_2008 directory, looking for non-whale sounds.\
+\
+Final tests are on 8/21 8/28 9/06 9/13 9/21 9/29\
+\
+5/06 investigating station creation...\
+\
+5/08/2009  Patching up airgun metric measurement in get_level_metrics, due to precursor (low frequency issues). \
+\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0 Ip=[];Im=[];\
+\pard\pardeftab720\ql\qnatural
+\cf4 while\cf0  isempty(Ip)|isempty(Im)\
+    \cf3 %toll=2*toll;\cf0 \
+    \cf3 %Ip=Istart-1+min(find(abs(cumSEL-0.95)<toll));\cf0 \
+    \cf3 %Im=Istart-1+min(find(abs(cumSEL-0.05)<toll));\cf0 \
+    Ip=Istart-1+min(find(cumSEL>=0.95));\
+    Im=Istart-1+min(find(cumSEL>=0.05));\
+    \
+\cf4 end\cf0 \
+\
+\
+Next, increase buffer time to 2 seconds, from one second.\
+Then, improved stationarity check by introducing "Istart" variable.\
+Thus if a transient exists at beginning of clip, can be rejected...\
+\
+x2eq=mean(x2(1:nbuff));\
+\pard\pardeftab720\ql\qnatural
+\cf3 %Safety check\cf0 \
+x2eqhalf1=median(x2(1:(nbuff/2)));\
+x2eqhalf2=median(x2((nbuff/2):nbuff));\
+Iadjust=0;\
+Istart=1;\
+\pard\pardeftab720\ql\qnatural
+\cf4 while\cf0  nbuff>16&abs(x2eqhalf1-x2eqhalf2)/x2eqhalf1>0.25\
+    Iadjust=Iadjust+1;\
+    \cf3 %disp(sprintf('nbuff is now %i',nbuff));\cf0 \
+    \cf4 if\cf0  x2eqhalf1>x2eqhalf2, \cf3 %bump in signal in last half of buffer\cf0 \
+        Istart=Istart+round(nbuff/2);\
+    \cf4 end\cf0 \
+    x2eq=x2(Istart+(1:(nbuff/2)));\
+    nbuff=round(nbuff/2);\
+ \
+    x2eqhalf1=median(x2eq(1:round(nbuff/2)));\
+    x2eqhalf2=median(x2eq(round(nbuff/2):end));\
+\cf4 end\cf0 \
+\cf4  \cf0 \
+\cf4  \cf0 \
+x2eq=mean(x2eq);\
+\
+Note that I use median when computing x2eqhalf*\
+\
+Finally, I reject if end of detected pulse lies within the buffer time.\
+\
+\cf4 if\cf0  Ip<Fs*bufferTime\
+    \cf3 %disp('peak not reached in proper time window')\cf0 \
+    \cf4 return\cf0 \
+\cf4 end\cf0 \
+\
+Seems to be working well, and works to flag true pulse from random crap...\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 \
+5/13\
+Challenges... high missed fraction on day 9/29 Site 5b, 9/21 Sites 5c and higher\
+Out of memory when processing Site 1\
+\
+^^^^^^^^^ End Station S508A0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508B0 vvvvvvvvv\
+Raw detection comparison, max time for this and following is 2008-09-29 12:01:07\
+x trimmed: x was 1852 long, now 1823 points remain\
+Out of 1202 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 1202 false alarm fraction: 1.6027 matched calls 640, missed calls: 110, missed fraction: 0.1467 \
+\
+Interval detection comparison...\
+x trimmed: x was 1843 long, now 1814 points remain\
+Out of 1194 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 1194 false alarm fraction: 1.5920 matched calls 639, missed calls: 111, missed fraction: 0.1480 \
+\
+Morph detection comparison...\
+x trimmed: x was 1019 long, now 1012 points remain\
+Out of 587 false matches, 0 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station results: false_alarms: 587 false alarm fraction: 0.7827 matched calls 431, missed calls: 319, missed fraction: 0.4253 \
+\
+Substantailly revised find_similar_elements_ovlap.m to include frequency band ovlap comparison for evaluation.\
+\
+May 23, 2009\
+\
+Results of first neural network training run are stored in Eval*/Results.dir/results_Site5_05212009.txt\
+\
+Sept. 29, 2009 has high morph miss rate because SNRmin of 12 dB too high.  Also losing many to interval detector.  Examples.\
+\
+\pard\pardeftab720\li1440\fi40\ql\qnatural
+
+\f5\i \cf0 ^^^^^^^^^ End Station S508A0 ^^^^^^^\
+vvvvvvvvvvvvv Begin Station S508B0 vvvvvvvvv\
+Raw detection comparison, max time for this and following is 2008-09-29 12:01:07\
+x trimmed for time range: x was 1852 long, now 1823 points remain\
+Out of 1201 false matches, 10 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station S508B0 on 20080929, results: false_alarms: 1191 false alarm fraction: 1.5880 matched calls 640, missed calls: 110, missed fraction: 0.1467 \
+ \
+Interval detection comparison...\
+x trimmed for time range: x was 1843 long, now 1814 points remain\
+Out of 1193 false matches, 10 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station S508B0 on 20080929, results: false_alarms: 1183 false alarm fraction: 1.5773 matched calls 639, missed calls: 111, missed fraction: 0.1480 \
+ \
+Morph detection comparison...\
+x trimmed for time range: x was 1019 long, now 1012 points remain\
+Out of 586 false matches, 55 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station S508B0 on 20080929, results: false_alarms: 531 false alarm fraction: 0.7080 matched calls 431, missed calls: 319, missed fraction: 0.4253 \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0\i0 \cf0 \
+\pard\pardeftab720\li1440\ql\qnatural
+
+\f5\i \cf0 vvvvvvvvvvvvv Begin Station S508A0 vvvvvvvvv\
+Raw detection comparison, max time for this and following is 2008-08-21 12:00:34\
+x trimmed for time range: x was 6566 long, now 6561 points remain\
+Out of 5897 false matches, 5 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station S508A0 on 20080821, results: false_alarms: 5892 false alarm fraction: 8.4413 matched calls 685, missed calls: 13, missed fraction: 0.0186 \
+ \
+Interval detection comparison...\
+x trimmed for time range: x was 2947 long, now 2942 points remain\
+Out of 2350 false matches, 4 were actually overlapped more than   0.25  with a true value and not included in final false result\
+Station S508A0 on 20080821, results: false_alarms: 2346 false alarm fraction: 3.3610 matched calls 613, missed calls: 85, missed fraction: 0.1218 \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0\i0 \cf0 \
+Thus the following parameters have been changed..\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0  param.interval_remove.Ndet=10;\
+        param.interval_remove.Nmiss=3;\
+        param.interval_remove.ICItol=0.75;  %%Was 1.5\
+        param.morph.SNRmin=10;  \cf3 %was 12\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 If performance worse, then increase ICItol again.\
+Did many changes to features.  IMPORTANT!  trim_station.m did not sort .Image field...\
+\
+May 25, 2009\
+\
+At SNRmin=12 dB false/true ration was 0.75.  At 10 dB increased to 1.25.  I had also added harmonic detection as extra features.  Changing from 10 to 20 neurons has no\
+effect.
+\f1 \cf3 \
+\pard\pardeftab720\ql\qnatural
+\cf0 \
+        \
+May 27, 2009\
+after quitting and restarting matlab, able to train using Sites 1,4,5 simultaneously.  Some stats:\
+\
+Nwhale =\
+\
+       13869       13836       13595       13476\
+           0           0           0           0\
+           0           0           0           0\
+       31741       31535       30518       30094\
+       24658       24275       23298       22968\
+\
+>> Nmiss\
+\
+Nmiss =\
+\
+         244         277         518         637\
+           0           0           0           0\
+           0           0           0           0\
+        1162        1368        2385        2809\
+        1873        2256        3233        3563\
+\
+>> Nfalse\
+\
+Nfalse =\
+\
+      411909      397825      445844      445844\
+           0           0           0           0\
+           0           0           0           0\
+       93629       60505       70151       70151\
+      178408      124888      166136      166136\
+\
+Each column represents a stage in the algorithm; each row a Site.\
+There are 66538 whales, 682131 falses, and 7000 missed whales in the entire\
+set.  Site 1 flooded with false alarms.\
+\
+66538 whale patterns and 682131 other patterns\
+0 Inf values in pattern matrix\
+TRAINSCG-calcgrad, Epoch 500/500, MSE 0.155687/0, Gradient 0.00784785/1e-06\
+TRAINSCG, Maximum epoch reached, performance goal was not met.\
+\
+Miss fraction desired is   0.10\
+threshold value is -0.8000\
+66538 manual calls: Before filtering, 66538 true and 682131 false alarms\
+66538 manual calls: After filtering, 61210 true and 99478 false alarms\
+\pard\pardeftab720\ql\qnatural
+
+\f3\b \cf0 Nnetwork2_Sites1to5_Shell08_March_optimized_10cells_20080821_20080929.mat\
+\
+May 28, 2009\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f1\b0 \cf0 Sites 2,3,4,5 now processed (8/21 site 3 skipped due to TSV problem)\
+\
+Nwhale =\
+\
+           0           0           0           0\
+       48697       48388       47095       46260\
+       33174       32847       31932       31375\
+       31741       31535       30518       30094\
+       24658       24275       23298       22968\
+\
+\
+Nmiss =\
+\
+           0           0           0           0\
+        1017        1326        2619        3454\
+        1860        2187        3102        3659\
+        1162        1368        2385        2809\
+        1873        2256        3233        3563\
+\
+\
+Nfalse =\
+\
+           0           0           0           0\
+      276820      241760      324817      324817\
+       92727       66149       83229       83229\
+       93629       60505       70151       70151\
+      178408      124888      166136      166136\
+\
+130697 whale patterns and 644333 other patterns\
+0 Inf values in pattern matrix\
+TRAINSCG-calcgrad, Epoch 0/500, MSE 1.0921/0, Gradient 4.06324/1e-06\
+\
+TRAINSCG-calcgrad, Epoch 500/500, MSE 0.279388/0, Gradient 0.00822247/1e-06\
+TRAINSCG, Maximum epoch reached, performance goal was not met.\
+\
+Miss fraction desired is   0.10\
+threshold value is -0.7500\
+130697 manual calls: Before filtering, 130697 true and 644333 false alarms\
+130697 manual calls: After filtering, 119548 true and 149090 false alarms\
+Nnetwork2_Sites2to5_Shell08_March_optimized_10cells_20080821_20080929\
+1:1 false alarm ratio at 50%.\
+\
+Now attempt all five Sites.\
+\
+5/29/2009\
+\
+On KatMacPro: All five sites\
+Rows are site, column is processing stage...\
+\
+Nwhale =\
+\
+       13869       13836       13595       13476\
+       48697       48388       47095       46260\
+       33174       32847       31932       31375\
+       31741       31535       30518       30094\
+       24658       24275       23298       22968\
+\
+\
+Nmiss =\
+\
+         244         277         518         637\
+        1017        1326        2619        3454\
+        1860        2187        3102        3659\
+        1162        1368        2385        2809\
+        1873        2256        3233        3563\
+\
+\
+Nfalse =\
+\
+      411909      397825      445844      445844\
+      276820      241760      324817      324817\
+       92727       66149       83229       83229\
+       93629       60505       70151       70151\
+      178408      124904      166155      166155\
+\
+144173 whale patterns and 1090196 other patterns\
+0 Inf values in pattern matrix\
+TRAINSCG-calcgrad, Epoch 0/500, MSE 2.41944/0, Gradient 8.68451/1e-06\
+TRAINSCG-calcgrad, Epoch 500/500, MSE 0.202209/0, Gradient 0.00916635/1e-06\
+TRAINSCG, Maximum epoch reached, performance goal was not met.\
+\
+Miss fraction desired is   0.10\
+threshold value is -0.8000\
+144173 manual calls: Before filtering, 144173 true and 1090196 false alarms\
+144173 manual calls: After filtering, 131648 true and 200679 false alarms\
+\
+/Users/thode/Arctic_2008/Processed/Site_05/Shell08_Site5_PeakNeuralNetTrain/Neural_Networks.dir/Nnetwork_all_Sites1to5_Shell08_March_optimized_10cells_20080821_20080929.mat\
+\
+Located on macmussel in\
+/Volumes/macmussel1/Arctic_2008/Processed/Neural_Networks.dir\
+\
+6/02/2009\
+\pard\pardeftab720\ql\qnatural
+
+\f3\b\fs28 \cf0 Investigating why so many overlapping false detections at Site 3.\
+	When reviewing potential false detections in  find_similar_elements_ovlap.m ,\
+	needed to add a frequency overlap measure in addition to a time overlap.  Now\
+the number of false alarms that are truly false alarms have increased,\
+growing the final training set for false alarms.\
+	Both computers updated, running Sites 1 through 5 on KatKimMac now.\
+\
+Results (with 50% overlap required now)\
+\
+\
+Nwhale =\
+\
+       13671       13638       13474       13320\
+       48120       47813       46664       45582\
+       32678       32380       31559       30861\
+       31184       30989       30198       29632\
+       23565       23202       22809       22401\
+\
+\
+Nmiss =\
+\
+         442         475         639         793\
+        1594        1901        3050        4132\
+        2356        2654        3475        4173\
+        1719        1914        2705        3271\
+        2966        3329        3722        4130\
+\
+\
+Nfalse =\
+\
+      412239      398152      446500      451850\
+      277777      242707      327479      350139\
+       93443       66802       84668       96185\
+       94372       61212       71476       82130\
+      179600      126056      167390      173202\
+\
+141796 whale patterns and 1153506 other patterns\
+**Final neural network used for 2008 results\
+\pard\pardeftab720\ql\qnatural
+
+\f1\b0\fs24 \cf0 \
+\
+\pard\pardeftab720\ql\qnatural
+
+\f3\b \cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0\b0 \cf0 6/04/2009\
+\
+\
+8/03/2009\
+Linking study: constant easting criteria...\
+Site 2 summary:\
+Manual calls: 5062.00, into linking stage 4530.00, out of linking stage 3159.00\
+89.4903 percent pass before linking,  62.41 pass after linking\
+Site 3 summary:\
+Manual calls: 2342.00, into linking stage 2064.00, out of linking stage 1408.00\
+88.1298 percent pass before linking,  60.12 pass after linking\
+Site 4 summary:\
+Manual calls: 2198.00, into linking stage 1914.00, out of linking stage 1364.00\
+87.0792 percent pass before linking,  62.06 pass after linking\
+Site 5 summary:\
+Manual calls: 1871.00, into linking stage 1635.00, out of linking stage 1344.00\
+87.3864 percent pass before linking,  71.83 pass after linking\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\i\b \cf0 Using WEST's more complex centerline...\
+Site 1 summary:\
+Manual calls: 890.00, into linking stage 792.00, out of linking stage 477.00\
+88.9888 percent pass before linking,  53.60 pass after linking\
+Site 2 summary:\
+Manual calls: 4467.00, into linking stage 4033.00, out of linking stage 2882.00\
+90.2843 percent pass before linking,  64.52 pass after linking\
+Site 3 summary:\
+Manual calls: 1962.00, into linking stage 1782.00, out of linking stage 1213.00\
+90.8257 percent pass before linking,  61.82 pass after linking\
+Site 4 summary:\
+Manual calls: 2121.00, into linking stage 1860.00, out of linking stage 1330.00\
+87.6945 percent pass before linking,  62.71 pass after linking\
+Site 5 summary:\
+Manual calls: 1467.00, into linking stage 1309.00, out of linking stage 1096.00\
+89.2297 percent pass before linking,  74.71 pass after linking\
+8/04/2009\
+Rewriting linking program...\
+\
+Updated work with advanced linking:\
+Site 2 summary:\
+Manual calls: 4467.00, into linking stage 4033.00, out of linking stage 2920.00\
+90.2843 percent pass before linking,  65.37 pass after linking\
+Site 3 summary:\
+Manual calls: 1962.00, into linking stage 1782.00, out of linking stage 1251.00\
+90.8257 percent pass before linking,  63.76 pass after linking\
+Site 4 summary:\
+Manual calls: 2121.00, into linking stage 1860.00, out of linking stage 1340.00\
+87.6945 percent pass before linking,  63.18 pass after linking\
+Site 5 summary:\
+Manual calls: 1467.00, into linking stage 1309.00, out of linking stage 1120.00\
+89.2297 percent pass before linking,  76.35 pass after linking\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\i0\b0 \cf0 \
+\
+\
+discovered that station_anchor.Nsegments==1 for all calls, even though the station.Image has several components...\
+I found that match_stations is still creating multiple matches...18 repeated indicies that is, two anchor detections share common "other" detection on 821BSite5.\
+\
+Icall=792,793\
+\
+Problem solved-have to look in past as well as future when counter-checking.\
+\
+8/05/2009\
+Started bulk test on KatMacPro.\
+Goals: improve efficiency by eliminating 'zero' rows during xcorr, restricting time matching.\
+	Improve dt estimates using xcorr results.\
+	Check dt by comparing with ctime_min.\
+	Possible implementation of gradient to sharpen edges..\
+\
+\
+Location 1\
+Time:2008-08-21 00:00:08, Position: [426612.29 7793423.3]\
+\
+Indicies:[3;4;5;6], weights: [1 0.1691 0.2305 1]\
+Measured dt: [0 0.7877 -3.821 -3.983]\
+Modeled dt:  [0;1.505;-2.929;-2.617]\
+Abs diff: [0;0.7175;0.8916;1.366]\
+Error ellipse size, 6.6433e-01 km^2, major, minor axis:   1.85   0.46 km\
+\
+Auto\
+\
+Location 1\
+Time:2008-08-21 00:00:08, Position: [426633.23 7793415]\
+\
+Indicies:[3;4;5;6], weights: [1 0.1929 0.2319 1]\
+Measured dt: [0 1.004 -3.605 -3.761]\
+Modeled dt:  [0;1.508;-2.927;-2.613]\
+Abs diff: [0;0.5042;0.6771;1.148]\
+\
+8/06/09\
+Revised linking does not work.. Digging deeper into S2 9/21 results\
+\
+min_stations=2:\
+Site 2 summary:\
+Manual calls: 731.00, into linking stage 492.00, out of linking stage 135.00\
+67.3051 percent pass before linking,  18.47 pass after linking\
+Site 3 summary:\
+Manual calls: 226.00, into linking stage 123.00, out of linking stage  29.00\
+54.4248 percent pass before linking,  12.83 pass after linking\
+Site 4 summary:\
+Manual calls:  86.00, into linking stage  63.00, out of linking stage  26.00\
+73.2558 percent pass before linking,  30.23 pass after linking\
+Site 5 summary:\
+Manual calls: 217.00, into linking stage 127.00, out of linking stage  79.00\
+58.5253 percent pass before linking,  36.41 pass after linking\
+\
+min_stations=3;\
+Site 2 summary:\
+Manual calls: 853.00, into linking stage 738.00, out of linking stage 204.00\
+86.5182 percent pass before linking,  23.92 pass after linking\
+Site 3 summary:\
+Manual calls: 286.00, into linking stage 241.00, out of linking stage  50.00\
+84.2657 percent pass before linking,  17.48 pass after linking\
+Site 4 summary:\
+Manual calls: 464.00, into linking stage 328.00, out of linking stage  40.00\
+70.6897 percent pass before linking,   8.62 pass after linking\
+Site 5 summary:\
+Manual calls: 285.00, into linking stage 241.00, out of linking stage  99.00\
+84.5614 percent pass before linking,  34.74 pass after linking\
+\
+min_stations=4;\
+Site 2 summary:\
+Manual calls: 664.00, into linking stage 616.00, out of linking stage 144.00\
+92.7711 percent pass before linking,  21.69 pass after linking\
+Site 3 summary:\
+Manual calls: 294.00, into linking stage 275.00, out of linking stage  32.00\
+93.5374 percent pass before linking,  10.88 pass after linking\
+Site 4 summary:\
+Manual calls: 384.00, into linking stage 311.00, out of linking stage  10.00\
+80.9896 percent pass before linking,   2.60 pass after linking\
+Site 5 summary:\
+Manual calls: 228.00, into linking stage 213.00, out of linking stage  91.00\
+93.4211 percent pass before linking,  39.91 pass after linking\
+\
+5 stations and above..\
+Site 2 summary:\
+Manual calls: 2219.00, into linking stage 2187.00, out of linking stage 656.00\
+98.5579 percent pass before linking,  29.56 pass after linking\
+Site 3 summary:\
+Manual calls: 1156.00, into linking stage 1143.00, out of linking stage 129.00\
+98.8754 percent pass before linking,  11.16 pass after linking\
+Site 4 summary:\
+Manual calls: 1187.00, into linking stage 1158.00, out of linking stage 176.00\
+97.5569 percent pass before linking,  14.83 pass after linking\
+Site 5 summary:\
+Manual calls: 737.00, into linking stage 728.00, out of linking stage 403.00\
+98.7788 percent pass before linking,  54.68 pass after linking\
+\
+min_stations=[3 9];\
+Loading wc0921S208.mat\
+Maximum time loaded is 2008-09-21 12:00:05\
+Out of 3786  manual locations, 3529 are whales, 183 are not whale, and 40 are uncertain.\
+1 sequences detected\
+Out of 3529  manual whale locations, 1658 used 3 or greater DASARS.\
+Out of 1658  remaining locations, 1494 have at least one weight>0.\
+Out of 1494 remaining manual locations, 1494 were successfully tracked.\
+Localizations less than 6 km used.\
+Out of 1494 remaining manual locations, 774 were less than 6 km from center.\
+Elapsed time is 22.518383 seconds.\
+Out of 774 manual detections, 758 had more than 2 detections in stations\
+Out of 774 manual detections, 538 had more than 2 detections in locations\
+Out of 774 manual detections, 526 had more than 2 detections in a single linkage\
+\
+\
+%%Performance on 2-DASAR manual locations..\
+Loading wc0929S208.mat\
+\
+67.3051 percent pass before linking,  18.47 pass after linking\
+\
+%%Performance on 3+ DASAR manual locations.\
+\
+Site 2 summary:\
+Manual calls: 3736.00, into linking stage 3541.00, out of linking stage 2058.00\
+94.7805 percent pass before linking,  55.09 pass after linking\
+\
+\
+\
+We have a segmentation issue...
+\f1   Site 2 example..\
+ctime2str(1.219882298478656e+09)\
+2008-08-28 00:11:38
+\f0 \
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\i\b \cf5 8/28 link analysis results\
+Site 2 summary, 2 links:\
+Manual calls: 178.00, into linking stage 113.00, out of linking stage  39.00\
+63.4831 percent pass before linking,  21.91 pass after linking\
+l\
+Site 2 summary, 3 links:\
+Manual calls: 184.00, into linking stage 149.00, out of linking stage  79.00\
+80.9783 percent pass before linking,  42.93 pass after linking\
+\
+Site 2 summary, 4 links:\
+Manual calls: 217.00, into linking stage 199.00, out of linking stage 145.00\
+91.7051 percent pass before linking,  66.82 pass after linking\
+\
+Site 2 summary, 5 links:\
+Manual calls: 263.00, into linking stage 258.00, out of linking stage 196.00\
+98.0989 percent pass before linking,  74.52 pass after linking
+\i0\b0 \
+\
+
+\i\b Site 2 summary, 6 links:\
+Manual calls: 159.00, into linking stage 157.00, out of linking stage 141.00\
+98.7421 percent pass before linking,  88.68 pass after linking\
+\
+Site 2 summary, 7 links:\
+Manual calls: 245.00, into linking stage 245.00, out of linking stage 236.00\
+100.0000 percent pass before linking,  96.33 pass after linking
+\i0\b0 \
+\
+
+\i\b Site 2 summary,All links:\
+Manual calls: 1246.00, into linking stage 1121.00, out of linking stage 836.00\
+89.9679 percent pass before linking,  67.09 pass after linking
+\i0\b0 \
+1008 calls greater than 2 links\
+\
+Site 2 summary, 1 links:\
+Manual calls: 1246.00, into linking stage 1121.00, out of linking stage 1009.00\
+89.9679 percent pass before linking,  80.98 pass after linking\cf0 \
+\
+
+\i\b \cf5 Out of 3231 automated detections, 964 had more than 1 detection in manual data\
+Out of 964 automated linkages with 1+ manual links , 738 had no extra linkages\
+Out of 1246 automated linkages with 1+ manual links, 515 filled more than 50\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+\cf0 %%%%new "mincorr" metric...\
+!!\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+\cf6 Site 2 summary, 2 links:\
+Manual calls: 178.00, into linking stage 113.00, out of linking stage  69.00\
+63.4831 percent pass before linking,  38.76 pass after linking\
+\
+Site 2 summary, 3 links:\
+Manual calls: 184.00, into linking stage 149.00, out of linking stage 124.00\
+80.9783 percent pass before linking,  67.39 pass after linking\
+\
+Site 2 summary, 4 links:\
+Manual calls: 217.00, into linking stage 199.00, out of linking stage 180.00\
+91.7051 percent pass before linking,  82.95 pass after linking\
+\
+Site 2 summary, 5 links:\
+Manual calls: 263.00, into linking stage 258.00, out of linking stage 246.00\
+98.0989 percent pass before linking,  93.54 pass after linking\
+\
+Site 2 summary, 6 links:\
+Manual calls: 159.00, into linking stage 157.00, out of linking stage 155.00\
+98.7421 percent pass before linking,  97.48 pass after linking\
+\
+Site 2 summary, 7 links:\
+Manual calls: 245.00, into linking stage 245.00, out of linking stage 244.00\
+100.0000 percent pass before linking,  99.59 pass after linking\
+\
+Site 2 summary, all links:\
+Manual calls: 1246.00, into linking stage 1121.00, out of linking stage 1018.00\
+89.9679 percent pass before linking,  81.70 pass after linking\
+\
+!No automated filtering...\
+Out of 4308 automated detections, 1191 had more than 1 detection in manual data\
+Out of 1191 automated linkages with 1+ manual links , 445 had no extra linkages\
+Out of 1191 automated linkages with 1+ manual links, 800 filled more than 50% of manual linkages\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+\cf7 %%%With bearings with '0' weight incorporated...\
+Site 2, date 20080828:\
+Out of 1246 manual detections, 1121 had more than 2 detections in stations\
+Out of 1246 manual detections, 1064 had more than 2 detections in locations\
+Out of 1246 manual detections, 1009 had more than 2 detections in a single linkage\
+Site 2 summary, 1 links:\
+Manual calls: 1246.00, into linking stage 1121.00, out of linking stage 1009.00\
+89.9679 percent pass before linking,  80.98 pass after linking\
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+\cf6 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\fs22 \cf0 !Restricting automated to greater than 2 DASARS:\
+Site 2 summary, all links:\
+Manual calls: 1246.00, into linking stage 1121.00, out of linking stage 958.00\
+89.9679 percent pass before linking,  76.89 pass after linking\
+\
+Out of 2924 automated detections, 1074 had more than 1 detection in manual data\
+Out of 1074 automated linkages with 1+ manual links , 328 had no extra linkages\
+Out of 1074 automated linkages with 1+ manual links, 761 filled more than 50% of manual linkages\
+\
+!Restricting automated to greater than 3 DASARS:\
+Site 2 summary, 1 links:\
+Manual calls: 1246.00, into linking stage 1121.00, out of linking stage 840.00\
+89.9679 percent pass before linking,  67.42 pass after linking\
+Out of 1959 automated detections, 884 had more than 1 detection in manual data\
+Out of 884 automated linkages with 1+ manual links , 235 had no extra linkages\
+Out of 884 automated linkages with 1+ manual links, 680 filled more than 50% of manual linkages\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\i0\b0 \cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\fs24 \cf0 !Restricting linkages to within 2 DASARS of current anchor...\
+Elapsed time is 20.733344 seconds.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\i\b \cf0 Site 2, date 20080828:\
+Site 2 summary, all links:\
+Manual calls: 1246.00, into linking stage 1121.00, out of linking stage 1009.00\
+89.9679 percent pass before linking,  80.98 pass after linking\
+Out of 4179 automated detections, 1220 had more than 1 detection in manual data\
+Out of 1220 automated linkages with 1+ manual links , 511 had no extra linkages\
+Out of 1220 automated linkages with 1+ manual links, 755 filled more than 50% of manual linkages\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\i0\b0 \cf0 \
+%%%%%%%%Site 2 summary, 2 links:\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\i\b \cf0 9/13 link analysis results\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\i0\b0 \cf0 \
+\
+Site 2 summary, 2 links:\
+Manual calls: 124.00, into linking stage  66.00, out of linking stage  20.00\
+53.2258 percent pass before linking,  16.13 pass after linking\
+\
+Site 2 summary, 3 links:\
+Manual calls: 247.00, into linking stage 201.00, out of linking stage  97.00\
+81.3765 percent pass before linking,  39.27 pass after linking\
+\
+Site 2 summary, 4 links:\
+Manual calls: 147.00, into linking stage 129.00, out of linking stage  92.00\
+87.7551 percent pass before linking,  62.59 pass after linking\
+\
+Site 2 summary, 5 links:\
+Manual calls: 204.00, into linking stage 192.00, out of linking stage 147.00\
+94.1176 percent pass before linking,  72.06 pass after linking\
+\
+Site 2 summary, 6 links:\
+Manual calls: 292.00, into linking stage 289.00, out of linking stage 254.00\
+98.9726 percent pass before linking,  86.99 pass after linking\
+\
+Site 2 summary, 7 links:\
+Manual calls: 258.00, into linking stage 257.00, out of linking stage 240.00\
+99.6124 percent pass before linking,  93.02 pass after linking\
+\
+Site 2 summary, all links:\
+Manual calls: 1272.00, into linking stage 1134.00, out of linking stage 850.00\
+89.1509 percent pass before linking,  66.82 pass after linking\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\i\b \cf0 Site 5 8/28 link analysis results..\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\i0\b0 \cf0 Site 5 summary, 2 links:\
+Manual calls: 108.00, into linking stage  50.00, out of linking stage  35.00\
+46.2963 percent pass before linking,  32.41 pass after linking\
+\
+\
+Site 5 summary, 3 links:\
+Manual calls: 137.00, into linking stage 103.00, out of linking stage  63.00\
+75.1825 percent pass before linking,  45.99 pass after linking\
+\
+\
+Site 5 summary, 4 links:\
+Manual calls: 117.00, into linking stage 104.00, out of linking stage  84.00\
+88.8889 percent pass before linking,  71.79 pass after linking\
+\
+\
+Site 5 summary, 5 links:\
+Manual calls: 159.00, into linking stage 153.00, out of linking stage 131.00\
+96.2264 percent pass before linking,  82.39 pass after linking\
+\
+\
+Site 5 summary, 6 links:\
+Manual calls: 122.00, into linking stage 120.00, out of linking stage 116.00\
+98.3607 percent pass before linking,  95.08 pass after linking\
+\
+\
+Site 5 summary, 7 links:\
+Manual calls:  96.00, into linking stage  95.00, out of linking stage  94.00\
+98.9583 percent pass before linking,  97.92 pass after linking\
+Site 5 summary, \
+\
+8/08/09\
+\
+DO I have to search every combination of DASARs for linking?  (e.g. A on B, as well as B on A?)\
+\
+inserted code fragment...\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0  [locations, locations_ctime,loc_index]=cross_channel_match(Isite,station,param.feature,goodFile,run_options,run_options.debug);\
+                    [locations2, locations_ctime2,loc_index2]=cross_channel_match_test(Isite,station,param.feature,goodFile,run_options,run_options.debug);\
+                    save \cf2 temp_result\cf0  \cf2 locations\cf0  \cf2 locations2\cf0  \cf2 loc_index\cf0  \cf2 loc_index2\cf0 \
+                    \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 \
+where cross_channel_match_test has\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf3 %for Iother=Ianchor:length(goodFile)  \cf0 \
+    \cf4 for\cf0  Iother=1:length(goodFile)  \
+    \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 results for loc_index:\
+	          I: [7x5640 double]\
+                   dt: [7x5640 double]\
+             dt_xcorr: [7x5700 double]\
+    credibility_score: [1x5640 double]\
+\
+results for loc_index2 = \
+\
+                    I: [7x5644 double]\
+                   dt: [7x5644 double]\
+             dt_xcorr: [7x5700 double]\
+    credibility_score: [1x5644 double]\
+\
+Conclusion, only need to study 'match_stations' "one_way".\
+\
+Backing up all code under Aug7_2009_final.tar\
+\
+I now move 'match_stations4' into 'match_stations', erasing original "slow" scripts\
+\
+August 10, 2009\
+\
+I am no longer rejecting manual times with weight of zero.\
+\
+New standard (min_corr criteria) for Site 2.\
+Site 2, date 20080821:\
+Out of 56 manual detections, 45 had more than 2 detections in stations\
+Out of 56 manual detections, 42 had more than 2 detections in locations\
+Out of 56 manual detections, 42 had more than 2 detections in a single linkage\
+Site 2, date 20080828:\
+Out of 1246 manual detections, 1121 had more than 2 detections in stations\
+Out of 1246 manual detections, 1064 had more than 2 detections in locations\
+Out of 1246 manual detections, 1009 had more than 2 detections in a single linkage\
+Site 2, date 20080906:\
+Out of 226 manual detections, 203 had more than 2 detections in stations\
+Out of 226 manual detections, 196 had more than 2 detections in locations\
+Out of 226 manual detections, 188 had more than 2 detections in a single linkage\
+Site 2, date 20080913:\
+Out of 1272 manual detections, 1134 had more than 2 detections in stations\
+Out of 1272 manual detections, 1058 had more than 2 detections in locations\
+Out of 1272 manual detections, 991 had more than 2 detections in a single linkage\
+Site 2, date 20080921:\
+Out of 1133 manual detections, 1030 had more than 2 detections in stations\
+Out of 1133 manual detections, 961 had more than 2 detections in locations\
+Out of 1133 manual detections, 869 had more than 2 detections in a single linkage\
+Site 2, date 20080929:\
+Out of 534 manual detections, 500 had more than 2 detections in stations\
+Out of 534 manual detections, 495 had more than 2 detections in locations\
+Out of 534 manual detections, 488 had more than 2 detections in a single linkage\
+Site 2 summary, 1 links:\
+Manual calls: 4467.00, into linking stage 4033.00, out of linking stage 3587.00\
+90.2843 percent pass before linking,  80.30 pass after linking\
+\
+I changed extract_bearings:\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0  [thet,kappa,sd]=get_vmests([vx vy],500);\
+into\
+ [thet,kappa,sd]=get_vmests([vx vy],50);\
+\
+with no change in the size of the error ellipse  Apparently kappa measured pretty easily\
+(test result comparing S208G0T20080828T000000_Final_Huber_test_100vm with *test3)\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 August 11, 2009\
+\
+Run Sites 1-5 using mincorr estimate, only linking three adjacent stations, and 50 estimates for vm kappa estimate.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\i \cf0 Restricting manual locations to 6 km...\
+Site 1 summary, 1 links:\
+Manual calls: 890.00, into linking stage 792.00, out of linking stage 677.00\
+88.9888 percent pass before linking,  76.07 pass after linking\
+\
+\
+Site 2 summary, 1 links:\
+Manual calls: 4467.00, into linking stage 4033.00, out of linking stage 3587.00\
+90.2843 percent pass before linking,  80.30 pass after linking\
+\
+\
+Site 3 summary, 1 links:\
+Manual calls: 1962.00, into linking stage 1782.00, out of linking stage 1497.00\
+90.8257 percent pass before linking,  76.30 pass after linking\
+\
+\
+Site 4 summary, 1 links:\
+Manual calls: 2121.00, into linking stage 1860.00, out of linking stage 1655.00\
+87.6945 percent pass before linking,  78.03 pass after linking\
+\
+\
+Site 5 summary, 1 links:\
+Manual calls: 1467.00, into linking stage 1309.00, out of linking stage 1209.00\
+89.2297 percent pass before linking,  82.41 pass after linking\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\i0 \cf0 September 3, 2009\
+Rerunning analysis for Site 5 to reproduce result, but with distance restricted to 18 km from centerline (instead of 6 above)\
+Site 5 summary, 1 links:\
+Manual calls: 4404.00, into linking stage 3876.00, out of linking stage 3561.00\
+88.0109 percent pass before linking,  80.86 pass after linking\
+\
+Now add a filtering rule...\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0  filter_names=\{\cf2 'Contour_global_bandwidth'\cf0 ,\cf2 'Contour_fmax'\cf0 \}\
+                    filter_criteria=[0 20; 300 400]\
+                   
+\f0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+\cf0 Manual calls: 4404.00, into linking stage 3876.00, out of linking stage 3108.00\
+88.0109 percent pass before linking,  70.57 pass after linking\
+Changed the min number of stations allowed to 2,\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0 filter_names=\{\cf2 'Contour_global_bandwidth'\cf0 ,\cf2 'Contour_fmax'\cf0 ,\cf2 'Contour_fmin'\cf0 \}\
+                    filter_criteria=[0 20 5; 300 400 500]\
+                    \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 Site 5 summary, 1 links:\
+Manual calls: 4404.00, into linking stage 3876.00, out of linking stage 3512.00\
+88.0109 percent pass before linking,  79.75 pass after linking\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\i\b \cf0 RESULTS FOR UNFILTERED LOCATIONS, limited to 18 km from centerline, \
+AUTO results not filtered by range...\
+\
+Site 1 summary, 1 links:\
+Manual calls:  12.00, into linking stage  10.00, out of linking stage  10.00\
+83.3333 percent pass before linking,  83.33 pass after linking\
+\
+\
+Site 2 summary, 1 links:\
+Manual calls: 7863.00, into linking stage 7029.00, out of linking stage 6232.00\
+89.3934 percent pass before linking,  79.26 pass after linking\
+\
+\
+Site 3 summary, 1 links:\
+Manual calls: 5695.00, into linking stage 5129.00, out of linking stage 4299.00\
+90.0615 percent pass before linking,  75.49 pass after linking\
+\
+\
+Site 4 summary, 1 links:\
+Manual calls: 4825.00, into linking stage 4381.00, out of linking stage 3947.00\
+90.7979 percent pass before linking,  81.80 pass after linking\
+\
+\
+Site 5 summary, 1 links:\
+Manual calls: 4404.00, into linking stage 3876.00, out of linking stage 3561.00\
+88.0109 percent pass before linking,  80.86 pass after linking\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\i0\b0 \cf0 \
+If successful automated localization less than 18 km required:\
+Site 5 summary, 1 links:\
+Manual calls: 4404.00, into linking stage 3876.00, out of linking stage 2918.00\
+88.0109 percent pass before linking,  66.26 pass after linking\
+\
+\
+*Fixed compute_position so if kappa=0 (uniform distribution for angle uncertainty) that station is not used.\
+_test8 runs will see what effect crude filtering has on results..\
+Results of crude filtering by global bandwidth\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+\cf0 \ul Site 1 summary, 1 links:\
+Manual calls:  12.00, into linking stage  10.00, out of linking stage  10.00\
+83.3333 percent pass before linking,  83.33 pass after linking\
+\
+\
+Site 2 summary, 1 links:\
+Manual calls: 7863.00, into linking stage 6165.00, out of linking stage 5474.00\
+78.4052 percent pass before linking,  69.62 pass after linking\
+\
+\
+Site 3 summary, 1 links:\
+Manual calls: 5695.00, into linking stage 4984.00, out of linking stage 4009.00\
+87.5154 percent pass before linking,  70.40 pass after linking\
+\
+\
+Site 4 summary, 1 links:\
+Manual calls: 4825.00, into linking stage 4215.00, out of linking stage 3741.00\
+87.3575 percent pass before linking,  77.53 pass after linking\
+\
+\
+Site 5 summary, 1 links:\
+Manual calls: 4404.00, into linking stage 3782.00, out of linking stage 3471.00\
+85.8765 percent pass before linking,  78.81 pass after linking\
+\
+September 24-28, 2009\
+Because of a desire to conduct an analysis far beyond DASAR site boundaries,\
+I need to investigate seismic signal contamination.\
+First, a sesmic veto implemented using  seismic_veto_postprocessing.m,\
+Under the folder ShipTracking calculated bearings to Gillivar for each DASAR.\
+Then created output files of the form\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf2 \ulnone Shell08_Site%i_PeakBulkRunCore2.morph.Final_Huber_FilteredLocations_SeismicVeto10\cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 \ul \
+using a fixed 10 degree tolerance for all the data.  Results below\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\i\b \cf0 Results if automated localization less than 50 km required...\
+Manual calls: 9177.00, into linking stage 8177.00, out of linking stage 6976.00\
+89.1032 percent pass before linking,  76.02 pass after linking\
+\
+\
+Site 3 summary, 1 links:\
+Manual calls: 6727.00, into linking stage 6034.00, out of linking stage 4926.00\
+89.6982 percent pass before linking,  73.23 pass after linking\
+\
+\
+Site 4 summary, 1 links:\
+Manual calls: 6377.00, into linking stage 5775.00, out of linking stage 5060.00\
+90.5598 percent pass before linking,  79.35 pass after linking\
+\
+\
+Site 5 summary, 1 links:\
+Manual calls: 5334.00, into linking stage 4650.00, out of linking stage 4217.00\
+87.1766 percent pass before linking,  79.06 pass after linking\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\i0\b0 \cf0 \
+Effect of seismic veto, 10 degree fixed threshold... (compare to above)\
+Site 2 summary, 1 links:\
+Manual calls: 9177.00, into linking stage 8177.00, out of linking stage 6976.00\
+89.1032 percent pass before linking,  76.02 pass after linking\
+\
+\
+Site 3 summary, 1 links:\
+Manual calls: 6727.00, into linking stage 6034.00, out of linking stage 4926.00\
+89.6982 percent pass before linking,  73.23 pass after linking\
+\
+\
+Site 4 summary, 1 links:\
+Manual calls: 6377.00, into linking stage 5775.00, out of linking stage 5060.00\
+90.5598 percent pass before linking,  79.35 pass after linking\
+\
+\
+Site 5 summary, 1 links:\
+Manual calls: 5334.00, into linking stage 4650.00, out of linking stage 4217.00\
+87.1766 percent pass before linking,  79.06 pass after linking\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+\cf0 \ulnone \
+\
+Sept. 29, 2009\
+\
+Now looking into spokes caused by seismics, both Gillivar and distant sites.\
+Why is interval filter not working.\
+\
+Focal example: DASAR 2f, 9/15 between 8AM-12:00, fixed on Gillivar\
+up to 100 seismics per hour passed.  With a 12 second interval, this means\
+that 33% are getting through.\
+\
+This may be causing problems:\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0  \cf3 %If the difference between two ICI times is small, take mean value...\cf0 \
+    Idiff=find(diff(ici_cand)<tol_time);\
+    ici_cand(Idiff)=0.5*(ici_cand(Idiff)+ici_cand(Idiff+1));\
+    ici_cand(Idiff+1)=[];\
+\
+Also, I'm computing ICI based on initial detection time, not incorporating\
+duration (should try to use time in middle of detection).\
+\
+Finally, large variation in upper frequency limit of detections\
+(Aug 23, 05:01:22 DASAR 2F), plot file in interval_demo_Aug23_2f.jpg\
+\
+Example of "whale spike" at 5g 8/24 04:00-0:800\
+\
+\
+Looked at Sep 15, 2f, 8-11,  basic dispersed pulses from gillivar, 160/hr, 8:03:00 "hiccup"\
+Aug 23, 2f,4-6 AM,  split frequency pulses, 142/hr\
+Aug 31, 3d, 4-8 AM, 20 sec interval multipath downsweeps, two surveys 40 detections/4 hrs\
+Aug 31, 5f, 4-8 AM, three surveys simultaneously, 81 detections/1440\
+\
+Ideas:\
+	-remove code that takes mean values of small differences.\
+	-peak frequency instead of max frequency\
+	-larger tolerance, more intervals to check (say 20 count, must pass 12)\
+	-have tolerance grow as the sqrt as number of connections\
+	-have arrival time be center of detection (use duration as well as detection start)\
+	-Add mean interval to mix of candidates...\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 \
+	-
+\f1 Icand_t=(min_index-1)+find(abs(trel(min_index:max_index)-current_time)<(1+num_clicks)*
+\f3\b \ul 2
+\f1\b0 \ulnone *max(ici_range));\
+\pard\pardeftab720\ql\qnatural
+\cf0 	-possibly remove\
+		 ici_cand(JJ)=0.5*ici_cand(JJ)+0.5*diff(pred_time)/(2*K);\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 10/01/2009\
+\
+I have created master_evauation_complete_movie.m which plots all Sites and coastline and seismic vessel tracks (a la Susanna).\
+\
+Three complete seismic veto runs completed:  '_SeismicVeto10.mat' uses 10 degree fixed rejection threshold for Gillivar only, regardless of whether guns on or not.\
+Note that all results have already been coarse-filtered for global bandwidth, etc.\
+I have completed a new seismic veto run, '_shotsonly' 10 degrees threshold, but only when guns active.  It was run on Kat's computer.\
+I tested an adaptive threshold based on three times the standard deviation of the bearing. '
+\f1 \cf2 Shell08_Site%i_PeakBulkRunCore2.morph.Final_Huber_FilteredLocations_adaptiveGPSveto'\cf0 \
+
+\f0 \
+\
+Conclusion: 
+\i\b adaptive seismic veto threshold not robust--see Sept 14 0:00 thur 8 AM site 5 to see how seismic veto allows considerable number of GIllivar pulses through (when it is in middle of Site 4).  The fixed 10 degree threshold does not have problems
+\i0\b0 \
+\
+\
+Now to a second round of "interval filtering":  First step, recompute an ICI for all locations based 
+\i on time only
+\i0 , not frequency content.\
+Then compare locations that share common bearings and ICI.\
+\
+I have a very slow version of this running stored in BulkProcessing/Backups/Oct1_2009_1.tar seismic_veto_postprocessing.m\
+\
+\
+10/02/2009\
+\
+A new interval filter designed that computes ICI based on timing only, then looks to see if adjacent detections have an ICI, and if so, share the same bearing.  Note that the ICI\
+does not have to be the same (because there are 20 sec as well as 10 sec ICI).\
+Results of both the seismic veto and interval filter are in 
+\f1 Icasestr=\cf2 'Shell08_Site%i_PeakBulkRunCore2.morph.Final_Huber_FilteredLocations_intervalfilter'\cf0 ;\
+\pard\pardeftab720\ql\qnatural
+\cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 \
+GPS veto fixed 10 degree only,  unlimited range if guns active, 20 km range if guns not is in\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0 Icasestr=\cf2 'Shell08_Site%i_PeakBulkRunCore2.morph.Final_Huber_FilteredLocations_GPSveto10_shotsonly'\cf0 ;\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 only the Gillivar has an active veto.\
+\
+August 26 is in trouble.  Why?  Two surveys with two different bearings, thus scatter in bearings.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\i\b \cf0 8/26/2008 03:08:20 Site g.  Note whale calls and pulses that seem to arrive via sound speed minimum.
+\i0\b0 \
+ Two airgun surveys, 129 degrees ICI 10 (single FM downsweep), other is 50 degrees ICI 20, double arrival\
+\
+at 03:00:00 a large number of whale calls with similar bearings flagged with ICIs\
+\
+\
+Ideas:  Restrict ICI to within 1 sec of 5, 10, 20\
+\
+Force detections to share ICI as well as bearing (but allow multiples of basic ICI)\
+\
+10/19/2009\
+\
+Making large maps comparing manual vs. automated.  Some issues:\
+\
+(1) Sep. 6 8-12 AM many more detection on Site 5.  Suspect ship.\
+***(2) Getting 'anchor station has bearing failure error': e.g. manual index 23 .  Seems like should work, why failure?\
+\
+In compute_position...\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0  dt_true=locations\{I\}.dt(Ikeep);\
+                [dt_err,dt_est]=dt_error_check(VM,DASAR_coords(Ikeep,:),dt_true);\
+                \
+                dt_true_xcorr=locations\{I\}.dt_xcorr(Ikeep);\
+                [dt_err2,dt_est2]=dt_error_check(VM,DASAR_coords(Ikeep,:),dt_true_xcorr);\
+                \
+                \
+                \cf4 if\cf0  all(isinf(dt_err))\
+                    Ikeep=[];\
+                    locations\{I\}.position.outcome=\cf2 'anchor station has bearing failure'\cf0 ;\
+                    outcome=\cf2 'anchor station has bearing failure'\cf0 ;\
+                    \cf3 %keyboard;\cf0 \
+                    \cf4 continue\cf0 ;\
+                \cf4 end\cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 \
+***for some reason, dt_true is enormous...\
+1.2052    2.4112    2.4053   times 1e4.\
+May be tossing perfectly good calls here...\
+\
+(3) Need to get old interval filter back...\
+ location 389 for 9/06 Site 5, 3:21:00, interval filter... c,d,e but no convergence.\
+\
+10/26/2009\
+Accessed Oct1_2009_1.tar sesimic_postprocesing* and placed that interval filter into final_postprocessing.m\
+This is the interval filter associated with Export_Final_Huber_FilteredLocations_intervalfilter_20091017T155638.tar\
+\
+Also disable the dt_error check..\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0 run_options.filter_chc=\cf2 'min_weight'\cf0 ; \cf3 %dt_error, min_weight\cf0 \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 File names will be \
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf0 file_tag=\cf2 'intervalfilterNoDtCheck'\cf0 ;\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 \
+\
+10/26-Confirmed that \
+using dt_check took 10% off the miss rate\
+\pard\pardeftab720\ql\qnatural
+
+\f1 \cf3 Icasestr='Shell08_Site%i_PeakBulkRunCore2.morph.Final_Huber_FilteredLocations_fixedseismicveto_intervalfilterNoDtCheck\
+\
+Also note that \cf4 function\cf0  [Ix_nomatch,Iy_nomatch,Ix_match,Iy_match,Iy_nomatch_diff,Iy_match_diff,Ix_redundant]=find_similar_elements_ovlap(x,dx,y,dy,ovlap_tol,xfeature,yfeature)\
+\
+has a built-in tolerance feature that must be increased when looking for time-only matches...\
+tol=30;\
+\
+11/25/2009 \
+Notes on Site 1 reverb interface waves\
+\
+Times of extrema distances from 1A on Setp 9, 2008\
+09-Sep-2008 01:03:47\
+09-Sep-2008 03:34:30\
+09-Sep-2008 05:35:05\
+09-Sep-2008 07:15:34\
+09-Sep-2008 10:06:23\
+09-Sep-2008 12:57:13\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0 \cf0 \
+Ranges:\
+  23.2013\
+    6.5677\
+   14.4884\
+    4.3894\
+   22.6733\
+    6.9637\
+\
+\
+At 7:07 range is about 3 km, Dt=0.75 sec\
+\
+Dt=L(1/c1-1/c2)\
+\
+1/c1-Dt/L=1/c2, and c2=2.4 km/sec\
+\
+At 6:12 two distinct arrivals, Dt=2.7 and 1.7 respectively, L=9.38 km\
+\
+Give 2.6 km/sec and 2 km/sec\
+\
+7/20/2010\
+\
+Trying to plot basic automated results, and find inconsistencies in directory Shell08_Site%i_NeuralNetupdated (the run completed in June 2010 with two sequential neural net\
+works):\
+\
+loading S308A0T20080831T000000_morph\
+!!!! N.raw is 7282, ind.raw_detections.ctime is 61\
+!!!! N.interval is 4085, ind.interval_dections.ctime is 32\
+loading S308B0T20080831T000000_morph\
+!!!! N.raw is 8288, ind.raw_detections.ctime is 98\
+!!!! N.interval is 4308, ind.interval_dections.ctime is 61\
+loading S308C0T20080831T000000_morph\
+!!!! N.raw is 7516, ind.raw_detections.ctime is 54\
+!!!! N.interval is 3535, ind.interval_dections.ctime is 29\
+loading S308D0T20080831T000000_morph\
+!!!! N.raw is 8360, ind.raw_detections.ctime is 74\
+!!!! N.interval is 4098, ind.interval_dections.ctime is 44\
+Station 5 is not present in final localization results, so don't use\
+loading S308F0T20080831T0000\
+\
+loading S308F0T20080910T000000_morph\
+!!!! N.raw is 16857, ind.raw_detections.ctime is 133\
+!!!! N.interval is 13485, ind.interval_dections.ctime is 113\
+\
+loading S308G0T20080919T000000_morph\
+!!!! N.raw is 8284, ind.raw_detections.ctime is 128\
+!!!! N.interval is 2488, ind.interval_dections.ctime is 52\
+\
+In other words, the *_morph.mat files have hardly any detections in them, as opposed to the final *Filtered* result.\
+Most likely a partial run started after the fact...\
+\
+\
+Feb. 27, 2011\
+\
+Are excess detection ratios greater in 2008 because of presence of local seismic surveys?\
+\
+Can check by computing linkage stats during first three dates (before local seismic at Sites 3 and 4)  and last three dates (when local seismic is occurring).\
+Check Sites 3 (close to seismic) and 5 (far from seismic).\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
+\cf0 \
+Running from scratch on macmussel in 2008*/Eval* directory..\
+\
+Site 3, 2008, All six dates\
+**************\
+Site 3A summary:  28.53 miss rate,   0.64 false ratio, 4572 matched manual stations, 1825 missed manual stations,  4121 extra auto stations\
+Site 3B summary:  41.28 miss rate,   0.69 false ratio, 3776 matched manual stations, 2655 missed manual stations,  4451 extra auto stations\
+Site 3C summary:  31.91 miss rate,   0.60 false ratio, 4508 matched manual stations, 2113 missed manual stations,  3996 extra auto stations\
+Site 3D summary:  30.23 miss rate,   0.51 false ratio, 4172 matched manual stations, 1808 missed manual stations,  3049 extra auto stations\
+Site 3F summary:  33.24 miss rate,   0.55 false ratio, 3188 matched manual stations, 1587 missed manual stations,  2638 extra auto stations\
+Site 3G summary:  40.89 miss rate,   0.73 false ratio, 2567 matched manual stations, 1776 missed manual stations,  3156 extra auto stations\
+ Site 3 station summary:  34.05 miss rate station,   0.62 false ratio station\
+ Site 3 summary:  43.59 miss rate,   0.48 false ratio, 4464 matched manual locations, 3450 missed manual locations, 4903 matched auto locations, 3788 extra auto locations\
+*********\
+ Total summary:  34.05 miss rate station,   0.62 false ratio station,  43.59 miss rate localization,   0.48 false ratio localization\
+\
+First three dates\
+Site 3A summary:  22.02 miss rate,   0.67 false ratio, 3251 matched manual stations, 918 missed manual stations,  2792 extra auto stations\
+Site 3B summary:  32.59 miss rate,   0.67 false ratio, 2826 matched manual stations, 1366 missed manual stations,  2798 extra auto stations\
+Site 3C summary:  24.74 miss rate,   0.60 false ratio, 3203 matched manual stations, 1053 missed manual stations,  2557 extra auto stations\
+Site 3D summary:  24.53 miss rate,   0.54 false ratio, 2793 matched manual stations, 908 missed manual stations,  1993 extra auto stations\
+Site 3F summary:  30.72 miss rate,   0.59 false ratio, 1976 matched manual stations, 876 missed manual stations,  1676 extra auto stations\
+Site 3G summary:  34.83 miss rate,   0.66 false ratio, 1654 matched manual stations, 884 missed manual stations,  1672 extra auto stations\
+ Site 3 station summary:  27.66 miss rate station,   0.62 false ratio station\
+ Site 3 summary:  37.07 miss rate,   0.45 false ratio, 3227 matched manual locations, 1901 missed manual locations, 3512 matched auto locations, 2317 extra auto locations\
+*********\
+ Total summary:  27.66 miss rate station,   0.62 false ratio station,  37.07 miss rate localization,   0.45 false ratio localaization\
+total.all_auto_station_extra=13488, total.all_manual_station_total= 21708\
+\
+%%%%%Last three dates (seismic)...\
+**************\
+Site 3A summary:  40.71 miss rate,   0.60 false ratio, 1321 matched manual stations, 907 missed manual stations,  1329 extra auto stations\
+Site 3B summary:  57.57 miss rate,   0.74 false ratio, 950 matched manual stations, 1289 missed manual stations,  1653 extra auto stations\
+Site 3C summary:  44.82 miss rate,   0.61 false ratio, 1305 matched manual stations, 1060 missed manual stations,  1439 extra auto stations\
+Site 3D summary:  39.49 miss rate,   0.46 false ratio, 1379 matched manual stations, 900 missed manual stations,  1056 extra auto stations\
+Site 3F summary:  36.97 miss rate,   0.50 false ratio, 1212 matched manual stations, 711 missed manual stations,  962 extra auto stations\
+Site 3G summary:  49.42 miss rate,   0.82 false ratio, 913 matched manual stations, 892 missed manual stations,  1484 extra auto stations\
+ Site 3 station summary:  44.86 miss rate station,   0.62 false ratio station\
+ Site 3 summary:  55.60 miss rate,   0.53 false ratio, 1237 matched manual locations, 1549 missed manual locations, 1391 matched auto locations, 1471 extra auto locations\
+*********\
+ Total summary:  44.86 miss rate station,   0.62 false ratio station,  55.60 miss rate localization,   0.53 false ratio localaization\
+\
+total.all_auto_station_extra=7923, total.all_manual_station_total 12839\
+\
+%%%%Site 5, all dates%%%%%%%%%%%%%%%%%\
+**************\
+Site 5A summary:  35.22 miss rate,   1.13 false ratio, 3073 matched manual stations, 1671 missed manual stations,  5368 extra auto stations\
+Site 5B summary:  35.06 miss rate,   0.88 false ratio, 2971 matched manual stations, 1604 missed manual stations,  4042 extra auto stations\
+Site 5C summary:  38.35 miss rate,   0.95 false ratio, 2902 matched manual stations, 1805 missed manual stations,  4453 extra auto stations\
+Site 5D summary:  36.22 miss rate,   0.91 false ratio, 2664 matched manual stations, 1513 missed manual stations,  3810 extra auto stations\
+Site 5E summary:  40.94 miss rate,   1.07 false ratio, 2272 matched manual stations, 1575 missed manual stations,  4099 extra auto stations\
+Site 5F summary:  39.47 miss rate,   0.98 false ratio, 1449 matched manual stations, 945 missed manual stations,  2353 extra auto stations\
+Site 5G summary:  45.63 miss rate,   1.04 false ratio, 884 matched manual stations, 742 missed manual stations,  1684 extra auto stations\
+ Site 5 station summary:  37.80 miss rate station,   0.99 false ratio station\
+ Site 5 summary:  35.83 miss rate,   0.72 false ratio, 3761 matched manual locations, 2100 missed manual locations, 3913 matched auto locations, 4193 extra auto locations\
+*********\
+ Total summary:  37.80 miss rate station,   0.99 false ratio station,  35.83 miss rate localization,   0.72 false ratio localaization\
+\
+%%%%%%%%%%%Site 5, first three dates (no seismics)...\
+**************\
+Site 5A summary:  29.66 miss rate,   1.16 false ratio, 1691 matched manual stations, 713 missed manual stations,  2800 extra auto stations\
+Site 5B summary:  28.55 miss rate,   1.00 false ratio, 1737 matched manual stations, 694 missed manual stations,  2440 extra auto stations\
+Site 5C summary:  33.59 miss rate,   1.06 false ratio, 1538 matched manual stations, 778 missed manual stations,  2458 extra auto stations\
+Site 5D summary:  28.71 miss rate,   1.12 false ratio, 1644 matched manual stations, 662 missed manual stations,  2578 extra auto stations\
+Site 5E summary:  39.26 miss rate,   1.19 false ratio, 1264 matched manual stations, 817 missed manual stations,  2482 extra auto stations\
+Site 5F summary:  36.82 miss rate,   1.15 false ratio, 865 matched manual stations, 504 missed manual stations,  1577 extra auto stations\
+Site 5G summary:  51.36 miss rate,   1.31 false ratio, 357 matched manual stations, 377 missed manual stations,  959 extra auto stations\
+ Site 5 station summary:  33.32 miss rate station,   1.12 false ratio station\
+ Site 5 summary:  30.81 miss rate,   0.81 false ratio, 2138 matched manual locations, 952 missed manual locations, 2211 matched auto locations, 2510 extra auto locations\
+*********\
+ Total summary:  33.32 miss rate station,   1.12 false ratio station,  30.81 miss rate localization,   0.81 false ratio localaization\
+\
+%%%%%%Site 5, last three dates (seismics)\
+\
+**************\
+Site 5A summary:  40.94 miss rate,   1.10 false ratio, 1382 matched manual stations, 958 missed manual stations,  2568 extra auto stations\
+Site 5B summary:  42.44 miss rate,   0.75 false ratio, 1234 matched manual stations, 910 missed manual stations,  1602 extra auto stations\
+Site 5C summary:  42.95 miss rate,   0.83 false ratio, 1364 matched manual stations, 1027 missed manual stations,  1995 extra auto stations\
+Site 5D summary:  45.48 miss rate,   0.66 false ratio, 1020 matched manual stations, 851 missed manual stations,  1232 extra auto stations\
+Site 5E summary:  42.92 miss rate,   0.92 false ratio, 1008 matched manual stations, 758 missed manual stations,  1617 extra auto stations\
+Site 5F summary:  43.02 miss rate,   0.76 false ratio, 584 matched manual stations, 441 missed manual stations,  776 extra auto stations\
+Site 5G summary:  40.92 miss rate,   0.81 false ratio, 527 matched manual stations, 365 missed manual stations,  725 extra auto stations\
+ Site 5 station summary:  42.72 miss rate station,   0.85 false ratio station\
+ Site 5 summary:  41.43 miss rate,   0.61 false ratio, 1623 matched manual locations, 1148 missed manual locations, 1702 matched auto locations, 1683 extra auto locations\
+*********\
+ Total summary:  42.72 miss rate station,   0.85 false ratio station,  41.43 miss rate localization,   0.61 false ratio localaization\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+\cf0 \
+
+\b *Conculsion:  Seismic activity changes excess call ratio not at all on Site 3, but increases call miss fraction.  \
+Seismic activity lowers excess fraction rate at Sit 5, and also increases miss rate.\
+\
+Feb 28, 2011\
+\
+What are the optimal neural network thresholds for 2008?\
+\
+
+\b0 total.miss_fraction\
+\
+ans =\
+\
+    0.1463    0.1619    0.1900    0.2083    0.2238    0.2401    0.2591    0.2829    0.3186    0.3875    0.8925\
+    0.1874    0.1994    0.2240    0.2406    0.2548    0.2696    0.2871    0.3094    0.3428    0.4082    0.8975\
+    0.2538    0.2627    0.2821    0.2950    0.3065    0.3187    0.3332    0.3524    0.3820    0.4422    0.9080\
+    0.3297    0.3367    0.3522    0.3626    0.3719    0.3816    0.3934    0.4094    0.4347    0.4885    0.9229\
+    0.4134    0.4188    0.4311    0.4395    0.4470    0.4549    0.4644    0.4772    0.4987    0.5459    0.9398\
+    0.5020    0.5059    0.5153    0.5218    0.5279    0.5342    0.5419    0.5526    0.5704    0.6115    0.9571\
+    0.5937    0.5965    0.6035    0.6084    0.6131    0.6180    0.6241    0.6329    0.6477    0.6825    0.9724\
+    0.6911    0.6928    0.6973    0.7007    0.7040    0.7077    0.7123    0.7190    0.7308    0.7588    0.9848\
+    0.7875    0.7884    0.7909    0.7930    0.7951    0.7975    0.8008    0.8055    0.8142    0.8357    0.9926\
+    0.8800    0.8802    0.8813    0.8823    0.8832    0.8845    0.8862    0.8891    0.8944    0.9081    0.9971\
+    0.9542    0.9542    0.9545    0.9547    0.9550    0.9555    0.9560    0.9572    0.9595    0.9656    0.9992\
+\
+ total.false_fraction\
+\
+ans =\
+\
+    0.8021    0.7644    0.7381    0.7216    0.7059    0.6893    0.6712    0.6495    0.6208    0.5717    0.1759\
+    0.5557    0.5396    0.5226    0.5115    0.5018    0.4913    0.4788    0.4628    0.4408    0.4016    0.1346\
+    0.3814    0.3709    0.3607    0.3546    0.3498    0.3446    0.3385    0.3298    0.3166    0.2905    0.0935\
+    0.2640    0.2565    0.2486    0.2444    0.2415    0.2385    0.2351    0.2303    0.2227    0.2062    0.0580\
+    0.1818    0.1758    0.1696    0.1665    0.1645    0.1625    0.1603    0.1574    0.1528    0.1425    0.0332\
+    0.1219    0.1172    0.1122    0.1099    0.1084    0.1071    0.1058    0.1039    0.1010    0.0945    0.0170\
+    0.0784    0.0746    0.0708    0.0692    0.0683    0.0675    0.0666    0.0655    0.0636    0.0594    0.0078\
+    0.0468    0.0439    0.0415    0.0406    0.0400    0.0395    0.0390    0.0383    0.0372    0.0346    0.0029\
+    0.0252    0.0231    0.0216    0.0211    0.0208    0.0204    0.0201    0.0197    0.0191    0.0175    0.0009\
+    0.0112    0.0098    0.0090    0.0089    0.0087    0.0085    0.0084    0.0082    0.0079    0.0071    0.0003\
+    0.0031    0.0027    0.0024    0.0023    0.0023    0.0023    0.0022    0.0021    0.0020    0.0018    0.0000
+\b \
+\
+row 4, column 1, and row 3, column 7 possibliles.  Choose former:  thresholds (-0.4,-1) yield 0.3297 miss fraction, 0.2640 false fraction.\
+
+\b0 \
+   Icasestr='Shell08_Site%i_InitialRun.morph.ThresholdAdjustm0p4nm1p0';  %Reload TestRun image data, export as DoubleNetTest\
+        params_chc='Shell08_Recompute_BearingInterval_NeuralNetupdatedThresholdAdjust-0.4n-1.0';\
+   \
+\
+function [Icasestr,date_str,Site_vec,params_chc,param,ctimes,ctol,DASAR_str_local]=load_local_runparams(mfilename)\
+date_str=[];\
+param=[];\
+ctimes=[];\
+ctol=[];\
+DASAR_str_local=[];\
+\
+Plan to run on KatMacPro but need original data disk installed...\
+\
+\
+\
+}

@@ -1,0 +1,486 @@
+{\rtf1\ansi\ansicpg1252\cocoartf949\cocoasubrtf540
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fmodern\fcharset0 Courier;\f2\fmodern\fcharset0 Courier-Bold;
+\f3\fmodern\fcharset0 Courier-Oblique;\f4\fmodern\fcharset0 Courier-BoldOblique;\f5\fnil\fcharset0 LucidaGrande;
+}
+{\colortbl;\red255\green255\blue255;\red160\green32\blue240;\red34\green139\blue34;}
+\margl1440\margr1440\vieww19100\viewh19520\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf0 \
+Dec 4, 2009\
+\
+Backed up all *.m files to Dec04_2009_before2009data.tar in each directory.\
+Removed a lot of cases from TOC_params.m\
+The 
+\f1 \cf2 'Shell08_March_optimized' 
+\f0 \cf0 case was the final parameters used for 2008.  The keyword
+\f1 \cf2 \
+'Shell08_final_parameters'\cf0  was also added to this data set.\
+\
+Created a new folder (perhaps temporary) 'BulkProcessing2009'\
+\
+Created in ComputerSpecificScripts.idr 'load_neural_network_path.m' and\
+adjusted TOC_params.m so that it will operate on any computer system (no computer-specific path references).\
+\
+Corrected readgsi_header.m in CommonScripts.dir\
+\
+\pard\pardeftab720\ql\qnatural
+\cf0 WOrking on Site 2G 9/12--many repetitive pulses\
+removed max_freq from site\
+        param.interval_remove.names=\{\cf2 'min_freq'\cf0 ,\cf2 'total_duration'\cf0 \};\
+        param.interval_remove.tol_feature=[[1  ]*(2*param.energy.bandwidth) 0.75];\
+        \
+there are going to be problems--lots of variation in min_freq--surprising..\
+should check energy detector...\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f2\b \cf0 **updated get_DASAR_separation.m and load_DASAR_coords.m so that\
+DASAR_locations_2009 will be loaded...\
+\pard\pardeftab720\ql\qnatural
+
+\f1\b0 \cf0 \
+ 
+\f3\i param.interval_remove.Ndet=10;\
+        param.interval_remove.Nmiss=3;\
+        param.interval_remove.ICItol=0.75;\
+        \cf3 % param.interval_remove.names=\{'peak_freq','peak_duration'\};\cf0 \
+        \cf3 %param.interval_remove.tol_feature=[ 5+(0.5*param.energy.bandwidth) 0.75*1000];\cf0 \
+        \
+        \cf3 %%Main run\cf0 \
+        param.interval_remove.names=\{\cf2 'min_freq'\cf0 ,\cf2 'max_freq'\cf0 ,\cf2 'total_duration'\cf0 \};\
+        param.interval_remove.tol_feature=[[1  1.5]*(2*param.energy.bandwidth) 5*0.75];
+\f1\i0 \
+        \
+\
+The toleration in duration not important.\
+\
+Using the TOC_param param.interval_remove values above, am running Site2 on macmussel and Site 3 on Kat's, starting from 912 to end of October.  All in BulkProcessingScripts2009.\
+\
+Icase_str='Shell09_Site%i_TestRun.morph.Final';\
+params_chc='Shell09_initial';\
+\
+\
+Dec 6, 2009\
+Bad DASAR list:\
+-1g failed after a few days\
+-1f possibly unreliable sectors\
+-3g poor bearings--excluded from recomputation\
+\
+-5f possible timing questions\
+\
+\
+\
+Dec 7, 2009\
+\
+Sites 4 and 5 processing on KatMacPro.\
+Java script now assigned a unique ID; thus all_processing.m can be run twice in same folder.\
+Macmussel and BulkProcessing synchronized\
+\
+Quick review of Site 2 and 3 map.  Some notes:\
+	(1) Sep. 12, Site 2G: lots of seal/walrus sounds 5:17:43\
+	(2) Sep. 12, 0:2:11:13 2G: example of two "whale" like seismics:\
+			One set of pulses is 24 degrees site 2, 1.5 degrees site 5.\
+			Another set of pulses is 79 degrees site 2, 75 degrees site 5\
+	Thus one site is quite close, other far far to the east.\
+\
+	(3) BP calibration throughout day just east of Site 2, will need GPS track (midday).\
+	(4) September 14.  Intensive bowhead song captured on both Sites, leading to duplication of sounds.See specgram samples from 6 AM Sites 2 and 3.\
+\
+\
+Jan 11, 2010\
+\
+I have been working on the interval detector again.  I revised JAVA code to create an "all_chann" set of objects\
+that write all channels of a time series to a snips file.  This data can then be used to\
+compute bearings of all raw detections, which is then used as a "feature" for computing ICI.  At first blush\
+seems to work well.\
+\
+Another modification that improves performance is increasing param.interval_remove.Ndet to 20, Nmiss to 10- i.e can miss 50% of points put wait longer.  Another key improvement was adaptively updating the ICI estimate every time\
+new pulses fit the current template.  Previously, I had been using the 'pred_time' variable to re-estimate, which\
+adds no new information--I needed to use the actual measured times of the new pulses.\
+\
+A difficulty arose when considering how to log a clipped signal.  The DASARC java blocks filter the data, so a clipped\
+signal may not be clipped in the output.  I decided when a raw signal is clipped to simply write a clipped value\
+to the output.  However, this caused the IRR filter to crash, so I had to create two storage matricies, one\
+for use of the IRR and one for output.  Now clipped values exist in the snips file...\
+\
+2pm:  Updated macmussel JAVA and matlab codes...\
+\
+Jan 14,2010\
+Some manual calls are being removed because all .wght are zero, but otherwise are legit...\
+Example:  8/28 site 5c 10:09:25\
+\
+Jan 25, 2010\
+Implemented svn across all computers, learned that to make movies must use 'figure(gcf)' just before.\
+\
+Modified plot_movie_all_auto to make logfiles of false alarms, Diana Ponce now processing. Revision 25 is the original code she is using. It's clear a lot of seal call fragments are being passed.\
+\
+evaluate_raw_detection2.m now eliminated!\
+\
+Ran a training data set,  Icasestr=\cf2 'Shell09_Site%i_NeuraNetJan22.morph.NoNeuralNet'\cf0 , no revisions to image procesing.\
+       \
+\
+bufferTol for evaluate_linking is now 2 instead of 6.  Some differences, not too strong.\
+evalute_linking and evaluate_individual_stations now using the same subroutines, and redundancy removed.\
+\
+ \
+Jan 30, 2010\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f2\b \cf0 I have been trying to update neural network for 2009 data, eliminating seal calls.  I have been examining\
+the original parameters used for the Jun4, 2008 network training data:\
+50% overlap in frequency and time domain, with no buffer time originally.\
+No pca used, no manual data rejected due to failure to localize or localize position.\
+Two layers of ten neur
+\f1\b0 ons...\
+\
+**The find_similar_elements_ovlap.m function added a "redundancy" feature after June4 and before August.\
+Spent a lot of time thinking about handling redundant auto hits.  That is, if the automated detector\
+divides a long seal trill into a set of individual detections, then there will be multiple auto segments\
+that overlap the large box drawn by the manual operator.  Which segment should be best?  Should all segments go into\
+the neural net.\
+\
+**I've decided that if freq info available the "best" match will be determined by bandwidth*duration.  If only time info available, then max duration segment wins.  This avoids selecting tiny pieces that have 100% overlap within the box.  PREIVOUS TO THIS THE AUTO DETECTION WITH MAX TIME OVERLAP HAS been selected.\
+\
+
+\f2\b The user has a choice when activating evaluate_individual_stations, whether to ignore redundacies or treat as "true" detections.  For neural net, training between whale and pinniped, decided to treat as "true".\
+\pard\pardeftab720\ql\qnatural
+
+\f1\b0 \cf0 \
+\
+\pard\pardeftab720\ql\qnatural
+
+\f2\b \cf0 Results on KatMacPro under 'Shell09_Site*_TestRun/morph/*UpdatedNetTest*\
+This is was was used for Shell09 final report..
+\f1\b0 \
+\
+
+\f2\b By contrast, the 2008 data used for the final report has the form on macmussel:\
+Site_01/Shell08_Site1_PeakBulkRunCore2/morph/S108K0T20080813T000000_Final_Huber_FilteredLocations_fixedseismicveto_intervalfilterNoDtCheck.mat\
+\pard\pardeftab720\ql\qnatural
+
+\f1\b0 \cf0 \
+Nwhale =\
+ \
+        2212        2199        2185        2174\
+       17034       15721       15184       14818\
+       17434       15970       15373       14921\
+       10968       10542        9919        9632\
+       31597       30087       28921       28310\
+ \
+ \
+ \
+Nfalse =\
+ \
+        1674        1649        1615        1598\
+        3103        2982        2873        2826\
+        2327        2220        2115        2049\
+        1425        1378        1346        1321\
+        1547        1458        1395        1380\
+\
+Nred =\
+ \
+           0           0           0         449\
+           0           0           0        1428\
+           0           0           0         563\
+           0           0           0         217\
+           0           0           0         440\
+\
+\
+April 5, 2010\
+\
+Starting to write paper, investigating implementing bearing interval removal for 2008 data set.  Reviewing 2008\
+airgun analysis, looking for whale calls swept up in bearing analysis.  One example seems to be 10/01/2008  9:19:00.\
+The ICI is scattered between 5 and 10 sec.\
+\
+\
+Walrus calls 2f between 9/10/08, 7:14 to 9:19 AM, captured by ICI detector.... ICI all over the place...\
+\
+19-Aug-2008 11:54:06 (2f): shot intervals are 4 seconds!\
+21-Aug-2008 10:10:39:  shot intervals irregular, 23 seconds, and 10-12 sec\
+10-Sep-2008 07:56:47: more walrus, picked up by ICI, but period less than 4 sec...\
+22-Sep-2008 21:24:17:  first real point of confusion between whale call sequence and airgun\
+23-Sep-2008 06:04:49 more problems, ICI 7.75 bearing 177\
+\
+October 1 a real mess of calls bursting through, little seismic activity.  Study here...\
+\
+April 6-7, 2010\
+\
+Added following code to interval detector, in order to remove flagging of whale calls\
+during heavy call times.  Code checks to see whether ICIs of adjacent pulses are similar to\
+current pulse...\
+\
+\pard\pardeftab720\ql\qnatural
+
+\fs28 \cf0  ctimes=datenum(2008,10,1,3,11,39);
+\fs24   %simple downsweep\
+01-Oct-2008 05:36:00: walrus\
+01-Oct-2008 03:14:40: odd harmonic call\
+
+\fs28  ctimes=datenum(2008,10,1,3,14,43);  \cf3 %strong harmonic call with three pieces
+\fs24 \cf0 \
+
+\fs28        
+\fs24 \
+Revision 119-122 extensively commented but no fundamental changes...\
+122 has the greatest cosmetic changes.\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f4\i\b \cf0 ***Revision 121 is the "standard" code for month-long 2008 reprocessing\
+Icasestr='Shell08_Site%i_NeuralNetupdated.morph.BearingInterval';  %Reload TestRun image data, export as DoubleNetTestparams_chc='Shell08_Recompute_BearingInterval_NeuralNetupdated';\
+**
+\f1\i0\b0 \
+\
+------------------------------------------------------------------------\
+r122 | thode | 2010-04-19 09:29:01 -0700 (Mon, 19 Apr 2010) | 1 line\
+\
+further comments in extract_image_features inc. link_features\
+------------------------------------------------------------------------\
+r121 | thode | 2010-04-14 12:23:16 -0700 (Wed, 14 Apr 2010) | 1 line\
+\
+comments added through extract_ridge_traces.m\
+------------------------------------------------------------------------\
+r120 | thode | 2010-04-12 12:24:51 -0700 (Mon, 12 Apr 2010) | 1 line\
+\
+adding short plot to review_airguns.m\
+------------------------------------------------------------------------\
+r119 | thode | 2010-04-12 12:23:53 -0700 (Mon, 12 Apr 2010) | 1 line\
+\
+extensive commenting of scripts\
+------------------------------------------------------------------------\
+r118 | thode | 2010-04-09 08:24:48 -0700 (Fri, 09 Apr 2010) | 1 line\
+\
+revised ICI/debug for process_one_unit.m\
+------------------------------------------------------------------------\
+r117 | thode | 2010-04-08 15:01:27 -0700 (Thu, 08 Apr 2010) | 1 line\
+\
+Added bearing ICI correction to all_processing.m, now adjacent ICI check in place as well\
+------------------------------------------------------------------------\
+\
+\
+\
+Code bugs/improvements...\
+extract_image_features/link_calls:  \
+\
+	Many corrections needed here.\
+	(1) First, weighted features should not be computed until after linking...currently\
+		the weighted features are NOT recomputed correctly after harmonics or links added.\
+		New code:\
+\pard\pardeftab720\ql\qnatural
+
+\fs28 \cf3 		%%%%  together--this saves time on the reconstruction step.
+\fs24 \cf0 \
+
+\fs28     		[feature_ridge,final_image]=link_features(feature_ridge,param,initial_final_image,Idebug+1);
+\fs24 \
+
+\fs28     
+\fs24 \
+
+\fs28     		\cf3 %%Extract features from grayscale image--SNR-weighted features.  Need to
+\fs24 \cf0 \
+
+\fs28 \cf3     		%%      have final linked results.  April 20, 2010 change
+\fs24 \cf0 \
+
+\fs28     	     feature=extract_features_from_grayscale_image(feature_ridge,Beq,labeled_contour,numObjects,T,F,Idebug);
+\fs24 \
+
+\fs28      
+\fs24 \
+
+\fs28   AFTER revision 122 started to correct and rearrange grayscale work
+\fs24 \
+\
+\
+	(2) Second, link_calls loop should rerun until no changes--a link could be followed\
+	by a harmonic merge, for example\
+	A segment completely enclosed by another segment should also be captured. \
+		For example, a small segment in between two large harmonic segments(See 
+\fs28 datenum(2008,10,1,3,14,43);
+\fs24 \
+\
+\
+
+\fs28 final_image_cell(:,:,Nimages)=final_image;  %Can this be a sparse matrix?
+\fs24 \
+
+\fs28     
+\fs24 \
+April 20, 2010:\
+	\
+Quick check of 
+\f5 complete_movie_Shell08_Site2_NeuralNetupdated.morph.BearingInterval:  Site 2 only, revised\
+interval detection method, plus double neural network.  The revised interval method has the 'adjacent' ICI checking method--more\
+restrictive for accepting ICI intervals...\
+\
+April 21, 2010:\
+Still revising segment linking in extract_image_features.m  No checking to macmussel SVN.\
+Definition of Contour area ratio changed,  TotalBoundingBox computed consistently when features clumped.\
+Contour features only computed for contours associated with a ridge\
+Contour extent added as a feature.\
+Fixed error in kurtosis:\
+
+\f1\fs28  fourth_moment=(sum(mask4)./sum(mask));  %was originally mask3\
+\
+April 22, 2010\
+I renamed feature names extensively and am now computing more contour features.  Am also computing\
+maximum local bandwidth as well as minimum local bandwidth.  keywords have been redefined and many\
+variable names in extract_image_features.m redefined as well.  \
+\
+Committed revision 123 to SVN.  Major major changes to the image processing, particularly the feature\
+linkages and merges with contour processing...\
+\
+April 23, 2010\
+\pard\pardeftab720\ql\qnatural
+
+\fs24 \cf0 \
+Changed linking so that component splicing is conducted first, followed by harmonic linking.  The process is now\
+repeated until there are no changes.\
+\
+Committed revisions 124 to SVN.\
+\
+Ideally the binary features should be updated after linking and merging, perhaps\
+by morphological processing an image with only the components alone, using structuring element of same dimensions as tolerances.\
+\
+May 7, 2010\
+The former postprocessor_morph.m has been renamed extract_image_features.m, and changes completed.  Here are a summary of changes over the past few weeks:\
+	(1) Features not initially extracted from contour image.\
+	(2) Variable names changed for consistency, 'component','ridge', 'contour' defined consistently\
+	(3) link_features completely rewritten; now splicing occurs first.  After a splice, binary features are then\
+		extracted in detail: so 'extent' and 'solidity' are now correct after a splice.\
+  		Then harmonics are extracted.  A new harmonic criteria is included: 'test_ovlapc', where a component 			with 				frequencies that lie within bounding box is now incorporated.\
+\
+	(4) merge_ridge_with_contour.m revised so morphological reconstruction not required.\
+	(5) Feature filtering now takes place after link_features, so short components not eliminated before being spliced.\
+	(6) A contour image is now returned, along with many contour features.\
+	(7) SNR-weighted features not computed til the very end to save time.  Error in kurtosis calculation corrected.\
+	(8) Defined Area_contour , AreaRatio_contour and ExtentTotal features.\
+	(9) Created a new harmonic detector (see May 11), test_ovlapd\
+\
+SVN revision 127.  Now proceeding to station creation corrections.\
+\pard\pardeftab720\ql\qnatural
+
+\fs28 \cf0            
+\fs24 \
+May 9, 2010\
+\
+create_station.m has now been updated with the new field names, but no new features have been added yet.  \
+Committed revision 128 n 129.\
+\
+\
+Now make a set of example signals:\
+\
+(1)  Single whale call, esp. U-shaped;\
+(2)  Whale call with harmonics\
+(3)  Weak airgun signal;\
+(4)  Strong airgun signal: Site 3g, ctime 
+\fs28 1.221793800052335e+09, or 2008-09-19 03:10:00.  Demonstrates impact of using\
+contour threshold to remove dispersed pulses.
+\fs24 \
+\
+(5)  Leopard seal.\
+(6)  Walrus call.\
+\
+Walrus calls 2f between 9/10/08, 7:14 to 9:19 AM, captured by ICI detector.... ICI all over the place...\
+\
+19-Aug-2008 11:54:06 (2f): shot intervals are 4 seconds!\
+21-Aug-2008 10:10:39:  shot intervals irregular, 23 seconds, and 10-12 sec\
+10-Sep-2008 07:56:47: more walrus, picked up by ICI, but period less than 4 sec...\
+22-Sep-2008 21:24:17:  first real point of confusion between whale call sequence and airgun\
+23-Sep-2008 06:04:49 more problems, ICI 7.75 bearing 177\
+\
+\
+\
+May 11-12 Created a much better harmonic detector (vs. the previous overtone detector), exploiting the\
+T and F output of extract_features_from_grayscale_image.  I found that base harmonic may be missing,\
+so I have to look for ratios of 3/2 as well as integer ratios\
+\
+Spent a little time on walrus pulsive calls, decided it would be difficult to incorporate.\
+\
+\
+May 26:  Completely overhauled structure of param.morph, now called param.image, into\
+
+\fs28 \cf3 param:  parameters for processing.  Broken down into the following substructures:
+\fs24 \cf0 \
+
+\fs28 \cf3 %         basic: [1x1 struct]
+\fs24 \cf0 \
+
+\fs28 \cf3 %         median: [1x1 struct]
+\fs24 \cf0 \
+
+\fs28 \cf3 %         filter: [1x1 struct]
+\fs24 \cf0 \
+
+\fs28 \cf3 %         threshold: [1x1 struct]
+\fs24 \cf0 \
+
+\fs28 \cf3 %         merge: [1x1 struct]
+\fs24 \cf0 \
+
+\fs28 \cf3 %         ridge: [1x1 struct]
+\fs24 \cf0 \
+
+\fs28 \cf3 %         contour: [1x1 struct]
+\fs24 \cf0 \
+\
+I also fixed the feature.harmonic and feature.overtone features so that they are only scalars.  Also added comments to output to clarify each processing step.\
+\
+Committed as revision 133.\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f4\i\b \cf0 **Since April 14 have been rerunning 2008 data using svn version 121: improved interval detector (including evaluation of consistent ICI)\
+and double network training, with original (as of April 2010) image processor.  Note: ALL DASARS are processed and linked, even "bad ones" on this round...\
+Dates of processing:\
+	Site 2: 4/14/10 13:01 to 4/18 8:53\
+	Site 3: 4/20/10 18?55 to 4/23 07:00\
+	Site 4: 5/9/10 22:22 to 5/12\
+	Site 5: 5/13/10 02:23 to 5/16 9:13\
+	Site 1: 5/16/10 to 5/25/10 11:56 (9/20 only)--clearly something extra special here.  Took 8 hours to process 9/05!!!\
+***\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f1\i0\b0 \cf0 Created a "trunk" and "branch_Mar2010version" in the svn repository, the latter being the former version 121 with minimal changes, and is thus the program that has been reprocessing the 2008 data in April/May 2010.\
+\
+\
+5/28/2010 Quick test drive of new image processing on S1H 9/21  ~300 detections/sec vs. 1200/sec for old version.  Why so slow?\
+\
+Out of 530 detections reviewed, 362 pass image processing, or 68.3019 percent pass\
+Image processing stage finished in  23.43 seconds or 1357.07 detections/minute\
+\
+Image processing stage finished in    258.60 detections/minute\
+\
+After adding a 'splice_flag' feature and running 'extract_binary_features' as few times as possible...\
+Out of 530 detections reviewed, 487 pass image processing, or 91.8868 percent pass\
+Image processing stage finished in  36.01 seconds or 883.13 detections/minute\
+\
+\
+6/3/2010\
+\
+Processing S108H0T20080921T000000\
+Running JAVA script\
+JAVA program run in 105.31 seconds\
+End of file reached after detection 19184, error flag type 0\
+File pointer no longer valid, resetting...\
+Opening file\
+Closing file...\
+Raw data loaded in 274.59 seconds, min time 21-Sep-2008 00:00:02 max time 21-Sep-2008 23:59:55\
+Elapsed time is 274.585071 seconds.\
+ICI does not fit inside range\
+ICI does not fit inside range\
+After  18.43 sec interval check 489 regular signals, 18694 out of 19183 detections remain.\
+\
+\
+6/30/2010. review of 'Shell09_Recompute_BearingInterval_NeuralNetupdated'\
+\
+Site 1: 8/26- 10/03 , missing singletons: 8/31, 9/07; 9/23 missing\
+Site 2: 8/25- 10/04 ,  \
+Site 3: 8/23- 9/30, 9/24 duplicate\
+Site 4: 8/19 - 9/05, 9/07-10/01\
+Site 5: 8/21 - 10/05,\
+}
