@@ -11,7 +11,7 @@ dz=[];
 
 prompt = {'Water depth (m)','Source depth (m)','Profile choice (munk,linear,MURI_Feb2014)', ...
     'path length (km)','ray angles (degrees)', ...
-    'Relative arrival times (msec; positive means arrives before first path)','Tilt (deg)' , ...
+    'Relative arrival times (msec; positive means arrives after first path)','Tilt (deg)' , ...
     'Uncertainty in timing (msec)','Uncertainty in depth (m)','Max depth permitted (m)'};
 dlg_title = 'Ray tracing parameters';
 num_lines = 1;
@@ -131,7 +131,7 @@ for Itilt=1:length(tilt)
         
         %tref1=interp1(r0,t0,x{I}(:,1));
         dz(I,:)=z1'-z_intp{I}';
-        dt(I,:)=t1'-t_intp{I}';  %Positive means that a given path arrives before
+        dt(I,:)=-t1'+t_intp{I}';  %Positive means that a given path arrives after
         %   the first path.
         
         %%%Plot data
@@ -141,7 +141,10 @@ for Itilt=1:length(tilt)
         set(gca,'fontweight','bold','fontsize',14);
         axis('ij');hold on
         xlabel('range(km)');ylabel('depth(m)');grid on
-        ylim([0 D]);set(gca,'ytick',0:250:D);
+        ylim([0 D]);set(gca,'ytick',0:500:D);
+        set(gca,'xtick',0:10:send);
+        
+        set(gca,'xminorgrid','on','yminorgrid','on')
         
         subplot(2,1,2);
         
@@ -152,12 +155,16 @@ for Itilt=1:length(tilt)
         plot([min(r1) max(r1)]/1000,dt_meas(I)*[1 1],['--' cchc(I)],'linewidth',2);
         
         xlabel('range (km)');ylabel('Time relative to first ray (msec)');
-        title('Positive value means path arrives before path 1');
+        title('Positive value means path arrives after path 1');
         
         grid on
         
+        set(gca,'xminorgrid','on','yminorgrid','on')
+        
         ylimm=[-150 150];
-        ylim(ylimm);set(gca,'ytick',ylimm(1):10:ylimm(2));
+        ylim(ylimm);set(gca,'ytick',ylimm(1):30:ylimm(2));
+        
+            set(gcf,'Position', [100, 100, 1049, 895]);
         
         %     subplot(3,1,2);
         %     %Check raw results
@@ -184,6 +191,8 @@ for Itilt=1:length(tilt)
     [~,fname,~]=fileparts(fname);
     print(gcf,'-djpeg',sprintf('CrudeError_%s.jpg',fname));
     saveas(gcf,sprintf('CrudeError_%s.fig',fname),'fig')
+    
+
 end %Itilt
 
 %%Plot error results
@@ -251,8 +260,8 @@ end
 set(gca,'fontweight','bold','fontsize',18);
 xlabel('range(km)');ylabel('depth(m)');grid on;ylim([0 D])
 xlimm=xlim;
-set(gca,'ytick',0:250:D);
-set(gca,'xtick',0:5:max(xlimm));
+set(gca,'ytick',0:200:D);
+set(gca,'xtick',0:10:max(xlimm));
 title(fname,'interp','none');
 
 subplot(3,1,2);
@@ -261,13 +270,13 @@ set(gca,'fontweight','bold','fontsize',18);
 
 legend('Timing error','depth error');ylim([0.1 100]);
 xlabel('range(km)');ylabel('rms err ');grid on
-xlim(xlimm);set(gca,'xtick',0:5:max(xlimm));
+xlim(xlimm);set(gca,'xtick',0:10:max(xlimm));
 
 subplot(3,1,3);
 semilogy(x{1}(:,1)/1000,(err_all),'linewidth',3);grid on;ylim([1 100]);
 set(gca,'fontweight','bold','fontsize',18);
 xlabel('range(km)');ylabel('total err ');grid on
-xlim(xlimm);set(gca,'xtick',0:5:max(xlimm));
+xlim(xlimm);set(gca,'xtick',0:50:max(xlimm));
 
 rbest=x{1}(Igood(Ir),1);
 zbest=x{1}(Igood(Ir),2);
@@ -276,5 +285,5 @@ subplot(3,1,1);
 xlim(xlimm);
 fprintf('Error: %6.2g, Best range: %6.2f km, Best depth: %6.2f m\n**\n',best_err,rbest/1000,zbest);
 
-
+set(gcf,'Position', [100, 100, 1049, 895]);
 end

@@ -10,7 +10,7 @@ switch upper(myfile)
     case 'GP090503.MP4'
         tmin=datenum([2015 1 28 15 40+11 4+38]);
     case 'GP180496.MP4'
-        tmin=datenum([2015 1 17 17 46 24]);
+        tmin=datenum([2015 1 17 17 46 3]);
 end
 
 end
