@@ -1,5 +1,5 @@
 %function [s_w, Fe_w,t_w_min]=warp_temp_exa_beta(s,Fe,r,c,beta,dtmax,dt_rc)
-% dtmax and dt_rc are times of tmax and r/c in seconds relative to s(1), r in meters, c in c/sec
+% dtmax and dt_rc are times of tmax (maximum evaluation time) and r/c in seconds relative to s(1), r in meters, c in c/sec
 %  beta is waveguide invariant.  If zero, use Bonnel's ideal waveguide
 %  warping
 function [s_w, Fe_w,t_w]=warp_temp_exa_beta(s,Fe,r,c,beta,dtmax,dt_rc)
@@ -19,7 +19,7 @@ dt=1/Fe;
 %tmax=(N-1)/Fe;
 %% Step 2: new time step
 
-if beta>0
+if beta>0 %dtmax not used
     tmin=r/c;
     tmax=(N-1)/Fe+r/c;
     dt_w=iwarp_t_beta(tmax,r,c,beta)-iwarp_t_beta(tmax-dt,r,c,beta);

@@ -3,7 +3,11 @@ function [params,values,slice] = choose_instant(x_deconv,params,delay,Fs,r,c1,c2
 %  x_deconv: time series.  If beta<0 time series has already been
 %  time-reversed
 %  delay: sample at which to begin warping...
+%  params:  structure with following:
+%       .beta_transform, beta, t_w, dtmax, dt_rc, jmax, xmax, Nww,
+%       fw,fwlims,climms
 %
+
 % Output:
 % slice: sum of frequency-warped spectrogram along time axis
 % params.t_w_min
@@ -23,13 +27,16 @@ x_ok=[x_deconv(x_min:end); zeros(x_min-1,1)];
 if isfield(params,'beta_transform')
     if ~params.beta_transform
         [s_w, Fe_w]=warp_temp_exa(x_ok,Fs,r,c1);    % s_w: warped signal, Fe_w: new warping frequency
-        params.t_w=(0:length(s_w))/Fe_w;
+        t_w=(0:length(s_w))/Fe_w;
+        params.t_w=t_w;
         params.dtmax=[];
         params.dt_rc=[];
     else
-        nzero=length(x_deconv)-x_min;
+        %nzero=length(x_deconv)-x_min;
         %x_ok=[x_deconv(1:x_min); zeros(nzero,1)];
-        x_ok=x_deconv;
+        if params.beta<0
+            x_ok=x_deconv;
+        end
         %dj=(params.j-x_min)+params.jmax;
         params.dtmax=params.jmax/Fs;
         params.dt_rc=x_min/Fs;

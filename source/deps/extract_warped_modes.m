@@ -6,9 +6,11 @@ function [modes,Nmode,filt] = extract_warped_modes(x_ok,Fe,N,Nww,r,c,clims,filt,
 %%% Warping
 if ~beta_transform
     [s_w, Fe_w]=warp_temp_exa(x_ok,Fe,r,c);    % s_w: warped signal, Fe_w: new warping frequency
-    t_w=(0:M-1)/Fe_w;                           % Warped time
+    t_w=(0:length(s_w)-1)/Fe_w;                           % Warped time
 
 else
+   % params.dtmax=params.jmax/Fe;
+    %params.dt_rc
     [s_w, Fe_w, t_w]=warp_temp_exa_beta(x_ok,Fe,r,c,beta,dtmax,dt_rc); 
     
 end
@@ -29,6 +31,8 @@ while isnan(Nmode) % if the user make a misclic in the mode selection, press esc
     figure(10);clf;
     
     imagescFun((0:M-1)/Fe_w,f_w,RTFdB-max(max(RTFdB)),'ij')
+    %imagescFun(t_w,f_w,RTFdB-max(max(RTFdB)),'ij')
+    
     axis('xy');
     ylim(filt.fwlims)
     %caxis(clims)

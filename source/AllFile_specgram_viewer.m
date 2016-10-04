@@ -10194,7 +10194,7 @@ else
         %%% JULIEN, here is where you specify arbitrary beta %%%
         prompt={'Range guess(m)','water speed (m/s)','bottom speed (m/s)','Nfft','N_window', ...
             'Decimation factor:','Number of FM contour points:','Deconvolve? (yes=1)','Beta transform? (no=0, yes= beta value'};
-        def={'22000','1442','1650',Nfft,WindowSize,num2str(Rest),'2',deconv_chc,'-3'};
+        def={'15000','1442','1650',Nfft,WindowSize,num2str(Rest),'2',deconv_chc,'-3'};
         dlgTitle	=	sprintf('Warping parameters');
         lineNo		=	ones(size(prompt));
         answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
