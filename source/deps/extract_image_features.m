@@ -66,8 +66,8 @@
 %       param.morph.threshold_fudge=what fraction of automated adaptive threshold should be
 %           used for converting to binary image. Only used if
 %           .threshold_chc set to 'otsu'
-
-
+%
+%
 %
 % % %%%Output %%%%%%%%
 %
@@ -835,7 +835,7 @@ end
         
         pwr=temp.power.narrowband;
         rms=10*log10(pwr);
-        SNR=rms-noise_rmsdB;
+        SNR=rms-noise_rmsdB; %%%SNR computed in terms of rms value...
         
         if Idebug==4,
             figure(10);set(gcf,'units','norm','pos',[4.5312e-02   8.3333e-02   2.9167e-01   3.5000e-01]);

@@ -3603,6 +3603,8 @@ if ~strcmp(handles.mydir(end-6),'S')
     return
 end
 for Idasar=1:NDasar
+    xsample{Idasar}=[];
+    tsec(Idasar)=NaN;
     %%Assume final directoryname containing files is of the form 'S510G0/'
     directory_flag=false;
     Inum=1;
@@ -3631,7 +3633,7 @@ for Idasar=1:NDasar
     
     try
         handles		=	load_and_display_spectrogram(handles);
-        [theta(Idasar),kappa(Idasar),tsec]=get_GSI_bearing(hObject,eventdata,handles);
+        [theta(Idasar),kappa(Idasar),tsec(Idasar),xsample{Idasar}]=get_GSI_bearing(hObject,eventdata,handles);
     catch
         disp(sprintf('Directory %s, file %s does not exist',handles.mydir,handles.myfile));
     end
@@ -3709,15 +3711,39 @@ if ~isempty(VA_cords)
     angg=bnorm(atan2((-VA_cords(1)+VM(1)/1000),(-VA_cords(2)+VM(2)/1000))*180/pi);
     title(sprintf('Range of source from chosen location: %6.2f deg,,%6.2f +/- %3.2f km,  minor axis %3.2f km',angg,range,A/1000,B/1000));
 end
+
+dtt=zeros(1,length(tsec));
+tsec_corrected(Igood(1))=0;
+for I=1:(length(Igood)-1)
+    
+    %%%  xcov(s2,s1);  if s2 arrives first, lag is negative, if s2
+    %%%  lags s1, lag is positive
+    [cc,lags] = xcov(xsample{Igood(I+1)}(:,1),xsample{Igood(I)}(:,1));
+    [~,Ilag]=max(abs(hilbert(cc)));
+    dtt(Igood(I))=lags(Ilag)/1000;  %positive dtt means I-1 lags I
+    tsec_corrected(Igood(I+1))=tsec_corrected(Igood(I))+tsec(Igood(I+1))-tsec(Igood(I))+dtt(Igood(I));
+    
+end
 fprintf('Position of location (can copy for annotation): %s\n',mat2str(VM,10));
+fprintf('Values of theta for station %s (degrees, compass standard): %s\n',mat2str(Igood),mat2str(theta(Igood),6));
+fprintf('raw tsec of selections:  %s\n',mat2str(tsec(Igood),6));
+fprintf(' tsec corrected by xcorr:  %s\n',mat2str(tsec_corrected(Igood),6));
+
 yes=menu('Print and Save?','Yes','No');
 if yes==1
     orient landscape
-    tstart=datestr(datenum(0,0,0,0,0,tsec)+handles.tdate_start,30);
+    tstart=datestr(datenum(0,0,0,0,0,tsec(Igood(end)))+handles.tdate_start,30);
     figure(1);
     print(1,'-djpeg','-r300',sprintf('Localization_G_%s.jpg',tstart));
     print('-djpeg','-r300',sprintf('Spectrogram_G_%s.jpg',tstart));
-    save(sprintf('DASAR_localization_%s',tstart),'DASAR_coords','Igood','theta','Ikeep','VM','A','B','ANG','range');
+    try
+        save(sprintf('DASAR_localization_%s',tstart),'DASAR_coords','Igood','theta','Ikeep','VM','A','B','ANG','xsample','tsec','range');
+    catch
+        save(sprintf('DASAR_localization_%s',tstart),'DASAR_coords','Igood','theta','Ikeep','VM','A','B','ANG','xsample','tsec','tsec_corrected');
+        %fprintf('Position not saved. \n');
+        
+       
+    end
 end
 close(1)
 end
@@ -8653,7 +8679,7 @@ end
 end
 
 
-function [thet,kappa,tsec]=get_GSI_bearing(hObject,eventdata,handles,tmp)
+function [thet,kappa,tsec,xf]=get_GSI_bearing(hObject,eventdata,handles,tmp)
 % Freq or temp in kiloHz
 %tsec: seconds into time series that data are selected...
 % tmp is previous ginput
@@ -8684,7 +8710,8 @@ freq=1000*sort(tmp(:,2));
 contents=get(handles.popupmenu_Nfft,'String');
 Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
 
-[thet0,kappa,sd]=extract_bearings(x(n(1):n(2),:),0.25,Nfft,Fs,freq(1),freq(2),200);
+x=x(n(1):n(2),:);
+[thet0,kappa,sd,xf]=extract_bearings(x,0.25,Nfft,Fs,freq(1),freq(2),200);
 
 if ~isempty(strfind('T2007',handles.myfile))
     cal07flag=1;
@@ -8758,8 +8785,8 @@ end
 
 
 
-function [thet,kappa,sd]=extract_bearings(y,bufferTime,Nfft,Fs,fmin,fmax,Nsamples)
-%function [thet,kappa,sd]=extract_bearings(y,bufferTime,Nfft,Fs,fmin,fmax,Nsamples)
+function [thet,kappa,sd,x]=extract_bearings(y,bufferTime,Nfft,Fs,fmin,fmax,Nsamples)
+%function [thet,kappa,sd,x]=extract_bearings(y,bufferTime,Nfft,Fs,fmin,fmax,Nsamples)
 % Input:
 %    y: time series, with channels arranged as columns
 %    bufferTime: how much time exists before and after signal proper.
@@ -8782,6 +8809,7 @@ function [thet,kappa,sd]=extract_bearings(y,bufferTime,Nfft,Fs,fmin,fmax,Nsample
 %    Nsamples:  number of bootstrap samples for estimating kappa and sd
 %  Output: thet: angle in degrees, increasing clockwise from true north...,
 %  sd standard deviation in degrees
+%   x: filtered time series, columns are channels
 kappa=[];sd=[];thet=[];
 
 filter_chc='butter';
@@ -10254,7 +10282,7 @@ else
     
     yes=menu('Save Result?','Yes','No');
     if yes==1
-       save FrequencyWarpingResult modes modes_source filtt filt_param stft_param 
+       save FrequencyWarpingResult modes modes_source filtt filt_param stft_param x0 hdr param_file
     end
     keyboard
     Nchan=modes.Nchan;

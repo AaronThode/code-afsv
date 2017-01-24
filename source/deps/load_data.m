@@ -725,18 +725,18 @@ switch filetype
                         sens=1;
                         
                         % kludge Code for testing beta=-3;
-                        disp('WARNING!  DOWNLOADING TEST FILE');
-                        data=load('/Users/thode/Projects/RightWhaleDetection/Publications/Refractive_Invariant/DataExample.dir/Animal_faint/AveragedCallBeta1Range15km/StackedResult.mat');
-                      
-                        x=data.xtot;
-                        %x=data.xref;
-                        Fs=data.Fs;
-                        t=1:length(x);
-                        tmin=datenum([1970 1 1 0 0 0]);
-                        tmax=tmin+datenum(0,0,0,0,0,length(x)/Fs);
-                        head.Nchan=1;
-                        
-                        return
+%                         disp('WARNING!  DOWNLOADING TEST FILE');
+%                         data=load('/Users/thode/Projects/RightWhaleDetection/Publications/Refractive_Invariant/DataExample.dir/Animal_faint/AveragedCallBeta1Range15kmModes1n2/StackedResult.mat');
+%                       
+%                         x=data.xtot;
+%                         %x=data.xref;
+%                         Fs=data.Fs;
+%                         t=1:length(x);
+%                         tmin=datenum([1970 1 1 0 0 0]);
+%                         tmax=tmin+datenum(0,0,0,0,0,length(x)/Fs);
+%                         head.Nchan=1;
+%                         
+%                         return
                         
                         %%End of kludge
                         done=true;
