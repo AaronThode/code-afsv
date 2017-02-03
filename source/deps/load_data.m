@@ -205,9 +205,11 @@ switch filetype
             %y=x(:,1)-fudge_factor_velocity*(cos(angles(I)*pi/180)*x(:,3)+sin(angles(I)*pi/180)*x(:,2)); %switch x and y to get compass bearing
             
             thta=thta-head.brefa;
-            x=x(:,1)+sin(thta*pi/180)*x(:,2)+cos(thta*pi/180)*x(:,3);
-            x=x/2; %Turn into equivalent of one channel.
-            
+            x0=x(:,1)+sin(thta*pi/180)*x(:,2)+cos(thta*pi/180)*x(:,3);
+            x=x0/2; %Turn into equivalent of one channel.
+           
+            %x=sqrt(x(:,1).*x(:,2)*sin(thta*pi/180)+x(:,1).*x(:,3)*cos(thta*pi/180));
+            %x=sqrt(x0.*y);
         end
         
         
