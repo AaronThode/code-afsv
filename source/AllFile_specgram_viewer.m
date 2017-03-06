@@ -3617,7 +3617,22 @@ for Idasar=1:NDasar
         handles.myfile(6)=numm(Inum);
         if exist(handles.mydir,'dir')==7
             directory_flag=true;
-            fprintf('Directory %s contains %s\n',handles.mydir,handles.myfile);
+            fprintf('Directory %s exists...\n',handles.mydir);
+            %%%Check to see whether file exists
+            if ~(exist([handles.mydir filesep handles.myfile],'file')==2)
+                %%%Could we be looking at first file of the year?
+                fprintf('%s is missing, try a wild card search...\n',handles.myfile);
+                mydir=pwd;
+                cd(handles.mydir)
+                DDD=dir(sprintf('%s*.gsi',handles.myfile(1:(end-10))));
+                if ~isempty(DDD)
+                    handles.myfile=DDD(1).name;
+                else
+                    directory_flag=false;
+                end
+                cd(mydir)
+                
+            end
         else
             Inum=Inum+1;
             if Inum==length(numm)
@@ -3674,7 +3689,7 @@ if faill
     %GSI_location_dir=fullfile('/Volumes','Data',sprintf('Shell%s_GSI_Data',year),'DASARlocations',sprintf('DASAR_locations_%s.mat',year));
     GSI_location_dir=sprintf(handles.GSI_location_dir_template,year,year);
     
-    def1={GSI_location_dir, '5','[4.174860699660919e+05 7.817274204098196e+06]'};
+    def1={GSI_location_dir, '6','[4.174860699660919e+05 7.817274204098196e+06]'};
     answer=inputdlg(prompt1,dlgTitle1,1,def1);
     locs=load(answer{1});
     Isite=str2double(answer{2});
@@ -3704,7 +3719,7 @@ Ikeep=find(~isnan(theta(Igood))&theta(Igood)>0);
 [~,xg,yg]=plot_location(DASAR_coords(Igood,:),theta(Igood),Ikeep,VM,A,B,ANG);
 hold on
 
-if ~isempty(VA_cords)
+if ~isempty(VA_cords)&Isite==5
     tmp=(VA_cords-[xg yg]);
     plot(tmp(1),tmp(2),'o');
     range=sqrt(sum((VA_cords-VM/1000).^2));

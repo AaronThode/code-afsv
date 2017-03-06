@@ -41,7 +41,8 @@ name='File Template';
 numlines=1;
 options.Resize='on';
 options.WindowStyle='normal';
-defaultanswer={sprintf('S%i*_BearingInterval_Huber_FilteredLocations.mat',Site),'Range',sprintf('%s array',year),'10','[30 50]'};
+%defaultanswer={sprintf('S%i*_Huber_FilteredLocations.mat',Site),'All',sprintf('%s array',year),'10','[30 200]'};
+defaultanswer={sprintf('S%i*_Huber_FilteredLocations.mat',Site),'Range','Site0','3','[30 200]'};
 
 answer=inputdlg(prompt,name,numlines,defaultanswer,options);
 fnames=dir(answer{1});
@@ -124,7 +125,12 @@ end
         %find year and Site from list_names{1}
         try
             locs=load(GSI_location_dir);
-            mySite=locs.Site{Site};
+            if Site==0
+                iSite=6;
+            else
+                iSite=Site;
+            end
+            mySite=locs.Site{iSite};
             Igood=find(mySite.northing>0);
             station_locations.northing=mySite.northing(Igood);
             station_locations.easting=mySite.easting(Igood);
@@ -259,6 +265,8 @@ end
                         % Depth from Tiger: 47.4 m  Wind speed (avg): 12 m/s  Water temp: 4.6 C
                         filter_params.UTM_center=eval('[4.152065807469279e+05 7.805557380281989e+06]');
                         
+                    case 'site0'
+                        filter_params.UTM_center=[5.3164e+05 7.8128e+06];
                     otherwise
                         filter_params.UTM_center=eval(UTM_keyword);
                 end
