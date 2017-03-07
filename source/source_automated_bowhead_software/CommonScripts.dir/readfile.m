@@ -27,7 +27,7 @@ elseif findstr(rawfile,'.gsi')
     y=calibrate_GSI_signal(y, 'DASARC');
         
     
-    if (abs(size(y,1)-floor(head.Fs*tlen))>2),
+    if (abs(max(size(y))-floor(head.Fs*tlen))>2),
         disp('End of file reached, setting y to empty');
         y=[];
     end
