@@ -29,9 +29,11 @@ vx=squeeze(real((B(1,:,:).*conj(B(2,:,:)))));
 vy=squeeze(real((B(1,:,:).*conj(B(3,:,:)))));
 
 %sec_avg=input('Enter time to average over (sec; 0 does no averaging):');
-Batch_vars.sec_avg	=	'0';	Batch_desc{1}	=	'Seconds to average PSD for long-term display, if "0" no averaging' ;
+Batch_vars.sec_avg	=	'0.1';	Batch_desc{1}	=	'Seconds to average PSD for long-term display, if "0" no averaging' ;
+Batch_vars.climm='[100 200]'; Batch_desc{2}='Bearing Range Color Scale';
 Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, 'Vector Sensor Processing');
 sec_avg=str2num(Batch_vars.sec_avg);
+climm=eval(Batch_vars.climm);
 
 if ~isempty(sec_avg)&&sec_avg>0
     Navg=floor(sec_avg*Fs/dn);  %Samples per avg
@@ -64,6 +66,7 @@ if strcmpi(handles.display_view,'Directionality')
     else
         colormap(hsv);
     end
+    caxis(climm);
     
 elseif strcmpi(handles.display_view,'ReactiveRatio')
     %Uncomment to show reactive intensity

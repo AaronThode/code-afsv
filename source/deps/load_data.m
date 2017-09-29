@@ -42,10 +42,16 @@ switch filetype
         t=linspace(tmin,tmax,length(x));
     case 'MAT'
         
-        
         %%Look at THAW data
         if ~isempty(strfind(myfile,'rcv'))
+            
+            mydir=pwd;
+            cd(mydir);
+            cd ..
+            head=load('ExperimentParameters.mat');
             data=load(fullfile(mydir,myfile));
+            
+            keyboard
             Fs=data.sample_rate;
             x=data.rcvx;
             
@@ -75,6 +81,7 @@ switch filetype
         simulated=load(fullfile(mydir,myfile));
         Fs=simulated.fs;
         x=simulated.x;Ichan=15;
+        
         %%Uncomment to conduct Bering Sea call selection
         %%% size(x)=[ 5(zplot)           4 (rplot)          8       16033]
 %         name='Bering Sea Simulations';
@@ -176,10 +183,12 @@ switch filetype
             end
         end
         
+       
         [x,t,head]=readGSIfile([mydir '/' myfile],tdate_start,tlen,Ichan,'datenum','nocalibrate');
         head.multichannel=true;
         head.linked=true;
         head.Nchan=3;
+        
         
         if isempty(keyword)
             prompt = {'Enter a keyword for GSI calibration [DASARC]:'};
@@ -189,17 +198,19 @@ switch filetype
             answer = inputdlg(prompt,dlg_title,num_lines,def);
             keyword=answer{1};
         end
-        % keyword=input('Enter a keyword for GSI calibration [DASARC]:','s');
-        %             if isempty(keyword)
-        %                 keyword='DASARC';
-        %             end
-        %         end
         x=calibrate_GSI_signal(x, keyword);
+        tmin=datenum(1970,1,1,0,0,head.ctbc);
+        tmax=tmin+datenum(0,0,1,0,0,0);
+        
+        
+        if 1==0  %%%Shannon Rankin DIFAR data
+            [x,t,head]=load_sonobuoy_demo(tdate_start,tlen,Ichan);
+            tmin=datenum(1970,1,1,0,0,0);
+            tmax=tmin+datenum(0,0,0,0,0,max(t));
+        end
         
         Fs=head.Fs;
         
-        tmin=datenum(1970,1,1,0,0,head.ctbc);
-        tmax=tmin+datenum(0,0,1,0,0,0);
         %head.Nchan=length(Ichan);
         if beamform_data==1
             %y=x(:,1)-fudge_factor_velocity*(cos(angles(I)*pi/180)*x(:,3)+sin(angles(I)*pi/180)*x(:,2)); %switch x and y to get compass bearing
@@ -207,7 +218,7 @@ switch filetype
             thta=thta-head.brefa;
             x0=x(:,1)+sin(thta*pi/180)*x(:,2)+cos(thta*pi/180)*x(:,3);
             x=x0/2; %Turn into equivalent of one channel.
-           
+            
             %x=sqrt(x(:,1).*x(:,2)*sin(thta*pi/180)+x(:,1).*x(:,3)*cos(thta*pi/180));
             %x=sqrt(x0.*y);
         end
