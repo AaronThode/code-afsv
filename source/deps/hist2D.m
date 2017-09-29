@@ -1,9 +1,10 @@
 function [N2D,printname,Ibin,hout,hprint]=hist2D(X,axis1,axis2,feature_names,contour_chc,scale_chc,trim_chc,no_margin)
-%function [N,printname,Ibin]=hist2D(X,axis1,axis2,feature_names,contour_chc,scale_chc,trim_chc)
+%function [N,printname,Ibin]=hist2D(X,axis1,axis2,feature_names,contour_chc,scale_chc,trim_chc,no_margin)
 %  Plot 2D histograms of several variables...
 %
 %  Input:
-%%% X: [Ndim Nsamples] data sample with Ndim variables (Ndim>1);
+%%% X: [Ndim Nsamples] data sample with Ndim variables (Ndim>1);  first row
+%%% is reference row
 %%%  axis1, axis2: desired histogram bins.  axis2 can be a cell matrix for
 %%%             Ndim> 2
 %%%  feature_names: cell array of names of features for plotting

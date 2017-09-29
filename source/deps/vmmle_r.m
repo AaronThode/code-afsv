@@ -6,7 +6,7 @@ function [VM,Qhat,w,outcome] = vmmle_r(angle,dasar,r,k)
 %     Technometrics 23:149-154.
 %
 %   [VM,QHAT,W,QHAT] = VMMLE(ANGLE,DASAR,R,K) processes a single observation
-%   comprised of ANGLE (an n-by-1 column vector of bearings), DASAR
+%   comprised of compass ANGLE (an n-by-1 column vector of bearings), DASAR
 %   (an n-by-2 matrix of coordinates for the DASAR source of each
 %   bearing), and K (an n-by-1 vector of bearing standard error
 %   estimates, expressed as the von Mises concentration parameter kappa,
@@ -31,7 +31,7 @@ else
 end
 r = lower(r);
 robust = strfind('mah',r);
-if isempty(robust),
+if isempty(robust)
     error('Input r must be either "m", "a", or "h"');
 end
 failed = {'less than 2 bearings','negative variance estimates',...

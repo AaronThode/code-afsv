@@ -249,9 +249,6 @@ for Iname=1:length(names)
             %range.  But just in case...
             
             try
-                newEvent.localization.range=sqrt((station_position.easting(Istation)-location.position.location(1)).^2+ ...
-                    (station_position.northing(Istation)-location.position.location(2)).^2);
-                newEvent.range=newEvent.localization.range/1000; %km
                 
                 %Reject all bearings that do not contribute to a
                 %localization...
@@ -266,6 +263,10 @@ for Iname=1:length(names)
                 newEvent.position=location.position.location;  %This is an editable field
                 newEvent.Istation=Istation; %Useful to identify where in bearings_all we are.
                 
+                 newEvent.localization.range=sqrt((station_position.easting(Istation)-location.position.location(1)).^2+ ...
+                    (station_position.northing(Istation)-location.position.location(2)).^2);
+                newEvent.range=newEvent.localization.range/1000; %km
+               
             catch
                 fprintf('convert_automated_bowhead_into_annotations: You cannot assign a range to this event: no position associated with this detection.\n');
             end
