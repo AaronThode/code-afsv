@@ -75,6 +75,8 @@ function AllFile_specgram_viewer_OpeningFcn(hObject, eventdata, handles, varargi
 
 if ispc
     deskPath=['C:/Users/' char(java.lang.System.getProperty('user.name')) '/Desktop/'];
+elseif strcmp(getenv('USER'),'thode')
+   deskPath='/Users/thode/repos/code-afsv/source/';
 else
     deskPath='~/Desktop/';
 end
@@ -93,7 +95,7 @@ try
         'ProgressPosition', 5, ...
         'ProgressRatio', 0.4 );
     s.addText( 30, 50, 'Ulysses/Ribbit', 'FontSize', 30, 'Color', [0 0 0.6] )
-    s.addText( 30, 80, 'v1.1, August 26, 2014', 'FontSize', 20, 'Color', [0.2 0.2 0.5] )
+    s.addText( 30, 80, 'v10.1, October 10, 2017', 'FontSize', 20, 'Color', [0.2 0.2 0.5] )
     s.addText( 30, 110, 'Aaron Thode and Jit Sarkar', 'FontSize', 20, 'Color', [0.2 0.2 0.5] )
     s.addText( 30, 150, 'Adventure through Analysis', 'FontSize', 20, 'Color', [0.2 0.2 0.5] ,'Fontangle','Italic')
     
@@ -3727,6 +3729,8 @@ if ~isempty(VA_cords)&Isite==5
     title(sprintf('Range of source from chosen location: %6.2f deg,,%6.2f +/- %3.2f km,  minor axis %3.2f km',angg,range,A/1000,B/1000));
 end
 
+
+%%%%Estimate relative time of arrival-for Ludovic
 dtt=zeros(1,length(tsec));
 tsec_corrected(Igood(1))=0;
 for I=1:(length(Igood)-1)

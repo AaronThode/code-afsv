@@ -45,25 +45,28 @@ switch filetype
         %%Look at THAW data
         if ~isempty(strfind(myfile,'rcv'))
             
-            mydir=pwd;
+            tempdir=pwd;
             cd(mydir);
             cd ..
             head=load('ExperimentParameters.mat');
+            cd(mydir);
             data=load(fullfile(mydir,myfile));
             
-            keyboard
-            Fs=data.sample_rate;
-            x=data.rcvx;
             
-            day=str2num(myfile(5:7));
-            hour=str2num(myfile(8:9));
-            minn=str2num(myfile(10:11));
-            secc=str2num(myfile(12:13));
-            tmin=datenum(2012,0,day,hour,minn,secc);
+            Fs=head.fs;
+            x=data.rcvx*head.hysens*head.ampgain;
+            
+            day=str2num(myfile(9:11));
+            hour=str2num(myfile(12:13));
+            minn=str2num(myfile(14:15));
+            secc=str2num(myfile(16:17));
+            tmin=datenum(2013,0,day,hour,minn,secc);
             tmax=tmin+datenum(0,0,0,0,0,length(x)/Fs);
             head.Nchan=1;
             head.Fs=Fs;
-            
+            head.multichannel=0;
+            head.linked=0;
+    
             if tdate_start==-1
                 tdate_start=tmin;
                 
@@ -74,7 +77,7 @@ switch filetype
             Istart=1+round(dt*Fs);
             Iend=Istart+(round(tlen*Fs));
             x=x(Istart:Iend);
-            
+            cd(tempdir)
             %keyboard
             return
         end
