@@ -187,30 +187,37 @@ switch filetype
         end
         
        
-        [x,t,head]=readGSIfile([mydir '/' myfile],tdate_start,tlen,Ichan,'datenum','nocalibrate');
-        head.multichannel=true;
-        head.linked=true;
-        head.Nchan=3;
-        
-        
-        if isempty(keyword)
-            prompt = {'Enter a keyword for GSI calibration [DASARC]:'};
-            dlg_title = 'DASAR calibration';
-            num_lines = 1;
-            def = {'DASARC'};
-            answer = inputdlg(prompt,dlg_title,num_lines,def);
-            keyword=answer{1};
-        end
-        x=calibrate_GSI_signal(x, keyword);
-        tmin=datenum(1970,1,1,0,0,head.ctbc);
-        tmax=tmin+datenum(0,0,1,0,0,0);
-        
-        
-        if 1==0  %%%Shannon Rankin DIFAR data
-            [x,t,head]=load_sonobuoy_demo(tdate_start,tlen,Ichan);
+        if ~isempty(strfind(myfile,'Rankin'))  %%%Shannon Rankin DIFAR data
+            [x,t,head]=load_sonobuoy_demo([mydir '/' myfile],tdate_start,tlen,Ichan);
             tmin=datenum(1970,1,1,0,0,0);
             tmax=tmin+datenum(0,0,0,0,0,max(t));
+            
+        elseif ~isempty(strfind(myfile,'DIFAR'))
+            [x,t,head]=load_sonobuoy_Soldevilla([mydir '/' myfile],tdate_start,tlen,Ichan);
+            tmin=datenum(1970,1,1,0,0,0);
+            tmax=tmin+datenum(0,0,0,0,0,max(t));
+            
+        else
+            [x,t,head]=readGSIfile([mydir '/' myfile],tdate_start,tlen,Ichan,'datenum','nocalibrate');
+            head.multichannel=true;
+            head.linked=true;
+            head.Nchan=3;
+            
+            
+            if isempty(keyword)
+                prompt = {'Enter a keyword for GSI calibration [DASARC]:'};
+                dlg_title = 'DASAR calibration';
+                num_lines = 1;
+                def = {'DASARC'};
+                answer = inputdlg(prompt,dlg_title,num_lines,def);
+                keyword=answer{1};
+            end
+            x=calibrate_GSI_signal(x, keyword);
+            tmin=datenum(1970,1,1,0,0,head.ctbc);
+            tmax=tmin+datenum(0,0,1,0,0,0);
         end
+        
+       
         
         Fs=head.Fs;
         

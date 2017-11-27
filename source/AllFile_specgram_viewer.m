@@ -3293,6 +3293,7 @@ else
     fprintf('Slope is %6.2f Hz/sec\n',1000*bandwidth/duration)
     
 end
+fprintf('%s \n',msg);
 uiwait(msgbox(msg,'Modal'));
 
 

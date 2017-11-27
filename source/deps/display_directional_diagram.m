@@ -30,13 +30,17 @@ vy=squeeze(real((B(1,:,:).*conj(B(3,:,:)))));
 
 %sec_avg=input('Enter time to average over (sec; 0 does no averaging):');
 Batch_vars.sec_avg	=	'0.1';	Batch_desc{1}	=	'Seconds to average PSD for long-term display, if "0" no averaging' ;
-Batch_vars.climm='[100 200]'; Batch_desc{2}='Bearing Range Color Scale';
+Batch_vars.climm='[0 360]'; Batch_desc{2}='Bearing Range Color Scale';
 Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, 'Vector Sensor Processing');
 sec_avg=str2num(Batch_vars.sec_avg);
 climm=eval(Batch_vars.climm);
 
 if ~isempty(sec_avg)&&sec_avg>0
     Navg=floor(sec_avg*Fs/dn);  %Samples per avg
+    if Navg==0
+        Navg=1;
+        sec_avg=dn/Fs;
+    end
     Nsnap=floor((M-Navg)/((1-ovlap)*Navg));  %Number of averaged samples per window.
     vx_avg=zeros(Nfft/2,Nsnap);
     vy_avg=vx_avg;

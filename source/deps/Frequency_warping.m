@@ -147,6 +147,8 @@ while redo
         
         temp=input('Enter mode numbers:');
         if isempty(temp)||Nm==0
+            disp('No mode number selected!')
+            keyboard
             continue
         end
         

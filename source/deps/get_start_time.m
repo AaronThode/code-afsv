@@ -46,7 +46,7 @@ else
     nothappy=1;
     while ~isempty(nothappy)
         beta=1;
-        disp('Select two points to estimate r/c estimation, last point is tmax:');
+        disp('Select two points on a contour to estimate r/c estimation, last point is tmax:');
         tmp=ginput(2);
         f=tmp(:,2);
         tt=tmp(:,1);
