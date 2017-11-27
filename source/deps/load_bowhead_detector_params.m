@@ -27,10 +27,23 @@ cd(dirname);
 Ishell=max(strfind(dirname,'Shell'))+length('Shell');
 if isempty(Ishell)
     uiwait(msgbox(sprintf('Cannot find string ''Shell'' in %s',dirname)));
-    temp=input('Enter year and Site [year Site]:');
-    year=temp(1);
-    Site=temp(2);
+    
+    prompt={'Year (YYYY)','Site'};
+    name='Year and Site';
+    numlines=1;
+    options.Resize='on';
+    options.WindowStyle='normal';
+    defaultanswer={'2010','5'};
+    answer=inputdlg(prompt,name,numlines,defaultanswer,options);
+    year=eval(answer{1});
+    Site=eval(answer{2});
+    
+    % temp=input('Enter year and Site [year Site]:');
+    % year=temp(1);
+    %Site=temp(2);
 else
+    
+
     year=num2str(2000+str2num(dirname(Ishell+(0:1))));
     Site=str2num(dirname(Ishell+7));
 end
