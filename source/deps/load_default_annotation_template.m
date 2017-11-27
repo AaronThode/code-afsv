@@ -58,7 +58,7 @@ Template.SNR_rms			=	0;
 Template.SNR_rms_dB			=	0;
 
 Template.num_pulses			=	0;
-Template.num_harmonics		=	-1;
+Template.num_harmonics		=	0;
 Template.multipath			=	0;
 Template.confidence			=	3;
 Template.comments			=	'';

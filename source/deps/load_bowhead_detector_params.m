@@ -27,9 +27,14 @@ cd(dirname);
 Ishell=max(strfind(dirname,'Shell'))+length('Shell');
 if isempty(Ishell)
     uiwait(msgbox(sprintf('Cannot find string ''Shell'' in %s',dirname)));
+    temp=input('Enter year and Site [year Site]:');
+    year=temp(1);
+    Site=temp(2);
+else
+    year=num2str(2000+str2num(dirname(Ishell+(0:1))));
+    Site=str2num(dirname(Ishell+7));
 end
-year=num2str(2000+str2num(dirname(Ishell+(0:1))));
-Site=str2num(dirname(Ishell+7));
+
 
 GSI_location_dir=sprintf(GSI_location_dir_template,year,year);
 
@@ -42,7 +47,7 @@ numlines=1;
 options.Resize='on';
 options.WindowStyle='normal';
 %defaultanswer={sprintf('S%i*_Huber_FilteredLocations.mat',Site),'All',sprintf('%s array',year),'10','[30 200]'};
-defaultanswer={sprintf('S%i*_Huber_FilteredLocations.mat',Site),'Range','Site0','3','[30 200]'};
+defaultanswer={sprintf('S%i*_Huber_FilteredLocations.mat',Site),'West','Site5','3','[30 200]'};
 
 answer=inputdlg(prompt,name,numlines,defaultanswer,options);
 fnames=dir(answer{1});
@@ -96,15 +101,17 @@ end
 %What DASARS used to compute box?
 IDASAR=logical([1 1 1 1 1 1]);  %DASARS CDEG
 
-Site5_northing=Site5_northing(IDASAR);
-Site5_easting=Site5_easting(IDASAR);
+station_locations.northing=station_locations.northing(IDASAR);
+station_locations.easting=station_locations.easting(IDASAR);
+%Site5_northing=Site5_northing(IDASAR);
+%Site5_easting=Site5_easting(IDASAR);
 
 xbuffer=100; %A little extra shrinking of the center site width, in meters (makes sure box of Center is inside of all DASARS
-filter_params.northing=[min(Site5_northing)+xbuffer max(Site5_northing)-xbuffer];  %Boxes at same latitude
-dl=abs(min(Site5_easting)-max(Site5_easting));  %How wide should a box be?  For now, make width the same as the width of the 'center' box..
+filter_params.northing=[min(station_locations.northing)+xbuffer max(station_locations.northing)-xbuffer];  %Boxes at same latitude
+dl=abs(min(station_locations.easting)-max(station_locations.easting));  %How wide should a box be?  For now, make width the same as the width of the 'center' box..
 %dl=10000; %10 km box width
 
-filter_params.easting=[min(Site5_easting)+xbuffer max(Site5_easting)-xbuffer];
+filter_params.easting=[min(station_locations.easting)+xbuffer max(station_locations.easting)-xbuffer];
 
 switch(lower(loc_keyword))
     case 'center'
@@ -121,83 +128,87 @@ switch(lower(loc_keyword))
 end
 %%%%inner function get_Site_data
     function station_locations=get_Site_data(station_locations,GSI_location_dir)
+        %%% try to load %%DASAR_locations_YYYY.mat
+        %%%% format will be Site{5}.easting/northing
+        
         
         %find year and Site from list_names{1}
         try
-            locs=load(GSI_location_dir);
             if Site==0
                 iSite=6;
             else
                 iSite=Site;
             end
+            locs=load(GSI_location_dir);
+            
             mySite=locs.Site{iSite};
             Igood=find(mySite.northing>0);
             station_locations.northing=mySite.northing(Igood);
             station_locations.easting=mySite.easting(Igood);
         catch
-            uiwait(errordlg('Can''t access Site location information'));
+            uiwait(warndlg('load_bowhead_detector_params: Can''t access Site location information, using default locations for Site 5'));
+            % Determine UTC boundaries
+            Site5_easting=[
+                412659
+                418898
+                412949
+                419139
+                413253
+                413492];
             
+            Site5_northing=[
+                7795035
+                7798311
+                7802045
+                7805333
+                7809065
+                7816110];
+            
+            Site4_easting=[
+                560332
+                554220
+                560195
+                554068
+                560066
+                553948
+                559900
+                541824
+                541960
+                554007
+                560054
+                554185
+                560126];
+            
+            Site4_northing=[
+                7794371
+                7798004
+                7801398
+                7805012
+                7808391
+                7812033
+                7815436
+                7811774
+                7804792
+                7819070
+                7822482
+                7826006
+                7829492];
+            
+            %Save data to station_locations output variable
+            switch iSite(1)
+                case 5
+                    station_locations.northing=Site5_northing;
+                    station_locations.easting=Site5_easting;
+                    
+                case 4
+                    station_locations.northing=Site4_northing;
+                    station_locations.easting=Site4_easting;
+                    
+                otherwise
+                    uiwait(errordlg('Can''t access Site location information'));
+            end
         end
-        % Determine UTC boundaries
-        Site5_easting=[
-            412659
-            418898
-            412949
-            419139
-            413253
-            413492];
         
-        Site5_northing=[
-            7795035
-            7798311
-            7802045
-            7805333
-            7809065
-            7816110];
-        
-        Site4_easting=[
-            560332
-            554220
-            560195
-            554068
-            560066
-            553948
-            559900
-            541824
-            541960
-            554007
-            560054
-            554185
-            560126];
-        
-        Site4_northing=[
-            7794371
-            7798004
-            7801398
-            7805012
-            7808391
-            7812033
-            7815436
-            7811774
-            7804792
-            7819070
-            7822482
-            7826006
-            7829492];
-        
-        %Save data to station_locations output variable
-        %         switch Site_number(1)
-        %             case 5
-        %                 station_locations.northing=Site5_northing;
-        %                 station_locations.easting=Site5_easting;
-        %
-        %             case 4
-        %                 station_locations.northing=Site4_northing;
-        %                 station_locations.easting=Site4_easting;
-        %
-        %             otherwise
-        %                 uiwait(errordlg('Can''t access Site location information'));
-        %         end
     end
 
 %%%%%%%%%%

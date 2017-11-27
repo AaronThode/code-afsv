@@ -111,7 +111,7 @@ try
         
         for I=1:length(data.locations)
             
-            if rem(I,500)==0
+            if rem(I,250)==0
                 waitbar(I/length(data.locations),h);
                 
             end
@@ -121,6 +121,8 @@ try
             
             %Does succesfull localization fit?
             pos=data.locations{I}.position.location;
+            fmin=min([data.locations{I}.feature.robust_fmin]);
+           
             poss(I,:)=pos;
             Igood(I)= pos(1)>=filter_params.easting(1) && pos(1)<=filter_params.easting(2);
             Igood(I)=Igood(I)&& (fmin>=filter_params.freq_range(1))&&(fmin<=filter_params.freq_range(2));
@@ -199,7 +201,7 @@ try
     success_flag=1;
 catch
     success_flag=0;
-    MException.last
+    uiwait(errordlg(MException.last.message))
     %lasterr.identifier
     %lasterr.stack
 end
