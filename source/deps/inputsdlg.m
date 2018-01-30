@@ -39,7 +39,7 @@ function [Answer,Canceled] = inputsdlg(Prompt, Title, Formats, DefAns, Options)
 %               {'edit'}                     for 'color' type
 %               {'pushbutton'}               for 'button' and 'color' types
 %               {'table'}                    for 'table' type
-%   format   - Data format: ['string','date','float','integer','logical',
+%   format   - Data format: ['text','date','float','integer','logical',
 %                            'vector','file','dir']
 %   limits   - [min max] (see below for details)
 %   required -  'on'   - control must have an answer
@@ -114,7 +114,7 @@ function [Answer,Canceled] = inputsdlg(Prompt, Title, Formats, DefAns, Options)
 %
 %   type    allowed format
 %   --------------------------------------------
-%   check     {logical}, integer
+%   check     {logical}, integer, text
 %   edit      {text}, date, float, integer, file, dir, vector
 %   list      {integer}, text
 %   range     {float}
@@ -130,8 +130,10 @@ function [Answer,Canceled] = inputsdlg(Prompt, Title, Formats, DefAns, Options)
 %   style         role of limits
 %   ---------------------------------------------------
 %   checkbox      If data format is integer, limits(1) is the ANSWER value
-%                 if the check box is not selected  box is not selected and
-%                 limits(2) is the ANSWER if the check box is selected.
+%                 if the check box is not selected box is not selected and
+%                 limits(2) is the ANSWER if the check box is selected. If
+%                 data format is text, its limits field must be given as a
+%                 cellstring array.
 %   edit:text
 %                 If diff(limits)>0, text aligns with the prompt label. If
 %                 diff(limits)<0, tet aligns with the control.
@@ -144,10 +146,17 @@ function [Answer,Canceled] = inputsdlg(Prompt, Title, Formats, DefAns, Options)
 %                 a valid date/time expression, the dialog box
 %                 automatically converts to the assigned format.
 %   edit::float, edit::integer
-%                 This style defines the range of allowed values
+%                 This style defines the range of allowed values if numeric
+%                 vector is given, including the values specified. For
+%                 other cases, use cell array to customize its
+%                 validateattribute call. For example, {'positive','<',1}
+%                 to specify value between 0 and 1, excluding 0 & 1.
 %   edit::vector
 %                 limits specifies the allowed number of elements in a
-%                 vector
+%                 vector. Use cell array to customize its validateattribute
+%                 call if vector length is fixed or completely arbitrary.
+%                 Note that 'column' attribute is always forced unless
+%                 'row' attribute is explicitly specified.
 %   edit::file
 %                 If 0<diff(limits)<=1 uses UIGETFILE in single select
 %                 mode with single-line edit. If diff(limits)>1 uses
@@ -277,9 +286,9 @@ function [Answer,Canceled] = inputsdlg(Prompt, Title, Formats, DefAns, Options)
 % answer = inputsdlg(prompt,name,formats,defaultanswer,options);
 %
 % See also INPUTDLG, DIALOG, ERRORDLG, HELPDLG, LISTDLG, MSGBOX,
-%  QUESTDLG, UIGETFILE, UIPUTFILE, UIGETDIR, DATESTR.
+%  QUESTDLG, UIGETFILE, UIPUTFILE, UIGETDIR, DATESTR, VALIDATEATTRIBUTE.
 
-% Version 2.0.5 (Mar 28, 2014)
+% Version 2.2.0 (June 25, 2015)
 % Written by: Takeshi Ikuma
 % Contributors: Andreas Greuer, Luke Reisner, Florian Hatz
 % Created: Nov. 16, 2009
@@ -376,6 +385,28 @@ function [Answer,Canceled] = inputsdlg(Prompt, Title, Formats, DefAns, Options)
 %  * Bug fix on ANSWER reporting non-empty default answer for
 %    list:radiobutton and list:togglebutton with required='off'.
 %  * Bug fix on multi-select file formats
+%  v.2.1.1 (Sept 17, 2014)
+%  * Improved backward compatibility
+%  * Bug fix in setting default value for list:integer:radiobutton control
+%  v.2.1.2 (Sept 19, 2014)
+%  * Improved check_formats routine (faster and better backward
+%    compatibility)
+%  v.2.2 (June 25, 2015)
+%  * Added logical:text control with its limits format field specifying the
+%    returning string values
+%  * Numeric editboxes uses validateattribute to check its value. Its
+%    formats.limits field may now be set to cell array to specify the
+%    attribute
+%  * Fixed errorneous behavior when pressed Enter key in Edit control
+%    containing invalid value
+%  v.2.3 (June 26, 2015)
+%  * Added the row vector option for edit:vector via specifying 'row' in
+%    the cell-array limits definition
+%  * Bug fix in edit:vector limits parser
+%  v.2.3.1 (June 29, 2015)
+%  * Bug fixes in default value processing
+%  v.2.3.2 (June 30, 2015)
+%  * Bug fix for list:text default value processing (case insensitive)
 
 % to-do list
 % * Add edit:font for the built-in uisetfont dialog
@@ -387,9 +418,13 @@ function [Answer,Canceled] = inputsdlg(Prompt, Title, Formats, DefAns, Options)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% # of argument Check %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-narginchk(0,5);
-nargoutchk(0,2);
-
+try
+   narginchk(0,5);
+   nargoutchk(0,2);
+catch
+   error(nargchk(0,5,nargin)); %#ok
+   error(nargchk(0,2,nargout)); %#ok
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Handle Input Args %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -441,6 +476,7 @@ IsRequired = arrayfun(@(fmt)strcmp(fmt.required,'on'),Formats);
 DefaultReqMet = checkReq(DefaultAnswer);
 ReqMet = false; % also modified by the Apply button
 
+ReturnPress = false;
 Applied = false; % set true by pressing Apply Button
 Canceled = ~ishghandle(handles.fig);
 
@@ -452,9 +488,22 @@ try
       % Wait till uiresume is called
       uiwait(handles.fig);
       
+      figflag = get(handles.fig,'UserData');
+   
+      % if Return key press released from uiwait, make sure associated
+      % callback did not cause an error
+      if ReturnPress
+         ReturnPress = false;
+         if strcmp(figflag,'Error')
+            ReqMet = false;
+            set(handles.fig,'UserData','');
+            continue;
+         end
+      end
+      
       % Check handle validity again since figure could be deleted externally
-      Canceled = strcmp(get(handles.fig,'UserData'),'Cancel');
-
+      Canceled = strcmp(figflag,'Cancel');
+      
       if Canceled % return the default answer
          Answer = DefaultAnswer; % revert back to the default answer
       else
@@ -561,20 +610,26 @@ end
          end
          
          switch fmt.style
+            case 'checkbox'
+               ansname = 'Value';
+               if strcmp(fmt.format,'text')
+                  val = strcmp(val,fmt.limits{2});
+               end
             case 'edit'
                ansname = 'String';
                switch fmt.format
                   case {'integer','float'}
                      % for numeric edit box, check for the range & set mouse down behavior
                      fcn = @(hObj,evd)checkNumericRange(hObj,evd,k,cbfcn);
-                     aux = {'UserData',val}; % save the numeric data
+                     %aux = {'UserData',val}; % save the numeric data
                      val = num2str(val);
                   case 'date'
                      fcn = @(hObj,evd)checkDate(hObj,evd,k,cbfcn);
                   case 'vector'
                      % for vector edit box, check for the range & set mouse down behavior
                      fcn = @(hObj,evd)checkVector(hObj,evd,k,cbfcn);
-                     val = num2str(val(:));
+                     
+                     val = num2str(val);
                   case 'file'
                      mode = diff(fmt.limits);
                      fcnname = 'ButtonDownFcn';
@@ -614,11 +669,10 @@ end
             case {'radiobutton', 'togglebutton'}
                fcnname = 'SelectionChangeFcn';
                ansname = 'SelectedObject';
+               hbtn = get(h,'UserData'); % hButtons
                if strcmp(fmt.format,'integer')
-                  hbtn = get(h,'UserData'); % hButtons
                   val = hbtn(val);
                else
-                  hbtn = get(h,'Children'); % hButtons
                   val = findobj(hbtn,'flat','String',val);
                end
                set(hbtn,ena{:});
@@ -631,7 +685,7 @@ end
                   fcn = @(hObj,evd)forceInteger(hObj,evd,k,cbfcn);
                end
                ansname = 'Value';
-            case {'checkbox' 'listbox' 'popupmenu'}
+            case {'listbox' 'popupmenu'}
                ansname = 'Value';
          end
          
@@ -700,7 +754,20 @@ end
          fmt = Formats(i);
          
          switch fmt.style
-            case {'checkbox' 'popupmenu' 'listbox' 'slider'}
+            case 'checkbox'
+               val = get(h,'Value');
+               
+               if ~isempty(val)
+                  switch fmt.format
+                     case 'text' % 'popupmenu' 'listbox'
+                        answer(i) = fmt.limits(val+1);
+                     case 'logical' % 'checkbox'
+                        answer{i} = val==get(h,'Max');
+                     otherwise %{'float' 'integer'}
+                        answer{i} = val;
+                  end
+               end
+            case {'popupmenu' 'listbox' 'slider'}
                val = get(h,'Value');
                
                if ~isempty(val)
@@ -783,26 +850,26 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
    function doFigureKeyPress(obj, evd)
-
       [tf,I] = ismember(evd.Key,{'return','space','escape'});
       if ~tf, return; end % nothing special to do
       
+      ReturnPress = false;
       if any(I==[1 2])
          
          % Ignore under a condition when GCO is an edit uicontrol
          % Known Potential Issue: GCO could be modified from outside
          hedit = findobj(gco,'flat','type','uicontrol','style','edit');
          
-         if ~isempty(hedit)
-            
+         ignore = ~isempty(hedit);
+         if ignore
             % check for the conditions
             if I==1 % return
                % resume only if not currently in a multi-line edit uicontrol
-               if get(hedit,'Max')-get(hedit,'Min')>1
-                  return;
-               end
-            else % space
-               % don't resume if current focus is on an edit control
+               ignore = get(hedit,'Max')-get(hedit,'Min')>1;
+               ReturnPress = true;
+            end
+            
+            if ignore
                return;
             end
          end
@@ -843,19 +910,18 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % UICONTROL ButtonDownFcn callback functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
    function checkNumericRange(hObj,evt,k,cbfcn)
       
       fmt = Formats(k);
+      errored = false;
       
       str = get(hObj,'String');
       if isempty(str)
          if fmt.required
             % show an error dialog
             h = errordlg('This parameter must be filled with a value.','Required Value','modal');
-            uiwait(h);
-            % revert back to the previous value
-            set(hObj,'String',num2str(Answer{k}));
-            return;
+            errored = true;
          else
             Answer{k} = [];
          end
@@ -867,29 +933,44 @@ end
          if isint
             val = round(val);  % Round to the nearest integer
          end
-         
+
+         % validate the value
          lim = fmt.limits;
-         if val>=lim(1) && val<=lim(2) % good result
+         if ~iscell(lim)
+            lim = {'' lim(1) '' lim(2)};
+            if lim{4}==inf
+               lim([3 4]) = [];
+            else
+               lim{3} = '<=';
+            end
+            if lim{2}==-inf
+               lim([1 2]) = [];
+            else
+               lim{1} = '>=';
+            end
+         end
+         
+         try
+            validateattributes(val,{'numeric'},[{'scalar'} lim]);
             % Re-format the control's text according to the value
             set(hObj, 'String', num2str(val));
             Answer{k} = val; % store the numeric answer to revert to later
-         else % out-of-range value
-            if isint
-               msg = sprintf('%d, %d',lim(1),lim(2));
-            else
-               msg = sprintf('%f, %f',lim(1),lim(2));
-            end
-            h = errordlg(sprintf('This parameter must be within the range [%s].',msg),'Invalid Value','modal');
-            uiwait(h);
-            
-            % revert back to the previous value
-            set(hObj,'String',num2str(Answer{k}));
-            return;
+         catch MExcept
+            h = errordlg(MExcept.message,'Invalid Value','modal');
+            errored = true;
          end
       end
       
-      % run custom callback function
-      if ~isempty(cbfcn)
+      
+      if errored
+         % set flag
+         set(handles.fig,'UserData','Error');
+         
+         % revert back to the previous value
+         set(hObj,'String',num2str(Answer{k}));
+         uiwait(h);
+      elseif ~isempty(cbfcn) % success
+         % run custom callback function
          cbfcn(hObj,evt,handles.ctrls,k);
       end
       
@@ -898,74 +979,103 @@ end
    function checkVector(hObj,evd,k,cbfcn)
       
       fmt = Formats(k);
+      errored = false;
       
       str = get(hObj,'String');
-      if isempty(str) 
+      if isempty(str)
          if fmt.required
             % show an error dialog
             h = errordlg('This parameter must be filled with a value.','Required Value','modal');
-            uiwait(h);
-            % revert back to the previous value
-            set(hObj,'String',num2str(Answer{k}));
-            return;
+            errored = true;
          else
             Answer{k} = [];
-            return;
+         end
+      else
+         % convert to float/integer
+         val = str2num(str); %#ok
+         
+         lim = fmt.limits;
+         
+         try
+            if iscell(lim)
+               if any(strcmpi(lim,'row'))
+                  type = {};
+               else
+                  type = {'column'};
+               end
+               
+               validateattributes(val,{'numeric'},[type lim]);
+            else
+               N = numel(val);
+               if N<lim(1) || N>lim(2) % incompatible dimension
+                  error('This vector parameter must have %d to %d elements.',lim(1),lim(2));
+               end
+            end
+            
+            % Re-format the control's text according to the value
+            Answer{k} = val; % force to be a column vector and store to revert to later
+            set(hObj, 'String', num2str(Answer{k}));
+         catch MExcept
+            h = errordlg(MExcept.message,'Invalid Value','modal');
+            errored = true;
          end
       end
-      
-      % convert to float/integer
-      val = str2num(str); %#ok
-      N = numel(val);
-      
-      lim = fmt.limits;
-      if N>=lim(1) && N<=lim(2) % good result
-         % Re-format the control's text according to the value
-         Answer{k} = val(:); % force to be a column vector and store to revert to later
-         set(hObj, 'String', num2str(Answer{k}));  
-      else % out-of-range value
-         h = errordlg(sprintf('This vector parameter must have %d to %d elements.',lim(1),lim(2)),'Invalid Number of Elements','modal');
-         uiwait(h);
+
+      if errored
+         % set flag
+         set(handles.fig,'UserData','Error');
          
          % revert back to the previous value
          set(hObj,'String',num2str(Answer{k}));
-      end
-      
-      % run custom callback function
-      if ~isempty(cbfcn)
+         uiwait(h);
+      elseif ~isempty(cbfcn) % success
+         % run custom callback function
          cbfcn(hObj,evd,handles.ctrls,k);
       end
+      
    end
 
    function checkDate(hObj,evd,k,cbfcn)
 
       format = Formats(k).limits;
+      errored = false;
       
       str = get(hObj,'string');
-      if isempty(str)  % Avoid calling datenum() which prints a warning for empty strings
-         Answer{k} = '';
-         set(hObj, 'String', Answer{k});
-         return;
-      end
-      try
-         num = datenum(str, format);  % Check if the input matches the custom date format first
-      catch
-         try
-            num = datenum(str);  % Check if the input matches any other supported date format
-         catch
-            h = errordlg(sprintf('Unsupported date format.'),'Invalid Value','modal');
-            uiwait(h);
-            set(hObj,'String',Answer{k});
-            return;
+      if isempty(str) % Avoid calling datenum() which prints a warning for empty strings
+         if fmt.required
+            % show an error dialog
+            h = errordlg('This parameter must be filled with a value.','Required Value','modal');
+            errored = true;
+         else
+            Answer{k} = '';
          end
+      else
+         try
+            num = datenum(str, format);  % Check if the input matches the custom date format first
+         catch
+            try
+               num = datenum(str);  % Check if the input matches any other supported date format
+            catch
+               h = errordlg(sprintf('Unsupported date format.'),'Invalid Value','modal');
+               errored = true;
+            end
+         end
+         Answer{k} = datestr(num,format);
+         set(hObj,'String',Answer{k});
       end
-      Answer{k} = datestr(num,format);
-      set(hObj,'String',Answer{k});
 
-      % run custom callback function
-      if ~isempty(cbfcn)
+      if errored
+         % set flag
+         set(handles.fig,'UserData','Error');
+         
+         % revert back to the previous value
+         set(hObj,'String',num2str(Answer{k}));
+         uiwait(h);
+      elseif ~isempty(cbfcn)
+         % run custom callback function
          cbfcn(hObj,evd,handles.ctrls,k);
       end
+      
    end
 
    function openFilePrompt(hObj,evd,k,cbfcn)
@@ -1231,371 +1341,305 @@ if any(I==0)
 end
 fvals = cell([prod(fdims) nfields]);
 fvals(:,I) = struct2cell(Formats(:)).';
+Nvals = numel(Formats);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Check type field (Column 1)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% if there are any field without type defined, set to default
-Iempty = cellfun(@isempty,fvals);
-fvals(Iempty(:,1)& ~all(Iempty(:,2:end),2),1) = fields(1,1);
-
-% if type field does not contain NumQuest many non-'none' types, 
-% specify the first empty fields to be the default type
-Iempty = cellfun(@isempty,fvals(:,1));
-Inone = cellfun(@(s)strcmp(s,'none'),fvals(:,1));
-N = sum(~(Iempty|Inone))-NumQuest;
-if N<0
-   err = {'inputsdlg:InvalidInput','Not enough FORMATS given to match the number of PROMPTS.'};
-   return
-elseif N>0
-   idx = find(Iempty,N);
-   fvals(idx) = fields(2,1);
-   Iempty(idx) = false;
-end
-
-% set the rest of empty entries to none (spacer)
-fvals(Iempty,1) = {'none'};
-
-% identify unknown types
-fvals(:,1) = lower(fvals(:,1));
-if verLessThan('matlab','7.14') % pre-R2012a
-   [tf,typeindex] = ismember(fvals(:,1),fields(end:-1:1,1)); % typeindex: first matching case in fields
-   typeindex(tf) = size(fields,1)-typeindex(tf)+1;
-else
-   [~,typeindex] = ismember(fvals(:,1),fields(:,1),'R2012a'); % typeindex: first matching case in fields
-end
-
-% check for invalid type field contents
-if any(typeindex==0)
-   err = {'inputsdlg:InvalidInput','FORMATS.type must be one of {''check'',''edit'',''list'',''range'',''color'',''button'',''table'',''none''}.'};
-   return
-end
-
-% check number of entries matching NumQuest (number of PROMPT elements)
-if sum(~strcmp('none',fvals(:,1)))~=NumQuest
+% Mark implicitly unused cells
+Iempty = cellfun(@isempty,fvals); % cell with empty format
+Iunk = all(Iempty,2); % if all type/format/style are all empty, cell format is completely unknown
+Inone = strcmp(fvals(:,1),'none'); % explictly specified empty cell
+Nmissing = NumQuest - (Nvals-sum(Iunk)-sum(Inone)); % number of unformated prompts
+if Nmissing<0
    err = {'inputsdlg:InvalidInput',sprintf('%s\n%s',...
       'FORMATS must have matching number of elements to PROMPT (exluding ''none'' type).',...
       'If .span field is used, also check for overlapping controls.')};
    return
 end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Fill empty format field (Column 2) to their type's defaults
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-idx = cellfun(@isempty,fvals(:,2));
-fvals(idx,2) = fields(typeindex(idx),2);
-
-Itable = strcmp('table',fvals(:,1));
-Iother = ~Itable;
-
-if ~all(iscellstr(fvals(Iother,2)))
-   err = {'inputsdlg:InvalidInput','FORMATS.format must be given as a cell string for a non-table Type.'};
-   return;
+if sum(Iunk)-Nmissing>0 % if extra unknown cells exist, set them to 'none'
+   Imorenone = find(Iunk,sum(Iunk)-Nmissing,'last');
+   fvals(Imorenone,1) = {'none'}; % set the rest of empty entries to none (spacer)
 end
-if ~(all(iscell(fvals(Itable,2))))
-   err = {'inputsdlg:InvalidInput','FORMATS.format must be given as a cell array, specifying ColumnFormat of uitable.'};
-   return;
-end
+Iempty(:,1:2) = true; % to always copy the type & format columns
 
-fvals(Iother,2) = lower(fvals(Iother,2)); % make format strings lower case
+noformat = cellfun(@isempty,fields(:,2));
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Set all empty fields to type's defaults
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% avaiable styles for each Format type
+styles.text = {'text'};
+styles.check = {'checkbox'};
+styles.edit = {'edit'};
+styles.list = {'listbox','popupmenu','radiobutton','togglebutton'};
+styles.range = {'slider'};
+styles.table = {'table'};
+styles.color = {'pushbutton'};
+styles.button = {'pushbutton'};
 
-%[~,locb] = ismember(fvals(Iother,[1 2]),fields(1:end-1,[1 2]),'rows');
-a = fvals(Iother,[1 2]);
-if ~isempty(a)
-   uB = fields(1:end-1,[1 2]); % guarantees to be unique, excludes 'table' entry
-   [sortA,IndSortA] = sortrows(a);
-   groupsSortA = [true;any(~strcmp(sortA(1:end-1,:),sortA(2:end,:)),2)]; % Finds the index of matching entriesuA = sortA(groupsSortA,:);
-   uA = sortA(groupsSortA,:);
-   icA = cumsum(groupsSortA);                             % Lists position, starting at 1.
-   icA(IndSortA) = icA;                                  % Re-reference indC to indexing of sortA.
-   [sortuAuB,IndSortuAuB] = sortrows([uA;uB]);
-   d = all(strcmp(sortuAuB(1:end-1,:),sortuAuB(2:end,:)),2);     % d indicates matching entries
-   ndx1 = IndSortuAuB(d);                          % NDX1 are locations of repeats in C
-   szuA = size(uA,1);
-   [lia,locb] = ismember(icA,ndx1,'R2012a');    % Find locb by using given indices
-   d = find(d);
-   newd = d(locb(lia));                    % NEWD is D for non-unique A
-   where = IndSortuAuB(newd+1)-szuA;   % Index values of uB through UNIQUE
-   locb(lia) = where;                      % Return first or last occurrence of A within B
-else
-   locb = [];
-end
-
-if ~all(lia)
-   err = {'inputsdlg:InvalidInput','Invalid FORMATS.format specified.'};
-   return;
-end
-
-typefmtindex = zeros(size(typeindex));
-typefmtindex(Iother) = locb;
-typefmtindex(Itable) = size(fields,1);
-
-idx = cellfun(@isempty,fvals);
-[I,J] = find(idx);
-T = typefmtindex(I);
-
-fvals(idx) = fields(sub2ind(size(fields),T,J));
-% Set all characters in fixed-format string field to lower case
-fvals(:,[3 7]) = lower(fvals(:,[3 7])); % style & enable
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% check for proper combination of format specs
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-[types,~,IB] = unique(fvals(:,1));
-for n = 1:numel(types)
+for n = 1:Nvals % for each format entry
+   [type,format,style] = deal(fvals{n,1:3});
    
-   idx = find(IB==n); % index of the matching grid elements
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   % Check type/format/style fields (Columns 1-2) 
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   % if there are any field without type defined, set to default
+   if isempty(type) % type not specified
+      Ifield = true(size(fields,1),1); % can be any field
+   else % type specified
+      Ifield = strcmpi(type,fields(:,1));
+      if strcmpi(type,'table')
+         format = []; % ignore format field
+         Iempty(n,2) = false; % do not copy format field
+      end
+   end
    
-   switch types{n}
-      case 'text'
-         % check style
-         if ~all(strcmp(fvals(idx,3),'text'))
-            err = {'inputsdlg:InvalidInput','FORMATS.style for ''text'' type must be ''text''.'};
+   if isempty(format) % format specified (ignore if style=table)
+      if isempty(type) && ~isempty(style) % only style specified
+         Ifield(:) = Ifield & strcmpi(fields(:,3),style);
+      end
+   else
+      Ifield(:) = Ifield & (noformat|strcmpi(fields(:,2),format));
+   end
+
+   % grab the first match
+   Ifield = find(Ifield,1,'first'); 
+   if isempty(Ifield)
+      [i,j] = ind2sub(fdims,n);
+      err = {'inputsdlg:InvalidInput',invalidformat_errormessage(i,j,type,format,fields(:,1:2))};
+      return;
+   end
+   
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   % Set all empty fields to type's defaults
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   fvals(n,Iempty(n,:)) = fields(Ifield,Iempty(n,:));
+   [type,format] = deal(fvals{n,1:2});
+   
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   % check style (Column 3)
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   if ~Iempty(n,3)
+      try
+         fvals{n,3} = validatestring(style,styles.(type));
+      catch
+         err = {'inputsdlg:InvalidInput','Invalid FORMATS.style for ''range'' type must be ''slider''.'};
+         return
+      end
+   end
+   
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   % check items (Column 4)
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   % slider style: items specifies its SliderStep property
+   if ~Iempty(n,4)
+      items = fvals{n,4};
+      if strcmp(type,'range') % type = range
+         if ~any(cellfun(@(c)isnumeric(c)&&numel(c)==2&&all(c>0&c<1),items))
+            err = {'inputsdlg:InvalidInput','FORMATS.items for ''range'' type must be 2 element vector with values between 0 and 1.'};
             return
          end
-      case 'check'
-         % check format
-         if ~any(ismember(fvals(idx,2),{'logical','integer'}))
-            err = {'inputsdlg:InvalidInput','FORMATS.format for ''check'' type must be ''logical'' or ''integer''.'};
-            return
-         end
-         % check style
-         if ~all(strcmp(fvals(idx,3),'checkbox'))
-            err = {'inputsdlg:InvalidInput','FORMATS.style for ''check'' type must be ''checkbox''.'};
-            return
-         end
-      case 'edit'
-         % check format
-         fmts = fvals(idx,2);
-         if ~any(ismember(fmts,{'text','date','float','integer','file','dir','vector'}))
-            err = {'inputsdlg:InvalidInput','FORMATS.format for ''edit'' type must be one of ''text'', ''data'', ''float'', ''integer'', ''file'', ''dir'', or ''vector''.'};
-            return
-         end
-         % check style
-         if ~any(strcmp(fvals(idx,3),'edit'))
-            err = {'inputsdlg:InvalidInput','FORMATS.style for ''edit'' type must be ''edit''.'};
-            return
-         end
-      case 'list'
-         % check format
-         if ~any(ismember(fvals(idx,2),{'integer','text'}))
-            err = {'inputsdlg:InvalidInput','FORMATS.format for ''list'' type must be ''integer'' or ''text''.'};
-            return
-         end
-         
-         % check style
-         if ~any(ismember(fvals(idx,3),{'listbox','popupmenu','radiobutton','togglebutton'}))
-            err = {'inputsdlg:InvalidInput','FORMATS.style for ''list'' type must be one of ''listbox'', ''popupmenu'', ''radiobutton'', or ''togglebutton''.'};
-            return
-         end
-         
+      elseif strcmp(type,'list')
          % check items - convert if string array or numeric array given
-         idx1 = idx(cellfun(@ischar,fvals(idx,4)));
-         fvals(idx1,4) = cellfun(@cellstr,fvals(idx1,4),'UniformOutput',false);
-         idx2 = idx(cellfun(@isnumeric,fvals(idx,4)));
-         fvals(idx2,4) = cellfun(@num2cell,fvals(idx2,4),'UniformOutput',false);
-         
-         if ~any(cellfun(@iscellstr,fvals(idx,4)))
+         if ischar(items)
+            fvals{n,4} = cellstr(items);
+         elseif isnumeric(items)
+            fvals{n,4} = num2cell(items);
+         elseif ~iscellstr(items)
             err = {'inputsdlg:InvalidInput','FORMATS.items for ''list'' type must be either a cell of strings or of numbers.'};
             return
          end
-      case 'range'
-         % check format
-         if ~any(ismember(fvals(idx,2),{'float','integer'}))
-            err = {'inputsdlg:InvalidInput','FORMATS.format for ''range'' type must be ''float'' or ''integer''.'};
-            return
-         end
-         % check style
-         if ~any(strcmp(fvals(idx,3),'slider'))
-            err = {'inputsdlg:InvalidInput','FORMATS.style for ''range'' type must be ''slider''.'};
-            return
-         end
-      case 'table'
-         if ~any(strcmp(fvals(idx,3),'table'))
-            err = {'inputsdlg:InvalidInput','FORMATS.style for ''table'' type must be ''table''.'};
-            return
-         end
-      case 'color'
-         if ~any(ismember(fvals(idx,2),{'float','integer'}))
-            err = {'inputsdlg:InvalidInput','FORMATS.format for ''range'' type must be ''float'' or ''integer''.'};
-            return
-         end
-         if ~any(strcmp(fvals(idx,3),'pushbutton'))
-            err = {'inputsdlg:InvalidInput','FORMATS.style for ''color'' type must be ''pushbutton''.'};
-            return
-         end
-      case 'button'
-         if ~any(strcmp(fvals(idx,3),'pushbutton'))
-            err = {'inputsdlg:InvalidInput','FORMATS.style for ''range'' type must be ''slider''.'};
-            return
-         end
+      end
    end
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% check items (Column 4)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% slider style: items specifies its SliderStep property
-idx = strcmp(fvals(:,3),'slider') & ~cellfun(@isempty,fvals(:,4));
-if any(idx)
-   items = fvals(idx,4);
-   if ~any(cellfun(@(c)isnumeric(c)&&numel(c)==2&&all(c>0&c<1),items))
-      err = {'inputsdlg:InvalidInput','FORMATS.items for ''range'' type must be 2 element vector with values between 0 and 1.'};
-      return
-   end
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% check limits (Column 5)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% edit::date - limits specifies the date display format
-idx = strcmp(fvals(:,1),'edit') & strcmp(fvals(:,2),'date');
-if any(idx)
-   lims = fvals(idx,5);
-   idx1 = cellfun(@(l)ischar(l) && size(l,1)==1,lims);
-   try
-      cellfun(@(l)datestr(1,l),lims(idx1),'UniformOutput',false);
-   catch
-      err = {'inputsdlg:InvalidInput', 'Invalid free-form format string in FORMATS.limits for ''date'' control.'};
-      return;
-   end
-   if any(cellfun(@(l)isnumeric(l)&&isscalar(l)&&any(l==[0 1 2 6 13 14 15 16 23]),lims(idx1)))
-      err = {'inputsdlg:InvalidInput','FORMATS.limits for ''edit::date'' format must be one of 0,1,2,6,13,14,15,16,23.'};
-      return;
-   end
-end
-
-% table - limits specifies the Column widths
-I = idx;
-idx = strcmp(fvals(:,1),'table');
-if any(idx)
-   lim = fvals(idx,5);
    
-   if ~any(cellfun(@iscell,lim))
-      err = {'inputsdlg:InvalidInput','FORMATS.limits for ''table'' type must be given as a cell vector.'};
-      return;
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   % check limits (Column 5)
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   
+   % edit::date - limits specifies the date display format
+   if ~Iempty(n,5)
+      lims = fvals{n,5};
+      if strcmp(type,'check') && strcmp(format,'text')
+         if ~(iscellstr(lims) && numel(lims)==2)
+            err = {'inputsdlg:InvalidInput','FORMATS.limits must be given as a two-element cellstring vector for ''check:text'' control.'};
+         end
+      elseif strcmp(type,'edit') && strcmp(format,'date')
+         if ischar(lims) % date format string given
+            try
+               datestr(1,lims);
+            catch
+               err = {'inputsdlg:InvalidInput', 'Invalid free-form format string in FORMATS.limits for ''date'' control.'};
+               return;
+            end
+         elseif ~(isnumeric(lims) && isscalar(lims) && any(lims==[0 1 2 6 13 14 15 16 23]))
+            err = {'inputsdlg:InvalidInput','FORMATS.limits for ''edit::date'' format must be one of 0,1,2,6,13,14,15,16,23.'};
+            return;
+         end
+      elseif strcmp(type,'table') % table - limits specifies the Column widths
+         if ~iscell(lims)
+            err = {'inputsdlg:InvalidInput','FORMATS.limits for ''table'' type must be given as a cell vector.'};
+            return;
+         end
+      elseif ~((isnumeric(lims) && numel(lims)==2)...
+            || (iscell(lims) && strcmp(type,'edit') && any(strcmp(format,{'float','integer','vector'}))))
+         err = {'inputsdlg:InvalidInput','FORMATS.limits must be given as a two-element vector.'};
+         return;
+      end
    end
-end
-
-% all other contols - limits must be 2-element vector
-I(:) = ~(I | idx);
-if ~all(cellfun(@(l)isnumeric(l)&&numel(l)==2,fvals(I,5)))
-   err = {'inputsdlg:InvalidInput','FORMATS.limits must be given as a two-element vector.'};
-   return;
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% check size (Column 6)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if ~all(cellfun(@(sz)isnumeric(sz) && any(numel(sz)==[1 2]) && ~any(isnan(sz)),fvals(:,6)))
-   err = {'inputsdlg:InvalidInput','FORMATS.size must be 1 or 2 element non-NaN vector.'};
-   return
-end
-idx = cellfun(@numel,fvals(:,6))==1;
-fvals(idx,6) = cellfun(@(sz)[sz 0],fvals(idx,6),'UniformOutput',false);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% check enable (Column 7)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if ~all(ismember(fvals(:,7),{'on','inactive','off'}))
-   err = {'inputsdlg:InvalidInput','FORMATS.enable must be one of {''on'',''inactive'',''off''}.'};
-   return;
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% check required (Column 8)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if ~all(ismember(fvals(:,8),{'on','off'}))
-   err = {'inputsdlg:InvalidInput','FORMATS.required must be ''on'' or ''off''.'};
-   return;
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% check callback (Column 9)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-idx0 = cellfun(@(cb)~isempty(cb)&&isstruct(cb),fvals(:,9));
-idx1 = cellfun(@(cb)isa(cb,'function_handle'),fvals(:,9));
-if ~all(idx0|idx1|cellfun(@isempty,fvals(:,9)))
-   err = {'inputsdlg:InvalidInput','FORMATS.callback must be given as a function handle or a struct containing function handles.'};
-   return;
-end
-if any(idx0) % given as struct, make sure all its elements are function handles
-   I = find(idx0);
-   for n = 1:numel(I)
-      cbvals = fvals{idx0(I(n)),9};
-      if ~(isempty(cbvals) || all(structfun(@(cb)isa(cb,'function_handle'),cbvals)))
+   
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   % check size (Column 6)
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   if ~Iempty(n,6)
+      sz = fvals{n,6};
+      if ~(isnumeric(sz) && any(numel(sz)==[1 2]) && ~any(isnan(sz)))
+         err = {'inputsdlg:InvalidInput','FORMATS.size must be 1 or 2 element non-NaN vector.'};
+         return
+      end
+      
+      % if only scalar value given, set 0 as the second element
+      if isscalar(sz)
+         fvals{n,6}(2) = 0;
+      end   
+   end
+   
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   % check enable (Column 7)
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   if ~Iempty(n,7)
+      try
+         fvals{n,7} = validatestring(fvals{n,7},{'on','inactive','off'});
+      catch
+         err = {'inputsdlg:InvalidInput','FORMATS.enable must be one of {''on'',''inactive'',''off''}.'};
+         return;
+      end
+   end
+   
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   % check required (Column 8)
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   if ~Iempty(n,8) 
+      try
+         fvals{n,8} = validatestring(fvals{n,8},{'on','off'});
+      catch
+         err = {'inputsdlg:InvalidInput','FORMATS.required must be ''on'' or ''off''.'};
+         return;
+      end
+   end
+   
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   % check callback (Column 9)
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   if ~Iempty(n,9)
+      cb = fvals{n,9};
+      
+      if isstruct(cb) % given as struct, make sure all its elements are function handles
+         if all(structfun(@(cb)isa(cb,'function_handle'),cb))
+            err = {'inputsdlg:InvalidInput','FORMATS.callback must be given as a function handle or a struct containing function handles.'};
+            return;
+         end
+      elseif isa(cb,'function_handle') % convert to the struct form
+         if strcmp(type,'table')
+            fvals{n,9} = struct('CellEditCallback',cb);
+         elseif strcmp(type,'list') && any(strcmp(style,{'radiobutton','togglebutton'})) % uibuttongroup
+            fvals{n,9} = struct('SelectionChangeFcn',cb);
+         elseif strcmp(style,'edit') && (strcmp(type,'color') || any(strcmp(format,{'file','dir','font'}))) % inactive edit uicontrol
+            fvals{n,9} = struct('ButtonDownFcn',cb);
+         else
+            fvals{n,9} = struct('Callback',cb);
+         end
+      else
          err = {'inputsdlg:InvalidInput','FORMATS.callback must be given as a function handle or a struct containing function handles.'};
          return;
       end
    end
-end
-if any(idx1) % convert to the struct form
-   idx1 = find(idx1);
-   types = fvals(idx1,1);
-   formats = fvals(idx1,2);
-   styles = fvals(idx1,3);
-   cbs = fvals(idx1,9);
    
-   Jtb = cellfun(@(t)strcmp('table',t),types); % uitable
-   if any(Jtb)
-      fvals(idx1(Jtb),9) = cellfun(@(cb)struct('CellEditCallback',cb),cbs(Jtb),'UniformOutput',false);
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   % check prompt label location (Column 10)
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   if ~Iempty(n,10)
+      try
+         fvals{n,10} = validatestring(fvals{n,10},{'lefttop','leftmiddle','leftbottom','topleft','topcenter','topright'});
+      catch
+         err = {'inputsdlg:InvalidInput','FORMATS.labelloc must be ''lefttop'', ''leftmiddle'', ''leftbottom'', ''topleft'', ''topcenter'', or ''topright''.'};
+         return;
+      end
    end
    
-   Jbg = cellfun(@(t,s)strcmp('list',t) & ~ismember(s,{'listbox','popupmenu'}),types,styles); % uibuttongroup
-   if any(Jbg)
-      fvals(idx1(Jbg),9) = cellfun(@(cb)struct('SelectionChangeFcn',cb),cbs(Jbg),'UniformOutput',false);
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   % check units label location (Column 11)
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   if ~Iempty(n,11)
+      try
+         fvals{n,11} = validatestring(fvals{n,11},{'righttop','rightmiddle','rightbottom','bottomleft','bottomcenter','bottomright'});
+      catch
+         err = {'inputsdlg:InvalidInput','FORMATS.unitsloc must be ''righttop'', ''rightmiddle'', ''rightbottom'', ''bottomleft'', ''bottomcenter'', or ''bottomright''.'};
+         return;
+      end
    end
    
-   Jbd = cellfun(@(s,t,f)strcmp('edit',s) && (strcmp('color',t) || ismember(f,{'file','dir','font'})),...
-      styles,types,formats); % inactive edit uicontrol
-   if any(Jbd)
-      fvals(idx1(Jbd),9) = cellfun(@(cb)struct('ButtonDownFcn',cb),cbs(Jbd),'UniformOutput',false);
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   % check label margins (Column 12)
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   if ~Iempty(n,12)
+      v = fvals{n,12};
+      if ~(isnumeric(v) && any(numel(v)==[1 2]) && ~any(isinf(v)|v<0))
+         err = {'inputsdlg:InvalidInput','FORMATS.margin must be 1 or 2 element positive vector.'};
+         return
+      end
+      if isscalar(v) % if scalar value given, use the same value for both margins
+         fvals{n,12}(2) = fvals{n,12};
+      end
    end
-
-   J = ~(Jtb|Jbg|Jbd); % uicontrol
-   if any(J)
-      fvals(idx1(J),9) = cellfun(@(cb)struct('Callback',cb),cbs(J),'UniformOutput',false);
-   end
-   
 end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% check prompt label location (Column 10)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if ~all(ismember(fvals(:,10),{'lefttop','leftmiddle','leftbottom','topleft','topcenter','topright'}))
-   err = {'inputsdlg:InvalidInput','FORMATS.labelloc must be ''lefttop'', ''leftmiddle'', ''leftbottom'', ''topleft'', ''topcenter'', or ''topright''.'};
-   return;
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% check units label location (Column 11)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if ~all(ismember(fvals(:,11),{'righttop','rightmiddle','rightbottom','bottomleft','bottomcenter','bottomright'}))
-   err = {'inputsdlg:InvalidInput','FORMATS.unitsloc must be ''righttop'', ''rightmiddle'', ''rightbottom'', ''bottomleft'', ''bottomcenter'', or ''bottomright''.'};
-   return;
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% check label margins (Column 12)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if ~all(cellfun(@(v)isnumeric(v) && any(numel(v)==[1 2]) && ~any(isinf(v)|v<0),fvals(:,12)))
-   err = {'inputsdlg:InvalidInput','FORMATS.margin must be 1 or 2 element positive vector.'};
-   return
-end
-
-idx = cellfun(@isscalar,fvals(:,12));
-fvals(idx,12) = cellfun(@(v)repmat(v,[1 2]),fvals(idx,12),'UniformOutput',false);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % gather back as Formats struct
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Formats = reshape(cell2struct(fvals,fnames,2),fdims);
 
+end
+
+function err = invalidformat_errormessage(i,j,type,format,fields)
+% return error message for specifying invalid cell format
+
+str = sprintf('Specified Format(%d,%d).',i,j);
+
+if isempty(type) % type not specified
+   Ifield = true(size(fields,1),1); % can be any field
+else % type specified
+   Ifield = strcmpi(type,fields(:,1));
+   if ~any(Ifield) % invalid type
+      types = unique(fields(:,1));
+      err = sprintf('%stype field value (''%s'') is unsupported.\n',str,type);
+      err = sprintf('%s\nSupported types are: %s',err,types{1});
+      for n = 2:numel(types)-1
+         err = sprintf('%s, %s',err,types{n});
+      end
+      if numel(types)>1
+         err = sprintf('%s, and %s.',err,types{end});
+      else
+         err = sprintf('%s.',err);
+      end
+      return;
+   end
+end
+
+I = strcmpi(fields(:,2),format);
+if ~any(Ifield&I)
+   formats = fields(Ifield,2);
+   str = sprintf('%sformat field value (''%s'') is unsupported',str,format);
+   if isempty(type)
+      err = sprintf('%s.',str);
+   else
+      err = sprintf('%s for %s cell type.',str,type);
+   end
+   err = sprintf('%s\nSupported formats are: %s',err,formats{1});
+   for n = 2:numel(formats)-1
+      err = sprintf('%s, %s',err,formats{n});
+   end
+   if numel(formats)>1
+      err = sprintf('%s, and %s.',err,formats{end});
+   else
+      err = sprintf('%s.',err);
+   end
+   return;
+end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1661,7 +1705,7 @@ for k = 1:len
    
    % if any of the tiled element is given empty & its answer is required
    Iempty = cellfun(@isempty,DefAns(k,:));
-   if any(Iempty && strcmp(Formats(k).required,'on')) 
+   if any(Iempty) && strcmp(Formats(k).required,'on') 
 
       switch fmt.type
          case 'check' % off
@@ -1725,12 +1769,14 @@ for k = 1:len
             if strcmp(fmt.type,'list')
                isUiControl = ismember(fmt.style,{'listbox', 'popupmenu'});
                if any(Jischar)
-                  [tf,idx] = ismember(vals,fmt.items);
-                  if ~all(tf)
-                     err = {'inputsdlg:InvalidInput','Default list item is not valid.'};
-                     return;
+                  try
+                     vals(:) = cellfun(@(v)validatestring(v,fmt.items),vals,'UniformOutput',false);
+                  catch ME
+                     err = {'inputsdlg:InvalidInput',ME.message};
+                     return
                   end
                   if isUiControl
+                     [~,idx] = ismember(vals,fmt.items);
                      % convert to integer format
                      vals(Jischar) = num2cell(idx);
                   end
@@ -1767,30 +1813,26 @@ for k = 1:len
                return;
             end
          case 'float'
-            
-            if ~all(cellfun(@(v)isfloat(v)&&all(v>=fmt.limits(1)&v<=fmt.limits(2)),vals))
-               err = {'inputsdlg:InvalidInput','Default float data must be a numeric within specified limits.'};
-               return;
+            if strcmp(fmt.type,'color') % must be a valid RGB tuple
+               attr = {'numel',3,'nonnegative','<=',1};
+               varname = 'Default color data';
+            else % for all other types, value must be scalar
+               if iscell(fmt.limits)
+                  attr = [{'scalar'} fmt.limits];
+               else
+                  attr = {'scalar', '>=',fmt.limits(1),'<=',fmt.limits(2)};
+               end
+               varname = 'Default float data';
             end
             
-            if strcmp(fmt.type,'color') % must be a valid RGB tuple
-               if ~all(cellfun(@(v)numel(v)==3 && max(v)<=1 && min(v)>=0,vals))
-                  err = {'inputsdlg:InvalidInput','Default coloar data must have 3 elements.'};
-                  return;
-               end
-            else % for all other types, value must be scalar
-               if ~all(cellfun(@isscalar,vals))
-                  err = {'inputsdlg:InvalidInput','Default float data must be scalar.'};
-                  return;
-               end
+            try
+               cellfun(@(v)validateattributes(v,{'numeric'},attr,mfilename,varname),vals);
+            catch ME
+               err = {'inputsdlg:InvalidInput',ME.message};
+               return;
             end
             
          case 'integer' % can be multi-select if type=list
-            if ~all(cellfun(@(v)isnumeric(v)&&all(round(v)==v),vals))
-               err = {'inputsdlg:InvalidInput','Default integer data must integer.'};
-               return;
-            end
-
             switch fmt.type
                case 'list'
                   isUiBtnGrp = ismember(fmt.style,{'togglebutton', 'radiobutton'});
@@ -1798,23 +1840,35 @@ for k = 1:len
                   
                   % must be a valid index to items and
                   % if multiple-selection is not enabled, must be scalar
-                  if any(cellfun(@(v)any(v<1|v>numel(fmt.items)),vals)) ...
-                        || ~(msel || all(cellfun(@isscalar,vals)))
-                     err = {'inputsdlg:InvalidInput','Default list index data is invalid.'};
+                  attr = {'integer','positive','<=',numel(fmt.items)};
+                  if ~msel
+                     attr{end+1} = 'scalar'; %#ok
+                  end
+                  
+                  try
+                     cellfun(@(v)validateattributes(v,{'numeric'},attr,mfilename,...
+                        'Default list index data'),vals);
+                  catch ME
+                     err = {'inputsdlg:InvalidInput',ME.message};
                      return;
                   end
                   
                   if msel % if multiple-selection enabled, make sure values are unique
                      DefAns(k,Ifilled) = cellfun(@unique,vals,'UniformOutput',false);
                   elseif isUiBtnGrp
-                     DefAns(k,Ifilled) = fmt.items(vals);
+                     DefAns(k,Ifilled) = vals;%fmt.items(vals);
                   end
                   
                case 'color' % must be a RGB tuple
-                  if ~all(cellfun(@(v)numel(v)==3 && max(v)<=255 && min(v)>=0,vals))
-                     err = {'inputsdlg:InvalidInput','Default coloar data must have 3 elements.'};
+                  try
+                     cellfun(@(v)validateattributes(v,{'numeric'},...
+                        {'numel',3,'integer','nonnegative','<=',255},mfilename,...
+                        'Default color data'),vals);
+                  catch ME
+                     err = {'inputsdlg:InvalidInput',ME.message};
                      return;
                   end
+                  
                   % convert to float representation
                   DefAns(k,Ifilled) = cellfun(@(v)double(v)/255,vals,'UniformOutput',false);
                case 'check' % must be a scalar and one of limits
@@ -1824,13 +1878,15 @@ for k = 1:len
                   end
                otherwise %must be a scalar
                   % limits specifies the value range
-                  if ~all(cellfun(@(v)v>=fmt.limits(1)&v<=fmt.limits(2),vals))
-                     err = {'inputsdlg:InvalidInput','Out-of-range default integer data.'};
-                     return;
+                  if iscell(fmt.limits)
+                     attr = [{'scalar','integer'} fmt.limits];
+                  else
+                     attr = {'scalar','integer','>=' fmt.limits(1),'<=',fmt.limits(2)};
                   end
-                  
-                  if ~all(cellfun(@isscalar,vals))
-                     err = {'inputsdlg:InvalidInput','Default integer data must be scalar.'};
+                  try
+                     cellfun(@(v)validateattributes(v,{'numeric'},attr,mfilename,'Defaultinteger data'),vals);
+                  catch ME
+                     err = {'inputsdlg:InvalidInput',ME.message};
                      return;
                   end
             end
@@ -1898,9 +1954,31 @@ for k = 1:len
                return;
             end
          case 'vector'
-            if ~all(cellfun(@(v)isnumeric(v)&&numel(v)>=fmt.limits(1)&&numel(v)<=fmt.limits(2),vals))
-               err = {'inputsdlg:InvalidInput','Default vector data must be numeric and the number of elements must be within the limit.'};
-               return;
+            iscol = true;
+            if iscell(fmt.limits)
+               if any(strcmpi(fmt.limits,'row'))
+                  iscol = false;
+                  attr = fmt.limits;
+               else
+                  attr = [{'column'},fmt.limits];
+                  vals{1} = vals{1}(:);
+               end
+               try
+                  cellfun(@(v)validateattributes(v,{'numeric'},attr,mfilename,'Default vector data'),vals);
+               catch ME
+                  err = {'inputsdlg:InvalidInput',ME.message};
+                  return;
+               end
+            else
+               nel = numel(vals{1});
+               if any(cellfun(@(v)~isnumeric(v) || nel<fmt.limits(1) || nel>fmt.limits(2),vals))
+                  err = {'inputsdlg:InvalidInput','Default vector data must be numeric and the number of elements must be within the limit.'};
+                  return;
+               end
+            end
+            if iscol
+               idx = cellfun(@(v)~iscolumn(v),vals);
+               DefAns(k,Ifilled) = cellfun(@(v)v(:),vals(idx),'UniformOutput',false);
             end
       end
    end
@@ -1947,6 +2025,7 @@ FormatFields = [
    {'edit'   'dir'     'edit'       {}      [0 1]      [0 0]  'on'     'off'      struct([]) 'leftmiddle'  'righttop' [3 3]} % default if Formats or Formats.type not given
    {'check'  'logical' 'checkbox'   {}      [0 1]      [0 0]  'on'     'on'       struct([]) 'leftmiddle'  'righttop' [3 3]}
    {'check'  'integer' 'checkbox'   {}      [0 1]      [0 0]  'on'     'on'       struct([]) 'leftmiddle'  'righttop' [3 3]}
+   {'check'  'text'    'checkbox'   {}      {'off','on'} [0 0] 'on'    'on'       struct([]) 'leftmiddle'  'righttop' [3 3]}
    {'list'   'integer' 'popupmenu'  {}      [0 1]      [0 0]  'on'     'on'      struct([]) 'leftmiddle'  'righttop' [3 3]}
    {'list'   'text'    'popupmenu'  {}      [0 1]      [0 0]  'on'     'on'      struct([]) 'leftmiddle'  'righttop' [3 3]}
    {'range'  'float'   'slider'     {}      [0 1]      [0 0]  'on'     'on'       struct([]) 'leftmiddle'  'righttop' [3 3]}
@@ -2005,8 +2084,7 @@ for fname_cstr = fieldnames(UserOptions)' % for each user option field
    
    % if field not filled, use default value
    if isempty(UserOptions.(fname)), continue; end
-   
-   
+      
    switch lower(fname)
       case 'resize'
          if numel(val)~=1 || ~any(strcmpi(val,{'on','off'}))
@@ -2274,8 +2352,8 @@ istext = reshape(arrayfun(@(s)strcmp(s.type,'text'),Formats),num,1);
 autosize = zeros(num,2); % 0-fixed, 1-autosize, 2-resize with window
 rowspan = zeros(num,1); % # of rows control occupies
 colspan = zeros(num,1); % # of columns control occupies
-hPanels = gobjects(num,2); % [uipanel|axes]
-hCtrls = gobjects(num,3); % [Prompt|Edit|Unit]
+hPanels = zeros(num,2); % [uipanel|axes]
+hCtrls = zeros(num,3); % [Prompt|Edit|Unit]
 for m = 1:num % for each control
    
    % get current control's Format spec
@@ -2328,7 +2406,7 @@ for m = 1:num % for each control
       dim_btns = size(fmt.items);
       kvalid = find(~cellfun(@isempty,fmt.items));
       Nvalid = numel(kvalid);
-      hButtons = gobjects(Nvalid,1);
+      hButtons = zeros(Nvalid,1);
       btn_w = zeros(dim_btns);
       btn_h = zeros(dim_btns);
       for n = 1:numel(kvalid)
@@ -2386,7 +2464,8 @@ for m = 1:num % for each control
       hCtrls(m,1) = hc;
       
       % set min and max if not a numeric edit box
-      if ~any(strcmp(fmt.style,'edit')) || ~any(strcmp(fmt.format,{'float','integer','date','dir'}))
+      if ~(any(strcmp(fmt.style,'edit')) && any(strcmp(fmt.format,{'float','integer','date','dir','vector'}))) ...
+            && ~(strcmp(fmt.type,'check')&&strcmp(fmt.format,'text'))
          lim = fmt.limits;
          if any(isinf(lim)), lim = [0 2]; end % edit:vector
          set(hc,'Min',lim(1),'Max',lim(2));
@@ -2417,10 +2496,39 @@ for m = 1:num % for each control
          case 'edit' % edit type
             
             % check if multi-line control
-            dlim = round(diff(fmt.limits));
-            multiline = strcmp(fmt.format,'vector') || (any(strcmp(fmt.format,{'text','file'})) && dlim>1);
+            if iscell(fmt.limits)
+               dlim = 0;
+            else
+               dlim = round(diff(fmt.limits));
+            end
             
-            % change alignment for numeric formats
+            % set multi-line edit box
+            multiline = (any(strcmp(fmt.format,{'text','file'})) && dlim>1);
+            if multiline
+               nrows = dlim-1;
+            else
+               multiline = strcmp(fmt.format,'vector');
+               if multiline
+                  if iscell(fmt.limits)
+                     multiline = ~any(strcmpi(fmt.limits,'row')); % if row-vector, a single-line editbox suffices
+                     if multiline
+                        nrows = find(strcmpi(fmt.limits,'numel'),1);
+                        if isempty(nrows)
+                           nrows = 5;
+                        else
+                           nrows = min(5,fmt.limits{nrows+1});
+                        end
+                     end
+                  else
+                     nrows = max(fmt.limits(1),min(fmt.limits(2),5));
+                  end
+               end
+            end
+            if multiline
+               set(hc,'Min',0,'Max',2);
+            end
+            
+            % change alignment for numeric formats (default: center)
             if any(strcmp(fmt.format,{'float','integer'}))
                set(hc,'HorizontalAlignment','center');
             elseif strcmp(fmt.format,'vector')
@@ -2431,11 +2539,6 @@ for m = 1:num % for each control
             if autosize(m,2)>0 % auto-height adjustment
                % set
                if multiline % set to have dlim lines
-                  if strcmp(fmt.format,'vector')
-                     nrows = max(fmt.limits(1),min(fmt.limits(2),5));
-                  else
-                     nrows = dlim-1;
-                  end
                   set(hc,'String',repmat(sprintf(' \n'),1,nrows-1));
                else % single-line
                   set(hc,'String',' ');
@@ -2535,7 +2638,7 @@ for m = 1:num % for each control
             
             % set slider step if items field is filled
             if ~isempty(fmt.items)
-               set(hc,'SliderStep',sort(fmt.items));
+               set(hc,'SliderStep',fmt.items);
             end
             
          case 'pushbutton' % button & color types
@@ -3066,7 +3169,7 @@ end
 end
 
 
-% Copyright (c) 2009-2014, Takeshi Ikuma
+% Copyright (c) 2009-2015, Takeshi Ikuma
 % Copyright (c) 2010, Luke Reisner
 % All rights reserved.
 %

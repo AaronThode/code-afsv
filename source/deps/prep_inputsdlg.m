@@ -1,3 +1,6 @@
+
+function [Prompt,Formats,DefAns,Options]=prep_inputsdlg(names, Description, defaults)  %Annotation edit window setup
+
 Options.Resize='on';
 Options.WindowStyle='normal';
 Options.Interpreter='tex';
@@ -8,9 +11,10 @@ DefAns = struct([]);
 II=1;
 Iother=0;
 
-names
+
 while II<=length(names)
-    
+  %while II<=12
+  
     
     Prompt(II,:) = {Description{II}, names{II},[]};
     DefAns(1).(names{II}) = defaults{II};
@@ -31,22 +35,25 @@ while II<=length(names)
 %             %DefAns.(names{II}) = defaults{II};
 %             
         case 'sig_type'
-            Formats(2,1).type = 'list';
-            Formats(2,1).format = 'text';
-            Formats(2,1).style = 'radiobutton';
-            Formats(2,1).items = {'FM' 'Pulsive'};
+            Formats(1,2).type = 'list';
+            Formats(1,2).format = 'text';
+            Formats(1,2).style = 'radiobutton';
+            Formats(1,2).items = {'FM' 'Pulsive'};
             % Formats(7,1).span = [2 1];  % item is 2 field x 1 fields
+            DefAns.(names{II}) = 'FM';
             
+
         case 'call_type'
             
-            Formats(5,1).type = 'edit';
-            Formats(5,1).format = 'text';
-            Formats(5,1).span = [1 1];
+            Formats(2,2).type = 'edit';
+            Formats(2,2).format = 'text';
+            Formats(2,2).span = [1 1];
            
 %             Formats(2,2).type = 'list';
 %             Formats(2,2).format = 'text';
 %             Formats(2,2).style = 'radiobutton';
-             Formats(2,2).items = {'upsweep' 'downsweep' 'U-shaped' 'N-shaped','other'};
+             %Formats(2,2).items = {'upsweep' 'downsweep' 'U-shaped' 'N-shaped','other'};
+             
 %             % Formats(7,1).span = [2 1];  % item is 2 field x 1 fields
 %             %DefAns.(names{II}) = 'downsweep';
              if ~any(strcmp(DefAns.(names{II}),Formats(2,2).items))
@@ -77,44 +84,43 @@ while II<=length(names)
             Formats(4,2).format = 'text';
             Formats(4,2).span = [1 1];
             %Formats(2,1).size = 200; % automatically assign the height
-            
-        case 'num_pulses'
+        case 'SNR_rms_dB'
             Formats(5,1).type = 'edit';
             Formats(5,1).format = 'text';
-            Formats(5,1).span = [1 1];
-            %Formats(2,1).size = 200; % automatically assign the height
             
-        case 'num_harmonics'
-            Formats(5,2).type = 'edit';
-            Formats(5,2).format = 'text';
-            Formats(5,1).span=[1 1];
-            %Formats(5,2).style = 'radiobutton';
-            %Formats(5,2).items = {'0' '1' '2' '3','4','5','6'};
-            %DefAns.(names{II}) = '0';
-            
-        case 'multipath'
+            DefAns.(names{II}) =defaults{II};
+        case 'num_pulses'
             Formats(6,1).type = 'list';
             Formats(6,1).format = 'text';
+            %Formats(5,1).span=[1 1];
             Formats(6,1).style = 'radiobutton';
             Formats(6,1).items = {'0' '1' '2' '3'};
             DefAns.(names{II}) = '0';
             
-        case 'confidence'
-            Formats(6,2).type = 'edit';
+        case 'num_harmonics'
+            Formats(6,2).type = 'list';
             Formats(6,2).format = 'text';
+            %Formats(5,1).span=[1 1];
             Formats(6,2).style = 'radiobutton';
-            Formats(6,2).items = {'0' '1' '2' '3','4','5'};
-            DefAns.(names{II}) = '5';
+            Formats(6,2).items = {'0' '1' '2' '3'};
+            DefAns.(names{II}) = '0';
             
-        case 'link_names'
-            Formats(7,1).type = 'edit';
+        case 'multipath'
+            Formats(7,1).type = 'list';
             Formats(7,1).format = 'text';
-            Formats(7,1).limits = [0 3]; % multi-select files
-            Formats(7,1).size = [-1 80];
-            %Formats(7,1).items = {'*.itm','Auction Item File';'*.*','All Files'};
-            Formats(7,1).span = [1 2];  % item is 1 field x 3 fields
+            Formats(7,1).style = 'radiobutton';
+            Formats(7,1).items = {'0' '1' '2' '3'};
+            DefAns.(names{II}) = '0';
             
-        case 'link_hashtags'
+        case 'confidence'
+            Formats(7,2).type = 'list';
+            Formats(7,2).format = 'text';
+            Formats(7,2).style = 'radiobutton';
+            Formats(7,2).items = {'0' '1' '2' '3','4','5'};
+            DefAns.(names{II}) = '5';
+        
+         
+        case 'link_names'
             Formats(8,1).type = 'edit';
             Formats(8,1).format = 'text';
             Formats(8,1).limits = [0 3]; % multi-select files
@@ -122,9 +128,17 @@ while II<=length(names)
             %Formats(7,1).items = {'*.itm','Auction Item File';'*.*','All Files'};
             Formats(8,1).span = [1 2];  % item is 1 field x 3 fields
             
+        case 'link_hashtags'
+            Formats(9,2).type = 'edit';
+            Formats(9,2).format = 'text';
+            Formats(9,2).limits = [0 3]; % multi-select files
+            Formats(9,2).size = [-1 80];
+            %Formats(7,1).items = {'*.itm','Auction Item File';'*.*','All Files'};
+            Formats(9,2).span = [1 1];  % item is 1 field x 3 fields
+            
         case 'comments'  %%May  be the last field
             
-            Irow=9;
+            Irow=10;
             Icol=1;
             Formats(Irow,1).type = 'edit';
             Formats(Irow,1).format = 'text';
@@ -132,12 +146,8 @@ while II<=length(names)
             Formats(Irow,1).size = [-1 -1];
             %Formats(7,1).items = {'*.itm','Auction Item File';'*.*','All Files'};
             Formats(Irow,1).span = [1 2];  % item is 1 field x 3 fields
-%         case 'range'
-%             Formats(9,2).type = 'edit';
-%             Formats(9,2).format = 'text';
-%             Formats(9,2).span = [1 1];
-%             %Formats(2,1).size = 200; % automatically assign the height
-%             %DefAns.(names{II}) = defaults{II};
+          
+   
 %         
         otherwise
             Iother=Iother+1;
@@ -156,4 +166,5 @@ while II<=length(names)
     II=II+1;
 end
 
+end
 

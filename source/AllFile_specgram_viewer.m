@@ -7273,7 +7273,8 @@ end
 %answer		=	inputdlg(Description, dlgTitle, num_lines, defaults, options);
 %answer		=	newid(Description, dlgTitle, num_lines, defaults, options);
 
-prep_inputsdlg;  %Annotation edit window setup
+Options.Resize='on';
+[Prompt,Formats,DefAns,Options]=prep_inputsdlg(names, Description,defaults);  %Annotation edit window setup
 [answer,Cancelled] = inputsdlg(Prompt,dlgTitle,Formats,DefAns,Options);
 %
 
