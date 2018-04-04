@@ -201,7 +201,8 @@ try
     success_flag=1;
 catch
     success_flag=0;
-    uiwait(errordlg(MException.last.message))
+    errr=MException.last.message;
+    uiwait(errordlg(errr))
     %lasterr.identifier
     %lasterr.stack
 end

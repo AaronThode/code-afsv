@@ -2917,7 +2917,7 @@ if	audio_stale
                 use_filter = false;
             else
                 %	default band-pass filter
-                df	=	0.1*[f_min f_max]; df = df(df>0);
+                df	=	0.25*[f_min f_max]; df = df(df>0);
                 df	=	min(df);
                 f	=	[f_min-[df 0] f_max+[0 df]];
                 a	=	[0 1 0];
@@ -2939,6 +2939,9 @@ if	audio_stale
                 end
                 
                 [n,fo,ao,w] =	firpmord(f, a, dev, Fs);
+                if n>1000
+                    fprintf('Warning, filter too large for %s \n',num2str(f));
+                end
                 b			=	firpm(n,fo,ao,w);
                 
                 handles.filter.b		=	b;
@@ -3065,7 +3068,9 @@ else
 end
 chan=get(handles.edit_chan,'String');
 
-save_name=sprintf('soundsamp%s_%s',handles.mydir((Islash(end)+1):end),datestr(tdate_start,30));
+%save_name=sprintf('soundsamp%s_%s',handles.myfile((Islash(end)+1):end),datestr(tdate_start,30));
+save_name=sprintf('soundsamp%s_%s',handles.myfile,datestr(tdate_start,30));
+
 disp(['Saving ...' save_name]);
 
 save_path	=	fullfile(handles.outputdir,[ save_name ]);  %AARON: save to local directory, not server
@@ -7285,7 +7290,11 @@ end
 
 NewEvent	=	OldEvent;
 for	ii	=	1:N_fields
-    NewEvent.(names{ii})	=	answer.(names{ii});
+    try
+        NewEvent.(names{ii})	=	answer.(names{ii});
+    catch  %If edit was not editable then not in answer
+        NewEvent.(names{ii})	=	OldEvent.(names{ii});
+    end
 end
 
 
@@ -7875,9 +7884,11 @@ for	ii	=	1:length(names)
     
     temp			=	num2str(Event.(names{ii}));
     if size(temp,1)>1
-        Ibad=[Ibad ii];
         if strcmp(names{ii},'comments')
             Message{2,ii}	=	temp;
+        else
+            Ibad=[Ibad ii];
+        
         end
         continue
     end
