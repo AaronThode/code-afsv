@@ -65,45 +65,16 @@ try
     
     if isfield(filter_params,'range')&&isfield(filter_params,'UTM_center')&&~(strcmp(lower(keyword),'all'))
         filter_position=2;  %Filter locations by position (circle)
-        rangee=-1*ones(1,length(data.locations));
+        %rangee=-1*ones(1,length(data.locations));
     end
     
     Igood= true(1,length(data.locations));
     
     %%Restrict annotations to certain UTM positions bounded by filt_param
     %%'northing' and 'easting' restrictions.
-    if filter_position==2
-        Igood= false(1,length(data.locations));
+    %%%  If using range restriction we will apply it at a later point
     
-        poss=zeros(length(data.locations),2);
-        h=waitbar(0,'Filtering positions.. wait');
-        for I=1:length(data.locations)
-            
-            if rem(I,500)==0
-                waitbar(I/length(data.locations),h);
-                
-            end
-            if ~strcmp(data.locations{I}.position.outcome,'successful')
-                continue
-            end
-            
-            fmin=min([data.locations{I}.feature.robust_fmin]);
-            Igood(I)=(fmin>=filter_params.freq_range(1))&(fmin<=filter_params.freq_range(2));
-            %Does succesfull localization fit?
-            pos=data.locations{I}.position.location;
-            poss(I,:)=pos;
-            tmp=[pos(1)-filter_params.UTM_center(1) pos(2)-filter_params.UTM_center(2)];
-            rangee(I)=sqrt(sum(tmp.^2));
-            Igood(I)=Igood(I) && (filter_params.range>=rangee(I));
-            
-            
-        end
-        
-        % Check our filtering
-        %plot(poss(:,1),poss(:,2),'kx');hold on;grid on; axis('equal');
-        %plot(poss(Igood,1),poss(Igood,2),'ro');hold on;grid on; axis('equal');
-        close(h)
-    elseif filter_position==1
+    if filter_position==1
         Igood= false(1,length(data.locations));
     
         poss=zeros(length(data.locations),2);
@@ -129,23 +100,61 @@ try
            
             Igood(I)= Igood(I) && pos(2)>=filter_params.northing(1) && pos(2)<=filter_params.northing(2);
             
+            
         end
         
         % Check our filtering
         %plot(poss(:,1),poss(:,2),'kx');hold on;grid on; axis('equal');
         %plot(poss(Igood,1),poss(Igood,2),'ro');hold on;grid on; axis('equal');
         close(h)
+    elseif filter_position==2  %if 'range' the filter keyword,filter for frequency range
+        Igood= false(1,length(data.locations));
+    
+        %poss=zeros(length(data.locations),2);
+        h=waitbar(0,'Filtering positions.. wait');
+        for I=1:length(data.locations)
+            
+            if rem(I,500)==0
+                waitbar(I/length(data.locations),h);
+                
+            end
+            if ~strcmp(data.locations{I}.position.outcome,'successful')
+                continue
+            end
+            
+            fmin=min([data.locations{I}.feature.robust_fmin]);
+            Igood(I)=(fmin>=filter_params.freq_range(1))&(fmin<=filter_params.freq_range(2));
+            %Does succesfull localization fit?
+           % pos=data.locations{I}.position.location;
+            %poss(I,:)=pos;
+            
+            %%%%Range filtering step with respect to array center
+            %tmp=[pos(1)-filter_params.UTM_center(1) pos(2)-filter_params.UTM_center(2)];
+            %rangee(I)=sqrt(sum(tmp.^2));
+            %Igood(I)=Igood(I) && (filter_params.range>=rangee(I));
+            
+            
+        end
+        
+        % Check our filtering
+        %plot(poss(:,1),poss(:,2),'kx');hold on;grid on; axis('equal');
+        %plot(poss(Igood,1),poss(Igood,2),'ro');hold on;grid on; axis('equal');
+        close(h)
+        
     end
-    
-    
     %%Finish filtering locations
     data.locations=data.locations(Igood);
     data.locations_ctime=data.locations_ctime(Igood,:);
+    
+    clear Igood
+    
+
     
     %Now convert each location into a series of annotations
     
     %We cycle through each station at each location to make hashtag processing
     %easier.
+    Igood=[];
     Icount=ones(Ns,1);
     h=waitbar(0,'Please wait');
     
@@ -159,14 +168,25 @@ try
             
         end
         for J=1:Ns
+            if filter_position==2
+                pos=data.locations{I}.position.location;
+                
+                tmp=[pos(1)-station_position.easting(J) pos(2)-station_position.northing(J)];
+                rangee=sqrt(sum(tmp.^2));
+                if rangee>=filter_params.range
+                    continue
+                end
+             
+            end
             
+            %%%%If we have a range filtering criteria, check here....
             newEvent=createEvent(data.locations{I},I,J,Defaults.Template,annotation_names,station_position);
             if isempty(newEvent)
                 continue
             end
             Data_all{J}.Events(Icount(J))=newEvent;
             Icount(J)=Icount(J)+1;
-            hashtags(J)=newEvent.hash_tag;
+            hashtags(J)=newEvent.hash_tag;  
             isPresent(J)=true;
         end
         

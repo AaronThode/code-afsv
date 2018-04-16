@@ -60,7 +60,7 @@ numlines=1;
 options.Resize='on';
 options.WindowStyle='normal';
 %defaultanswer={sprintf('S%i*_Huber_FilteredLocations.mat',Site),'All',sprintf('%s array',year),'10','[30 200]'};
-defaultanswer={sprintf('S%i*_Huber_FilteredLocations.mat',Site),'West','Site5','3','[30 200]'};
+defaultanswer={sprintf('S%i*_Huber_FilteredLocations.mat',Site),'Range','2010 array','10','[30 200]'};
 
 answer=inputdlg(prompt,name,numlines,defaultanswer,options);
 fnames=dir(answer{1});
