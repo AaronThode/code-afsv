@@ -8,7 +8,8 @@ if length(x(1,:))<Nfft/2
     return
 end
 
-axes(handles.axes1);
+%axes(handles.axes1);
+figure
 
 dn=(1-ovlap)*Nfft;
 M=floor(1+(size(x,2)-Nfft)/dn);
