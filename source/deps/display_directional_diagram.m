@@ -1,5 +1,5 @@
 %%%%display_directional_diagram.m
-function display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr)
+function [TT,FF,azi]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr)
 
 if strcmpi(handles.filetype,'PSD')
     return
