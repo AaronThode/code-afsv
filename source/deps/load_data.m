@@ -730,6 +730,7 @@ switch filetype
         
         [head.cable_factor,sens]=get_ADAT24_cable_factor;
         
+        %%%Get start times for various files...
         try
             done=false;
             [SUDAR_true,tmin,tmax,FsSUDAR]=get_SUDAR_time(mydir,myfile); %Check whether a SUDAR file exists
@@ -738,7 +739,6 @@ switch filetype
                 sens=(10^(186/20))/(2^15);
                 Fs=FsSUDAR;
                 done=true;
-                
             end
             
             if ~done
@@ -820,6 +820,11 @@ switch filetype
         if head.Nchan>1
             head.multichannel=true;
         end
+        
+        if ~isempty(strfind(myfile,'DIFAR'))
+            head.multichannel=true;
+        end
+        
         if ~strcmp(Ichan,'all')
             x		=	x(:,Ichan);
         end

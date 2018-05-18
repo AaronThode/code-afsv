@@ -8,7 +8,7 @@
 
 function tstart=convert_date(data,delimiter)
 tstart=[];
-mt_style_flag=~isempty(findstr('Sound',data));
+mt_style_flag=~isempty(strfind(data,'Sound'));
 fname_bounds=findstr(data,delimiter);
 
 Idot=findstr(data,'.');
@@ -33,10 +33,10 @@ if mt_style_flag==1
 else
     try
         
-        for I=1:(length(fname_bounds)-1),
+        for I=1:(length(fname_bounds)-1)
             test=data((fname_bounds(I)+1):(fname_bounds(I+1)-1));
-            if length(test)==15,
-                if strcmp(test(9),'T'),
+            if length(test)==15
+                if strcmp(test(9),'T')
                     nm=test;
                 end
             end

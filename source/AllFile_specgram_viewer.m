@@ -3090,6 +3090,7 @@ catch
     matVers=version('-release');
     
     if(str2double(matVers(1:4))>2012 || strcmp(matVers,'2012b'))
+        audiowrite([save_path '_4x.wav'],(x/(1.1*max(max(abs(x))))),round(Fs*4));
         audiowrite([save_path '.wav'],(x/(1.1*max(max(abs(x))))),round(Fs));
     else
         wavwrite(x/(1.1*max(max(abs(x)))),round(Fs),[save_path '.wav']);
@@ -8279,8 +8280,9 @@ if isempty(tlen)
 end
 mydir	=	pwd;
 
+want_directionality=strcmp(handles.display_view,'Directionality')||strcmpi(handles.display_view,'ReactiveRatio');
 
-if strcmp(handles.display_view,'Directionality')||strcmpi(handles.display_view,'ReactiveRatio')
+if want_directionality&strcmpi(handles.filetype,'gsi')
     Ichan='all';
 else
     Ichan	=	eval(get(handles.edit_chan,'String'));
@@ -8373,7 +8375,7 @@ end  %if PSD
 
 %%%%Select different views
 
-if strcmpi(handles.display_view,'Directionality')||strcmpi(handles.display_view,'ReactiveRatio')
+if want_directionality
     display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr);
 elseif strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New Fig')
     
@@ -8513,7 +8515,8 @@ for II=1:length(handles.buttongroup.array)
 end
 
 
-if strcmpi(lower(handles.filetype),'gsi')
+%%%Are these vector sensor files?
+if strcmpi(lower(handles.filetype),'gsi')||~isempty(strfind(handles.myfile,'DIFAR'))
     status='on';
 else
     status='off';
