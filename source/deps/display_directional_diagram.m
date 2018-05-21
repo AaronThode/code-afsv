@@ -1,5 +1,5 @@
 %%%%display_directional_diagram.m
-function [TT,FF,azi]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr)
+function [TT,FF,azi,handles]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr)
 
 if strcmpi(handles.filetype,'PSD')
     return
@@ -42,13 +42,29 @@ elseif ~isempty(strfind(handles.myfile,'DIFAR'))
 end
 
 %sec_avg=input('Enter time to average over (sec; 0 does no averaging):');
-Batch_vars.sec_avg	=	'0.1';	Batch_desc{1}	=	'Seconds to average PSD for long-term display, if "0" no averaging' ;
-Batch_vars.climm='[0 360]'; Batch_desc{2}='Bearing Range Color Scale';
-Batch_vars.brefa='11.7';Batch_desc{3}='Bearing bias/correction (default is 11.7 degrees)';
-Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, 'Vector Sensor Processing');
-sec_avg=str2num(Batch_vars.sec_avg);
-climm=eval(Batch_vars.climm);
-hdr.brefa=eval(Batch_vars.brefa);
+get_newparams=false;
+if ~isfield(handles,'azigram')
+    get_newparams=true;
+    
+elseif ~isfield(handles.azigram,'climm')
+    get_newparams=true;
+    
+end
+
+if get_newparams
+    Batch_vars=get_Azigram_Callback(handles);
+    handles.azigram.sec_avg=(Batch_vars.sec_avg);
+    handles.azigram.climm=(Batch_vars.climm);
+    handles.azigram.brefa=(Batch_vars.brefa);
+end
+
+% Batch_vars.sec_avg	=	'0.1';	Batch_desc{1}	=	'Seconds to average PSD for long-term display, if "0" no averaging' ;
+% Batch_vars.climm='[0 360]'; Batch_desc{2}='Bearing Range Color Scale';
+% Batch_vars.brefa='11.7';Batch_desc{3}='Bearing bias/correction (default is 11.7 degrees)';
+% Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, 'Vector Sensor Processing');
+ sec_avg=str2num(handles.azigram.sec_avg);
+ climm=eval(handles.azigram.climm);
+ hdr.brefa=eval(handles.azigram.brefa);
 
 if ~isempty(sec_avg)&&sec_avg>0
     Navg=floor(sec_avg*Fs/dn);  %Samples per avg

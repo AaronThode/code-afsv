@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 10-Mar-2015 21:50:11
+% Last Modified by GUIDE v2.5 21-May-2018 14:24:54
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -3150,7 +3150,7 @@ if strcmpi(handles.filetype,'MDAT')
             axis('xy')
             fmax=str2double(get(handles.edit_fmax,'String'));
             fmin=str2double(get(handles.edit_fmin,'String'));
-            if fmax==0,
+            if fmax==0
                 ylim([0 Fs/2]);
                 set(handles.edit_fmax,'String',num2str(Fs/2));
             else
@@ -3160,7 +3160,7 @@ if strcmpi(handles.filetype,'MDAT')
             climm(1)=str2double(get(handles.edit_mindB,'String'));
             climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
             caxis(climm);
-            if get(handles.checkbox_grayscale,'Value')==1,
+            if get(handles.checkbox_grayscale,'Value')==1
                 colormap(flipud(gray));
             else
                 colormap(jet);
@@ -3274,8 +3274,12 @@ tmp=ginput(Np);
 
 y_unit_amp=handles.radiobutton_timeseries.Value;
 azigram_flag=handles.radiobutton_directionality.Value;
-if azigram_flag&&~isfield(handles,'azigram') %%Azigram is not visible on screen
-    return
+if azigram_flag
+    if ~isfield(handles,'azigram') %%Azigram is not visible on screen
+        return
+    elseif ~isfield(handles.azigram,'azi')
+        return
+    end
 end
 
 msg=[];
@@ -8393,7 +8397,7 @@ end  %if PSD
 %%%%Select different views
 
 if want_directionality
-    [TT,FF,azi]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr);
+    [TT,FF,azi,handles]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr);
     handles.azigram.azi=azi;
     handles.azigram.TT=TT;
     handles.azigram.FF=FF;
@@ -10554,3 +10558,19 @@ end
 end
 
 
+
+
+% --------------------------------------------------------------------
+function MenuItem_Azigram_Callback(hObject, eventdata, handles)
+% hObject    handle to MenuItem_Azigram (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+Batch_vars=get_Azigram_Callback(handles);
+
+handles.azigram.sec_avg=(Batch_vars.sec_avg);
+handles.azigram.climm=(Batch_vars.climm);
+handles.azigram.brefa=(Batch_vars.brefa);
+guidata(hObject, handles);
+
+end
