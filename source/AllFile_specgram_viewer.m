@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 21-May-2018 14:24:54
+% Last Modified by GUIDE v2.5 10-Mar-2015 21:50:11
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -153,8 +153,11 @@ handles.buttongroup.GSI(2)=handles.pushbutton_GSI_localization;
 handles.buttongroup.GSI(3)=handles.radiobutton_directionality;
 handles.buttongroup.GSI(4)=handles.radiobutton_reactive;
 %Set default template 
-if strfind(getenv('USER'),'thode')
+if strfind(getenv('USER'),'thode') 
     handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
+    
+elseif strfind(getenv('USER'),'ludovictenorio') 
+        handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
     
 else %Cedric to modify
     handles.GSI_location_dir_template=fullfile('E:\','%s_Beaufort_Shell_DASAR\','DASARlocations\','DASAR_locations_%s.mat');
@@ -3301,22 +3304,22 @@ end
 msg=sprintf('%s\n Absolute time at min time: %s \n' ,msg, datestr(start_time+datenum(0,0,0,0,0,min(tmp(:,1))),0));
 
 if ~azigram_flag
-    duration=max(tmp(:,1))-min(tmp(:,1));
-    bandwidth=max(tmp(:,2))-min(tmp(:,2));
-    if y_unit_amp
-        msg=sprintf('%s Duration: %6.2f sec \n pk-pk Amplitide: %6.6g uPa, or %6.2f dB \n Slope: %6.2f uPa/sec\n', ...
-            msg,duration, bandwidth,20*log10(bandwidth), bandwidth/duration);
-        fprintf('Bandwidth is %6.6g uPa, or %6.2f dB re 1 uPa\n',bandwidth,20*log10(bandwidth))
-        fprintf('Duration is %7.4f sec\n',duration)
-        fprintf('Slope is %6.2f uPa/sec\n',bandwidth/duration)
-    else
-        msg=sprintf('%s Duration: %6.2f sec \n Bandwidth: %6.2f Hz \n Slope: %6.2f Hz/sec\n', ...
-            msg,duration,1000*bandwidth,1000*bandwidth/duration);
-        fprintf('Bandwidth is %6.6g Hz\n',bandwidth)
-        fprintf('Duration is %7.4f sec\n',duration)
-        fprintf('Slope is %6.2f Hz/sec\n',1000*bandwidth/duration)
-        
-    end
+duration=max(tmp(:,1))-min(tmp(:,1));
+bandwidth=max(tmp(:,2))-min(tmp(:,2));
+if y_unit_amp
+    msg=sprintf('%s Duration: %6.2f sec \n pk-pk Amplitide: %6.6g uPa, or %6.2f dB \n Slope: %6.2f uPa/sec\n', ...
+        msg,duration, bandwidth,20*log10(bandwidth), bandwidth/duration);
+    fprintf('Bandwidth is %6.6g uPa, or %6.2f dB re 1 uPa\n',bandwidth,20*log10(bandwidth))
+    fprintf('Duration is %7.4f sec\n',duration)
+    fprintf('Slope is %6.2f uPa/sec\n',bandwidth/duration)
+else
+    msg=sprintf('%s Duration: %6.2f sec \n Bandwidth: %6.2f Hz \n Slope: %6.2f Hz/sec\n', ...
+        msg,duration,1000*bandwidth,1000*bandwidth/duration);
+    fprintf('Bandwidth is %6.6g Hz\n',bandwidth)
+    fprintf('Duration is %7.4f sec\n',duration)
+    fprintf('Slope is %6.2f Hz/sec\n',1000*bandwidth/duration)
+    
+end
 end
 
 fprintf('%s \n',msg);
@@ -3719,7 +3722,8 @@ if faill
     %GSI_location_dir=fullfile('/Volumes','Data',sprintf('Shell%s_GSI_Data',year),'DASARlocations',sprintf('DASAR_locations_%s.mat',year));
     GSI_location_dir=sprintf(handles.GSI_location_dir_template,year,year);
     
-    def1={GSI_location_dir, '6','[4.174860699660919e+05 7.817274204098196e+06]'};
+    def1={GSI_location_dir, '1','[4.174860699660919e+05 7.817274204098196e+06]'};
+    % site 5: [4.174860699660919e+05 7.817274204098196e+06]
     answer=inputdlg(prompt1,dlgTitle1,1,def1);
     locs=load(answer{1});
     Isite=str2double(answer{2});
@@ -3759,22 +3763,11 @@ end
 
 
 %%%%Estimate relative time of arrival-for Ludovic
-dtt=zeros(1,length(tsec));
-tsec_corrected(Igood(1))=0;
-for I=1:(length(Igood)-1)
-    
-    %%%  xcov(s2,s1);  if s2 arrives first, lag is negative, if s2
-    %%%  lags s1, lag is positive
-    [cc,lags] = xcov(xsample{Igood(I+1)}(:,1),xsample{Igood(I)}(:,1));
-    [~,Ilag]=max(abs(hilbert(cc)));
-    dtt(Igood(I))=lags(Ilag)/1000;  %positive dtt means I-1 lags I
-    tsec_corrected(Igood(I+1))=tsec_corrected(Igood(I))+tsec(Igood(I+1))-tsec(Igood(I))+dtt(Igood(I));
-    
-end
+[tdoa_mat]=xcorr_dasars(xsample,tsec,DASAR_coords);
+
 fprintf('Position of location (can copy for annotation): %s\n',mat2str(VM,10));
 fprintf('Values of theta for station %s (degrees, compass standard): %s\n',mat2str(Igood),mat2str(theta(Igood),6));
 fprintf('raw tsec of selections:  %s\n',mat2str(tsec(Igood),6));
-fprintf(' tsec corrected by xcorr:  %s\n',mat2str(tsec_corrected(Igood),6));
 
 yes=menu('Print and Save?','Yes','No');
 if yes==1
@@ -3784,9 +3777,9 @@ if yes==1
     print(1,'-djpeg','-r300',sprintf('Localization_G_%s.jpg',tstart));
     print('-djpeg','-r300',sprintf('Spectrogram_G_%s.jpg',tstart));
     try
-        save(sprintf('DASAR_localization_%s',tstart),'DASAR_coords','Igood','theta','Ikeep','VM','A','B','ANG','xsample','tsec','range');
+               save(sprintf('DASAR_localization_%s',tstart),'DASAR_coords','Igood','theta','Ikeep','VM','A','B','ANG','xsample','tsec','VA_cords','range','tdoa_mat');
     catch
-        save(sprintf('DASAR_localization_%s',tstart),'DASAR_coords','Igood','theta','Ikeep','VM','A','B','ANG','xsample','tsec','tsec_corrected');
+        save(sprintf('DASAR_localization_%s',tstart),'DASAR_coords','Igood','theta','Ikeep','VM','A','B','ANG','xsample','tsec','VA_cords','tdoa_mat');
         %fprintf('Position not saved. \n');
         
        
