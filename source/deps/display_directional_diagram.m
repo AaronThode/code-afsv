@@ -7,7 +7,7 @@ end
 
 %%%%Two files that can get active intensity directionality: *.gsi and
 %%%%*DIFAAR*.wav files.
-dn=(1-ovlap)*Nfft;
+dn=round((1-ovlap)*Nfft);
 
 if strcmpi(handles.filetype,'gsi')
     
@@ -16,7 +16,7 @@ if strcmpi(handles.filetype,'gsi')
     end
     
     %axes(handles.axes1);
-    figure
+    %figure
     
     M=floor(1+(size(x,2)-Nfft)/dn);
     FF=linspace(0,Fs,Nfft);
