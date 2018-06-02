@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 10-Mar-2015 21:50:11
+% Last Modified by GUIDE v2.5 02-Jun-2018 09:23:27
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -3223,8 +3223,9 @@ if strcmpi(handles.filetype,'MDAT')
 end  %MDAT
 
 handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
+OwnFig=handles.togglebutton_NewFigure.Value;
 
-if ~strcmp(handles.display_view,'New Fig')
+if ~OwnFig
     figchc=[];
     axes(handles.axes1);
 else
@@ -3246,8 +3247,14 @@ tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 chan=get(handles.edit_chan,'String');
 Idot=strfind(handles.myfile,'.')-1;
-save_name=sprintf('soundsamp_%s_%s_%s_%s', ...
-    handles.myfile(1:Idot),datestr(tdate_start,30),chan,handles.display_view);
+
+if OwnFig
+    strr='NewFig';
+else
+    strr='Screen';
+end
+save_name=sprintf('soundsamp_%s_%s_%s_%s_%s', ...
+    handles.myfile(1:Idot),datestr(tdate_start,30),chan,handles.display_view,strr);
 
 save_path	=	fullfile(handles.outputdir, save_name);
 disp(['Printing %s ...' save_name]);
@@ -8388,19 +8395,25 @@ else
 end  %if PSD
 
 %%%%Select different views
+if ~handles.togglebutton_NewFigure.Value
+    axes(handles.axes1);
+else
+    figure;
+end
+
 
 if want_directionality
     [TT,FF,azi,handles]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr);
     handles.azigram.azi=azi;
     handles.azigram.TT=TT;
     handles.azigram.FF=FF;
-elseif strcmp(handles.display_view,'Spectrogram')||strcmp(handles.display_view,'New Fig')
+elseif strcmp(handles.display_view,'Spectrogram')
     
-    if strcmp(handles.display_view,'Spectrogram')
-        axes(handles.axes1);
-    else
-        figure;
-    end
+    %if strcmp(handles.display_view,'Spectrogram')
+    %    axes(handles.axes1);
+    %else
+    %    figure;
+    %end
     
     if length(x(:,1))<Nfft/2
         return
@@ -10566,4 +10579,14 @@ handles.azigram.climm=(Batch_vars.climm);
 handles.azigram.brefa=(Batch_vars.brefa);
 guidata(hObject, handles);
 
+end
+
+
+% --- Executes on button press in togglebutton_NewFigure.
+function togglebutton_NewFigure_Callback(hObject, eventdata, handles)
+% hObject    handle to togglebutton_NewFigure (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of togglebutton_NewFigure
 end

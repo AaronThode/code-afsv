@@ -187,6 +187,8 @@ switch filetype
         end
         
        
+        %%%%Rare situations were I was testing DIFAR processing--should be
+        %%%%commented out once results published.
         if ~isempty(strfind(myfile,'Rankin'))  %%%Shannon Rankin DIFAR data
             [x,t,head]=load_sonobuoy_demo([mydir '/' myfile],tdate_start,tlen,Ichan);
             tmin=datenum(1970,1,1,0,0,0);
