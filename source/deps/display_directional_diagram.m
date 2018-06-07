@@ -1,5 +1,5 @@
 %%%%display_directional_diagram.m
-function [TT,FF,azi,handles]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr)
+function [TT,FF,azi,vx,vy,handles]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr)
 
 if strcmpi(handles.filetype,'PSD')
     return
@@ -37,7 +37,6 @@ if strcmpi(handles.filetype,'gsi')
 elseif ~isempty(strfind(handles.myfile,'DIFAR'))
     M=floor(1+(max(size(x))-Nfft)/dn);
     [vx,vy,TT,FF]=demultiplex_DIFAR(x,Fs,Nfft,ovlap,hdr);
-    hdr.brefa=11.7;
     Nf=length(FF);
 end
 
@@ -56,6 +55,7 @@ if get_newparams
     handles.azigram.sec_avg=(Batch_vars.sec_avg);
     handles.azigram.climm=(Batch_vars.climm);
     handles.azigram.brefa=(Batch_vars.brefa);
+    handles.azigram.alg=Batch_vars.alg;
 end
 
 % Batch_vars.sec_avg	=	'0.1';	Batch_desc{1}	=	'Seconds to average PSD for long-term display, if "0" no averaging' ;
@@ -65,7 +65,8 @@ end
  sec_avg=str2num(handles.azigram.sec_avg);
  climm=eval(handles.azigram.climm);
  hdr.brefa=eval(handles.azigram.brefa);
-
+ alg_mult=eval(handles.azigram.alg);
+ 
 if ~isempty(sec_avg)&&sec_avg>0
     Navg=floor(sec_avg*Fs/dn);  %Samples per avg
     if Navg==0
@@ -94,6 +95,8 @@ if strcmpi(handles.display_view,'Directionality')
     
     mu = 180/pi*atan2(vx,vy);
     azi=bnorm(hdr.brefa+mu);
+    
+    
     imagesc(TT,FF/1000,azi);
     titstr=' Azimuth';
     if get(handles.checkbox_grayscale,'Value')==1

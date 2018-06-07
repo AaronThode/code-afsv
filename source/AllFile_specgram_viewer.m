@@ -3280,7 +3280,7 @@ start_time=handles.tdate_start;
 lineNo=1;
 answer=inputdlg(prompt,'',lineNo,def);
 Np=str2num(answer{1});
-tmp=ginput(Np);
+
 
 y_unit_amp=handles.radiobutton_timeseries.Value;
 azigram_flag=handles.radiobutton_directionality.Value;
@@ -3295,15 +3295,40 @@ end
 msg=[];
 for If=1:Np
     if y_unit_amp
+        tmp=ginput(Np);
         msg=sprintf('%s Point %i Time: %8.6f Amplitude: %6.6g uPa \n',msg,If,tmp(If,1),tmp(If,2));
     elseif azigram_flag
-        [~,Ibestt]=min(abs(tmp(If,1)-handles.azigram.TT));
-        [~,Ibestf]=min(abs(tmp(If,2)*1000-handles.azigram.FF));
-        azi=handles.azigram.azi(Ibestf,Ibestt);
-         msg=sprintf('%s Point %i Time: %8.6f Frequency: %6.2f Hz, Directions: %6.2f degrees \n', ...
-             msg,If,tmp(If,1),1000*tmp(If,2),azi);
+        
+        mult_chc=handles.azigram.alg;
+        
+        if mult_chc
+            tmp=ginput(Np);
+            
+            [~,Ibestt]=min(abs(tmp(If,1)-handles.azigram.TT));
+            [~,Ibestf]=min(abs(tmp(If,2)*1000-handles.azigram.FF));
+            azi=handles.azigram.azi(Ibestf,Ibestt);
+            msg=sprintf('%s Point %i Time: %8.6f Frequency: %6.2f Hz, Directions: %6.2f degrees \n', ...
+                msg,If,tmp(If,1),1000*tmp(If,2),azi);
+        else  %%If do it old fashioned way with boxes
+            [vx,vy,TT,FF]=demultiplex_DIFAR(x,Fs,Nfft,ovlap,hdr);
+    
+            for J=1:Np %for each point
+                 disp('Click on two extreme corners, click below axis twice to reject:');
+                boxx=ginput(2);
+               
+                if (isempty(tmp)||any(tmp(:,2)<0))
+                    return
+                end
+                tsec=min(box(:,1));
+                want=round(sort(tmp(:,2)));
+
+                
+            end
+            
+        end
         
     else
+        tmp=ginput(Np);
         msg=sprintf('%s Point %i Time: %8.6f Frequency: %6.2f Hz \n',msg,If,tmp(If,1),1000*tmp(If,2));
     end
 end
@@ -8403,10 +8428,11 @@ end
 
 
 if want_directionality
-    [TT,FF,azi,handles]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr);
+    [TT,FF,azi,vx,vy,handles]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr);
     handles.azigram.azi=azi;
     handles.azigram.TT=TT;
     handles.azigram.FF=FF;
+    
 elseif strcmp(handles.display_view,'Spectrogram')
     
     %if strcmp(handles.display_view,'Spectrogram')
@@ -8759,8 +8785,20 @@ mydir=pwd;
 
 %Ichan='all';  %Hardwire first channel
 %Ichan=str2double(get(handles.edit_chan,'String'));
-[x,t,Fs,tstart,tend,head]=load_data(handles.filetype,tdate_start,tlen,'all',handles);
+azigram_flag=handles.radiobutton_directionality.Value;
+DIFAR_flag=strcmpi(handles.filetype,'wav')&~isempty(strfind(handles.myfile,'DIFAR'));
+GSI_flag=strcmpi(handles.filetype,'gsi')&~azigram_flag;
 
+if GSI_flag %GSI file displayed in spectrogram view, use tradiational bearing method
+    [x,t,Fs,tstart,tend,head]=load_data(handles.filetype,tdate_start,tlen,'all',handles);
+elseif DIFAR_flag
+    %channel=str2num(handles.edit_chan.String);
+    %[x,t,Fs,tstart,tend,head]=load_data(handles.filetype,tdate_start,tlen,channel,handles);
+    disp('Cannot use this button for DIFAR files:  use Select Points instead');
+    set(handles.text_filename,'String','Cannot use this button for DIFAR files:  use Select Points instead');
+
+    return
+end
 disp('Click on two extreme corners, click below axis twice to reject:');
 if ~exist('tmp','var')
     tmp=ginput(2);
@@ -8775,23 +8813,25 @@ freq=1000*sort(tmp(:,2));
 contents=get(handles.popupmenu_Nfft,'String');
 Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
 
-x=x(n(1):n(2),:);
-[thet0,kappa,sd,xf]=extract_bearings(x,0.25,Nfft,Fs,freq(1),freq(2),200);
-
-if ~isempty(strfind('T2007',handles.myfile))
-    cal07flag=1;
-    handles.calibration_DASAR2007_dir='/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/RawData';
+if GSI_flag
+    x=x(n(1):n(2),:);
+    [thet0,kappa,sd,xf]=extract_bearings(x,0.25,Nfft,Fs,freq(1),freq(2),200);
     
-    brefa_table=calibrate_bearing_Shell2007(handles.calibration_DASAR2007_dir,handles.myfile);
-else
-    cal07flag=0;
-end
-
-if cal07flag==0
-    thet=bnorm(thet0+head.brefa);
-else
-    [junk,Icol]=calibrate_bearing_Shell2007(handles.calibration_DASAR2007_dir,handles.myfile,1);
-    thet= interp1(0:360,brefa_table(:,Icol),bnorm(thet0));
+    if ~isempty(strfind('T2007',handles.myfile))
+        cal07flag=1;
+        handles.calibration_DASAR2007_dir='/Users/thode/Projects/Greeneridge_bowhead_detection/Macmussel_Mirror/RawData';
+        
+        brefa_table=calibrate_bearing_Shell2007(handles.calibration_DASAR2007_dir,handles.myfile);
+    else
+        cal07flag=0;
+    end
+    
+    if cal07flag==0
+        thet=bnorm(thet0+head.brefa);
+    else
+        [junk,Icol]=calibrate_bearing_Shell2007(handles.calibration_DASAR2007_dir,handles.myfile,1);
+        thet= interp1(0:360,brefa_table(:,Icol),bnorm(thet0));
+    end
 end
 
 %handles.bearing=thet;
@@ -10577,6 +10617,7 @@ Batch_vars=get_Azigram_Callback(handles);
 handles.azigram.sec_avg=(Batch_vars.sec_avg);
 handles.azigram.climm=(Batch_vars.climm);
 handles.azigram.brefa=(Batch_vars.brefa);
+handles.azigram.alg=Batch_vars.alg;
 guidata(hObject, handles);
 
 end
