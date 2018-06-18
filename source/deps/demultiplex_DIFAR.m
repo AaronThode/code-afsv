@@ -1,4 +1,4 @@
-function [vx,vy,T,F]=demultiplex_DIFAR(x,Fs,Nfft,ovlap,hdr)
+function [vx,vy,T,F]=demultiplex_DIFAR(x,Fs,Nfft,ovlap)
 
 
 %Nfft=2^15;

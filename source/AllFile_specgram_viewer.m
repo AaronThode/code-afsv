@@ -3293,65 +3293,72 @@ if azigram_flag
 end
 
 msg=[];
-for If=1:Np
-    if y_unit_amp
+
+if y_unit_amp
+    for If=1:Np
         tmp=ginput(Np);
         msg=sprintf('%s Point %i Time: %8.6f Amplitude: %6.6g uPa \n',msg,If,tmp(If,1),tmp(If,2));
-    elseif azigram_flag
-        
-        mult_chc=handles.azigram.alg;
-        
-        if mult_chc
-            tmp=ginput(Np);
-            
+    end
+elseif azigram_flag
+    
+    mult_chc=handles.azigram.alg;
+    
+    if mult_chc
+        tmp=ginput(Np);
+        for If=1:Np
             [~,Ibestt]=min(abs(tmp(If,1)-handles.azigram.TT));
             [~,Ibestf]=min(abs(tmp(If,2)*1000-handles.azigram.FF));
             azi=handles.azigram.azi(Ibestf,Ibestt);
             msg=sprintf('%s Point %i Time: %8.6f Frequency: %6.2f Hz, Directions: %6.2f degrees \n', ...
                 msg,If,tmp(If,1),1000*tmp(If,2),azi);
-        else  %%If do it old fashioned way with boxes
-            [vx,vy,TT,FF]=demultiplex_DIFAR(x,Fs,Nfft,ovlap,hdr);
-    
-            for J=1:Np %for each point
-                 disp('Click on two extreme corners, click below axis twice to reject:');
-                boxx=ginput(2);
-               
-                if (isempty(tmp)||any(tmp(:,2)<0))
-                    return
-                end
-                tsec=min(box(:,1));
-                want=round(sort(tmp(:,2)));
-
-                
+        end
+    else  %%If do it old fashioned way with boxes
+        [vx,vy,TT,FF]=demultiplex_DIFAR(x,Fs,Nfft,ovlap);
+        
+        for J=1:Np %for each point
+            disp('Click on two extreme corners, click below axis twice to reject:');
+            boxx=ginput(2);
+            
+            if (isempty(tmp)||any(tmp(:,2)<0))
+                return
             end
+            tsec=min(box(:,1));
+            want=round(sort(tmp(:,2)));
+            
             
         end
         
-    else
-        tmp=ginput(Np);
+    end
+    
+else
+    
+    tmp=ginput(Np);
+    for If=1:Np
         msg=sprintf('%s Point %i Time: %8.6f Frequency: %6.2f Hz \n',msg,If,tmp(If,1),1000*tmp(If,2));
     end
+    
 end
+
 
 msg=sprintf('%s\n Absolute time at min time: %s \n' ,msg, datestr(start_time+datenum(0,0,0,0,0,min(tmp(:,1))),0));
 
 if ~azigram_flag
-duration=max(tmp(:,1))-min(tmp(:,1));
-bandwidth=max(tmp(:,2))-min(tmp(:,2));
-if y_unit_amp
-    msg=sprintf('%s Duration: %6.2f sec \n pk-pk Amplitide: %6.6g uPa, or %6.2f dB \n Slope: %6.2f uPa/sec\n', ...
-        msg,duration, bandwidth,20*log10(bandwidth), bandwidth/duration);
-    fprintf('Bandwidth is %6.6g uPa, or %6.2f dB re 1 uPa\n',bandwidth,20*log10(bandwidth))
-    fprintf('Duration is %7.4f sec\n',duration)
-    fprintf('Slope is %6.2f uPa/sec\n',bandwidth/duration)
-else
-    msg=sprintf('%s Duration: %6.2f sec \n Bandwidth: %6.2f Hz \n Slope: %6.2f Hz/sec\n', ...
-        msg,duration,1000*bandwidth,1000*bandwidth/duration);
-    fprintf('Bandwidth is %6.6g Hz\n',bandwidth)
-    fprintf('Duration is %7.4f sec\n',duration)
-    fprintf('Slope is %6.2f Hz/sec\n',1000*bandwidth/duration)
-    
-end
+    duration=max(tmp(:,1))-min(tmp(:,1));
+    bandwidth=max(tmp(:,2))-min(tmp(:,2));
+    if y_unit_amp
+        msg=sprintf('%s Duration: %6.2f sec \n pk-pk Amplitide: %6.6g uPa, or %6.2f dB \n Slope: %6.2f uPa/sec\n', ...
+            msg,duration, bandwidth,20*log10(bandwidth), bandwidth/duration);
+        fprintf('Bandwidth is %6.6g uPa, or %6.2f dB re 1 uPa\n',bandwidth,20*log10(bandwidth))
+        fprintf('Duration is %7.4f sec\n',duration)
+        fprintf('Slope is %6.2f uPa/sec\n',bandwidth/duration)
+    else
+        msg=sprintf('%s Duration: %6.2f sec \n Bandwidth: %6.2f Hz \n Slope: %6.2f Hz/sec\n', ...
+            msg,duration,1000*bandwidth,1000*bandwidth/duration);
+        fprintf('Bandwidth is %6.6g Hz\n',bandwidth)
+        fprintf('Duration is %7.4f sec\n',duration)
+        fprintf('Slope is %6.2f Hz/sec\n',1000*bandwidth/duration)
+        
+    end
 end
 
 fprintf('%s \n',msg);

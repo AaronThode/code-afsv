@@ -8,7 +8,7 @@ Batch_desc{4}='Bearing algorithm multiplicative (Default 1)';
 Batch_vars.sec_avg	=	'0.1';
 Batch_vars.climm='[0 360]';
 Batch_vars.brefa='11.7';
-handBatch_vars.alg='1';
+Batch_vars.alg='1';
 
 if isfield(handles,'azigram')
     if isfield(handles.azigram,'sec_avg')

@@ -1,4 +1,16 @@
 %%%%display_directional_diagram.m
+%function [TT,FF,azi,vx,vy,handles]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr)
+%
+% handles.filetype
+% handles.myfile
+% Optional
+%    handles.azigram.sec_avg=(Batch_vars.sec_avg);
+%     handles.azigram.climm=(Batch_vars.climm);
+%     handles.azigram.brefa=(Batch_vars.brefa);
+%     handles.azigram.alg=Batch_vars.alg;
+% handles.display_view,'Directionality'
+% handles.checkbox_grayscale,'Value'
+%  handles.edit_fmax,edit_fmin
 function [TT,FF,azi,vx,vy,handles]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr)
 
 if strcmpi(handles.filetype,'PSD')
@@ -36,7 +48,7 @@ if strcmpi(handles.filetype,'gsi')
     Nf=Nfft/2;
 elseif ~isempty(strfind(handles.myfile,'DIFAR'))
     M=floor(1+(max(size(x))-Nfft)/dn);
-    [vx,vy,TT,FF]=demultiplex_DIFAR(x,Fs,Nfft,ovlap,hdr);
+    [vx,vy,TT,FF]=demultiplex_DIFAR(x,Fs,Nfft,ovlap);
     Nf=length(FF);
 end
 
@@ -62,11 +74,11 @@ end
 % Batch_vars.climm='[0 360]'; Batch_desc{2}='Bearing Range Color Scale';
 % Batch_vars.brefa='11.7';Batch_desc{3}='Bearing bias/correction (default is 11.7 degrees)';
 % Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, 'Vector Sensor Processing');
- sec_avg=str2num(handles.azigram.sec_avg);
- climm=eval(handles.azigram.climm);
- hdr.brefa=eval(handles.azigram.brefa);
- alg_mult=eval(handles.azigram.alg);
- 
+sec_avg=str2num(handles.azigram.sec_avg);
+climm=eval(handles.azigram.climm);
+hdr.brefa=eval(handles.azigram.brefa);
+alg_mult=eval(handles.azigram.alg);
+
 if ~isempty(sec_avg)&&sec_avg>0
     Navg=floor(sec_avg*Fs/dn);  %Samples per avg
     if Navg==0
@@ -99,9 +111,13 @@ if strcmpi(handles.display_view,'Directionality')
     
     imagesc(TT,FF/1000,azi);
     titstr=' Azimuth';
-    if get(handles.checkbox_grayscale,'Value')==1
-        colormap(flipud(gray));
-    else
+    try
+        if get(handles.checkbox_grayscale,'Value')==1
+            colormap(flipud(gray));
+        else
+            colormap(hsv);
+        end
+    catch
         colormap(hsv);
     end
     caxis(climm);
@@ -131,7 +147,7 @@ elseif strcmpi(handles.display_view,'ReactiveRatio')
     climm=[-10 0];
     caxis(climm);
     titstr='active fraction (dB)';
-    if get(handles.checkbox_grayscale,'Value')==1,
+    if get(handles.checkbox_grayscale,'Value')==1
         colormap(flipud(gray));
     else
         colormap(jet);
@@ -171,20 +187,26 @@ end
 
 grid on
 axis('xy')
-fmax=str2double(get(handles.edit_fmax,'String'));
-fmin=str2double(get(handles.edit_fmin,'String'));
-if fmax==0,
-    ylim([0 Fs/2000]);
-    set(handles.edit_fmax,'String',num2str(Fs/2000));
-else
-    ylim([fmin fmax]);
+
+try
+    fmax=str2double(get(handles.edit_fmax,'String'));
+    fmin=str2double(get(handles.edit_fmin,'String'));
+    if fmax==0
+        ylim([0 Fs/2000]);
+        set(handles.edit_fmax,'String',num2str(Fs/2000));
+    else
+        ylim([fmin fmax]);
+    end
+    %ylim([0 1]);axis('xy')
+    
+    
+    colorbar;
+    % set(gcf,'pos',[30   322  1229   426])
+    set(gca,'fontweight','bold','fontsize',14);
+    xlabel('Time (sec)');ylabel('Frequency (kHz)');
+    
+    set(handles.text_filename,'String',sprintf('%s, %s ... ', ...
+        get(handles.text_filename,'String'),titstr));
+catch
+    disp('catch in display_directional_diagram');
 end
-%ylim([0 1]);axis('xy')
-
-
-colorbar;
-% set(gcf,'pos',[30   322  1229   426])
-set(gca,'fontweight','bold','fontsize',14);
-xlabel('Time (sec)');ylabel('Frequency (kHz)');
-set(handles.text_filename,'String',sprintf('%s, %s ... ', ...
-    get(handles.text_filename,'String'),titstr));
