@@ -1,84 +1,60 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
-  <configuration target="target.ezdeploy.standalone" target-name="MATLAB Compiler for Standalone Applications" name="Ulysses_Win64" location="E:\Work\matlab\AllFile_specgram_viewer" file="E:\Work\matlab\AllFile_specgram_viewer\Ulysses_Win64.prj" preferred-package-type="package.type.exe" build-checksum="164528651" preferred-package-location="E:\Work\matlab\AllFile_specgram_viewer\Ulysses_Win64\for_redistribution">
+  <configuration build-checksum="164528651" file="C:\Users\bsarkar\Documents\Ulysses\Ulysses_Win64.prj" location="C:\Users\bsarkar\Documents\Ulysses" name="Ulysses_Win64" preferred-package-location="C:\Users\bsarkar\Documents\Ulysses\Ulysses_Win64\for_redistribution" preferred-package-type="package.type.exe" target="target.ezdeploy.standalone" target-name="Application Compiler">
     <param.appname>Ulysses_Win64</param.appname>
+    <param.icon>${PROJECT_ROOT}\AllFile_specgram_viewer_Mac_resources\icon.icns</param.icon>
+    <param.icons />
+    <param.version>1.0</param.version>
     <param.authnamewatermark>Aaron Thode</param.authnamewatermark>
     <param.email>athode@ucsd.edu</param.email>
     <param.company>MPL-SIO-UCSD</param.company>
-    <param.icon>${PROJECT_ROOT}\AllFile_specgram_viewer_Mac_resources\icon.icns</param.icon>
-    <param.icons />
     <param.summary />
     <param.description />
     <param.screenshot>${PROJECT_ROOT}\source\104703.JPG</param.screenshot>
-    <param.version>1.0</param.version>
-    <param.namespace>Ulysses_Win64</param.namespace>
     <param.guid />
     <param.installpath.string>Ulysses</param.installpath.string>
     <param.installpath.combo>option.installpath.programfiles</param.installpath.combo>
     <param.logo>${PROJECT_ROOT}\source\104703.JPG</param.logo>
     <param.install.notes />
+    <param.target.install.notes />
     <param.intermediate>${PROJECT_ROOT}\Ulysses_Win64\for_testing</param.intermediate>
+    <param.files.only>${PROJECT_ROOT}\Ulysses_Win64\for_redistribution_files_only</param.files.only>
     <param.output>${PROJECT_ROOT}\Ulysses_Win64\for_redistribution</param.output>
+    <param.logdir>${PROJECT_ROOT}\Ulysses_Win64</param.logdir>
+    <param.enable.clean.build>false</param.enable.clean.build>
+    <param.user.defined.mcr.options />
     <param.embed.ctf>true</param.embed.ctf>
     <param.target.type>subtarget.standalone</param.target.type>
-    <param.classorg />
+    <param.support.packages />
     <param.web.mcr>true</param.web.mcr>
     <param.package.mcr>false</param.package.mcr>
     <param.no.mcr>false</param.no.mcr>
     <param.web.mcr.name>Ulysses_installer</param.web.mcr.name>
     <param.package.mcr.name>MyAppInstaller_mcr</param.package.mcr.name>
     <param.no.mcr.name>MyAppInstaller_app</param.no.mcr.name>
-    <param.user.defined.mcr.options />
     <param.windows.command.prompt>true</param.windows.command.prompt>
-    <param.user.only.registration>false</param.user.only.registration>
-    <param.mads.no.java>false</param.mads.no.java>
-    <param.mads.exclusive.mcr>false</param.mads.exclusive.mcr>
-    <param.net.framework>option.net.framework.default</param.net.framework>
-    <param.assembly.type>false</param.assembly.type>
-    <param.encryption.key.file />
-    <param.net.enable.remoting>false</param.net.enable.remoting>
-    <param.net.tsa.enable>false</param.net.tsa.enable>
-    <param.net.tsa.assembly />
-    <param.net.tsa.interface />
-    <param.net.tsa.namespace>Ulysses_Win64</param.net.tsa.namespace>
-    <param.net.tsa.superclass />
-    <param.net.tsa.metadata />
-    <param.net.tsa.metadata.assembly>C:\Users\Default.VPC_WIN7x64\Documents\MATLAB</param.net.tsa.metadata.assembly>
     <param.create.log>true</param.create.log>
     <param.log.file>test</param.log.file>
     <unset>
       <param.icons />
+      <param.version />
       <param.summary />
       <param.description />
-      <param.version />
-      <param.namespace />
       <param.guid />
-      <param.install.notes />
+      <param.target.install.notes />
       <param.intermediate />
+      <param.files.only />
       <param.output />
+      <param.logdir />
+      <param.enable.clean.build />
       <param.embed.ctf />
       <param.target.type />
-      <param.classorg />
+      <param.support.packages />
       <param.web.mcr />
       <param.package.mcr />
       <param.no.mcr />
       <param.package.mcr.name />
       <param.no.mcr.name />
       <param.windows.command.prompt />
-      <param.user.only.registration />
-      <param.mads.no.java />
-      <param.mads.exclusive.mcr />
-      <param.net.framework />
-      <param.assembly.type />
-      <param.encryption.key.file />
-      <param.net.enable.remoting />
-      <param.net.tsa.enable />
-      <param.net.tsa.assembly />
-      <param.net.tsa.interface />
-      <param.net.tsa.namespace />
-      <param.net.tsa.superclass />
-      <param.net.tsa.metadata />
-      <param.net.tsa.metadata.assembly />
     </unset>
     <fileset.main>
       <file>${PROJECT_ROOT}\source\AllFile_specgram_viewer.m</file>
@@ -87,8 +63,6 @@
       <file>${PROJECT_ROOT}\source\104703.JPG</file>
       <file>${PROJECT_ROOT}\source\AllFile_specgram_viewer.fig</file>
       <file>${PROJECT_ROOT}\source\AllFile_specgram_viewer.m</file>
-      <file>${PROJECT_ROOT}\source\deps\104703.JPG</file>
-      <file>${PROJECT_ROOT}\source\deps\boxplot.m</file>
       <file>${PROJECT_ROOT}\source\deps\boxplot_percentile.m</file>
       <file>${PROJECT_ROOT}\source\deps\brickwall_bpf.m</file>
       <file>${PROJECT_ROOT}\source\deps\brickwall_hpf.m</file>
@@ -186,16 +160,85 @@
       <file>${PROJECT_ROOT}\source\104703.JPG</file>
       <file>${PROJECT_ROOT}\source\PreProcessV1.jar</file>
     </fileset.package>
+    <fileset.depfun>
+      <file>${PROJECT_ROOT}\source\deps\bnorm.m</file>
+      <file>${PROJECT_ROOT}\source\deps\choose_instant.m</file>
+      <file>${PROJECT_ROOT}\source\deps\DASAR_Shell_2007_equalization.m</file>
+      <file>${PROJECT_ROOT}\source\deps\demultiplex_DIFAR.m</file>
+      <file>${PROJECT_ROOT}\source\deps\display_correlogram_series.m</file>
+      <file>${PROJECT_ROOT}\source\deps\display_directional_diagram.m</file>
+      <file>${PROJECT_ROOT}\source\deps\display_time_series.m</file>
+      <file>${PROJECT_ROOT}\source\deps\dwindow.m</file>
+      <file>${PROJECT_ROOT}\source\deps\extract_warped_modes.m</file>
+      <file>${PROJECT_ROOT}\source\deps\Frequency_warping.m</file>
+      <file>${PROJECT_ROOT}\source\deps\get_ADAT24_cable_factor.m</file>
+      <file>${PROJECT_ROOT}\source\deps\get_Azigram_Callback.m</file>
+      <file>${PROJECT_ROOT}\source\deps\get_Berchok_time.m</file>
+      <file>${PROJECT_ROOT}\source\deps\get_start_time.m</file>
+      <file>${PROJECT_ROOT}\source\deps\get_start_time_MP4.m</file>
+      <file>${PROJECT_ROOT}\source\deps\getcgeneral_crude.m</file>
+      <file>${PROJECT_ROOT}\source\deps\getcgeneral_Sitka.m</file>
+      <file>${PROJECT_ROOT}\source\deps\getclin.m</file>
+      <file>${PROJECT_ROOT}\source\deps\getcmunk.m</file>
+      <file>${PROJECT_ROOT}\source\deps\imagescFun.m</file>
+      <file>${PROJECT_ROOT}\source\deps\input_batchparams.m</file>
+      <file>${PROJECT_ROOT}\source\deps\invariant_range_estimate.m</file>
+      <file>${PROJECT_ROOT}\source\deps\iwarp_t.m</file>
+      <file>${PROJECT_ROOT}\source\deps\iwarp_t_beta.m</file>
+      <file>${PROJECT_ROOT}\source\deps\iwarp_temp_exa.m</file>
+      <file>${PROJECT_ROOT}\source\deps\iwarp_temp_exa_beta.m</file>
+      <file>${PROJECT_ROOT}\source\deps\load_data.m</file>
+      <file>${PROJECT_ROOT}\source\deps\momftfr.m</file>
+      <file>${PROJECT_ROOT}\source\deps\ode45ray.m</file>
+      <file>${PROJECT_ROOT}\source\deps\quick_filter.m</file>
+      <file>${PROJECT_ROOT}\source\deps\raytrace_MATLAB.m</file>
+      <file>${PROJECT_ROOT}\source\deps\read_synchronized_dat_file.m</file>
+      <file>${PROJECT_ROOT}\source\deps\readGSIfile.m</file>
+      <file>${PROJECT_ROOT}\source\deps\sourceDeconv_dB.m</file>
+      <file>${PROJECT_ROOT}\source\deps\SSP_MURI_Feb2014_smooth.mat</file>
+      <file>${PROJECT_ROOT}\source\deps\tfrqview.m</file>
+      <file>${PROJECT_ROOT}\source\deps\tfrrsp.m</file>
+      <file>${PROJECT_ROOT}\source\deps\tfrstft.m</file>
+      <file>${PROJECT_ROOT}\source\deps\warp_t.m</file>
+      <file>${PROJECT_ROOT}\source\deps\warp_t_beta.m</file>
+      <file>${PROJECT_ROOT}\source\deps\warp_temp_exa.m</file>
+      <file>${PROJECT_ROOT}\source\deps\warp_temp_exa_beta.m</file>
+      <file>${PROJECT_ROOT}\source\deps\xcorr_dasars.m</file>
+    </fileset.depfun>
     <build-deliverables>
-      <file name="readme.txt" location="${PROJECT_ROOT}\Ulysses_Win64\for_testing" optional="true">E:\Work\matlab\AllFile_specgram_viewer\Ulysses_Win64\for_testing\readme.txt</file>
-      <file name="Ulysses_Win64.exe" location="${PROJECT_ROOT}\Ulysses_Win64\for_testing" optional="false">E:\Work\matlab\AllFile_specgram_viewer\Ulysses_Win64\for_testing\Ulysses_Win64.exe</file>
+      <file location="${PROJECT_ROOT}\Ulysses_Win64\for_testing" name="splash.png" optional="false">C:\Users\bsarkar\Documents\Ulysses\Ulysses_Win64\for_testing\splash.png</file>
+      <file location="${PROJECT_ROOT}\Ulysses_Win64\for_testing" name="Ulysses_Win64.exe" optional="false">C:\Users\bsarkar\Documents\Ulysses\Ulysses_Win64\for_testing\Ulysses_Win64.exe</file>
+      <file location="${PROJECT_ROOT}\Ulysses_Win64\for_testing" name="readme.txt" optional="true">C:\Users\bsarkar\Documents\Ulysses\Ulysses_Win64\for_testing\readme.txt</file>
     </build-deliverables>
     <workflow />
     <matlab>
-      <root>C:\Program Files (x86)\MATLAB\R2013b</root>
+      <root>C:\Program Files\MATLAB\R2016b</root>
       <toolboxes>
         <toolbox name="fixedpoint" />
+        <toolbox name="matlabcoder" />
+        <toolbox name="matlabhdlcoder" />
+        <toolbox name="embeddedcoder" />
       </toolboxes>
+      <toolbox>
+        <fixedpoint>
+          <enabled>true</enabled>
+        </fixedpoint>
+      </toolbox>
+      <toolbox>
+        <matlabcoder>
+          <enabled>true</enabled>
+        </matlabcoder>
+      </toolbox>
+      <toolbox>
+        <matlabhdlcoder>
+          <enabled>true</enabled>
+        </matlabhdlcoder>
+      </toolbox>
+      <toolbox>
+        <embeddedcoder>
+          <enabled>true</enabled>
+        </embeddedcoder>
+      </toolbox>
     </matlab>
     <platform>
       <unix>false</unix>
@@ -206,12 +249,11 @@
       <vista>false</vista>
       <linux>false</linux>
       <solaris>false</solaris>
-      <osver>6.1</osver>
-      <os32>true</os32>
-      <os64>false</os64>
-      <arch>win32</arch>
+      <osver>6.2</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
       <matlab>true</matlab>
     </platform>
   </configuration>
 </deployment-project>
-
