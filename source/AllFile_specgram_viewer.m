@@ -3096,7 +3096,8 @@ catch
         audiowrite([save_path '_4x.wav'],(x/(1.1*max(max(abs(x))))),round(Fs*4));
         audiowrite([save_path '.wav'],(x/(1.1*max(max(abs(x))))),round(Fs));
     else
-        wavwrite(x/(1.1*max(max(abs(x)))),round(Fs),[save_path '.wav']);
+%        wavwrite(x/(1.1*max(max(abs(x)))),round(Fs),[save_path '.wav']);
+		audiowrite([save_path '.wav'], x/(1.1*max(max(abs(x)))),round(Fs));
     end
     
 end
@@ -5260,8 +5261,10 @@ for Imodel=1:length(MFP_scenario)
     plot_range_estimates;
     
     if plot_chc==1
-        if exist('MM', 'var');
-            movie2avi(MM,'tiltTest');
+        if exist('MM', 'var')
+%            movie2avi(MM,'tiltTest');
+%			vid_obj	=	VideoWriter('tiltTest.avi'); %#ok<TNMLP>
+			
         end
         keyboard
         for I=1:12
