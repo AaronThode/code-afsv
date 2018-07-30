@@ -38,7 +38,7 @@ elseif strcmp(keyword,'short')||~isempty(strfind(keyword,'DASARC'))
     end
 elseif strcmp(keyword,'filter')
     error('calibrate_GSI_signal: filter no longer a valid keyword...')
-elseif ~isempty(strfind(keyword,'NorthStar08')),
+elseif ~isempty(strfind(keyword,'NorthStar08'))
     
     %%This has a 10 Hz high pass filter
     filt.a=[1.000000000000000e+00    -2.911197067426073e+00     2.826172902227507e+00    -9.149758348014339e-01];
@@ -128,7 +128,7 @@ elseif ~isempty(strfind(keyword,'Liberty08')>0)
     %     keyboard;
 end
 
-if 1==0,
+if 1==0
     Fs=1000;
     Nfft=256;
     A=fft(filt.a,Nfft);

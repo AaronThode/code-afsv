@@ -22,7 +22,7 @@ elseif strfind(rawfile,'.gsi')
         
     end
     y=y(nchan,:);
-    if strcmp(calibrate,'calibrate'),
+    if strcmp(calibrate,'calibrate')
         y=y-0.5*(2^16);  %Remove DC bias in A/D converter
         
         y=y*(2.5/65535)*(10^(150/20));

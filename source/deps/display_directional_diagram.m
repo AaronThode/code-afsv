@@ -66,7 +66,14 @@ if get_newparams
     Batch_vars=get_Azigram_Callback(handles);
     handles.azigram.sec_avg=(Batch_vars.sec_avg);
     handles.azigram.climm=(Batch_vars.climm);
-    handles.azigram.brefa=(Batch_vars.brefa);
+    if strcmpi(handles.filetype,'gsi')
+        handles.azigram.brefa=(Batch_vars.brefa);
+        %%%Don't alter hdr.brefa, which contains the correction.
+    else
+        handles.azigram.brefa=(Batch_vars.brefa);
+        hdr.brefa=eval(handles.azigram.brefa);
+
+    end
     handles.azigram.alg=Batch_vars.alg;
 end
 
@@ -76,7 +83,6 @@ end
 % Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, 'Vector Sensor Processing');
 sec_avg=str2num(handles.azigram.sec_avg);
 climm=eval(handles.azigram.climm);
-hdr.brefa=eval(handles.azigram.brefa);
 alg_mult=eval(handles.azigram.alg);
 
 if ~isempty(sec_avg)&&sec_avg>0
