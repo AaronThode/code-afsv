@@ -14,13 +14,15 @@ P=10*log10(abs(P));
 % Bmean=median(P')';
 
 %%%%Locate pilot signals
-Bwidth=10;
+Bwidth=50;
 [I75]=find(F>=7500-0.5*Bwidth&F<=7500+0.5*Bwidth);
-[~,Ipilot]=max(P(I75));
+[~,Ipilot]=max(P(I75,:));
+Ipilot=mode(Ipilot);
 Ipilot75=I75(Ipilot);
 
 [I15]=find(F>=2*7500-0.5*Bwidth&F<=2*7500+0.5*Bwidth);
-[~,Ipilot]=max(P(I15));
+[~,Ipilot]=max(P(I15,:));
+Ipilot=mode(Ipilot);
 Ipilot15=I15(Ipilot);
 pilot_phase=(exp(-1i*angle(S(Ipilot15,:))));
 
@@ -31,7 +33,8 @@ pilot_phase=(exp(-1i*angle(S(Ipilot15,:))));
 
 P=S(2:(Ipilot75-1),:);
 N=Ipilot75-2;
-Sm=flipud(S((Ipilot75+1):(Ipilot15-1),:));
+%Sm=flipud(S((Ipilot75+1):(Ipilot15-1),:));
+Sm=flipud(S((Ipilot75+1)+(0:N-1),:));
 Sp=S((Ipilot15+1)+(0:N-1),:);
 
 [Nf,Nt]=size(P);

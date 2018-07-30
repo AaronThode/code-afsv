@@ -29,7 +29,7 @@ elseif strfind(rawfile,'.gsi')
     end
     y=y.';
     
-    if (abs(size(y,1)-floor(head.Fs*tlen))>2),
+    if (abs(size(y,1)-floor(head.Fs*tlen))>2)
         disp('End of file reached, setting y to empty');
         y=[];
     end
