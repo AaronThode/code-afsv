@@ -30,22 +30,42 @@ if strcmpi(handles.filetype,'gsi')
     %axes(handles.axes1);
     %figure
     
-    M=floor(1+(size(x,2)-Nfft)/dn);
-    FF=linspace(0,Fs,Nfft);
-    FF=FF(1:(Nfft/2));
-    TT=(0:(M-1))*dn/Fs;
+    %%%Original code that does not use the spectrogram function (switched
+    %%%to hamming instead of hanning on July 29 2018)
+%     tic
+%     M=floor(1+(size(x,2)-Nfft)/dn);
+%     FF=linspace(0,Fs,Nfft);
+%     FF=FF(1:(Nfft/2));
+%     TT=(0:(M-1))*dn/Fs;
+%     
+%     B=zeros(3,Nfft/2,M);
+%     x=x';
+%     for J=1:M
+%         index=(J-1)*dn+(1:Nfft);
+%         xsub=x(index,:);  %xsub is [nsamp nchan];
+%         Xsub=fft((hamming(Nfft)*ones(1,3)).*xsub,Nfft);
+%         B(:,1:(Nfft/2),J)=Xsub(1:(Nfft/2),:).';
+%     end
+%     vx=squeeze(real((B(1,:,:).*conj(B(2,:,:)))));
+%     vy=squeeze(real((B(1,:,:).*conj(B(3,:,:)))));
+%     Nf=Nfft/2;
+%     toc
     
-    B=zeros(3,Nfft/2,M);
+    %%%%Test alternate, faster version, used since July 29, 2018
+    tic
+    M=floor(1+(size(x,2)-Nfft)/dn);
     x=x';
-    for J=1:M
-        index=(J-1)*dn+(1:Nfft);
-        xsub=x(index,:);  %xsub is [nsamp nchan];
-        Xsub=fft((hanning(Nfft)*ones(1,3)).*xsub,Nfft);
-        B(:,1:(Nfft/2),J)=Xsub(1:(Nfft/2),:).';
+    B=zeros(size(x,2),Nfft/2+1,M);
+    for J=1:size(x,2)
+        [B(J,:,:),FF,TT] = spectrogram(x(:,J),Nfft,round(ovlap*Nfft),Nfft,Fs);
     end
     vx=squeeze(real((B(1,:,:).*conj(B(2,:,:)))));
     vy=squeeze(real((B(1,:,:).*conj(B(3,:,:)))));
-    Nf=Nfft/2;
+    Nf=Nfft/2+1;  %Should be the same as length(FF)
+   
+    toc
+    
+    
 elseif ~isempty(strfind(handles.myfile,'DIFAR'))
     M=floor(1+(max(size(x))-Nfft)/dn);
     [vx,vy,TT,FF]=demultiplex_DIFAR(x,Fs,Nfft,ovlap);

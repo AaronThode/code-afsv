@@ -11,10 +11,10 @@ function [omi,t,head]=readgsi(fn,ctstart,tlen,formatt)
 
 t=[];omi=[];
 head=readgsif_header(fn);
-if nargin==1,
+if nargin==1
     return
 end
-if nargin<4,
+if nargin<4
     formatt='ctime';
 end
 
@@ -27,13 +27,13 @@ end
 fs=head.Fs*(1+head.tdrift/86400);
 fid = fopen(char(fn),'r','ieee-be');
 
-if head.ctbc>ctstart&ctstart>0,
+if head.ctbc>ctstart&ctstart>0
     %disp('Start time less than file start');
     fclose(fid);
     return;
 end
 
-if ctstart<=0,
+if ctstart<=0
     %disp('cstart less than or equal to zero; interpret as seconds offset from file start');
     tsec=abs(ctstart);
 else
@@ -55,7 +55,7 @@ t=(1:size(omi,2))/head.Fs;
 %spectrogram(omi,hanning(N),N/2,N,head.Fs,'yaxis') % gram
 %end
  
-if 1==0,
+if 1==0
    fn='S508A0T20080819T072522.gsi';
    tstart=0;
    %tstart=datenum(2008,8,19,12,0,0);
