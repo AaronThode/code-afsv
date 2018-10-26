@@ -151,7 +151,7 @@ handles.buttongroup.multichan(2)=handles.edit_chan;
 handles.buttongroup.GSI(1)=handles.pushbutton_GSIbearing;
 handles.buttongroup.GSI(2)=handles.pushbutton_GSI_localization;
 handles.buttongroup.GSI(3)=handles.radiobutton_directionality;
-handles.buttongroup.GSI(4)=handles.radiobutton_reactive;
+handles.buttongroup.GSI(4)=handles.radiobutton_energy;
 %Set default template 
 if strfind(getenv('USER'),'thode') 
     handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
@@ -3094,6 +3094,8 @@ catch
     
     if(str2double(matVers(1:4))>2012 || strcmp(matVers,'2012b'))
         audiowrite([save_path '_4x.wav'],(x/(1.1*max(max(abs(x))))),round(Fs*4));
+        audiowrite([save_path '_32d.wav'],(x/(1.1*max(max(abs(x))))),round(Fs/32));
+        
         audiowrite([save_path '.wav'],(x/(1.1*max(max(abs(x))))),round(Fs));
     else
 %        wavwrite(x/(1.1*max(max(abs(x)))),round(Fs),[save_path '.wav']);
@@ -8336,7 +8338,7 @@ if isempty(tlen)
 end
 mydir	=	pwd;
 
-want_directionality=strcmp(handles.display_view,'Directionality')||strcmpi(handles.display_view,'ReactiveRatio');
+want_directionality=strcmp(handles.display_view,'Directionality')||strcmpi(handles.display_view,'EnergyRatio');
 
 if want_directionality&strcmpi(handles.filetype,'gsi')
     Ichan='all';
@@ -8438,7 +8440,7 @@ end
 
 
 if want_directionality
-    [TT,FF,azi,vx,vy,handles]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr);
+    [TT,FF,azi,vx,vy,ratioo,handles]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr);
     handles.azigram.azi=azi;
     handles.azigram.TT=TT;
     handles.azigram.FF=FF;
@@ -10271,7 +10273,8 @@ Ichan	=	str2double(get(handles.edit_chan,'String'));  %Hardwire first channel
 
 %%x=get_signal.m
 
-Iwant=menu('Which signal?','Separated Modes','Current signal','Current signal with saved parameters','Simulation');
+%Iwant=menu('Which signal?','Separated Modes','Current signal','Current signal with saved parameters','Simulation');
+Iwant=2;
 
 if Iwant==0
     return;
@@ -10331,13 +10334,13 @@ else
         Rest=ceil(Fs/fmax/2.5);
         %Rest=10;
         tempWindow=str2double(get(handles.edit_winlen,'String'));
-        deconv_chc='0';
+        deconv_chc='1';
 
         %Load saved parameters, select new ones
         %%% JULIEN, here is where you specify arbitrary beta %%%
         prompt={'Range guess(m)','water speed (m/s)','bottom speed (m/s)','Nfft','N_window', ...
             'Decimation factor:','Number of FM contour points:','Deconvolve? (yes=1)','Beta transform? (no=0, yes= beta value'};
-        def={'15000','1442','1650',Nfft,WindowSize,num2str(Rest),'2',deconv_chc,'-3'};
+        def={'9000','1490','1650',Nfft,WindowSize,num2str(Rest),'2',deconv_chc,'0'};
         dlgTitle	=	sprintf('Warping parameters');
         lineNo		=	ones(size(prompt));
         answer		=	inputdlg(prompt,dlgTitle,lineNo,def);

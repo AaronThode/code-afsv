@@ -1,8 +1,7 @@
 function [modes_ok,filtt,modes_signal]=Frequency_warping(x,stft_param,filt_param,hdr,handles,param_file,var_temp)
 %function [modes_ok,filtt,modes_signal]=Frequency_warping(x,stft_param,filt_param,hdr,handles,param_file,var_temp)
 %  modes_ok: [Nmodes Ntime] of mode time series without source phase
-%  modes_signal:  [Nmodes Ntime] of mode time series with source phase
-%  added back
+%  modes_signal:  [Nmodes Ntime] of mode time series with source phase  added back
 %
 % var_temp: structure of variables for warping
 Nmodes=5;                           % Number of modes to search and localize
@@ -224,7 +223,6 @@ while redo
     end
     
     TFR=20*log10(abs(tfr));
-    
     figure
     imagescFun(time,freq,TFR,'xy');
     ylim(flims)
@@ -236,6 +234,7 @@ while redo
     ylabel('Frequency [Hz]')
     grid on
     legend(leg)
+    
     
     %%%%%Plot orignal signal components
     leg=repmat(' ',Nmode,7);
@@ -280,6 +279,7 @@ while redo
     ylabel('Frequency [Hz]')
     grid on
     legend(leg)
+    keyboard
     redo=input('Enter 1 to redo mode selection:');
     if isempty(redo)
         redo=0;

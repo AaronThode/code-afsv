@@ -1,5 +1,5 @@
 %%%%display_directional_diagram.m
-%function [TT,FF,azi,vx,vy,handles]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr)
+%function [TT,FF,azi,vx,vy,VR_ratio,handles]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr)
 %
 % handles.filetype
 % handles.myfile
@@ -11,8 +11,9 @@
 % handles.display_view,'Directionality'
 % handles.checkbox_grayscale,'Value'
 %  handles.edit_fmax,edit_fmin
-function [TT,FF,azi,vx,vy,handles]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr)
+function [TT,FF,azi,vx,vy,KV_ratio,handles]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr)
 
+azi=[];vx=[];vy=[];KV_ratio=[];
 if strcmpi(handles.filetype,'PSD')
     return
 end
@@ -59,21 +60,32 @@ if strcmpi(handles.filetype,'gsi')
     for J=1:size(x,2)
         [B(J,:,:),FF,TT] = spectrogram(x(:,J),Nfft,round(ovlap*Nfft),Nfft,Fs);
     end
-    vx=squeeze(real((B(1,:,:).*conj(B(2,:,:)))));
-    vy=squeeze(real((B(1,:,:).*conj(B(3,:,:)))));
-    Nf=Nfft/2+1;  %Should be the same as length(FF)
-   
-    toc
+   % vx=squeeze(real((B(1,:,:).*conj(B(2,:,:)))));
+    %vy=squeeze(real((B(1,:,:).*conj(B(3,:,:)))));
+    rho=1000;c=1500;
     
+    vx=squeeze(((B(1,:,:).*conj(B(2,:,:)))))./(rho*c); %%Convert velocity into velocity units
+    vy=squeeze(((B(1,:,:).*conj(B(3,:,:)))))./(rho*c);
+    
+    Nf=Nfft/2+1;  %Should be the same as length(FF)
+    toc
+    get_newparams=false;
+
     
 elseif ~isempty(strfind(handles.myfile,'DIFAR'))
     M=floor(1+(max(size(x))-Nfft)/dn);
     [vx,vy,TT,FF]=demultiplex_DIFAR(x,Fs,Nfft,ovlap);
     Nf=length(FF);
+    get_newparams=false;
+
+    if exist('hdr','var')
+        if ~isfield(hdr,'brefa')
+        get_newparams=true;
+        end
+    end
 end
 
 %sec_avg=input('Enter time to average over (sec; 0 does no averaging):');
-get_newparams=false;
 if ~isfield(handles,'azigram')
     get_newparams=true;
     
@@ -105,8 +117,11 @@ sec_avg=str2num(handles.azigram.sec_avg);
 climm=eval(handles.azigram.climm);
 alg_mult=eval(handles.azigram.alg);
 
+
+%%%%%Average vx and vy, if needed
 if ~isempty(sec_avg)&&sec_avg>0
     Navg=floor(sec_avg*Fs/dn);  %Samples per avg
+    fprintf('%i averages per sample.\n',Navg);
     if Navg==0
         Navg=1;
         sec_avg=dn/Fs;
@@ -131,7 +146,7 @@ end
 
 if strcmpi(handles.display_view,'Directionality')
     
-    mu = 180/pi*atan2(vx,vy);
+    mu = (180/pi)*atan2(real(vx),real(vy));
     azi=bnorm(hdr.brefa+mu);
     
     
@@ -148,67 +163,51 @@ if strcmpi(handles.display_view,'Directionality')
     end
     caxis(climm);
     
-elseif strcmpi(handles.display_view,'ReactiveRatio')
+elseif strcmpi(handles.display_view,'EnergyRatio')
     %Uncomment to show reactive intensity
-    active=sqrt(vx.^2+vy.^2);
     
-    %vx=squeeze(imag((B(1,:,:).*conj(B(2,:,:)))));
-    %vy=squeeze(imag((B(1,:,:).*conj(B(3,:,:)))));
-    if ~isempty(sec_avg)&&sec_avg>0
-        vx_avg=zeros(Nf,Nsnap);
-        vy_avg=vx_avg;
+    pressure_autospectrum=squeeze(abs(B(1,:,:)).^2);
+    normalized_velocity_autospectrum=squeeze(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2);
+    
+    %%These velocities have units of pressure :
+    %%(rho*c*velocity)
+    %intensity_a=sqrt(real(vx).^2)+(real(vy).^2);
+    %intensity_r=sqrt(imag(vx).^2)+(imag(vy).^2);
+    %velocity_cross=squeeze(((B(2,:,index).*conj(B(3,:,index))))).'./(rho*c).^2;
+                       
+      
+     if ~isempty(sec_avg)&&sec_avg>0
+        PA_avg=zeros(Nf,Nsnap);
+        NVA_avg=PA_avg;
         for J=1:Nsnap
             index=floor((J-1)*Navg*(1-ovlap))+(1:Navg);
-            vx_avg(:,J)=mean(vx(:,index),2);
-            vy_avg(:,J)=mean(vy(:,index),2);
+            PA_avg(:,J)=mean(pressure_autospectrum(:,index),2);
+            NVA_avg(:,J)=mean(normalized_velocity_autospectrum(:,index),2);
         end
-        vx=vx_avg;
-        vy=vy_avg;
+        pressure_autospectrum=PA_avg;
+        normalized_velocity_autospectrum=NVA_avg;
         TT=TT_avg;
     end
     
-    reactive=sqrt(vx.^2+vy.^2);
-    total=(reactive+active);
-    imagesc(TT,FF/1000,10*log10(abs(active./total)));
-    climm=[-10 0];
-    caxis(climm);
-    titstr='active fraction (dB)';
+    KV_ratio=(normalized_velocity_autospectrum./pressure_autospectrum);
+    kang=acosd(sqrt(KV_ratio));kang(imag(kang)~=0)=0;
+    
+    imagesc(TT,FF/1000,KV_ratio);caxis([0 2])
+    %imagesc(TT,FF/1000,cos_ratio);caxis([0 2]);
+   
+    colormap(jet);axis('xy');figure(gcf);colorbar
+            
+    keyboard
+    %%%Set colorscale
+    %caxx=str2double(handles.edit_mindB.String)+[0 str2double(handles.edit_dBspread.String)];
+    %caxis(caxx);
+    titstr='Energy ratio (dB)';
     if get(handles.checkbox_grayscale,'Value')==1
         colormap(flipud(gray));
     else
         colormap(jet);
     end
-    % elseif strcmpi(handles.display_view,'Impedance')
-    %     %Uncomment to show reactive intensity
-    %
-    %     vx=squeeze(B(2,:,:));
-    %     vy=squeeze(B(3,:,:));
-    %     v=sqrt(abs(vx).^2+abs(vy).^2);
-    %     p=abs(squeeze(B(1,:,:)));
-    %
-    %     if ~isempty(sec_avg)&&sec_avg>0
-    %         v_avg=zeros(Nfft/2,Nsnap);
-    %         p_avg=v_avg;
-    %         for J=1:Nsnap
-    %             index=floor((J-1)*Navg*(1-ovlap))+(1:Navg);
-    %             v_avg(:,J)=mean(v(:,index),2);
-    %             p_avg(:,J)=mean(p(:,index),2);
-    %         end
-    %         v=v_avg;
-    %         p=p_avg;
-    %         TT=TT_avg;
-    %     end
-    %
-    %
-    %     imagesc(TT,FF/1000,20*log10(abs(v./p)));
-    %     climm=[-6 10];
-    %     caxis(climm);
-    %     titstr='Acoustic impedance (dB)';
-    %     if get(handles.checkbox_grayscale,'Value')==1,
-    %         colormap(flipud(gray));
-    %     else
-    %         colormap(jet);
-    %     end
+    
 end
 
 grid on

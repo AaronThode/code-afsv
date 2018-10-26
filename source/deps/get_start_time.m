@@ -1,4 +1,6 @@
-%function  [filtt,params]=get_start_time(x_deconv,NFFT,N,Nwindow,Fs,flims,r_guess,c1,c2,D,Nmodes,filtt,beta_transform,beta)
+%%% get_start_time.m estimates the start time to use for warping..
+%%function  [filtt,params]=get_start_time(x_deconv,NFFT,N,Nwindow,Fs,flims,r_guess,c1,c2,D,Nmodes,filtt,beta_transform,beta)
+%%%% 
 function  [filtt,params]=get_start_time(x_deconv,NFFT,N,Nwindow,Fs,flims,r_guess,c1,c2,D,Nmodes,filtt,beta_transform,beta)
 
 %%filtt.xmin is final shift..
@@ -52,11 +54,11 @@ else
         tt=tmp(:,1);
         rr=(f(2)/f(1)).^((1+beta)/beta);
         Trc=(rr*tt(2)-tt(1))/(rr-1);
-        fprintf('Estimated rc time is %8.6f seconds\n',Trc);
+        fprintf('Estimated r/c time is %8.6f seconds\n',Trc);
         hold on
         line([1 1]*Trc,[0.8*flims(1) 1.2*flims(2)],'linewidth',3,'color','w','linestyle','--')
         line([1 1]*tt(2),[0.8*flims(1) 1.2*flims(2)],'linewidth',2,'color','g')
-        
+        fprintf('Green is your last selected point, dashed white is estimated start time (r/c)\n');
         nothappy=input('Not happy?');
     end
     
@@ -74,7 +76,7 @@ j=j(1);
 dt=j/Fs;
 %close(fig)
 
-%%% Choose a list of time samples surrounding the selected one
+%%% Choose a list of time start candidates surrounding the selected one
 frac=1/100;
 if beta>=0
     dj=max(1,ceil(j/2*(1-(1-frac)^2)*(1-(c1*j/Fs/r_guess)^2))); % Step (calculated so that the modes shift is about 1/50 of the distance between 2 pekeris cutoff frequencies
