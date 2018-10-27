@@ -82,9 +82,13 @@ switch filetype
             return
         end
         simulated=load(fullfile(mydir,myfile));
-        Fs=simulated.fs;
+        Fs=simulated.Fs;
         x=simulated.x;Ichan=15;
         
+        %%%Check that x is vertical
+        if size(x,2)>size(x,1)
+            x=x';
+        end
         %%Uncomment to conduct Bering Sea call selection
         %%% size(x)=[ 5(zplot)           4 (rplot)          8       16033]
 %         name='Bering Sea Simulations';
@@ -126,7 +130,7 @@ switch filetype
         if strcmp(Ichan,'all')
             Ichan=1:size(x,2);
         end
-        if max(Ichan)>max(size(x,2)),
+        if max(Ichan)>max(size(x,2))
             disp(['Channel too high, restricting to ' int2str(max(size(x,2)))]);
             Ichan=max(size(x,2));
         end
@@ -152,9 +156,13 @@ switch filetype
         t=(1:length(x))/Fs;
         
         tmax=tmin+datenum(0,0,0,0,0,max(t));
-        head.geom.rd=simulated.rd;
+        try
+            head.geom.rd=simulated.rd;
+        catch
+            head.geom.rd=0;
+        end
         head.Nchan=size(x,2);
-        x=x';
+        %x=x';
     case 'GSI'
         
         button_chc=get(handles.togglebutton_ChannelBeam,'String');

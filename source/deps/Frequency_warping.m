@@ -1,18 +1,21 @@
-function [modes_ok,filtt,modes_signal]=Frequency_warping(x,stft_param,filt_param,hdr,handles,param_file,var_temp)
-%function [modes_ok,filtt,modes_signal]=Frequency_warping(x,stft_param,filt_param,hdr,handles,param_file,var_temp)
-%  modes_ok: [Nmodes Ntime] of mode time series without source phase
-%  modes_signal:  [Nmodes Ntime] of mode time series with source phase  added back
+function [x_modes_ok,filtt,x_modes_signal]=Frequency_warping(x,stft_param,filt_param,hdr,handles,param_file,var_temp)
+%function [x_modes_ok,filtt,x_modes_signal]=Frequency_warping(x,stft_param,filt_param,hdr,handles,param_file,var_temp)
+%  x_modes_ok: [Nmodes Ntime] of mode time series without source phase
+%  x_modes_signal:  [Nmodes Ntime] of mode time series with source phase  added back
 %
 % var_temp: structure of variables for warping
+
+
 Nmodes=5;                           % Number of modes to search and localize
+Nmodes=var_temp.Nmodes;
 D=51;  %Depth for modeling Pekeris frequencies...
+
+
 %%% Create a folder to save the results
 saveFold=[strjoin(strsplit(handles.outputdir,'\'),'/') '/' datestr(handles.tdate_start,30)];
-
 if exist(saveFold,'dir')~=7
     mkdir(saveFold)
 end
-
 cd(saveFold)
 
 %%% General parameters and variables
@@ -28,11 +31,11 @@ catch
 end
 
 next=zeros(1,4)+1;      % A boolean vector used to go back and forward in the program
+
+%Get number of hydrophones in the data
 Nhydros=max([ 1 1*(strcmp(handles.filetype,'GSI'))+15*(strcmp(handles.filetype,'MDAT'))]); % DASAR or VLA
-[Fs,NFFT]=deal(stft_param.Fs,stft_param.Nfft);
 
-%%%%Pad x
-
+%%%%Pad x to be a power of 2 length.
 Nx=length(x(:,1));
 N=2^nextpow2(Nx);
 buff=round((N-Nx)/2);
@@ -40,39 +43,39 @@ y=zeros(N,size(x,2));
 y(buff+(1:length(x(:,1))),:)=(x-mean(x)*ones(Nx,1));
 x=y;
 
+
+%%Download parameters from user menu
 Nwindow=stft_param.N_window;
+[Fs,NFFT]=deal(stft_param.Fs,stft_param.Nfft);
 [r_guess,c1,c2]=deal(filt_param.r_guess,filt_param.c1,filt_param.c2);
 flims=filt_param.flims; % frequency bounds
 if min(flims)==0
-    uiwait(msgbox('Problem!  Warping requires a lower filtering limit.  Adjust minimum frequency'));
+    uiwait(msgbox('Problem!  Warping requires a lower filtering limit.  Adjust minimum frequency in main window'));
+    %flims(1)=input('Enter a new frequency:');
     filtt=[];
     modes_ok=[];
     return
 end
-%%% Check for bad hydrophones
 
+
+%%% Check for bad hydrophones
 if Nhydros~=1
     norm_tmp=x/norm(x(:,hydro_ref));
     hydros_ok=var_temp.Nchan(sqrt(sum(norm_tmp.^2,1))>0.01);
 else
     hydros_ok=[1]; % DASAR
 end
-
 Nhydros=length(hydros_ok);
 filtt.Nchan=hydros_ok;
 
 %%%% Signal selection  %%%
-
 for Nh=hydros_ok
     [x(:,Nh),~]=quick_filter(x(:,Nh),Fs,flims(1),flims(2));
 end
-
 filtt.Fs=Fs;
 freq=(0:NFFT-1)/NFFT*Fs;
 
 %%%% Source deconvolution %%%%%%%
-
-
 if strcmp(param_file,'')&&var_temp.deconv_chc==1 % If the user didn't select a file for deconvolution
     [x_deconv,source_phase,t_points,f_points] = sourceDeconv_dB(x(:,hydro_ref),Fs,NFFT,Nwindow,flims,filt_param.Ncontour);
     
@@ -82,11 +85,8 @@ elseif (var_temp.deconv_chc==1) %otherwise we take the selected points from the 
     iflaw=interp1(t_points,f_points,t,'linear')';
     Fsource=fft(fmodany(iflaw/Fs),N);
     source_phase=angle(Fsource);
-    
     disp('End of source deconvolution')
-    
     x_f=fft(x(:,hydro_ref),length(source_phase));
-    
     x_deconv=ifft(x_f.*exp(-1i*source_phase),'symmetric');
 elseif var_temp.deconv_chc==0
     x_deconv=x;
@@ -110,7 +110,6 @@ end
 %%% Time selection (for warping)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 next(2:end)=1;
 
 [filtt,params]=get_start_time(x_deconv,NFFT,N,Nwindow,Fs,flims,r_guess,c1,c2,D,Nmodes,filtt,var_temp.beta_transform,var_temp.beta);
@@ -130,18 +129,21 @@ N=length(x_deconv);
 
 % Mode selection
 while redo
-    modes_ok=[];
+    %%%%%%%%%%%%%%
+    %%%Allow mode extraction from multiple delays
+    %%%%%%%%%%
+    x_modes_ok=[];
     mode_index=[];
     Nmode=0;
     for I=1:length(delays)
-        x_ok=[x_deconv(delays(I):end); zeros(delays(I)-1,1)];
+        x_trimmed=[x_deconv(delays(I):end); zeros(delays(I)-1,1)];
         if var_temp.beta<0
             %nzero=length(x_deconv)-delays(I);
-            %x_ok=[x_deconv(1:delays(I)); zeros(nzero,1)];
-            x_ok=x_deconv;
+            %x_trimmed=[x_deconv(1:delays(I)); zeros(nzero,1)];
+            x_trimmed=x_deconv;
          
         end
-        [modes,Nm,filtt] = extract_warped_modes(x_ok,Fs,N,params.Nww,r_guess,c1,params.clims,filtt,  ...
+        [x_modes,Nm,filtt] = extract_warped_modes(x_trimmed,Fs,N,params.Nww,r_guess,c1,params.clims,filtt,  ...
            var_temp.beta_transform,var_temp.beta,params.dtmax,params.dt_rc);
         
         temp=input('Enter mode numbers:');
@@ -151,27 +153,27 @@ while redo
             continue
         end
         
-        if var_temp.beta>0
-            modes=[zeros(Nm,delays(I)-1) modes];
+        if var_temp.beta>=0  %%AARON bug fix?
+            x_modes=[zeros(Nm,delays(I)-1) x_modes];
         end
-        modes=modes(:,1:N);
-        modes_ok=[modes_ok;modes];
+        x_modes=x_modes(:,1:N);
+        x_modes_ok=[x_modes_ok;x_modes];
         mode_index=[mode_index temp];
         Nmode=Nmode+Nm;
-        
     end  %delays
     
-    %N=size(modes,1);
+    %N=size(x_modes,1);
     
-    [mode_index,Isort]=sort(mode_index);
-    modes_ok=modes_ok(Isort,:);
+    [~,Isort]=sort(mode_index);
+    x_modes_ok=x_modes_ok(Isort,:);
     
-    
+    %%%%
     %Add back original deconvolved source spectrum...
-    for I=1:size(modes_ok)
-        N=size(modes_ok,2);
-        x_f=fft(modes_ok(I,:).',N);
-        modes_signal(I,:)=ifft(x_f.*exp(1i*source_phase),N,'symmetric').';
+    %%%%%%%
+    for I=1:size(x_modes_ok)
+        N=size(x_modes_ok,2);
+        x_f=fft(x_modes_ok(I,:).',N);
+        x_modes_signal(I,:)=ifft(x_f.*exp(1i*source_phase),N,'symmetric').';
 
     end
     time=(0:N-1)/Fs;
@@ -193,23 +195,24 @@ while redo
 %         end
 %     end
 %     
-%     modes_ok=filtt.mode_stack(:,:,hydro_ref)';
+%     x_modes_ok=filtt.mode_stack(:,:,hydro_ref)';
+
     %%%%% Extract dispersion curves for impulse response
     
     tm=zeros(Nmode,NFFT);
     for m=1:Nmode
-        [~, mode_rtfr,~]=tfrrsp(hilbert(modes_ok(m,:).'),1:N,NFFT,hamming(Nwindow));
+        [~, mode_rtfr,~]=tfrrsp(hilbert(x_modes_ok(m,:).'),1:N,NFFT,hamming(Nwindow));
         [tm(m,:),~]=momftfr(mode_rtfr,1,N,time);
     end 
     leg=repmat(' ',Nmode,7);
-    figure
     
     %%%%%Plot impulse response mode estimates
-    for m=1:Nmode
+    figure(10)
+     for m=1:Nmode
         leg_i=['Mode ' num2str(m)];
         leg(m,1:length(leg_i))=leg_i;
         subplot(ceil(sqrt(Nmode)),ceil(sqrt(Nmode)),m)
-        tfr_modes=tfrstft(modes_ok(m,:)',1:N,NFFT,hamming(Nwindow));
+        tfr_modes=tfrstft(x_modes_ok(m,:)',1:N,NFFT,hamming(Nwindow));
         imagescFun(time,freq,20*log10(abs(tfr_modes)),'xy')
         ylim(flims)
         title(leg_i)
@@ -217,13 +220,14 @@ while redo
     
     %%%Plot impulse mode dispersion curve
     if var_temp.beta>=0
-        tfr=tfrstft(x_deconv(1:end,hydro_ref),1:N,NFFT,hamming(Nwindow));
+        tfr=tfrstft(x_deconv(:,hydro_ref),1:N,NFFT,hamming(Nwindow));
     else
-        tfr=tfrstft(sum(modes_ok,1)',1:N,NFFT,hamming(Nwindow));
+        tfr=tfrstft(sum(x_modes_ok,1)',1:N,NFFT,hamming(Nwindow));
     end
     
     TFR=20*log10(abs(tfr));
-    figure
+    
+    figure(11)
     imagescFun(time,freq,TFR,'xy');
     ylim(flims)
     %caxis([prctile(TFR(:),70) prctile(TFR(:),100)])
@@ -238,27 +242,27 @@ while redo
     
     %%%%%Plot orignal signal components
     leg=repmat(' ',Nmode,7);
-    figure
+    figure(12)
     for m=1:Nmode
         leg_i=['Mode ' num2str(m)];
         leg(m,1:length(leg_i))=leg_i;
         subplot(ceil(sqrt(Nmode)),ceil(sqrt(Nmode)),m)
-        tfr_modes=tfrstft(modes_signal(m,:)',1:N,NFFT,hamming(Nwindow));
+        tfr_modes=tfrstft(x_modes_signal(m,:)',1:N,NFFT,hamming(Nwindow));
         imagescFun(time,freq,20*log10(abs(tfr_modes)),'xy')
         ylim(flims)
         title(leg_i)
     end
     
     %subplot(ceil(sqrt(Nmode)),ceil(sqrt(Nmode)),m+1)
-    figure(300)
-    tfr_modes=tfrstft(sum(modes_signal,1)',1:N,NFFT,hamming(Nwindow));
+    figure(13)
+    tfr_modes=tfrstft(sum(x_modes_signal,1)',1:N,NFFT,hamming(Nwindow));
     imagescFun(time,freq,20*log10(abs(tfr_modes)),'xy')
     ylim(flims)
     title('All modes')
  
     tm=zeros(Nmode,NFFT);
     for m=1:Nmode
-        [~, mode_rtfr,~]=tfrrsp(hilbert(modes_signal(m,:).'),1:N,NFFT,hamming(Nwindow));
+        [~, mode_rtfr,~]=tfrrsp(hilbert(x_modes_signal(m,:).'),1:N,NFFT,hamming(Nwindow));
         [tm(m,:),~]=momftfr(mode_rtfr,1,N,time);
     end
     
@@ -268,7 +272,7 @@ while redo
     tfr=tfrstft(x(1:end,hydro_ref),1:N,NFFT,hamming(Nwindow));
     TFR=20*log10(abs(tfr));
     
-    figure
+    figure(14)
     imagescFun(time,freq,TFR,'xy');
      ylim(flims)
     %caxis([prctile(TFR(:),70) prctile(TFR(:),100)])
@@ -279,7 +283,7 @@ while redo
     ylabel('Frequency [Hz]')
     grid on
     legend(leg)
-    keyboard
+    
     redo=input('Enter 1 to redo mode selection:');
     if isempty(redo)
         redo=0;

@@ -51,6 +51,7 @@ end
 
 figure(10)
 ylim(filt.fwlims)
+%ylim([0 filt.ymax])
 title('Select the mode peaks in any order, hit return to exit early')
 hold on
 

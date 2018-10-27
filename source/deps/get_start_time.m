@@ -74,7 +74,7 @@ end
 %caxis([prctile(TFR(:),60) prctile(TFR(:),100)]);
 j=j(1);
 dt=j/Fs;
-%close(fig)
+close(fig)
 
 %%% Choose a list of time start candidates surrounding the selected one
 frac=1/100;
@@ -144,12 +144,13 @@ for I=1:Ncount
     %caxis('auto');
     axis('xy')
     %ylim([0 250]);
-    ylim([0 max(params.fwlims)]);
+    %ylim([0 max(params.fwlims)]);
+    ylim([0 params_opt{I}.ymax]);
     caxis([-20 0]);
     title(sprintf('Choice: %i, Offset: %6.2f',I,selects(I)));
 end
-gtext(sprintf('Range guess: %6.2f km, water depth: %6.2f m',r_guess/1000,D))
-
+%gtext(sprintf('Range guess: %6.2f km, water depth: %6.2f m',r_guess/1000,D))
+%
 
 Ichc=input('Enter choices for selection; e.g [1 3]: ');
 j_min=round(j+Fs*selects(Ichc));
@@ -159,6 +160,7 @@ j_min=round(j+Fs*selects(Ichc));
 
 %%% Save the filtering process to apply it to the other hydrophones
 
+filtt.ymax=params_opt{I}.ymax;
 filtt.xmin=j_min;
 filtt.flims=flims;
 filtt.fwlims=params.fwlims;

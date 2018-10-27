@@ -87,13 +87,6 @@ params.f_w=f_w;
 
 
 imagescFun(t_w,f_w,20*log10(abs(RTF)),'ij')
-ylim(params.fwlims)
-%xlim([0 params.xmax])
-fprintf('M: %i, delay: %i sec\n',M, delay/Fs);
-axis('xy');
-%caxis(params.clims)
-
-
 
 %%% Pekeris cutoff frequencies
 if params.beta>=0
@@ -109,5 +102,17 @@ if params.beta>=0
     end
     hold off
 end
+
+params.ymax=pek_cutoff*(Nmode-0.5);
+%ylim(params.fwlims)
+ylim([0 params.ymax])
+%xlim([0 params.xmax])
+fprintf('M: %i, delay: %i sec\n',M, delay/Fs);
+axis('xy');
+%caxis(params.clims)
+
+
+
+
 end
 
