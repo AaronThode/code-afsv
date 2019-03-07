@@ -8634,7 +8634,7 @@ handles.tdate_max=	-1;
 try
     [x,t,Fs,tmin,tmax]=load_data(filetype,-1,10,1,handles);
 catch %no file selected
-    %errordlg(sprintf('No %s file selected',filetype));
+    errordlg(sprintf('No %s file selected',filetype));
     errorflag=1;
     cd(mydir);
     return
@@ -8968,8 +8968,6 @@ vy=(x(:,1).*x(:,3));
 
 
 end
-
-
 
 
 

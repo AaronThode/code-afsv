@@ -82,49 +82,53 @@ switch filetype
             return
         end
         simulated=load(fullfile(mydir,myfile));
-        Fs=simulated.Fs;
-        x=simulated.x;Ichan=15;
         
-        %%%Check that x is vertical
-        if size(x,2)>size(x,1)
-            x=x';
-        end
+%         %%%%%Uncomment to load a simple MAT file
+%         Fs=simulated.Fs;
+%         x=simulated.x;Ichan=15;
+%         
+%         %%%Check that x is vertical
+%         if size(x,2)>size(x,1)
+%             x=x';
+%         end
+        %%%%%%%%%%%
+        
         %%Uncomment to conduct Bering Sea call selection
         %%% size(x)=[ 5(zplot)           4 (rplot)          8       16033]
-%         name='Bering Sea Simulations';
-%         numlines=1;
-%         if ndims(simulated.x)>3
-%             
-%             prompt={sprintf('Depths: %s',mat2str(simulated.zplot)), ...
-%                 sprintf('Ranges: %s',mat2str(simulated.rplot)), ...
-%                 sprintf('Modes: %s', mat2str(1:size(simulated.x,3)))};
-%             defaultanswer={'22','22000',''};
-%             
-%         else
-%             prompt={sprintf('Depths: %s',mat2str(simulated.zplot)), ...
-%                 sprintf('Ranges: %s',mat2str(simulated.rplot))};
-%             defaultanswer={'22','22000'};
-%         end
-%         answer=inputdlg(prompt,name,numlines,defaultanswer);
-%         [~,Iz]=min(abs(eval(answer{1})-simulated.zplot));
-%         [~,Ir]=min(abs(eval(answer{2})-simulated.rplot));
-%         if isempty(deblank(answer{3}))
-%             Imode=[];
-%         else
-%             Imode=eval(answer{3});
-%         end
-%         if ndims(simulated.x)>3
-%             if isempty(Imode)
-%                 simulated.x=squeeze(sum(simulated.x,3));
-%                
-%             else
-%                 Imode=min([Imode size(simulated.x,3)]);
-%                 simulated.x=squeeze(simulated.x(:,:,Imode,:));
-%             end
-%             %figure;spectrogram(X,WINDOW,NOVERLAP,NFFT,Fs)
-%         end
-%          x=squeeze(simulated.x(Iz,Ir,:));
-%         
+        name='Bering Sea Simulations';
+        numlines=1;
+        if ndims(simulated.x)>3
+            
+            prompt={sprintf('Depths: %s',mat2str(simulated.zplot)), ...
+                sprintf('Ranges: %s',mat2str(simulated.rplot)), ...
+                sprintf('Modes: %s', mat2str(1:size(simulated.x,3)))};
+            defaultanswer={'22','22000',''};
+            
+        else
+            prompt={sprintf('Depths: %s',mat2str(simulated.zplot)), ...
+                sprintf('Ranges: %s',mat2str(simulated.rplot))};
+            defaultanswer={'22','22000'};
+        end
+        answer=inputdlg(prompt,name,numlines,defaultanswer);
+        [~,Iz]=min(abs(eval(answer{1})-simulated.zplot));
+        [~,Ir]=min(abs(eval(answer{2})-simulated.rplot));
+        if isempty(deblank(answer{3}))
+            Imode=[];
+        else
+            Imode=eval(answer{3});
+        end
+        if ndims(simulated.x)>3
+            if isempty(Imode)
+                simulated.x=squeeze(sum(simulated.x,3));
+               
+            else
+                Imode=min([Imode size(simulated.x,3)]);
+                simulated.x=squeeze(simulated.x(:,:,Imode,:));
+            end
+            %figure;spectrogram(X,WINDOW,NOVERLAP,NFFT,Fs)
+        end
+         x=squeeze(simulated.x(Iz,Ir,:));
+        Fs=simulated.Fs;
        %%%%%%%%%%%%%
         %x=simulated.x_sweep';
         if strcmp(Ichan,'all')
@@ -235,8 +239,8 @@ switch filetype
         if beamform_data==1
             %y=x(:,1)-fudge_factor_velocity*(cos(angles(I)*pi/180)*x(:,3)+sin(angles(I)*pi/180)*x(:,2)); %switch x and y to get compass bearing
             
-            thta=thta-head.brefa;
-            x0=x(:,1)+sin(thta*pi/180)*x(:,2)+cos(thta*pi/180)*x(:,3);
+            thta=thta-head.brefa;  %%Convert to local reference
+            x0=x(:,1)+sind(thta)*x(:,2)+cosd(thta)*x(:,3);
             x=x0/2; %Turn into equivalent of one channel.
             
             %x=sqrt(x(:,1).*x(:,2)*sin(thta*pi/180)+x(:,1).*x(:,3)*cos(thta*pi/180));

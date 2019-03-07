@@ -29,6 +29,6 @@ for i = 1:B
     mux_hat(i,:) = vm_ests_uneq(x(U(:,i),:),options,flag); % Estimation accounting for lengths.
 end
 
-[junk,kappa,sd] = vm_ests(mux_hat,options);     % Estimation ignoring lengths.
+[~,kappa,sd] = vm_ests(mux_hat,options);     % Estimation ignoring lengths.
 %toc
 end

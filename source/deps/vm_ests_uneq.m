@@ -25,7 +25,7 @@ if flag
   mu = 180/pi*atan2(mux(1),mux(2));      % Mean angle (use y/x for math convention)
   Rbar = norm(mux);                      % Length of mean vector
   s = 180/pi*sqrt(2*(1-Rbar));           % Angular standard deviation
-  if Rbar<=(1/sqrt(n)),
+  if Rbar<=(1/sqrt(n))
     kappa = 0;
   else
     kappa = fminbnd('diffkr',eps,5e4,options,Rbar,n); % Find kappa 

@@ -31,7 +31,7 @@ elseif strfind(rawfile,'.gsi')
     
     if (abs(size(y,1)-floor(head.Fs*tlen))>2)
         disp('Warning: end of file reached before requested data acquired');
-        y=[];
+        %y=[];
     end
 end
 

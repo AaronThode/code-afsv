@@ -2,12 +2,12 @@ function Batch_vars=get_Azigram_Callback(handles)
 
 Batch_desc{1}	=	'Seconds to average PSD for long-term display, if "0" no averaging' ;
 Batch_desc{2}='Bearing Range Color Scale';
-Batch_desc{3}='Bearing bias/correction (default is 11.7 degrees)';
+Batch_desc{3}='Bearing bias/correction ';
 Batch_desc{4}='Bearing algorithm multiplicative (Default 1)';
 
 Batch_vars.sec_avg	=	'0.1';
 Batch_vars.climm='[0 360]';
-Batch_vars.brefa='11.7';
+Batch_vars.brefa='0';
 Batch_vars.alg='1';
 
 if isfield(handles,'azigram')

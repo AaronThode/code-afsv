@@ -20,11 +20,15 @@ while 1
     if ~ischar(tline), break, end
     %   ??  Date parsing can be done with inbuilt matlab functions
     if      strfind(tline, 'SamplingStartTimeLocal=')>0
-        tmin         =  datenum(parse_time(tline));
+        %tmin         =  datenum(parse_time(tline));  %%Works for me
+        datte=parse_time(tline);
+        tmin=datenum(datte(1:10))+datenum(datte(12:end),2019)-datenum(2019,1,1,0,0,0);
         
     elseif  strfind(tline, 'SamplingStopTimeLocal=')>0
-         tmax         =   datenum(parse_time(tline));
-       
+        %tmax         =   datenum(parse_time(tline));
+        datte=parse_time(tline);
+        tmax=datenum(datte(1:10))+datenum(datte(12:end),2019)-datenum(2019,1,1,0,0,0);
+        
     elseif  strfind(tline, '<FS>')>0
         Fs  =   str2double(parse_data(tline));
         
@@ -63,6 +67,7 @@ right=max(strfind(tline,'</'))-1;
 tm=(tline(left:right));
 
 end
+
 function tm=parse_time(tline)
 left=min(strfind(tline,'"'))+1;
 
