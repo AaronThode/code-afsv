@@ -3,7 +3,7 @@ function [pval z] = circ_rtest(alpha, w, d)
 % [pval, z] = circ_rtest(alpha,w)
 %   Computes Rayleigh test for non-uniformity of circular data.
 %   H0: the population is uniformly distributed around the circle
-%   HA: the populatoin is not distributed uniformly around the circle
+%   HA: the population is not distributed uniformly around the circle
 %   Assumption: the distribution has maximally one mode and the data is 
 %   sampled from a von Mises distribution!
 %

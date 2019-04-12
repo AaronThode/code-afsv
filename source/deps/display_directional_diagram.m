@@ -57,6 +57,7 @@ if strcmpi(handles.filetype,'gsi')
     M=floor(1+(size(x,2)-Nfft)/dn);
     x=x';
     B=zeros(size(x,2),Nfft/2+1,M);
+    [~,FF,TT,PdB] = spectrogram(x(:,1),Nfft,round(ovlap*Nfft),Nfft,Fs);
     for J=1:size(x,2)
         [B(J,:,:),FF,TT] = spectrogram(x(:,J),Nfft,round(ovlap*Nfft),Nfft,Fs);
     end
@@ -67,6 +68,7 @@ if strcmpi(handles.filetype,'gsi')
     vx=squeeze(((B(1,:,:).*conj(B(2,:,:)))))./(rho*c); %%Convert velocity into velocity units
     vy=squeeze(((B(1,:,:).*conj(B(3,:,:)))))./(rho*c);
     
+    PdB=10*log10(squeeze(PdB));
     Nf=Nfft/2+1;  %Should be the same as length(FF)
     toc
     get_newparams=false;
@@ -74,7 +76,7 @@ if strcmpi(handles.filetype,'gsi')
     
 elseif ~isempty(strfind(handles.myfile,'DIFAR'))
     M=floor(1+(max(size(x))-Nfft)/dn);
-    [vx,vy,TT,FF]=demultiplex_DIFAR(x,Fs,Nfft,ovlap);
+    [vx,vy,TT,FF,PdB]=demultiplex_DIFAR(x,Fs,Nfft,ovlap);
     Nf=length(FF);
     get_newparams=false;
 
@@ -145,12 +147,18 @@ end
 %vy=squeeze(imag((B(1,:,:).*conj(B(3,:,:)))));
 
 if strcmpi(handles.display_view,'Directionality')
-    
-    mu = (180/pi)*atan2(real(vx),real(vy));
+    if ~handles.checkbox_reactive.Value
+        mu = atan2d(real(vx),real(vy));
+    else
+        mu = atan2d(imag(vx),imag(vy));
+        
+    end
     azi=bnorm(hdr.brefa+mu);
     
     
-    imagesc(TT,FF/1000,azi);
+    hh=imagesc(TT,FF/1000,azi);
+    
+    
     titstr=' Azimuth';
     try
         if get(handles.checkbox_grayscale,'Value')==1
@@ -163,41 +171,79 @@ if strcmpi(handles.display_view,'Directionality')
     end
     caxis(climm);
     
-elseif strcmpi(handles.display_view,'EnergyRatio')
+    %%%Use alpha adjustment to display intensity as well
+    if exist('PdB','var')&&(sec_avg==0)
+        set(hh,'AlphaData',PdB);
+        set(hh,'AlphaDataMapping','scaled')
+        alim(str2double(handles.edit_mindB.String) + [0 str2double(handles.edit_dBspread.String)]);
+    end
+    
+elseif strcmpi(handles.display_view,'EnergyRatio')||strcmpi(handles.display_view,'IntensityEnergyRatio')
     %Uncomment to show reactive intensity
     
-    pressure_autospectrum=squeeze(abs(B(1,:,:)).^2);
-    normalized_velocity_autospectrum=squeeze(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2);
+    %pressure_autospectrum=squeeze(abs(B(1,:,:)).^2);
+    %normalized_velocity_autospectrum=squeeze(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2);
+   
+    
+    work.pressure_autospectrum=squeeze(abs(B(1,:,:)).^2);
+    work.normalized_velocity_autospectrum=squeeze(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2);
     
     %%These velocities have units of pressure :
     %%(rho*c*velocity)
-    %intensity_a=sqrt(real(vx).^2)+(real(vy).^2);
-    %intensity_r=sqrt(imag(vx).^2)+(imag(vy).^2);
-    %velocity_cross=squeeze(((B(2,:,index).*conj(B(3,:,index))))).'./(rho*c).^2;
+    work.intensity_xa=squeeze(((B(1,:,:).*conj(B(2,:,:)))));
+    work.intensity_ya=squeeze(((B(1,:,:).*conj(B(3,:,:)))));
+    if ~handles.checkbox_reactive.Value
+        work.intensity_a=sqrt((real(work.intensity_xa).^2)+(real(work.intensity_ya).^2));
+    else
+        work.intensity_a=sqrt((imag(work.intensity_xa).^2)+(imag(work.intensity_ya).^2));
+    end
                        
-      
+     energy_density=0.5*abs(work.normalized_velocity_autospectrum+work.pressure_autospectrum);
+    %energy_density=abs(work.pressure_autospectrum);
+    
      if ~isempty(sec_avg)&&sec_avg>0
-        PA_avg=zeros(Nf,Nsnap);
-        NVA_avg=PA_avg;
+        Ia_avg=zeros(Nf,Nsnap);
+        Energy_avg=Ia_avg;
+        NV_avg=Ia_avg; PA_avg=Ia_avg;
         for J=1:Nsnap
             index=floor((J-1)*Navg*(1-ovlap))+(1:Navg);
-            PA_avg(:,J)=mean(pressure_autospectrum(:,index),2);
-            NVA_avg(:,J)=mean(normalized_velocity_autospectrum(:,index),2);
+            Iax=mean(work.intensity_xa(:,index),2);
+            Iay=mean(work.intensity_ya(:,index),2);
+            if ~handles.checkbox_reactive.Value
+                Ia_avg(:,J)=sqrt(real(Iax).^2+real(Iay).^2);
+            else
+                Ia_avg(:,J)=sqrt(imag(Iax).^2+imag(Iay).^2); %reactive intensity
+            end
+            %Energy_avg(:,J)=mean(energy_density(:,index),2);
+            
+            NV_avg(:,J)=mean(work.normalized_velocity_autospectrum(:,index),2);
+            PA_avg(:,J)=mean(work.pressure_autospectrum(:,index),2);
+            
         end
-        pressure_autospectrum=PA_avg;
-        normalized_velocity_autospectrum=NVA_avg;
+        work.intensity_a=Ia_avg;
+        energy_density=0.5*abs(NV_avg+PA_avg);
+        
+        work.normalized_velocity_autospectrum=NV_avg;
+        work.pressure_autospectrum=PA_avg;
+        
         TT=TT_avg;
     end
     
-    KV_ratio=(normalized_velocity_autospectrum./pressure_autospectrum);
-    kang=acosd(sqrt(KV_ratio));kang(imag(kang)~=0)=0;
+    %KV_ratio=(normalized_velocity_autospectrum./pressure_autospectrum);
+    %kang=acosd(sqrt(KV_ratio));kang(imag(kang)~=0)=0;
+    %%%Effective velocity j/Sp
+    if strcmpi(handles.display_view,'IntensityEnergyRatio')
+        
+        c_eff=work.intensity_a./energy_density;
+        imagesc(TT,FF/1000,c_eff);caxis([0 1])
+    elseif strcmpi(handles.display_view,'EnergyRatio')
+        ratioo=work.normalized_velocity_autospectrum./work.pressure_autospectrum;
+        imagesc(TT,FF/1000,10*log10(ratioo));caxis([-20 20])
+    end
     
-    imagesc(TT,FF/1000,KV_ratio);caxis([0 2])
-    %imagesc(TT,FF/1000,cos_ratio);caxis([0 2]);
-   
     colormap(jet);axis('xy');figure(gcf);colorbar
             
-    keyboard
+    
     %%%Set colorscale
     %caxx=str2double(handles.edit_mindB.String)+[0 str2double(handles.edit_dBspread.String)];
     %caxis(caxx);

@@ -1,4 +1,4 @@
-function [vx,vy,T,F]=demultiplex_DIFAR(x,Fs,Nfft,ovlap)
+function [vx,vy,T,F,P]=demultiplex_DIFAR(x,Fs,Nfft,ovlap)
 
 
 %Nfft=2^15;
@@ -31,13 +31,14 @@ pilot_phase=(exp(-1i*angle(S(Ipilot15,:))));
 %rel_phase2=2*angle(S(Ipilot75,:));
 %plot(T,unwrap(rel_phase1-rel_phase2))
 
-P=S(2:(Ipilot75-1),:);
+P0=S(2:(Ipilot75-1),:);
+P=P(2:(Ipilot75-1),:);
 N=Ipilot75-2;
 %Sm=flipud(S((Ipilot75+1):(Ipilot15-1),:));
 Sm=flipud(S((Ipilot75+1)+(0:N-1),:));
 Sp=S((Ipilot15+1)+(0:N-1),:);
 
-[Nf,Nt]=size(P);
+[Nf,Nt]=size(P0);
 
 F=F(1:Nf);
 %%%%Multiplex by phase of 15 kHz pilot
@@ -59,6 +60,6 @@ Mq=ReMq+1i*ImMq;  %EQ
 %vx=squeeze(real((P.*conj(Mi))));
 %vy=squeeze(real((P.*conj(Mq))));
 
-vx=-squeeze(real((P.*conj(Mi))));
-vy=squeeze(real((P.*conj(Mq))));
+vx=-squeeze(real((P0.*conj(Mi))));
+vy=squeeze(real((P0.*conj(Mq))));
 

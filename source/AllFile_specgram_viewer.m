@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 02-Jun-2018 09:23:27
+% Last Modified by GUIDE v2.5 09-Apr-2019 20:26:16
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -151,7 +151,7 @@ handles.buttongroup.multichan(2)=handles.edit_chan;
 handles.buttongroup.GSI(1)=handles.pushbutton_GSIbearing;
 handles.buttongroup.GSI(2)=handles.pushbutton_GSI_localization;
 handles.buttongroup.GSI(3)=handles.radiobutton_directionality;
-handles.buttongroup.GSI(4)=handles.radiobutton_energy;
+handles.buttongroup.GSI(4)=handles.radiobutton_IERatio;
 %Set default template 
 if strfind(getenv('USER'),'thode') 
     handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
@@ -8339,7 +8339,7 @@ end
 mydir	=	pwd;
 
 want_directionality=strcmp(handles.display_view,'Directionality')||strcmpi(handles.display_view,'EnergyRatio');
-
+want_directionality=want_directionality||strcmpi(handles.display_view,'IntensityEnergyRatio');
 if want_directionality&strcmpi(handles.filetype,'gsi')
     Ichan='all';
 else
@@ -8634,7 +8634,8 @@ handles.tdate_max=	-1;
 try
     [x,t,Fs,tmin,tmax]=load_data(filetype,-1,10,1,handles);
 catch %no file selected
-    errordlg(sprintf('No %s file selected',filetype));
+    %errordlg(sprintf('No %s file selected',filetype));
+    fprintf('No %s file selected\n',filetype);
     errorflag=1;
     cd(mydir);
     return
@@ -10446,3 +10447,14 @@ function togglebutton_NewFigure_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of togglebutton_NewFigure
 end
+
+% --- Executes on button press in togglebutton_NewFigure.
+function checkbox_reactive_Callback(hObject, eventdata, handles)
+% hObject    handle to togglebutton_NewFigure (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of togglebutton_NewFigure
+end
+
+
