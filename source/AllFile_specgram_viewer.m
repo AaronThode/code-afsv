@@ -8338,8 +8338,8 @@ if isempty(tlen)
 end
 mydir	=	pwd;
 
-want_directionality=strcmp(handles.display_view,'Directionality')||strcmpi(handles.display_view,'EnergyRatio');
-want_directionality=want_directionality||strcmpi(handles.display_view,'IntensityEnergyRatio');
+want_directionality=strcmp(handles.display_view,'Directionality')||strcmpi(handles.display_view,'KEtoPERatio');
+want_directionality=want_directionality||strcmpi(handles.display_view,'ItoERatio')||strcmpi(handles.display_view,'IntensityPhase');
 if want_directionality&strcmpi(handles.filetype,'gsi')
     Ichan='all';
 else
