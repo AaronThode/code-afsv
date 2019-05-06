@@ -5,7 +5,7 @@ function [VM,Qhat,w,outcome] = vmmle_r(angle,dasar,r,k)
 %   Lenth,R.V. 1981.  On finding the source of a signal.
 %     Technometrics 23:149-154.
 %
-%   [VM,QHAT,W,QHAT] = VMMLE(ANGLE,DASAR,R,K) processes a single observation
+%   [VM,QHAT,W,OUTCOME] = VMMLE(ANGLE,DASAR,R,K) processes a single observation
 %   comprised of compass ANGLE (an n-by-1 column vector of bearings), DASAR
 %   (an n-by-2 matrix of coordinates for the DASAR source of each
 %   bearing), and K (an n-by-1 vector of bearing standard error

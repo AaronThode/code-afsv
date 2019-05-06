@@ -150,6 +150,7 @@ if strcmpi(handles.display_view,'Directionality')
     end
     azi=bnorm(hdr.brefa+mu);
     hh=imagesc(TT,FF/1000,azi);
+    
     titstr=' Azimuth';
     try
         if get(handles.checkbox_grayscale,'Value')==1
