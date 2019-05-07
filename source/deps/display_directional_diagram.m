@@ -163,6 +163,7 @@ if strcmpi(handles.display_view,'Directionality')
     end
     caxis(climm);
     
+    
     %%%Use alpha adjustment to display transport ratio as well
     %     set(hh,'AlphaData',intensity./energy_density);
     %     set(hh,'AlphaDataMapping','scaled')
