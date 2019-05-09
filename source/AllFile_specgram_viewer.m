@@ -3288,9 +3288,8 @@ Np=str2num(answer{1});
 y_unit_amp=handles.radiobutton_timeseries.Value;
 azigram_flag=handles.radiobutton_directionality.Value;
 if azigram_flag
-    if ~isfield(handles,'azigram') %%Azigram is not visible on screen
-        return
-    elseif ~isfield(handles.azigram,'azi')
+   
+    if isempty(handles.axes1.Children.CData)
         return
     end
 end
@@ -3311,7 +3310,8 @@ elseif azigram_flag
         for If=1:Np
             [~,Ibestt]=min(abs(tmp(If,1)-handles.azigram.TT));
             [~,Ibestf]=min(abs(tmp(If,2)*1000-handles.azigram.FF));
-            azi=handles.azigram.azi(Ibestf,Ibestt);
+            azi=handles.axes1.Children.CData;
+            azi=azi(Ibestf,Ibestt);
             msg=sprintf('%s Point %i Time: %8.6f Frequency: %6.2f Hz, Directions: %6.2f degrees \n', ...
                 msg,If,tmp(If,1),1000*tmp(If,2),azi);
         end
@@ -8440,91 +8440,32 @@ end
 
 
 if want_directionality
-    [TT,FF,azi,vx,vy,ratioo,handles]=display_directional_diagram(handles,x,Fs,Nfft,Nfft_window, ovlap, hdr);
-    handles.azigram.azi=azi;
+    
+    if isfield(handles,'azigram')
+        azigram_param=handles.azigram;
+    end
+    
+    if strcmpi(handles.filetype,'gsi')
+        azigram_param.brefa=hdr.brefa;
+    end
+    reactive_flag=handles.checkbox_reactive.Value;
+    
+    [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics ...
+        (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
+        handles.myfile,handles.filetype,reactive_flag);
+    
+    plot_directional_metric(TT,FF,output_array,handles,azigram_param);
+    % To recover matrix use handles.axes1.Children.CData;
+    %handles.azigram.azi=azi;
+    handles.azigram=azigram_param;
     handles.azigram.TT=TT;
     handles.azigram.FF=FF;
     
     
+    
     %%%%Take difference of azigrams
     if str2num(handles.edit_chan.String)>1&strcmpi(handles.filetype,'gsi')
-        handles1=handles;handles1.x=[];%handles1.azigram=[];
-        
-        handles1.mydir(end-2)=char(double(handles1.mydir(end-2))+1);  %%%Increment DASAR letter
-        handles1.myfile(5)=char(double(handles1.myfile(5))+1);
-        [x1,~,~,~,~,hdr1]=load_data(handles.filetype, ...
-            handles.tdate_start,tlen,Ichan,handles1);
-        [TT1,FF1,azi1]=display_directional_diagram(handles1,x1',Fs,Nfft,Nfft_window, ovlap, hdr1);
-        clear handles1
-        
-        
-        %%Estimate offset between images
-         [~,FF,TT,B] = spectrogram(x(1,:),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs);
-        [~,FF,TT,B1] = spectrogram(x1(:,1),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs);
-        
-        %%%Average out
-        sec_avg=str2num(handles.azigram.sec_avg);
-        dn=round((1-ovlap)*Nfft_window);
-        M=floor(1+(size(x,2)-Nfft_window)/dn);
-        Nf=size(B,1);
-        %climm=eval(handles.azigram.climm);
-        %alg_mult=eval(handles.azigram.alg);
-        
-        %%%%%Average vx and vy, if needed
-        if ~isempty(sec_avg)&&sec_avg>0
-            
-            Navg=floor(sec_avg*Fs/dn);  %Samples per avg
-            fprintf('%i averages per sample.\n',Navg);
-            if Navg==0
-                Navg=1;
-                sec_avg=dn/Fs;
-            end
-            Nsnap=floor((M-Navg)/((1-ovlap)*Navg));  %Number of averaged samples per window.
-            B_avg=zeros(2,Nf,Nsnap);
-            TT_avg=zeros(1,Nsnap);
-            for J=1:Nsnap
-                index=floor((J-1)*(Navg*(1-ovlap)))+(1:Navg);
-                B_avg(1,:,J)=mean(B(:,index),2);
-                B_avg(2,:,J)=mean(B1(:,index),2);
-                TT_avg(J)=mean(TT(index));
-            end
-            B=squeeze(B_avg(1,:,:));
-            B1=squeeze(B_avg(2,:,:));
-            TT=TT_avg;
-        end
-        maxlag=1024;
-        temp=zeros(1,2*maxlag+1);
-       
-        for Ir=1:size(B1,1)
-            [tmp,laggs]=xcov(log10(B(Ir,:)),log10(B1(Ir,:)),maxlag);
-            temp=temp+tmp;
-        end
-        clear tmp
-        [~,Ioff]=max(temp);
-        
-        if laggs(Ioff)<0
-            azi2=azi1(:,-laggs(Ioff):end);
-            azi3=azi(:,1:size(azi,2)+laggs(Ioff)+1);
-        else
-            azi3=azi1(:,laggs(Ioff):end);
-            azi2=azi(:,1:size(azi,2)-laggs(Ioff)+1);
-            
-        end
-        figure
-        subplot(3,1,1)
-        imagesc(TT,FF,azi2);grid on;colorbar;caxis([0 360]);colormap(hsv)
-        subplot(3,1,2)
-        imagesc(TT1,FF1,azi3);grid on;colorbar;caxis([0 360]);colormap(hsv)
-        hh=subplot(3,1,3);
-        tmp=abs(azi2-azi3);
-        Ijump=find(tmp>180);
-        tmp(Ijump)=abs(bnorm(azi2(Ijump)+180)-bnorm(azi3(Ijump)+180));
-        %tmp(:,:,1)=abs(cosd(azi2)-cosd(azi3));
-        %tmp(:,:,2)=abs(sind(azi2)-sind(azi3));
-        
-        imagesc(TT,FF,tmp);
-        colormap(hh,jet);colorbar;caxis([0 45]);
-        %keyboard
+        compute_azigram_difference;
         
     end
 elseif strcmp(handles.display_view,'Spectrogram')
@@ -8599,7 +8540,7 @@ elseif strcmp(handles.display_view,'Spectrogram')
     end
     
     caxis(climm);
-    if get(handles.checkbox_grayscale,'Value')==1,
+    if get(handles.checkbox_grayscale,'Value')==1
         colormap(flipud(gray));
     else
         colormap(jet);
@@ -10510,7 +10451,7 @@ function MenuItem_Azigram_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-Batch_vars=get_Azigram_Callback(handles);
+Batch_vars=get_Azigram_Callback(handles.azigram);
 
 handles.azigram.sec_avg=(Batch_vars.sec_avg);
 handles.azigram.climm=(Batch_vars.climm);
