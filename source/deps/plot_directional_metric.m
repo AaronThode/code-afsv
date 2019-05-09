@@ -1,5 +1,8 @@
 function plot_directional_metric(TT,FF,output_array,handles,param)
-
+%function plot_directional_metric(TT,FF,output_array,handles,param)
+%  TT, FF, time (sec) and frequency (Hz) associated with output_array
+%  handles: handles to figure
+%  param:  climm, alg
 climm=eval(param.climm);
 alg_mult=eval(param.alg);
 
@@ -70,7 +73,7 @@ try
     fmax=str2double(get(handles.edit_fmax,'String'));
     fmin=str2double(get(handles.edit_fmin,'String'));
     if fmax==0
-        ylim([0 Fs/2000]);
+        ylim([0 handles.Fs/2000]);
         set(handles.edit_fmax,'String',num2str(Fs/2000));
     else
         ylim([fmin fmax]);

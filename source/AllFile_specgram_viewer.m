@@ -8452,7 +8452,7 @@ if want_directionality
     
     [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics ...
         (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
-        handles.myfile,handles.filetype,reactive_flag);
+        handles.filetype,reactive_flag);
     
     plot_directional_metric(TT,FF,output_array,handles,azigram_param);
     % To recover matrix use handles.axes1.Children.CData;
@@ -8465,6 +8465,18 @@ if want_directionality
     
     %%%%Take difference of azigrams
     if str2num(handles.edit_chan.String)>1&strcmpi(handles.filetype,'gsi')
+        
+        azigram_param.sec_avg='0';
+        handles1=handles;
+        handles1.mydir(end-2)=char(double(handles1.mydir(end-2))+1);  %%%Increment DASAR letter
+        handles1.myfile(5)=char(double(handles1.myfile(5))+1);
+        
+        azigram_param1=azigram_param;
+        [x1,~,~,~,~,hdr1]=load_data('gsi', handles1.tdate_start,tlen,'all',handles1);
+        x1=x1';
+        azigram_param1.brefa=hdr1.brefa;
+        clear handles1
+        
         compute_azigram_difference;
         
     end

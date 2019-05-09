@@ -1,26 +1,25 @@
 %%%%compute_directional_metrics
-%function [TT,FF,azi,vx,vy,VR_ratio,handles]=compute_directional_metrics(param,x,Fs,Nfft,ovlap)
-% filetype
-% myfile
+%function [TT,FF,output_array,PdB,param]=compute_directional_metrics(x,metric_type, ...
+ %   Fs,Nfft, ovlap, param,filetype,reactive_flag)
+% x:  array of vector data, each column is a separate channel
+% metric type:'Directionality','ItoERatio','KEtoPERatio' ,'IntensityPhase
+% filetype: 'DIFAR' or 'gsi'
+% reactive_flag:  if true, compute reactive intensity
+% Fs: sampling rate in Hz
+% Nfft: FFT size used to compute frequency bin size
+% ovlap: fraction ovlap when computing spectrograms
 % Optional
-%    handles.azigram.sec_avg=(Batch_vars.sec_avg);
-%     handles.azigram.climm=(Batch_vars.climm);
-%     handles.azigram.brefa=(Batch_vars.brefa);
-%     handles.azigram.alg=Batch_vars.alg;
-% handles.display_view,'Directionality'
-% handles.checkbox_grayscale,'Value'
-%  handles.edit_fmax,edit_fmin
+%     param.sec_avg=(Batch_vars.sec_avg);
+%     param.climm=(Batch_vars.climm);
+%     param.brefa=(Batch_vars.brefa);
+%     param.alg=Batch_vars.alg;
+
 function [TT,FF,output_array,PdB,param]=compute_directional_metrics(x,metric_type, ...
-    Fs,Nfft, ovlap, param,myfile,filetype,reactive_flag)
+    Fs,Nfft, ovlap, param,filetype,reactive_flag)
 
 vx=[];vy=[];
 if strcmpi(filetype,'PSD')
     return
-end
-if exist('noplot','var')
-    noplot=true;
-else
-    noplot=false;
 end
 
 %%%%Two files that can get active intensity directionality: *.gsi and
@@ -60,7 +59,7 @@ if strcmpi(filetype,'gsi')
     get_newparams=false;
     
     
-elseif ~isempty(strfind(myfile,'DIFAR'))
+elseif ~isempty(strfind(filetype,'DIFAR'))
     M=floor(1+(max(size(x))-Nfft)/dn);
     [vx,vy,TT,FF,PdB]=demultiplex_DIFAR(x,Fs,Nfft,ovlap);
     Nf=length(FF);
