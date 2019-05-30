@@ -8472,20 +8472,69 @@ if want_directionality
     
     
     %%%%Take difference of azigrams
+    %%FOR LUDOVIC TENORIO
     if str2num(handles.edit_chan.String)>1&strcmpi(handles.filetype,'gsi')
         
         azigram_param.sec_avg='0';
         handles1=handles;
-        handles1.mydir(end-2)=char(double(handles1.mydir(end-2))+1);  %%%Increment DASAR letter
-        handles1.myfile(5)=char(double(handles1.myfile(5))+1);
+        DASAR_ltr(1)=handles1.mydir(end-2);
+        DASAR_ltr(2)=char(double(DASAR_ltr(1))+1);
+        handles1.mydir(end-2)=DASAR_ltr(2);  %%%Increment DASAR letter
+        handles1.myfile(5)=DASAR_ltr(2);
         
-        azigram_param1=azigram_param;
-        [x1,~,~,~,~,hdr1]=load_data('gsi', handles1.tdate_start,tlen,'all',handles1);
-        x1=x1';
-        azigram_param1.brefa=hdr1.brefa;
+        [xall{2},~,~,~,~,hdr1]=load_data('gsi', handles1.tdate_start,tlen,'all',handles1);
+        
+        %Package everything together
+        xall{2}=xall{2}';
+        xall{1}=x;
+        %azigram_param.brefa1=hdr1.brefa;
+        azigram_param.brefa(2)=hdr1.brefa;
+        
         clear handles1
         
-        compute_azigram_difference;
+        %%%%Parameters for the automated processing 
+        azigram_param.da=60;  %width of a sector to search azigram in degrees
+        
+        %Azimuthal grid with 50%% overlap
+        azigram_param.a_grid=azigram_param.da/2:(azigram_param.da/2):(360-azigram_param.da/2);  %Azimuthal grid
+        
+        %%Frequency range to serach for pulses
+        azigram_param.frange=[100 450];
+        
+        %%Minimum time/bandwidth product (e.g. pixel size) that is allowed
+        %%to remain in binary azigram
+        azigram_param.min_TBW=2.0480;
+        
+        %%%Maximum bandwidth gap permitted between pulse components
+        azigram_param.vertical_line=12;  %Hz
+        %params.threshold=5*4;  %Hz
+        
+        %%%Minimum total bandwidth required to be registered as a pulse
+        %%%(doesn't have to be a single connected oval
+        azigram_param.threshold=15*4;  %Hz
+        
+        %%%This parameter fixes a probelm with DASAR sensor.  Normally
+        %%%don't adjust 
+        azigram_param.f_transition=300;  %Frequency at which pressure/velocity go out of phase
+        
+        %%%Set these to true to see the morphological image processing and
+        %%%mas construction
+        azigram_param.debug.morph=false;
+        azigram_param.debug.mask_construction=false;
+        
+        dBspread=str2double(handles.edit_mindB.String) + [0 str2double(handles.edit_dBspread.String)];
+        azigram_param.debug.dBspread=dBspread;
+        
+        output=compute_azigram_difference(xall,Fs,Nfft,ovlap,azigram_param);
+        fprintf('Finished processing, starting localization...\n');
+
+        bearings=output.azi.wm.med;
+        pos_DASAR=[4 -1; 0 0; 4+3 -1+4.4];  %Tako City
+        Ikeep=double(DASAR_ltr)-double('A')+1;
+        plot_pulse_positions(output,bearings,pos_DASAR,Ikeep);
+        
+        bearings=output.azi.avg;
+        plot_pulse_positions(output,bearings,pos_DASAR,Ikeep);
         
     end
 elseif strcmp(handles.display_view,'Spectrogram')

@@ -1,7 +1,7 @@
 %%%%compute_directional_metrics
-%function [TT,FF,output_array,PdB,param]=compute_directional_metrics(x,metric_type, ...
+%function [TT,FF,output_array,PdB,param, Ix,Iy]=compute_directional_metrics(x,metric_type, ...
  %   Fs,Nfft, ovlap, param,filetype,reactive_flag)
-% x:  array of vector data, each column is a separate channel
+% x:  array of vector data, each row is a separate channel
 % metric type:'Directionality','ItoERatio','KEtoPERatio' ,'IntensityPhase
 % filetype: 'DIFAR' or 'gsi'
 % reactive_flag:  if true, compute reactive intensity
@@ -13,15 +13,29 @@
 %     param.climm=(Batch_vars.climm);
 %     param.brefa=(Batch_vars.brefa);
 %     param.alg=Batch_vars.alg;
+%
+% Output:
+%  TT,FF, output_array:  TT vector of times and FF vector of Hz for
+%               output_array grid.
+%  PdB: power spectral density of pressure autospectrum
+%  param:  altered parameters of input param
+%  Ix, Iy:  x and y active intensity
 
-function [TT,FF,output_array,PdB,param]=compute_directional_metrics(x,metric_type, ...
+function [TT,FF,output_array,PdB,param,Ix,Iy]=compute_directional_metrics(x,metric_type, ...
     Fs,Nfft, ovlap, param,filetype,reactive_flag)
 
-vx=[];vy=[];
+Ix=[];Iy=[];
 if strcmpi(filetype,'PSD')
     return
 end
 
+if ~exist('reactive_flag','var')
+    reactive_flag=false;
+end
+
+if ischar(param.brefa)
+    param.brefa=str2num(param.brefa);
+end
 %%%%Two files that can get active intensity directionality: *.gsi and
 %%%%*DIFAAR*.wav files.
 dn=round((1-ovlap)*Nfft);
@@ -43,12 +57,12 @@ if strcmpi(filetype,'gsi')
         
     end
     
-    % vx=squeeze(real((B(1,:,:).*conj(B(2,:,:)))));
-    %vy=squeeze(real((B(1,:,:).*conj(B(3,:,:)))));
+    % Ix=squeeze(real((B(1,:,:).*conj(B(2,:,:)))));
+    %Iy=squeeze(real((B(1,:,:).*conj(B(3,:,:)))));
     rho=1000;c=1500;
     
-    vx=squeeze(((B(1,:,:).*conj(B(2,:,:)))));
-    vy=squeeze(((B(1,:,:).*conj(B(3,:,:)))));
+    Ix=squeeze(((B(1,:,:).*conj(B(2,:,:)))));
+    Iy=squeeze(((B(1,:,:).*conj(B(3,:,:)))));
     
     pressure_autospectrum=squeeze(abs(B(1,:,:)).^2);
     normalized_velocity_autospectrum=squeeze(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2);
@@ -61,11 +75,11 @@ if strcmpi(filetype,'gsi')
     
 elseif ~isempty(strfind(filetype,'DIFAR'))
     M=floor(1+(max(size(x))-Nfft)/dn);
-    [vx,vy,TT,FF,PdB]=demultiplex_DIFAR(x,Fs,Nfft,ovlap);
+    [Ix,Iy,TT,FF,PdB]=demultiplex_DIFAR(x,Fs,Nfft,ovlap);
     Nf=length(FF);
     get_newparams=false;
     
-    
+    pressure_autospectrum=10.^(PdB/10);
     if ~isfield(param,'brefa')
         get_newparams=true;
     end
@@ -99,7 +113,7 @@ end
 % Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, 'Vector Sensor Processing');
 sec_avg=str2num(param.sec_avg);
 
-%%%%%Average vx and vy, if needed
+%%%%%Average Ix and Iy, if needed
 if ~isempty(sec_avg)&&sec_avg>0
     
     Navg=floor(sec_avg*Fs/dn);  %Samples per avg
@@ -109,21 +123,21 @@ if ~isempty(sec_avg)&&sec_avg>0
         sec_avg=dn/Fs;
     end
     Nsnap=floor((M-Navg)/((1-ovlap)*Navg));  %Number of averaged samples per window.
-    vx_avg=zeros(Nf,Nsnap);
-    vy_avg=vx_avg;
-    NV_avg=vx_avg;
-    PA_avg=vx_avg;
+    Ix_avg=zeros(Nf,Nsnap);
+    Iy_avg=Ix_avg;
+    NV_avg=Ix_avg;
+    PA_avg=Ix_avg;
     TT_avg=zeros(1,Nsnap);
     for J=1:Nsnap
         index=floor((J-1)*(Navg*(1-ovlap)))+(1:Navg);
-        vx_avg(:,J)=mean(vx(:,index),2);
-        vy_avg(:,J)=mean(vy(:,index),2);
+        Ix_avg(:,J)=mean(Ix(:,index),2);
+        Iy_avg(:,J)=mean(Iy(:,index),2);
         NV_avg(:,J)=mean(normalized_velocity_autospectrum(:,index),2);
         PA_avg(:,J)=mean(pressure_autospectrum(:,index),2);
         TT_avg(J)=mean(TT(index));
     end
-    vx=vx_avg;
-    vy=vy_avg;
+    Ix=Ix_avg;
+    Iy=Iy_avg;
     
     
     TT=TT_avg;
@@ -136,17 +150,17 @@ PdB=10*log10(2*pressure_autospectrum./(Nfft*Fs));  %%Power spectral density outp
 
 
 if ~reactive_flag
-    intensity=sqrt((real(vx)).^2+(real(vy)).^2);
+    intensity=sqrt((real(Ix)).^2+(real(Iy)).^2);
 else
-    intensity=sqrt((imag(vx)).^2+(imag(vy)).^2);
+    intensity=sqrt((imag(Ix)).^2+(imag(Iy)).^2);
 end
 
 switch metric_type
     case 'Directionality'
         if ~reactive_flag
-            mu = atan2d(real(vx),real(vy));
+            mu = atan2d(real(Ix),real(Iy));
         else
-            mu = atan2d(imag(vx),imag(vy));
+            mu = atan2d(imag(Ix),imag(Iy));
         end
         output_array=bnorm(param.brefa+mu);
     case 'ItoERatio'
@@ -155,7 +169,7 @@ switch metric_type
     case 'KEtoPERatio'
         output_array=normalized_velocity_autospectrum./pressure_autospectrum;
     case 'IntensityPhase'
-        output_array=atan2d(sqrt(imag(vx).^2+imag(vy).^2),sqrt((real(vx)).^2+(real(vy)).^2));
+        output_array=atan2d(sqrt(imag(Ix).^2+imag(Iy).^2),sqrt((real(Ix)).^2+(real(Iy)).^2));
 end
 
     
