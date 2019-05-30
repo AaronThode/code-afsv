@@ -2,9 +2,11 @@
 %function [TT,FF,output_array,PdB,param, Ix,Iy]=compute_directional_metrics(x,metric_type, ...
  %   Fs,Nfft, ovlap, param,filetype,reactive_flag)
 % x:  array of vector data, each row is a separate channel
-% metric type:'Directionality','ItoERatio','KEtoPERatio' ,'IntensityPhase
+% metric_type{Iwant}:'Directionality','ItoERatio','KEtoPERatio' ,'IntensityPhase
+%           If a cell array output_array will be a cell array
 % filetype: 'DIFAR' or 'gsi'
-% reactive_flag:  if true, compute reactive intensity
+% reactive_flag:  if true, compute reactive intensity.  Vector same size as
+%           metric_type
 % Fs: sampling rate in Hz
 % Nfft: FFT size used to compute frequency bin size
 % ovlap: fraction ovlap when computing spectrograms
@@ -15,7 +17,7 @@
 %     param.alg=Batch_vars.alg;
 %
 % Output:
-%  TT,FF, output_array:  TT vector of times and FF vector of Hz for
+%  TT,FF, output_array{Nwant}:  TT vector of times and FF vector of Hz for
 %               output_array grid.
 %  PdB: power spectral density of pressure autospectrum
 %  param:  altered parameters of input param
@@ -23,6 +25,17 @@
 
 function [TT,FF,output_array,PdB,param,Ix,Iy]=compute_directional_metrics(x,metric_type, ...
     Fs,Nfft, ovlap, param,filetype,reactive_flag)
+
+TT=[];FF=[];output_array=[];PdB=[];
+if ~iscell(metric_type)
+    temp=metric_type;clear metric_type
+    metric_type{1}=temp;
+end
+
+if length(metric_type)~=length(reactive_flag)
+    disp('Metric type not same length as reactive flag');
+    return
+end
 
 Ix=[];Iy=[];
 if strcmpi(filetype,'PSD')
@@ -149,29 +162,30 @@ end  %sec_avg
 PdB=10*log10(2*pressure_autospectrum./(Nfft*Fs));  %%Power spectral density output
 
 
-if ~reactive_flag
-    intensity=sqrt((real(Ix)).^2+(real(Iy)).^2);
-else
-    intensity=sqrt((imag(Ix)).^2+(imag(Iy)).^2);
-end
-
-switch metric_type
-    case 'Directionality'
-        if ~reactive_flag
-            mu = atan2d(real(Ix),real(Iy));
-        else
-            mu = atan2d(imag(Ix),imag(Iy));
-        end
-        output_array=bnorm(param.brefa+mu);
-    case 'ItoERatio'
-        %%%Effective velocity j/Sp
-        output_array=intensity./energy_density;
-    case 'KEtoPERatio'
-        output_array=normalized_velocity_autospectrum./pressure_autospectrum;
-    case 'IntensityPhase'
-        output_array=atan2d(sqrt(imag(Ix).^2+imag(Iy).^2),sqrt((real(Ix)).^2+(real(Iy)).^2));
-end
-
+for J=1:length(metric_type)  %%for each request
+    if ~reactive_flag(J)
+        intensity=sqrt((real(Ix)).^2+(real(Iy)).^2);
+    else
+        intensity=sqrt((imag(Ix)).^2+(imag(Iy)).^2);
+    end
     
+    switch metric_type{J}
+        case 'Directionality'
+            if ~reactive_flag(J)
+                mu = atan2d(real(Ix),real(Iy));
+            else
+                mu = atan2d(imag(Ix),imag(Iy));
+            end
+            output_array{J}=bnorm(param.brefa+mu);
+        case 'ItoERatio'
+            %%%Effective velocity j/Sp
+            output_array{J}=intensity./energy_density;
+        case 'KEtoPERatio'
+            output_array{J}=normalized_velocity_autospectrum./pressure_autospectrum;
+        case 'IntensityPhase'
+            output_array{J}=atan2d(sqrt(imag(Ix).^2+imag(Iy).^2),sqrt((real(Ix)).^2+(real(Iy)).^2));
+    end
+end
+
 end
 

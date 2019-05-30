@@ -8462,7 +8462,7 @@ if want_directionality
         output_array((Icut+1):end,:)=temp((Icut+1):end,:);
     end
 
-    plot_directional_metric(TT,FF,output_array,handles,azigram_param);
+    plot_directional_metric(TT,FF,output_array{1},handles,azigram_param);
     % To recover matrix use handles.axes1.Children.CData;
     %handles.azigram.azi=azi;
     handles.azigram=azigram_param;
@@ -8530,6 +8530,9 @@ if want_directionality
 
         bearings=output.azi.wm.med;
         pos_DASAR=[4 -1; 0 0; 4+3 -1+4.4];  %Tako City
+        rot=0;
+        pos_DASAR=([cosd(rot) -sind(rot);sind(rot) cosd(rot)]*pos_DASAR')';
+        
         Ikeep=double(DASAR_ltr)-double('A')+1;
         plot_pulse_positions(output,bearings,pos_DASAR,Ikeep);
         
