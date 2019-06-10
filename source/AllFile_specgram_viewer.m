@@ -7978,6 +7978,11 @@ htxt	=	uicontrol(hdlg(1), 'Style', 'edit',...
 % If localization info exists, plot it!
 if isfield(Event,'localization')&&~isempty(getfield(Event,'localization'))
     
+    if ~isfield(Event.localization,'bearings_all')
+        disp('No localization exists')
+        return
+    end
+    
     if nargin < 3 || isempty(hdlg) || ~all(ishandle(hdlg))||length(hdlg)<2
         hdlg(2)	=	dialog('Windowstyle', 'normal');
         pos		=	get(hdlg(2), 'Position');
@@ -7994,11 +7999,10 @@ if isfield(Event,'localization')&&~isempty(getfield(Event,'localization'))
     
     Istation=str2num(Event.Istation);
     
+    
+    
     DASAR_coords=[Event.localization.station_position.easting Event.localization.station_position.northing];
-    if ~isfield(Event.localization,'bearings_all')
-        disp('No localization exists')
-        return
-    end
+   
     bearings=Event.localization.bearings_all;
     Igood=find(~isnan(bearings));
     
@@ -8489,10 +8493,14 @@ if want_directionality
         xall{1}=x;
         %azigram_param.brefa1=hdr1.brefa;
         azigram_param.brefa(2)=hdr1.brefa;
+        azigram_param.goodName{1}=handles.myfile;
+        azigram_param.goodName{2}=handles1.myfile;
         
         clear handles1
         
         %%%%Parameters for the automated processing 
+        azigram_param.tabs_start=handles.tdate_start;
+        
         azigram_param.da=60;  %width of a sector to search azigram in degrees
         
         %Azimuthal grid with 50%% overlap
@@ -8528,17 +8536,30 @@ if want_directionality
         output=compute_azigram_difference(xall,Fs,Nfft,ovlap,azigram_param);
         fprintf('Finished processing, starting localization...\n');
 
+        %%%Compute positions
         bearings=output.azi.wm.med;
         pos_DASAR=[4 -1; 0 0; 4+3 -1+4.4];  %Tako City
-        rot=0;
+        rot=0;  %Optional rotation of frame size we don't have alignment exact.
         pos_DASAR=([cosd(rot) -sind(rot);sind(rot) cosd(rot)]*pos_DASAR')';
         
         Ikeep=double(DASAR_ltr)-double('A')+1;
-        plot_pulse_positions(output,bearings,pos_DASAR,Ikeep);
+        output.loc=plot_pulse_positions(bearings,pos_DASAR,Ikeep);
         
         bearings=output.azi.avg;
-        plot_pulse_positions(output,bearings,pos_DASAR,Ikeep);
+        plot_pulse_positions(bearings,pos_DASAR,Ikeep);
         
+        %%%Restrict what detections/locations to keep and write to
+        %%%annotation file.
+        
+        filter_params.keyword='all';  %%For now pass all annotation
+        %station_position.easting=pos_DASAR(:,1);station_position.northing=pos_DASAR(:,2);
+        Igood=output.azi.wm.med(1,:)>=180&output.azi.wm.med(1,:)<=360;
+        
+        output_write=filter_structure(output,Igood);
+        output_write.goodName=azigram_param.goodName;
+        
+        success_flag=convert_automated_PulseTracker_into_annotations(output_write,filter_params,Igood);
+
     end
 elseif strcmp(handles.display_view,'Spectrogram')
     

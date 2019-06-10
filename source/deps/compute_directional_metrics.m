@@ -163,11 +163,6 @@ PdB=10*log10(2*pressure_autospectrum./(Nfft*Fs));  %%Power spectral density outp
 
 
 for J=1:length(metric_type)  %%for each request
-    if ~reactive_flag(J)
-        intensity=sqrt((real(Ix)).^2+(real(Iy)).^2);
-    else
-        intensity=sqrt((imag(Ix)).^2+(imag(Iy)).^2);
-    end
     
     switch metric_type{J}
         case 'Directionality'
@@ -178,6 +173,12 @@ for J=1:length(metric_type)  %%for each request
             end
             output_array{J}=bnorm(param.brefa+mu);
         case 'ItoERatio'
+            if ~reactive_flag(J)
+                intensity=sqrt((real(Ix)).^2+(real(Iy)).^2);
+            else
+                intensity=sqrt((imag(Ix)).^2+(imag(Iy)).^2);
+            end
+            
             %%%Effective velocity j/Sp
             output_array{J}=intensity./energy_density;
         case 'KEtoPERatio'
