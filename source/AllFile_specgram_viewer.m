@@ -2083,63 +2083,96 @@ end
 
 switch	Batch_mode
     case 'Process Visible Window'
-        %%%%%%%%Energy_detector_review.m%%%%%%%%%%%%%%%
-        %function Energy_detector_review(param,fname,tstart,twant,tlen,tview)
-        %
-        %  Aaron Thode
-        %  December 9. 2008
-        %  Run a short segment of time through Energy detector for insight and
-        %  adjustment.
-        %
-        %  Input:
-        %       param: structure of parameters for energy detector; must contain
-        %           field param.energy.
-        %       fname: complete pathname to raw data file
-        %       tstart: datenumber of start time of file
-        %       twant:  datenumber of desired start time energy detector processing
-        %       tlen:   number of seconds to process
-        %       tview: two element vector giving bounds for viewing output (sec)
-        %            This permits viewing of a short transient window while
-        %            permitting a long "start up" time for the equalization.
         
+        %  burntime: Time in seconds to build up average stats.
+%   flo_det, fhi_det:  The absolute minimum and maximum frequencies
+ %   	to monitor for signals of interest, 
+ %   
+ %   eq_time: an equalization time in seconds.  If eq_time is zero, the equalization is not updated after the first 20 samples.
+ %   
+ %   bandwidth:  The bandwidth of a subdetector--must be less than fhi_det-flo_det
+ %   
+ %   threshold:  dB threshold SNR needed to exceed to start detection.
+ %   
+ %   buffertime: How much time to stuff before and after detection start and stop when writing time series output.
+ %   
+ %   TolTime: How much time in seconds must pass before new detection started?
+ %   
+ %   MinTime: Minimum time in seconds a signal needs to exceed threshold SNR to register a detection.
+ %   
+ %   debug: If 0, no subdetector output.  If 1, write subdetector SEL.  If 2, write suddetector equalization value.
+ %   	If 3, write ratio of current SEL to equalization SEL (SNR estimate).
+
+%    param.eq_time='10';   param_desc{K}='Equalization time (s): should be roughly twice the duration of signal of interest';K=K+1;
+%             param.bandwidth='.05';     param_desc{K}='Bandwidth of detector in kHz';K=K+1;
+%             param.threshold='10';  param_desc{K}='Threshold in dB to accept a detection';K=K+1;
+%             param.snips_chc='1';  param_desc{K}='0 for no snips file, 1 for snips file of one channel, 2 for snips file of all channels';K=K+1;
+%             param.bufferTime='0.5'; param_desc{K}='Buffer Time in seconds to store before and after each detection snip, -1 suppress snips file';K=K+1;
+%             param.TolTime='1e-4';  param_desc{K}='Minimum time in seconds that must elapse for two detections to be listed as separate';K=K+1;
+%             param.MinTime='0';     param_desc{K}='Minimum time in seconds a required for a detection to be logged';K=K+1;
+%             param.MaxTime='3';     param_desc{K}= 'Maximum time in seconds a detection is permitted to have';K=K+1;
+%             param.debug='0';       param_desc{K}= '0: do not write out debug information. 1:  SEL output.  2:  equalized background noise. 3: SNR.';K=K+1;
+%           
         
-        burn_in_time=1; %minutes
+%%%Jinglong, hardwired parameters
+        params.burn_in_time=0.5; %minutes
+        params.bandwidth=37;
+        params.threshold=8; %dB threshold
+        params.TolTime=0.02;
+        params.MinTime=0.1;
+        params.MaxTime=5;
+        params.debug=true;
+        params.eq_time=23.8; 
         
-        [param,param_desc]=load_energy_parameters;
-        if isempty(param)
+         
+        contents=get(handles.popupmenu_Nfft,'String');
+        params.Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
+        params.Fs=handles.Fs;
+        contents=get(handles.popupmenu_ovlap,'String');
+        params.ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
+        params.flo_det=1000*str2num(get(handles.edit_fmin,'String'));
+        params.fhi_det=1000*str2num(get(handles.edit_fmax,'String'));
+       
+        if isempty(params)
             return
         end
-        param.energy=param;
+       % [param,param_desc]=load_energy_parameters;
+        
+         detect=MultipleBandEnergyDetector(handles.x,handles.tdate_start,params);
+       
+         
+        
+        %param.energy=param;
         
         
         %tel=datevec(datenum(param.nstart)-datenum(handles.tdate_min));
         %sec=tel(:,6)+60*tel(:,5)+3600*tel(:,4)+24*3600*tel(:,3);
-        tlen=(param.nsamples);
-        tstart=datenum(param.energy.nstart);
-        %param.nstart=round(param.Fs*sec);
+%         tlen=(param.nsamples);
+%         tstart=datenum(param.energy.nstart);
+%         %param.nstart=round(param.Fs*sec);
+%         
+%         climm=str2num(get(handles.edit_mindB,'String'))+[0 str2num(get(handles.edit_dBspread,'String'))];
+%         
+%         data_all=Energy_detector_review(param,fullfile(handles.mydir,handles.myfile),  ...
+%             handles.tdate_min,tstart,tlen,climm,handles.axes1,[60*burn_in_time tlen]);
+%         
+%         %%Return 'param' to a form that can be used by the input_batch
+%         %%  function
+%         fields=fieldnames(param.energy);
+%         param.energy.f_low=param.energy.f_low/1000;
+%         param.energy.f_high=param.energy.f_high/1000;
+%         param.energy.bandwidth=param.energy.bandwidth/1000;
+%         param.energy.ovlap=round(100*param.energy.ovlap/param.Nfft);
+%         
+%         for II=1:length(fields)
+%             tmp=num2str(param.energy.(fields{II}));
+%             if ~isempty(tmp)
+%                 param.energy.(fields{II})=tmp;
+%             end
+%         end
         
-        climm=str2num(get(handles.edit_mindB,'String'))+[0 str2num(get(handles.edit_dBspread,'String'))];
-        
-        data_all=Energy_detector_review(param,fullfile(handles.mydir,handles.myfile),  ...
-            handles.tdate_min,tstart,tlen,climm,handles.axes1,[60*burn_in_time tlen]);
-        
-        %%Return 'param' to a form that can be used by the input_batch
-        %%  function
-        fields=fieldnames(param.energy);
-        param.energy.f_low=param.energy.f_low/1000;
-        param.energy.f_high=param.energy.f_high/1000;
-        param.energy.bandwidth=param.energy.bandwidth/1000;
-        param.energy.ovlap=round(100*param.energy.ovlap/param.Nfft);
-        
-        for II=1:length(fields)
-            tmp=num2str(param.energy.(fields{II}));
-            if ~isempty(tmp)
-                param.energy.(fields{II})=tmp;
-            end
-        end
-        
-        handles.energy_parameters_default=param.energy;
-        handles.energy_parameters_default_desc=param_desc;
+        handles.energy_parameters_default=params;
+        %handles.energy_parameters_default_desc=param_desc;
         !rm *sel *scr *snips *detsum out*txt
         guidata(hObject, handles);
         

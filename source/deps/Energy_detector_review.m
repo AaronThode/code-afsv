@@ -93,7 +93,7 @@ for J=1:3
     selnames=dir('*.sel');
     for I=1:length(selnames)
         [SEL,Tsec{I},Tabs{I},data]=read_Java_SEL(selnames(I).name,0,Inf);
-        if I==1,
+        if I==1
             SEL_all=zeros(length(selnames),length(SEL));
             
         end
