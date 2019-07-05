@@ -1,7 +1,8 @@
 %%%%MultipleBandEnergyDetector.m
 %%%  Given a time series x and a series of band parameters,
-%%%  Detect transients over multiple bands
-%  burntime: Time in minutes to build up average stats.
+%%%  detect transients over multiple overlapping frequency bands
+%   burn_in_time: Time in minutes to build up equalization model.
+%
 %   flo_det, fhi_det:  The absolute minimum and maximum frequencies
 %   	to monitor for signals of interest,
 %
@@ -38,7 +39,7 @@ B=10*log10(B); %Convert to dB
 threshold=params.threshold;
 Ncol=size(B,2);
 
-%%%Set up bands
+%%%Set up bands for subdetectors
 
 flo=params.flo_det:(0.5*params.bandwidth):params.fhi_det;
 fhi=flo+params.bandwidth;
@@ -50,9 +51,11 @@ Igood=find(Ifhi<params.fhi_det*params.Nfft/params.Fs);
 Ifhi=Ifhi(Igood);Iflo=Iflo(Igood);fhi=fhi(Igood);flo=flo(Igood);
 Ndet=length(Ifhi);
 
+%Create equalization
 Ispan=Iflo(1):Ifhi(end);
 [~,Iburn]=min(abs(params.burn_in_time*60-TT));
 eq=mean(B(Ispan,1:Iburn),2);
+
 Ifhi=Ifhi-Iflo(1)+1;
 Iflo=Iflo-Iflo(1)+1;
 
@@ -62,21 +65,13 @@ Imin_time=round(params.MinTime/dT);
 Itol_time=round(params.TolTime/dT);
 Imax_time=round(params.MaxTime/dT);
 
-%%Sneaky fast way
-% II=[];
-% for I=1:length(Iflo)
-%      II=[II;Iflo(I):Ifhi(I)];
-% end
-%  band.eq=sum(eq(II),2);
-%  debug.detect=sum(B(II,:));
-
-%%Easy-to-understand way
+%%% Create equalization and detection functions
 for I=1:length(Iflo)
     band.eq(I)=10*log10(sum(10.^(eq(Iflo(I):Ifhi(I))/10)));
     debug.detect(I,:)=10*log10(sum(10.^(B(Iflo(I):Ifhi(I),:)/10),1));
 end
 
-
+%%%Define equalization parameter
 dn = (1-params.ovlap)*params.Nfft;
 alpha = 0.01^(dn/(params.eq_time*params.Fs));  %20 dB depression
 
@@ -86,7 +81,12 @@ fieldnames={'tstart','tend','duration','amplitude','fmin','fmax'};
 for I=1:length(fieldnames)
     detect.(fieldnames{I})=zeros(count_estimate,1);
 end
+
 count=0;
+
+%%%detection_status reports status of each frequency band.  It is important
+% to have more states than just 'on' or 'off'.  No enum type in MATLAB
+
 detection_status=-2*ones(Ndet,1);  %-2: off; -1: possible off 1: possible on  2: on
 active_detectors=0;
 tend=zeros(Ndet,1);
@@ -95,15 +95,14 @@ magnitude=tstart;
 peak_index=tstart;
 
 tstart_total=0;tend_total=0;
-global_reset=false;
 write_flag=false;
 
 %%Cycle through detector.
 %%  Written as for loop to make it easy
-for I=((1+Iburn):Ncol)
+for I=((1+Iburn):Ncol)  %For every column of spectrogram (or incoming FFT)
     global_reset=false;
     val=debug.detect(:,I);  %Slice of spectrogram
-    for J=1:Ndet
+    for J=1:Ndet  %For each detector
         if write_flag||global_reset %Detection has offically ended, cycle thorugh rest of detectors quickly
             continue
         end
@@ -114,7 +113,7 @@ for I=((1+Iburn):Ncol)
                     tstart(J)=I;
                     tend(J)=I;
                 case 1 %POSSIBLEON
-                if (I-tstart(J))>=Imin_time
+                if (I-tstart(J))>=Imin_time  %Is the detection long enough to track
                     detection_status(J)=2;
                     active_detectors=active_detectors+1;
                     magnitude(J)=val(J);
@@ -137,7 +136,7 @@ for I=((1+Iburn):Ncol)
                     tend_total=tend(J);
                     write_flag=true;
                     if ~global_reset
-                        for KK=0:Ndetectors
+                        for KK=1:Ndet
                             detection_status(KK)=-2;
                             band.eq(KK)=(1-0.25)*val(KK)+0.25*band.eq(KK);
                             debug.eq_history(J,I)=band.eq(J);
@@ -186,7 +185,7 @@ for I=((1+Iburn):Ncol)
               
         end %if threshold
                 
-    end %J
+    end %J loop through detectors.
     debug.eq_history(:,I)=band.eq;
      debug.detection_status(:,I)=detection_status; 
     %%%We've now worked through all bands.  Create or close
@@ -208,7 +207,7 @@ for I=((1+Iburn):Ncol)
     end %write flag
     
     
-end  %I
+end  %I-loop through time
 
 for I=1:length(fieldnames)
     detect.(fieldnames{I})=detect.(fieldnames{I})(1:count);
@@ -232,10 +231,10 @@ if params.debug
     
     hold on
     for I=1:count
-       line([detect.tstart(I) detect.tend(I)],detect.fmax(I)*[1 1],'color','w','linewidth',3); 
-       line(mean([detect.tstart(I) detect.tend(I)])*[1 1],[detect.fmin(I) detect.fmax(I)],'color','w','linewidth',3); 
+       line([detect.tstart(I) detect.tend(I)],detect.fmax(I)*[1 1],'color','r','linewidth',3); 
+       line(mean([detect.tstart(I) detect.tend(I)])*[1 1],[detect.fmin(I) detect.fmax(I)],'color','r','linewidth',3); 
     end
-    pause;
+    %pause;
    
     
 end

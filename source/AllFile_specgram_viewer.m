@@ -2118,7 +2118,7 @@ switch	Batch_mode
         params.burn_in_time=0.5; %minutes
         params.bandwidth=37;
         params.threshold=8; %dB threshold
-        params.TolTime=0.02;
+        params.TolTime=0.05;
         params.MinTime=0.1;
         params.MaxTime=5;
         params.debug=true;
@@ -2131,6 +2131,10 @@ switch	Batch_mode
         contents=get(handles.popupmenu_ovlap,'String');
         params.ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
         params.flo_det=1000*str2num(get(handles.edit_fmin,'String'));
+        if params.flo_det==0
+            disp('Need to set lower frequency band to non-zero value');
+            return
+        end
         params.fhi_det=1000*str2num(get(handles.edit_fmax,'String'));
        
         if isempty(params)
@@ -8566,14 +8570,14 @@ if want_directionality
         dBspread=str2double(handles.edit_mindB.String) + [0 str2double(handles.edit_dBspread.String)];
         azigram_param.debug.dBspread=dBspread;
         
-        output=compute_azigram_difference(xall,Fs,Nfft,ovlap,azigram_param);
+        output=compute_azigram_difference(x,Fs,Nfft,ovlap,azigram_param);
         fprintf('Finished processing, starting localization...\n');
 
         %%%Compute positions
         bearings=output.azi.wm.med;
-        pos_DASAR=[4 -1; 0 0; 4+3 -1+4.4];  %Tako City
+        pos_DASAR0=[4 -1; 0 0; 4+3 -1+4.4];  %Tako City
         rot=0;  %Optional rotation of frame size we don't have alignment exact.
-        pos_DASAR=([cosd(rot) -sind(rot);sind(rot) cosd(rot)]*pos_DASAR')';
+        pos_DASAR=([cosd(rot) -sind(rot);sind(rot) cosd(rot)]*pos_DASAR0')';
         
         Ikeep=double(DASAR_ltr)-double('A')+1;
         output.loc=plot_pulse_positions(bearings,pos_DASAR,Ikeep);
