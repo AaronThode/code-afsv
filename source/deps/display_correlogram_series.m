@@ -18,13 +18,12 @@ if alg_chc==1
     Nfft_window=str2double(contents{get(handles.popupmenu_WindowSize,'Value')});
     
     [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs);
-    [mean_corr_org,tindex,TT_plot,pwr,pwr_tot,yscale]= create_incoherent_correlogram(TT,FF,B,param,fmin,fmax);
+    [mean_corr_org,tindex,TT_plot,pwr,pwr_tot]= create_incoherent_correlogram(TT,FF,B,param,fmin,fmax);
     
     
 else
     param.Nfft=round(param.time_sample*Fs);
     [mean_corr_eq,mean_corr_org,tindex,TT_plot,pwr]= create_coherent_correlogram(x(:,1),Fs,param,fmin,fmax);
-    
     %
     
 end

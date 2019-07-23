@@ -184,7 +184,11 @@ for J=1:length(metric_type)  %%for each request
         case 'KEtoPERatio'
             output_array{J}=normalized_velocity_autospectrum./pressure_autospectrum;
         case 'IntensityPhase'
-            output_array{J}=atan2d(sqrt(imag(Ix).^2+imag(Iy).^2),sqrt((real(Ix)).^2+(real(Iy)).^2));
+            if ~reactive_flag(J)
+                output_array{J}=atan2d(sqrt(imag(Ix).^2+imag(Iy).^2),sqrt((real(Ix)).^2+(real(Iy)).^2));
+            else
+                output_array{J}=atan2d(sqrt(real(Ix).^2+real(Iy).^2),sqrt((imag(Ix)).^2+(imag(Iy)).^2));
+            end
     end
 end
 

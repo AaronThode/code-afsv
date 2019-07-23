@@ -8500,7 +8500,7 @@ if want_directionality
         [~,~,temp]=compute_directional_metrics ...
             (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
             'gsi',true);
-        output_array((Icut+1):end,:)=temp((Icut+1):end,:);
+        output_array{1}((Icut+1):end,:)=temp{1}((Icut+1):end,:);
     end
 
     plot_directional_metric(TT,FF,output_array{1},handles,azigram_param);
@@ -8570,7 +8570,11 @@ if want_directionality
         dBspread=str2double(handles.edit_mindB.String) + [0 str2double(handles.edit_dBspread.String)];
         azigram_param.debug.dBspread=dBspread;
         
-        output=compute_azigram_difference(x,Fs,Nfft,ovlap,azigram_param);
+         %%%%%%How much data to read in at a time to RAM--solves clock drift
+        %%%%%%problem
+        params.time_chunk=10*60;
+        
+        output=azigram_pulse_detector(xall,Fs,Nfft,ovlap,azigram_param);
         fprintf('Finished processing, starting localization...\n');
 
         %%%Compute positions
@@ -8590,7 +8594,7 @@ if want_directionality
         
         filter_params.keyword='all';  %%For now pass all annotation
         %station_position.easting=pos_DASAR(:,1);station_position.northing=pos_DASAR(:,2);
-        Igood=output.azi.wm.med(1,:)>=180&output.azi.wm.med(1,:)<=360;
+        Igood=output.azi.wm.med(1,:)>=0&output.azi.wm.med(1,:)<=360;
         
         output_write=filter_structure(output,Igood);
         output_write.goodName=azigram_param.goodName;
