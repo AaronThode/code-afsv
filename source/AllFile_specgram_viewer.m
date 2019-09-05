@@ -3768,6 +3768,7 @@ for Idasar=1:NDasar
     try
         handles		=	load_and_display_spectrogram(handles);
         [theta(Idasar),kappa(Idasar),tsec(Idasar),xsample{Idasar}]=get_GSI_bearing(hObject,eventdata,handles);
+        fprintf('theta %i: %6.2f\n',Idasar,theta(Idasar));
     catch
         disp(sprintf('Directory %s, file %s does not exist',handles.mydir,handles.myfile));
     end
@@ -8546,7 +8547,7 @@ if want_directionality
         output_array{1}((Icut+1):end,:)=temp{1}((Icut+1):end,:);
     end
 
-    plot_directional_metric(TT,FF,output_array{1},handles,azigram_param);
+    plot_directional_metric(TT,FF,output_array{1},handles,azigram_param,PdB);
     % To recover matrix use handles.axes1.Children.CData;
     %handles.azigram.azi=azi;
     handles.azigram=azigram_param;
@@ -9042,8 +9043,9 @@ contents=get(handles.popupmenu_Nfft,'String');
 Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
 
 if GSI_flag
+    params.f_transition=300;
     x=x(n(1):n(2),:);
-    [thet0,kappa,sd,xf]=extract_bearings(x,0.25,Nfft,Fs,freq(1),freq(2),200);
+    [thet0,kappa,sd,xf]=extract_bearings(x,0.25,Nfft,Fs,freq(1),freq(2),200,params.f_transition);
     
     if ~isempty(strfind('T2007',handles.myfile))
         cal07flag=1;
@@ -9114,7 +9116,7 @@ end
 
 
 
-function [thet,kappa,sd,x]=extract_bearings(y,bufferTime,Nfft,Fs,fmin,fmax,Nsamples)
+function [thet,kappa,sd,x]=extract_bearings(y,bufferTime,Nfft,Fs,fmin,fmax,Nsamples,f_transition)
 %function [thet,kappa,sd,x]=extract_bearings(y,bufferTime,Nfft,Fs,fmin,fmax,Nsamples)
 % Input:
 %    y: time series, with channels arranged as columns
@@ -9136,6 +9138,9 @@ function [thet,kappa,sd,x]=extract_bearings(y,bufferTime,Nfft,Fs,fmin,fmax,Nsamp
 %               and active intensity.  May also be modified to permit
 %               robust beamforming for weak signals.
 %    Nsamples:  number of bootstrap samples for estimating kappa and sd
+%   f_transition:  frequency over which the pressure/velocity are 90 out of
+%       phase, so need to use a hilbert transform to get the bearing..
+%
 %  Output: thet: angle in degrees, increasing clockwise from true north...,
 %  sd standard deviation in degrees
 %   x: filtered time series, columns are channels
@@ -9167,12 +9172,17 @@ else
         x(:,I)=filter(B,A,y(:,I));
     end
 end
-if bufferTime>0,
+if bufferTime>0
     x=x(ceil(1+bufferTime*Fs):(end-floor(bufferTime*Fs)),:);
 end
 
 vx=(x(:,1).*x(:,2));
 vy=(x(:,1).*x(:,3));
+if fmin>=f_transition
+    vx=(imag(hilbert(x(:,1))).*x(:,2));
+    vy=(imag(hilbert(x(:,1))).*x(:,3));
+      
+end
 %thet=atan2(sum(vx),sum(vy))*180/pi;
 
 

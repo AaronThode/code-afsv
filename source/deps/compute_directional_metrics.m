@@ -159,8 +159,8 @@ if ~isempty(sec_avg)&&sec_avg>0
     pressure_autospectrum=PA_avg;
 end  %sec_avg
 
-PdB=10*log10(2*pressure_autospectrum./(Nfft*Fs));  %%Power spectral density output
-
+PdB=4+10*log10(2*pressure_autospectrum./(Nfft*Fs));  %%Power spectral density output
+%[~,FF,TT,PdB1] = spectrogram(x(:,1),Nfft,round(ovlap*Nfft),Nfft,Fs);
 
 for J=1:length(metric_type)  %%for each request
     
