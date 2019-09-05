@@ -75,16 +75,23 @@ function AllFile_specgram_viewer_OpeningFcn(hObject, eventdata, handles, varargi
 
 if ispc
     deskPath=['C:/Users/' char(java.lang.System.getProperty('user.name')) '/Desktop/'];
-elseif strcmp(getenv('USER'),'thode')
-   deskPath='/Users/thode/repos/code-afsv/source/';
+    if ~ isdeployed
+        path([deskPath 'Ulysses'],path);
+        path([deskPath 'Ulysses/deps'],path);
+    end
+elseif strcmpi(getenv('USER'),'thode')
+    deskPath='/Users/thode/repos/code-afsv/source/';
+    path([deskPath],path);
+    path([deskPath '/deps'],path);
 else
     deskPath='~/Desktop/';
+    if ~ isdeployed
+        path([deskPath 'Ulysses'],path);
+        path([deskPath 'Ulysses/deps'],path);
+    end
 end
 
-if ~ isdeployed
-    path([deskPath 'Ulysses'],path);
-    path([deskPath 'Ulysses/deps'],path);
-end
+
 
 startupinfo		=	gui_startup_information;
 
@@ -3701,15 +3708,18 @@ function pushbutton_GSI_localization_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 strr=upper('abcdefghijklmnopqrstuvwxyz');
-numm=['012'];
+numm=['012'];  %%%Version of deployment, i.e. last number in 'S510G0'
 NDasar=length(strr);
 theta=-2*ones(1,NDasar);
 kappa=theta;
 
-if ~strcmp(handles.mydir(end-6),'S')
-    fprintf('Directory %s does not have form S***** \n',handles.mydir);
-    return
-end
+%if ~strcmp(handles.mydir(end-6),'S')
+%    fprintf('Directory %s does not have form S***** \n',handles.mydir);
+%    return
+%end
+
+
+%%%%Cycle through all possible DASAR names to identify appropriate file
 for Idasar=1:NDasar
     xsample{Idasar}=[];
     tsec(Idasar)=NaN;
@@ -3717,10 +3727,11 @@ for Idasar=1:NDasar
     directory_flag=false;
     Inum=1;
     while ~directory_flag
-        
+        %%Directory of the form S107C0;
         handles.mydir(end-2)=strr(Idasar);
         handles.mydir(end-1)=numm(Inum);
-        %%S510G0T20100831T000000.gsi form
+        %%S510G0T20100831T000000.gsi form or
+        %%PE10G0T20100831T000000.gsi
         handles.myfile(5)=strr(Idasar);
         handles.myfile(6)=numm(Inum);
         if exist(handles.mydir,'dir')==7
@@ -3741,7 +3752,7 @@ for Idasar=1:NDasar
                 cd(mydir)
                 
             end
-        else
+        else  %%%Try to see if 
             Inum=Inum+1;
             if Inum==length(numm)
                 directory_flag=true;
@@ -3764,49 +3775,7 @@ for Idasar=1:NDasar
     
 end
 
-faill=false;
-if isfield(handles,'notes')
-    try
-        locc=handles.notes.Data.Events(2).localization.station_position;
-        strr=handles.notes.Data.Events(2).link_names(:,5);
-        indicies=double(strr)-64;
-        DASAR_coords=zeros(7,2);
-        DASAR_coords(indicies,:)=[locc.easting locc.northing];
-        VA_cords=[];
-    catch
-        faill=true;
-    end
-else
-    faill=true;
-end
-
-if faill
-    prompt1={'File of locations','Site','UTM location to compute range'};
-    dlgTitle1='Parameters for GSI localization...';
-    %def1={'/Volumes/ThodePortable2/2010_Beaufort_Shell_DASAR/DASAR_locations_2010.mat', '5','[4.174860699660919e+05 7.817274204098196e+06]'};
-    %'/Volumes/Data/Shell2010_GSI_Data/DASARlocations/DASAR_locations_2010.mat',
-    
-    if ispc
-        Iyear=strfind(handles.mydir,':\')+length(':/');
-        year=handles.mydir(Iyear+(0:3));
-    else
-        Iyear=strfind(handles.mydir,'Shell')+length('Shell');
-        year=handles.mydir(Iyear+(0:3));
-    end
-    %handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
-    %GSI_location_dir=fullfile('/Volumes','Data',sprintf('Shell%s_GSI_Data',year),'DASARlocations',sprintf('DASAR_locations_%s.mat',year));
-    GSI_location_dir=sprintf(handles.GSI_location_dir_template,year,year);
-    
-    def1={GSI_location_dir, '1','[4.174860699660919e+05 7.817274204098196e+06]'};
-    % site 5: [4.174860699660919e+05 7.817274204098196e+06]
-    answer=inputdlg(prompt1,dlgTitle1,1,def1);
-    locs=load(answer{1});
-    Isite=str2double(answer{2});
-    VA_cords=str2num(answer{3})/1000;
-    
-    DASAR_coords=[locs.Site{Isite}.easting locs.Site{Isite}.northing];
-    
-end
+[DASAR_coords,Isite]=get_DASAR_locations(handles,strr);
 
 Ikeep=find(~isnan(theta)&theta>0);  %Remove absent or unselected DASARs
 Igood=find(~isnan(theta)&theta>-2);  %Remove absent DASARS (used to compute center of array)
@@ -3823,12 +3792,15 @@ CRITVAL=4.60517; %chi2inv(0.90,2);
 
 [~,A,B,ANG,Baxis] = ellipsparms(Qhat,CRITVAL,mean_coords,VM);
 
-figure
+figure(1)
 Ikeep=find(~isnan(theta(Igood))&theta(Igood)>0);
-[~,xg,yg]=plot_location(DASAR_coords(Igood,:),theta(Igood),Ikeep,VM,A,B,ANG);
+[~,xg,yg]=plot_location(DASAR_coords(Igood,:),theta(Igood),Ikeep,VM,A,B,ANG,[],[],[],'m');
+%xlim([-0.1 0.1]);
+%ylim([-0.1 0.1]);
+
 hold on
 
-if ~isempty(VA_cords)&Isite==5
+if exist('VA_cords','var')&~isempty(VA_cords)&Isite==5
     tmp=(VA_cords-[xg yg]);
     plot(tmp(1),tmp(2),'o');
     range=sqrt(sum((VA_cords-VM/1000).^2));
@@ -3852,15 +3824,90 @@ if yes==1
     print(1,'-djpeg','-r300',sprintf('Localization_G_%s.jpg',tstart));
     print('-djpeg','-r300',sprintf('Spectrogram_G_%s.jpg',tstart));
     try
-               save(sprintf('DASAR_localization_%s',tstart),'DASAR_coords','Igood','theta','Ikeep','VM','A','B','ANG','xsample','tsec','VA_cords','range','tdoa_mat');
+               save(sprintf('DASAR_localization_%s',tstart),'DASAR_coords','Igood','theta','Ikeep','VM','A','B','ANG','xsample','tsec','range','tdoa_mat');
     catch
-        save(sprintf('DASAR_localization_%s',tstart),'DASAR_coords','Igood','theta','Ikeep','VM','A','B','ANG','xsample','tsec','VA_cords','tdoa_mat');
+        save(sprintf('DASAR_localization_%s',tstart),'DASAR_coords','Igood','theta','Ikeep','VM','A','B','ANG','xsample','tsec','tdoa_mat');
         %fprintf('Position not saved. \n');
         
        
     end
 end
-close(1)
+%close(1)
+end
+
+
+function [DASAR_coords,Isite]=get_DASAR_locations(handles,strr)
+%%S510G0T20100831T000000.gsi form
+%%PE19X0T20100831T000000.gsi
+DASAR_ltr=handles.myfile(5);
+iT=strfind(handles.myfile,'T')+1;
+year=handles.myfile(iT(1)+(0:3));
+
+DASAR_coords=-1*ones(length(strr),2);
+Isite=-1;
+%%%%  Check to see what deployment we have...
+if contains(handles.myfile(1:2),'PE')
+    Ikeep=double('XYZ')-double('A')+1;
+    pos_DASAR0=[0 -14.69; 0 15.73; 0 0];  %Tako City
+    rot=-20;  %Optional rotation of frame size we don't have alignment exact.
+    
+    DASAR_coords(Ikeep,:)=([cosd(rot) sind(rot);-sind(rot) cosd(rot)]*pos_DASAR0')';
+    
+    return
+elseif contains(handles.myfile(1:2),'PT')
+    Ikeep=double('ABC')-double('A')+1;
+    pos_DASAR0=[4 -1; 0 0; 4+3 -1+4.4];  %Tako City
+    rot=0;  %Optional rotation of frame size we don't have alignment exact.
+    DASAR_coords(Ikeep,:)=([cosd(rot) sind(rot);-sind(rot) cosd(rot)]*pos_DASAR0')';
+    return
+end
+
+
+
+if isfield(handles,'notes')
+    try
+        locc=handles.notes.Data.Events(2).localization.station_position;
+        strr=handles.notes.Data.Events(2).link_names(:,5);
+        indicies=double(strr)-64;
+        DASAR_coords=zeros(7,2);
+        DASAR_coords(indicies,:)=[locc.easting locc.northing];
+        VA_cords=[];
+        return
+        
+    end
+end
+
+prompt1={'File of locations','Site','UTM location to compute range'};
+dlgTitle1='Parameters for GSI localization...';
+%def1={'/Volumes/ThodePortable2/2010_Beaufort_Shell_DASAR/DASAR_locations_2010.mat', '5','[4.174860699660919e+05 7.817274204098196e+06]'};
+%'/Volumes/Data/Shell2010_GSI_Data/DASARlocations/DASAR_locations_2010.mat',
+
+%%S510G0T20100831T000000.gsi form
+
+
+%     if ispc
+%         Iyear=strfind(handles.mydir,':\')+length(':/');
+%         year=handles.mydir(Iyear+(0:3));
+%     else
+%
+%         Iyear=strfind(handles.mydir,'Shell')+length('Shell');
+%         year=handles.mydir(Iyear+(0:3));
+%     end
+
+%handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
+%GSI_location_dir=fullfile('/Volumes','Data',sprintf('Shell%s_GSI_Data',year),'DASARlocations',sprintf('DASAR_locations_%s.mat',year));
+GSI_location_dir=sprintf(handles.GSI_location_dir_template,year,year);
+
+def1={GSI_location_dir, '1','[4.174860699660919e+05 7.817274204098196e+06]'};
+% site 5: [4.174860699660919e+05 7.817274204098196e+06]
+answer=inputdlg(prompt1,dlgTitle1,1,def1);
+locs=load(answer{1});
+Isite=str2double(answer{2});
+VA_cords=str2num(answer{3})/1000;
+
+DASAR_coords=[locs.Site{Isite}.easting locs.Site{Isite}.northing];
+
+
 end
 
 % --- Executes on button press in pushbutton_CSDM.
@@ -8575,11 +8622,22 @@ if want_directionality
 
         %%%Compute positions
         bearings=output.azi.wm.med;
-        pos_DASAR0=[4 -1; 0 0; 4+3 -1+4.4];  %Tako City
-        rot=0;  %Optional rotation of frame size we don't have alignment exact.
-        pos_DASAR=([cosd(rot) -sind(rot);sind(rot) cosd(rot)]*pos_DASAR0')';
         
-        Ikeep=double(DASAR_ltr)-double('A')+1;
+        location='Eel';
+        if contains(lower(location),'eel')
+            Ikeep=double(DASAR_ltr)-double('X')+1;
+            pos_DASAR0=[0 -14.69; 0 15.73; 0 0];  %Tako City
+            rot=-20;  %Optional rotation of frame size we don't have alignment exact.
+            
+        elseif contains(lower(location),'tako')
+            
+            Ikeep=double(DASAR_ltr)-double('A')+1;
+            pos_DASAR0=[4 -1; 0 0; 4+3 -1+4.4];  %Tako City
+            rot=0;  %Optional rotation of frame size we don't have alignment exact.
+            
+        end
+        pos_DASAR=([cosd(rot) sind(rot);-sind(rot) cosd(rot)]*pos_DASAR0')';
+        
         output.loc=plot_pulse_positions(bearings,pos_DASAR,Ikeep);
         
         bearings=output.azi.avg;
@@ -8952,6 +9010,10 @@ mydir=pwd;
 %Ichan='all';  %Hardwire first channel
 %Ichan=str2double(get(handles.edit_chan,'String'));
 azigram_flag=handles.radiobutton_directionality.Value;
+if azigram_flag
+   disp('Can''t get bearing from azigram')
+   return
+end
 DIFAR_flag=strcmpi(handles.filetype,'wav')&~isempty(strfind(handles.myfile,'DIFAR'));
 GSI_flag=strcmpi(handles.filetype,'gsi')&~azigram_flag;
 
@@ -9000,10 +9062,6 @@ if GSI_flag
     end
 end
 
-%handles.bearing=thet;
-%guidata(hObject, handles);
-%titlestr=get(handles.text_filename,'String');
-%Iend=strfind(titlestr,'.gsi')-1;
 set(handles.text_filename,'String',sprintf('%s/%s %6.2f degrees... ',handles.mydir,handles.myfile,thet));
 %keyboard;
 end %function get_GSI_bearing

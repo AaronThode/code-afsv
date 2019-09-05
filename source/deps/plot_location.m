@@ -1,4 +1,4 @@
-function  [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,linel,Istation,VM_extra)
+function  [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,linel,Istation,VM_extra,units)
 %DASAR_coords are [NDASAR 2] matrix
 % bearings is a vector in degrees, map definition (0=north, increasing
 %   clockwise to east).
@@ -8,6 +8,12 @@ function  [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM
 %  Istation: line to emphasize
 % extra_VM: additional point to plot...
 
+if ~exist('units','var')
+    units='km';
+end
+if ~exist('linel', 'var')||isempty(linel)
+    linel=3500; %length of bearing lines in m
+end
 if nargin<10
     VM_extra=[];
 end
@@ -22,14 +28,15 @@ elseif nargin==4
     ANG=[];
 end
 %Convert to km
-VM=VM/1000;
-DASAR_coords=DASAR_coords/1000;
-A=A/1000;
-B=B/1000;
-
-if ~exist('linel', 'var')
-    linel=35; %length of bearing lines in km
+if strcmpi(units,'km')
+    VM=VM/1000;
+    DASAR_coords=DASAR_coords/1000;
+    A=A/1000;
+    B=B/1000;
+    line1=line1/1000;
 end
+
+
 %subplot(3,1,LL);
 xg=mean(DASAR_coords(:,1));
 yg=mean(DASAR_coords(:,2));
@@ -38,8 +45,6 @@ DASAR_coordsn(:,2)=DASAR_coords(:,2)-yg;
 
 plot(DASAR_coords(:,1)-xg,DASAR_coords(:,2)-yg,'r^','markersize',5,'markerfacecolor',[1 0 0]);hold on
 set(gca,'fontweight','bold','fontsize',14);
-xlabel('Easting (km)');
-ylabel('Northing (km)');
 axis('equal');
 grid on;
 
@@ -49,7 +54,7 @@ if ~isempty(bearings)
     for I=1:length(Igood)
         XX=DASAR_coords(Igood(I),1)+[0 linel*cos(bearings(I))]-xg;
         YY=DASAR_coords(Igood(I),2)+[0 linel*sin(bearings(I))]-yg;
-        if exist('Istation')&&Igood(I)==Istation
+        if exist('Istation','var')&(Igood(I)==Istation)
             line(XX,YY,'linewidth',5);
         else
             line(XX,YY);
@@ -74,14 +79,26 @@ if ~isempty(A)
     set(h,'linewidth',0.5);
 end
 
-xlim([-20 20]);
-ylim([-20 20]);
+if strcmpi(units,'km')
+    
+    xlim([-20 20]);
+    ylim([-20 20]);
+    xlabel('Easting (km)');
+    ylabel('Northing (km)');
+    
+elseif strcmpi(units,'m')
+    xlim([-100 100]);
+    ylim([-100 100]);
+    xlabel('Easting (m)');
+    ylabel('Northing (m)');
+    
+end
 
 hold off;
 
 
 if isnan(A)||isnan(B)
-   title('Ellipse parameters not calculated'); 
+    title('Ellipse parameters not calculated');
 end
 
 if all(isnan(VM))
