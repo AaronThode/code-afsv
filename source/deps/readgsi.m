@@ -18,10 +18,11 @@ if nargin<4
     formatt='ctime';
 end
 
-if strcmp(formatt,'datenum')&ctstart>0,
+if strcmp(formatt,'datenum')&ctstart>0
     %tfile_start=datenum(1970,1,1,0,0,head.ctbc);
     ctstart=86400*(ctstart-datenum(1970,1,1,0,0,0));
-
+elseif strcmp(formatt,'seconds')&ctstart>0
+    ctstart=-ctstart;  %Set to zero
 end
 %fid = fopen(char(fn),'r','ieee-le');
 fs=head.Fs*(1+head.tdrift/86400);

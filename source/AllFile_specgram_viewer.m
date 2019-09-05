@@ -2144,11 +2144,11 @@ switch	Batch_mode
         
          detect=MultipleBandEnergyDetector(handles.x,handles.tdate_start,params);
        
-         
-        
+         %ICI=compute_ici_bothways_feature(tabs,ici_range,feature_array,feature_names, ...
+    %num_clicks,num_misses,tol_feature,tol_time,Idebug)
+ 
         %param.energy=param;
-        
-        
+         
         %tel=datevec(datenum(param.nstart)-datenum(handles.tdate_min));
         %sec=tel(:,6)+60*tel(:,5)+3600*tel(:,4)+24*3600*tel(:,3);
 %         tlen=(param.nsamples);
@@ -3080,12 +3080,12 @@ tlen=handles.tlen;
 mydir=pwd;
 try
     chan=eval(get(handles.edit_chan,'String'));
-    if strcmpi(handles.filetype,'SIO')
+    if strcmpi(handles.filetype,'GSI')
         choice=menu('Store all channels?','Yes','No');
         if choice==1
-            chan=1;
+            chan=1:3;
         else
-            chan=-input('Which channel?');
+            chan=-1;
         end
     end
     if chan<0
@@ -3101,11 +3101,7 @@ end
 %[x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
 [x,~,Fs,~,~,hdr]=load_data(handles.filetype,tdate_start,tlen,Ichan,handles);
 
-if ~isempty(strfind(lower(computer),'mac'))
-    Islash=strfind(handles.mydir,'/');
-else
-    Islash=strfind(handles.mydir,'\');
-end
+Islash=strfind(handles.mydir,filesep);
 chan=get(handles.edit_chan,'String');
 
 %save_name=sprintf('soundsamp%s_%s',handles.myfile((Islash(end)+1):end),datestr(tdate_start,30));

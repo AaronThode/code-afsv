@@ -1,6 +1,9 @@
 %%%%MultipleBandEnergyDetector.m
 %%%  Given a time series x and a series of band parameters,
 %%%  detect transients over multiple overlapping frequency bands
+%
+%   EqFormat:  'dB' or 'linear' for equalization function
+%
 %   burn_in_time: Time in minutes to build up equalization model.
 %
 %   flo_det, fhi_det:  The absolute minimum and maximum frequencies
@@ -34,9 +37,20 @@
 %
 function [detect,debug]=MultipleBandEnergyDetector(x,tabs_start,params)
 
+isdB=true;
+if isfield(params,'EqFormat')
+  if ~contains(params.EqFormat,'dB')
+      isdB=false;  %linear
+  end
+end
+
 [~,FF,TT,B] = spectrogram(x,hanning(params.Nfft),round(params.ovlap*params.Nfft),params.Nfft,params.Fs);
-B=10*log10(B); %Convert to dB
-threshold=params.threshold;
+if isdB  %JINGLONG
+    B=10*log10(B); %Convert to dB
+    threshold=params.threshold;
+else
+    threshold=10.^log10(threshold); %convert to linear
+end
 Ncol=size(B,2);
 
 %%%Set up bands for subdetectors
@@ -66,11 +80,18 @@ Itol_time=round(params.TolTime/dT);
 Imax_time=round(params.MaxTime/dT);
 
 %%% Create equalization and detection functions
-for I=1:length(Iflo)
-    band.eq(I)=10*log10(sum(10.^(eq(Iflo(I):Ifhi(I))/10)));
-    debug.detect(I,:)=10*log10(sum(10.^(B(Iflo(I):Ifhi(I),:)/10),1));
+if isdB  %JINGLONG
+    for I=1:length(Iflo)
+        band.eq(I)=10*log10(sum(10.^(eq(Iflo(I):Ifhi(I))/10)));
+        debug.detect(I,:)=10*log10(sum(10.^(B(Iflo(I):Ifhi(I),:)/10),1));
+    end
+else
+    for I=1:length(Iflo)
+        band.eq(I)=sum(eq(Iflo(I):Ifhi(I)));
+        debug.detect(I,:)=sum(B(Iflo(I):Ifhi(I),:),1);
+    end
+    
 end
-
 %%%Define equalization parameter
 dn = (1-params.ovlap)*params.Nfft;
 alpha = 0.01^(dn/(params.eq_time*params.Fs));  %20 dB depression
@@ -106,49 +127,60 @@ for I=((1+Iburn):Ncol)  %For every column of spectrogram (or incoming FFT)
         if write_flag||global_reset %Detection has offically ended, cycle thorugh rest of detectors quickly
             continue
         end
-        if val(J)>=band.eq(J)+threshold  %threshold exceeded
+        
+        if isdB  %JINGLONG
+            criteria=band.eq(J)+threshold;
+        else
+            criteria=band.eq(J).*threshold;
+        end
+        if val(J)>=criteria  %threshold exceeded
             switch detection_status(J)
                 case -2 %OFF
                     detection_status(J)=1; %POSSIBLE ON
                     tstart(J)=I;
                     tend(J)=I;
                 case 1 %POSSIBLEON
-                if (I-tstart(J))>=Imin_time  %Is the detection long enough to track
-                    detection_status(J)=2;
-                    active_detectors=active_detectors+1;
-                    magnitude(J)=val(J);
-                    peak_index(J)=I;
-                    if active_detectors==1
-                        tstart_total=I;
-                    end
-                end
-                
-                case 2 %ON
-                magnitude(J)=max([magnitude(J) val(J)]);
-                if magnitude(J)==val(J)
-                    peak_index(J)=val(J);
-                end
-                
-                %%%Force reset?
-                if I-tstart_total>=Imax_time
-                    active_detectors=0;
-                    tend(J)=I;
-                    tend_total=tend(J);
-                    write_flag=true;
-                    if ~global_reset
-                        for KK=1:Ndet
-                            detection_status(KK)=-2;
-                            band.eq(KK)=(1-0.25)*val(KK)+0.25*band.eq(KK);
-                            debug.eq_history(J,I)=band.eq(J);
-                            tend(KK)=I;
-                            %writeMe(KK)=true;
+                    if (I-tstart(J))>=Imin_time  %Is the detection long enough to track
+                        detection_status(J)=2;
+                        active_detectors=active_detectors+1;
+                        magnitude(J)=val(J);
+                        peak_index(J)=I;
+                        if active_detectors==1
+                            tstart_total=I;
                         end
-                        global_reset=true;
                     end
                     
+                case 2 %ON
+                    magnitude(J)=max([magnitude(J) val(J)]);
+                    if magnitude(J)==val(J)
+                        peak_index(J)=val(J);
+                    end
                     
-                end %Imax_time
-                
+                    %%%Force reset?
+                    if I-tstart_total>=Imax_time
+                        active_detectors=0;
+                        tend(J)=I;
+                        tend_total=tend(J);
+                        write_flag=true;
+                        if ~global_reset
+                            for KK=1:Ndet
+                                detection_status(KK)=-2;
+                                if isdB  %JINGLONG
+                                band.eq(KK)=(1-0.25)*val(KK)+0.25*band.eq(KK);
+                                else
+                                   band.eq(KK)=(band.eq(J).^0.25).*(val(J).^.75); %Update background estimate
+                         
+                                end
+                                debug.eq_history(J,I)=band.eq(J);
+                                tend(KK)=I;
+                                %writeMe(KK)=true;
+                            end
+                            global_reset=true;
+                        end
+                        
+                        
+                    end %Imax_time
+                    
                 case -1 %POSSIBLE OFF: we have just dipped below threshold for less than EndTolerance time, take back
                     detection_status(J)=2;
                     tend(J)=I;
@@ -157,7 +189,12 @@ for I=((1+Iburn):Ncol)  %For every column of spectrogram (or incoming FFT)
             
             switch detection_status(J)
                 case -2 %OFF
-                    band.eq(J)=(alpha).*band.eq(J)+(1-alpha)*val(J); %Update background estimate
+                    if isdB
+                        band.eq(J)=(alpha).*band.eq(J)+(1-alpha)*val(J); %Update background estimate
+                    else
+                        band.eq(J)=(band.eq(J).^alpha).*(val(J).^(1-alpha)); %Update background estimate
+                        
+                    end
                 case 2 %ON
                     tend(J)=I;  %%Mark end of detection
                     detection_status(J)=-1; %Possible OFF
@@ -166,7 +203,12 @@ for I=((1+Iburn):Ncol)  %For every column of spectrogram (or incoming FFT)
                     tstart(J)=0;
                     tend(J)=0;
                 case -1 %POSSIBLE OFF
-                    band.eq(J)=(alpha).*band.eq(J)+(1-alpha)*val(J); %Update background estimate
+                    if isdB
+                        band.eq(J)=(alpha).*band.eq(J)+(1-alpha)*val(J); %Update background estimate
+                    else
+                        band.eq(J)=(band.eq(J).^alpha).*(val(J).^(1-alpha)); %Update background estimate
+                        
+                    end
                     if tend(J)+Itol_time<=I&&(tend(J)~=0)  %%%if enough time has passed since last detection
                         detection_status(J)=-2;
                         active_detectors=active_detectors-1;
@@ -182,28 +224,28 @@ for I=((1+Iburn):Ncol)  %For every column of spectrogram (or incoming FFT)
                     end
                     
             end  %detection_status
-              
+            
         end %if threshold
-                
+        
     end %J loop through detectors.
     debug.eq_history(:,I)=band.eq;
-     debug.detection_status(:,I)=detection_status; 
+    debug.detection_status(:,I)=detection_status;
     %%%We've now worked through all bands.  Create or close
     %%%  an official detection.
     
     if write_flag % detection completed
         %%%Is it too short?
-            count=count+1;
-            detect.tstart(count)=tstart_total;
-            detect.tend(count)=tend_total;
-            detect.fmin(count)=min(flo(tend~=0));
-            detect.fmax(count)=max(fhi(tend~=0));
-            detect.amplitude(count)=max(magnitude);
-            %detection_status(:)=false;
-            write_flag=false;
-            reset_detect;
-            
-    
+        count=count+1;
+        detect.tstart(count)=tstart_total;
+        detect.tend(count)=tend_total;
+        detect.fmin(count)=min(flo(tend~=0));
+        detect.fmax(count)=max(fhi(tend~=0));
+        detect.amplitude(count)=max(magnitude);
+        %detection_status(:)=false;
+        write_flag=false;
+        reset_detect;
+        
+        
     end %write flag
     
     
@@ -217,32 +259,34 @@ if params.debug
     %close all
     figure(100);hold off
     subplot(4,1,1);hold off
-    imagesc([],0.5*(flo+fhi),(debug.eq_history));axis('xy'); colorbar('west')
+    imagesc(TT,0.5*(flo+fhi),(debug.eq_history));axis('xy'); colorbar('west')
     caxis([min(min(debug.detect)) max(max(debug.detect))]);
     subplot(4,1,2);hold off
-    imagesc([],0.5*(flo+fhi),(debug.detect));axis('xy'); colorbar('west')
+    imagesc(TT,0.5*(flo+fhi),(debug.detect));axis('xy'); colorbar('west')
     caxis([min(min(debug.detect)) max(max(debug.detect))]);
     subplot(4,1,3);hold off
-    imagesc([],0.5*(flo+fhi),(debug.detect-debug.eq_history));axis('xy'); colorbar('west')
+    imagesc(TT,0.5*(flo+fhi),(debug.detect-debug.eq_history));axis('xy'); colorbar('west')
     caxis([params.threshold 30]);
     subplot(4,1,4);hold off
-    imagesc([],0.5*(flo+fhi),debug.detection_status);axis('xy'); colorbar('west')
-   
+    imagesc(TT,0.5*(flo+fhi),debug.detection_status);axis('xy'); colorbar('west')
+    
+    detect.tstart=dT*detect.tstart;
+    detect.tend=dT*detect.tend;
     
     hold on
     for I=1:count
-       line([detect.tstart(I) detect.tend(I)],detect.fmax(I)*[1 1],'color','r','linewidth',3); 
-       line(mean([detect.tstart(I) detect.tend(I)])*[1 1],[detect.fmin(I) detect.fmax(I)],'color','r','linewidth',3); 
+        line([detect.tstart(I) detect.tend(I)],detect.fmax(I)*[1 1],'color','r','linewidth',3);
+        line(mean([detect.tstart(I) detect.tend(I)])*[1 1],[detect.fmin(I) detect.fmax(I)],'color','r','linewidth',3);
     end
     %pause;
-   
+    
     
 end
 
 %%%Convert times to absolute times
-detect.duration=detect.tend-detect.tstart;
-detect.tstart=tabs_start+datenum(0,0,0,0,0,detect.tstart);
-detect.tend=tabs_start+datenum(0,0,0,0,0,detect.tend);
+detect.duration=(detect.tend-detect.tstart);
+detect.tstart_abs=tabs_start+datenum(0,0,0,0,0,detect.tstart);
+detect.tend_abs=tabs_start+datenum(0,0,0,0,0,detect.tend);
 
 
     function reset_detect

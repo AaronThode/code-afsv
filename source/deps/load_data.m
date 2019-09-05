@@ -95,40 +95,42 @@ switch filetype
         
         %%Uncomment to conduct Bering Sea call selection
         %%% size(x)=[ 5(zplot)           4 (rplot)          8       16033]
-        name='Bering Sea Simulations';
-        numlines=1;
-        if ndims(simulated.x)>3
-            
-            prompt={sprintf('Depths: %s',mat2str(simulated.zplot)), ...
-                sprintf('Ranges: %s',mat2str(simulated.rplot)), ...
-                sprintf('Modes: %s', mat2str(1:size(simulated.x,3)))};
-            defaultanswer={'22','22000',''};
-            
-        else
-            prompt={sprintf('Depths: %s',mat2str(simulated.zplot)), ...
-                sprintf('Ranges: %s',mat2str(simulated.rplot))};
-            defaultanswer={'22','22000'};
-        end
-        answer=inputdlg(prompt,name,numlines,defaultanswer);
-        [~,Iz]=min(abs(eval(answer{1})-simulated.zplot));
-        [~,Ir]=min(abs(eval(answer{2})-simulated.rplot));
-        if isempty(deblank(answer{3}))
-            Imode=[];
-        else
-            Imode=eval(answer{3});
-        end
-        if ndims(simulated.x)>3
-            if isempty(Imode)
-                simulated.x=squeeze(sum(simulated.x,3));
-               
-            else
-                Imode=min([Imode size(simulated.x,3)]);
-                simulated.x=squeeze(simulated.x(:,:,Imode,:));
-            end
-            %figure;spectrogram(X,WINDOW,NOVERLAP,NFFT,Fs)
-        end
-         x=squeeze(simulated.x(Iz,Ir,:));
-        Fs=simulated.Fs;
+%         name='Bering Sea Simulations';
+%         numlines=1;
+%         if ndims(simulated.x)>3
+%             
+%             prompt={sprintf('Depths: %s',mat2str(simulated.zplot)), ...
+%                 sprintf('Ranges: %s',mat2str(simulated.rplot)), ...
+%                 sprintf('Modes: %s', mat2str(1:size(simulated.x,3)))};
+%             defaultanswer={'22','22000',''};
+%             
+%         else
+%             prompt={sprintf('Depths: %s',mat2str(simulated.zplot)), ...
+%                 sprintf('Ranges: %s',mat2str(simulated.rplot))};
+%             defaultanswer={'22','22000'};
+%         end
+%         answer=inputdlg(prompt,name,numlines,defaultanswer);
+%         [~,Iz]=min(abs(eval(answer{1})-simulated.zplot));
+%         [~,Ir]=min(abs(eval(answer{2})-simulated.rplot));
+%         if isempty(deblank(answer{3}))
+%             Imode=[];
+%         else
+%             Imode=eval(answer{3});
+%         end
+%         if ndims(simulated.x)>3
+%             if isempty(Imode)
+%                 simulated.x=squeeze(sum(simulated.x,3));
+%                
+%             else
+%                 Imode=min([Imode size(simulated.x,3)]);
+%                 simulated.x=squeeze(simulated.x(:,:,Imode,:));
+%             end
+%             %figure;spectrogram(X,WINDOW,NOVERLAP,NFFT,Fs)
+%         end
+%          x=squeeze(simulated.x(Iz,Ir,:));
+%         Fs=simulated.Fs;
+        
+        
        %%%%%%%%%%%%%
         %x=simulated.x_sweep';
         if strcmp(Ichan,'all')
