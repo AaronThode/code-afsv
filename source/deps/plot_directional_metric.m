@@ -25,17 +25,20 @@ if strcmpi(handles.display_view,'Directionality')
     
     
     %%%Use alpha adjustment to display transport ratio as well
+   
      %    set(hh,'AlphaData',intensity./energy_density);
      %    set(hh,'AlphaDataMapping','scaled')
     %     alim([0 1]);
     %
     
     %%%Setting transparency to SPL
-         if ~isempty(PdB)&&all(size(PdB)==size(output_array))
-             set(hh,'AlphaData',PdB);
-             set(hh,'AlphaDataMapping','scaled')
-             alim(str2double(handles.edit_mindB.String) + [0 str2double(handles.edit_dBspread.String)]);
-         end
+    if handles.checkbox_transparency.Value&~isempty(PdB)&&all(size(PdB)==size(output_array))
+       
+            set(hh,'AlphaData',PdB);
+            set(hh,'AlphaDataMapping','scaled')
+            alim(str2double(handles.edit_mindB.String) + [0 str2double(handles.edit_dBspread.String)]);
+       
+    end
     
 else
     %%%Effective velocity j/Sp

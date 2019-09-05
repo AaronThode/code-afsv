@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 09-Apr-2019 20:26:16
+% Last Modified by GUIDE v2.5 05-Sep-2019 13:52:48
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -10679,3 +10679,13 @@ function checkbox_reactive_Callback(hObject, eventdata, handles)
 end
 
 
+
+
+% --- Executes on button press in checkbox_transparency.
+function checkbox_transparency_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_transparency (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_transparency
+end
