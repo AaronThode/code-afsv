@@ -19,7 +19,7 @@
 % localized.area(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
 % localized.axmajor(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
 % localized.axminor(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
-% 
+%
 % localized.Baxis(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
 % localized.Ang(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
 % localized.Nused(Icall,1)=str2num(tabfield(tline,J)).';J=J+5;
@@ -34,6 +34,13 @@
 %         ind.ctime(Icall,Idd)=str2num(tabfield(tline(Igood:end),5));
 %         ind.wctype(Icall,Idd)=localized.wctype(Icall);
 %         ind.sigdb(Icall,Idd)=str2num(tabfield(tline(Igood:end),6));
+%.  sigdb--Approximate acoustic level at hydrophone in dB re 1 µPa. This is
+%the root-mean-square (rms) level in the band measured for the call
+%averaged over the measured length of the call. The background noise is
+%measured for one second starting two seconds before the call and is
+%subtracted from the call levels. This process is subject to random errors,
+%and can lead to imaginary results.
+%
 %         ind.stndb(Icall,Idd)=str2num(tabfield(tline(Igood:end),7));
 %         ind.flo(Icall,Idd)=str2num(tabfield(tline(Igood:end),8));
 %         ind.fhi(Icall,Idd)=str2num(tabfield(tline(Igood:end),9));
@@ -61,64 +68,75 @@ if fid ~= -1    % did file open?
         %compute bin number
         %bin=ceil((ctime -ctstart)/binsize);
         %%Aaron addition
-
-
-        if (ctime>=ctmin)&(ctime<=ctmax) %& wctype <=8
-            Icall=Icall+1;
-            if rem(Icall,500)==0, disp(Icall);end
-            J=1;
-            localized.ctev(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
-            localized.atev(Icall,1)=datenum(tabfield(tline,J)).';J=J+1;
-            localized.utmx(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
-            localized.utmy(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
-            localized.wctype(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
-            localized.nseq(Icall,1)=0;
-            if localized.wctype(Icall,1)-floor(localized.wctype(Icall,1))>0
-                tmp=tabfield(tline,J-1);
-                Idot=findstr(tmp,'.')+1;
-                localized.nseq(Icall,1)=str2num(tmp(Idot:end));
-            end
-            localized.area(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
-            localized.axmajor(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
-            localized.axminor(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
-
-            localized.Baxis(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
-            localized.Ang(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
-            localized.Nused(Icall,1)=str2num(tabfield(tline,J)).';J=J+5;
-            localized.Outcome{Icall,1}=(tabfield(tline,J)).';J=J+1;
-            localized.comment{Icall,1}=(tabfield(tline,J)).';J=J+1;
-            localized.OperatorID{Icall,1}=(tabfield(tline,J)).';J=J+1;
-            localized.DateTimeProc{Icall,1}=(tabfield(tline,J)).';J=J+1;
-
-            %count(bin)=count(bin)+1;
-            for Idd=1:length(DASAR_list),
-                Igood=findstr(DASAR_list{Idd},tline);
-                if ~isempty(Igood),
-                    ind.wgt(Icall,Idd)=str2num(tabfield(tline(Igood:end),2));
-                    ind.bearing(Icall,Idd)=str2num(tabfield(tline(Igood:end),4));
-                    ind.bref(Icall,Idd)=str2num(tabfield(tline(Igood:end),3));
-                    ind.ctime(Icall,Idd)=str2num(tabfield(tline(Igood:end),5));
-                    ind.wctype(Icall,Idd)=localized.wctype(Icall);
-                    ind.sigdb(Icall,Idd)=str2num(tabfield(tline(Igood:end),6));
-                    ind.stndb(Icall,Idd)=str2num(tabfield(tline(Igood:end),7));
-                    ind.flo(Icall,Idd)=str2num(tabfield(tline(Igood:end),8));
-                    ind.fhi(Icall,Idd)=str2num(tabfield(tline(Igood:end),9));
-                    ind.duration(Icall,Idd)=str2num(tabfield(tline(Igood:end),10));
-                    ind.sdm(Icall,Idd)=str2num(tabfield(tline(Igood:end),11));
-                    ind.kappa(Icall,Idd)=str2num(tabfield(tline(Igood:end),12));
-                    
-                    %keyboard;
+        
+        try
+            if (ctime>=ctmin)&&(ctime<=ctmax) || isnan(ctime)
+                Icall=Icall+1;
+                %if rem(Icall,500)==0, disp(Icall);end
+                J=1;
+                localized.ctev(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
+                try
+                    localized.atev(Icall,1)=datenum(tabfield(tline,J)).';J=J+1;
+                catch
+                    localized.atev(Icall,1)=NaN;J=J+1; 
                 end
+                localized.utmx(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
+                localized.utmy(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
+                localized.wctype(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
+                localized.nseq(Icall,1)=0;
+                if localized.wctype(Icall,1)-floor(localized.wctype(Icall,1))>0
+                    tmp=tabfield(tline,J-1);
+                    Idot=findstr(tmp,'.')+1;
+                    localized.nseq(Icall,1)=str2num(tmp(Idot:end));
+                end
+                localized.area(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
+                localized.axmajor(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
+                localized.axminor(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
+                
+                localized.Baxis(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
+                localized.Ang(Icall,1)=str2num(tabfield(tline,J)).';J=J+1;
+                localized.Nused(Icall,1)=str2num(tabfield(tline,J)).';J=J+5;
+                localized.Outcome{Icall,1}=(tabfield(tline,J)).';J=J+1;
+                localized.comment{Icall,1}=(tabfield(tline,J)).';J=J+1;
+                localized.OperatorID{Icall,1}=(tabfield(tline,J)).';J=J+1;
+                localized.DateTimeProc{Icall,1}=(tabfield(tline,J)).';J=J+1;
+                
+                %count(bin)=count(bin)+1;
+                for Idd=1:length(DASAR_list)
+                    Igood=findstr(DASAR_list{Idd},tline);
+                    if ~isempty(Igood)
+                        ind.wgt(Icall,Idd)=str2num(tabfield(tline(Igood:end),2));
+                        ind.bearing(Icall,Idd)=str2num(tabfield(tline(Igood:end),4));
+                        ind.bref(Icall,Idd)=str2num(tabfield(tline(Igood:end),3));
+                        ind.ctime(Icall,Idd)=str2num(tabfield(tline(Igood:end),5));
+                        ind.wctype(Icall,Idd)=localized.wctype(Icall);
+                        ind.sigdb(Icall,Idd)=str2num(tabfield(tline(Igood:end),6));
+                        ind.stndb(Icall,Idd)=str2num(tabfield(tline(Igood:end),7));
+                        ind.flo(Icall,Idd)=str2num(tabfield(tline(Igood:end),8));
+                        ind.fhi(Icall,Idd)=str2num(tabfield(tline(Igood:end),9));
+                        ind.duration(Icall,Idd)=str2num(tabfield(tline(Igood:end),10));
+                        ind.sdm(Icall,Idd)=str2num(tabfield(tline(Igood:end),11));
+                        ind.kappa(Icall,Idd)=str2num(tabfield(tline(Igood:end),12));
+                        
+                        %keyboard;
+                    end
+                end
+                
+            else  %If not in time span
+                 display(tline);
+                badbins=badbins+1;
+                % display(['bin,wctype,badbins='  num2str(bin) blanks(2) num2str(wctype_all(Icall)) blanks(2) num2str(badbins)])
             end
-
-        else
-            % display(tline);
-            badbins=badbins+1;
-            % display(['bin,wctype,badbins='  num2str(bin) blanks(2) num2str(wctype_all(Icall)) blanks(2) num2str(badbins)])
-        end
+        catch
+            Icall=Icall-1;
+            
+            
+        end %try
     end   %of file read loop(while)
     fclose(fid);
     
+    Icall
+    nline
     %%If no detections, return
     if isempty(ind)
         return
@@ -127,22 +145,28 @@ if fid ~= -1    % did file open?
     %number of columns in ind same as DASAR_list
     ncol_needed=length(DASAR_list)-size(ind.ctime,2);
     
-    if ncol_needed>0,
+    if ncol_needed>0
         ind.wgt=[ind.wgt zeros(Icall,ncol_needed)];
         ind.bearing=[ind.bearing zeros(Icall,ncol_needed)];
         ind.bref=[ind.bref zeros(Icall,ncol_needed)];
         ind.ctime=[ind.ctime zeros(Icall,ncol_needed)];
         ind.wctype=[ind.wctype zeros(Icall,ncol_needed)];
-        ind.sigdb=[ind.sigdb zeros(Icall,ncol_needed)];   
+        ind.sigdb=[ind.sigdb zeros(Icall,ncol_needed)];
         ind.stndb=[ind.stndb zeros(Icall,ncol_needed)];
         ind.flo=[ind.flo zeros(Icall,ncol_needed)];
         ind.fhi=[ind.fhi zeros(Icall,ncol_needed)];
         ind.duration=[ind.duration zeros(Icall,ncol_needed)];
         ind.sdm=[ind.sdm zeros(Icall,ncol_needed)];
         ind.kappa=[ind.kappa zeros(Icall,ncol_needed)];
-
-    end
         
+    end
+    
+    %%%Replaces zeros with NaN when no data present to avoid confusion
+    fieldnamess=fieldnames(ind);
+    Ibad=find(ind.ctime==0);
+    for JJ=1:length(fieldnamess)
+        ind.(fieldnamess{JJ})(Ibad)=NaN;
+    end
 end
 
 function test
@@ -164,7 +188,7 @@ if isempty(n)
     fs = '';
 elseif length(n) == 1
     xx = find((s == char(9)));
-
+    
     if n > (length(xx) + 1)
         fs = [];
     else

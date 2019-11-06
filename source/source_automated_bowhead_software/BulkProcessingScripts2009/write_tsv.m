@@ -14,7 +14,7 @@ fid=fopen(fname,'w');
 
 Icall=0;
 Nwrite=zeros(1,length(goodName));
-for I=1:length(locations),
+for I=1:length(locations)
     pos=locations{I}.position;
     
     outcome=lower(pos.outcome);
@@ -47,7 +47,7 @@ for I=1:length(locations),
     fprintf(fid,'%12.4f\t',pos.Qhat);
     fprintf(fid,'%s\tautomated\t0\t%s\t',pos.outcome,datestr(now));
     It=min(findstr(goodName{1},'T'))-1;
-    for J=1:length(pos.Ikeep),
+    for J=1:length(pos.Ikeep)
         Idd=pos.Ikeep(J);
         strr=goodName{Idd}(1:It);
         fprintf(fid,'%s\t%12.8f\t%15.2f\t%15.2f\t%15.2f\t%10.6f\t%10.6f\t%10.6f\t%10.6f\t%10.6f\t%10.6f\t%10.6f\t', ...

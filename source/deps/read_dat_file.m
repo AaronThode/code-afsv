@@ -10,7 +10,7 @@ function [x, tfs, tfe, fs,fparms]    =...
 %
 % Input Parameters:
 %   fname           -   name of *DAT file.  MUST include DAT extension and full pathname!
-%   raw             -   t/f, weather output should be raw data or scaled
+%   raw             -   t/f, whether output should be raw data or scaled
 %   fs              -   sampling frequency in Hz.
 %   tstart          -   datenumber of desired start time.
 %                           If zero, data are read from start of file

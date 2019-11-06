@@ -1,4 +1,6 @@
-function  [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,linel,Istation,VM_extra,units)
+function  [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,line0,Istation,VM_extra,units)
+%function  [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,linel,Istation,VM_extra,units)
+
 %DASAR_coords are [NDASAR 2] matrix
 % bearings is a vector in degrees, map definition (0=north, increasing
 %   clockwise to east).
@@ -11,8 +13,8 @@ function  [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM
 if ~exist('units','var')
     units='km';
 end
-if ~exist('linel', 'var')||isempty(linel)
-    linel=3500; %length of bearing lines in m
+if ~exist('line0', 'var')||isempty(line0)
+    line0=3500; %length of bearing lines in m
 end
 if nargin<10
     VM_extra=[];
@@ -33,7 +35,7 @@ if strcmpi(units,'km')
     DASAR_coords=DASAR_coords/1000;
     A=A/1000;
     B=B/1000;
-    line1=line1/1000;
+    line0=line0/1000;
 end
 
 
@@ -52,8 +54,8 @@ grid on;
 if ~isempty(bearings)
     bearings=(90-bearings(Igood))*pi/180;
     for I=1:length(Igood)
-        XX=DASAR_coords(Igood(I),1)+[0 linel*cos(bearings(I))]-xg;
-        YY=DASAR_coords(Igood(I),2)+[0 linel*sin(bearings(I))]-yg;
+        XX=DASAR_coords(Igood(I),1)+[0 line0*cos(bearings(I))]-xg;
+        YY=DASAR_coords(Igood(I),2)+[0 line0*sin(bearings(I))]-yg;
         if exist('Istation','var')&(Igood(I)==Istation)
             line(XX,YY,'linewidth',5);
         else
@@ -81,8 +83,8 @@ end
 
 if strcmpi(units,'km')
     
-    xlim([-20 20]);
-    ylim([-20 20]);
+    xlim([-30 30]);
+    ylim([-30 30]);
     xlabel('Easting (km)');
     ylabel('Northing (km)');
     

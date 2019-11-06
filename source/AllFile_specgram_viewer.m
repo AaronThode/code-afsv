@@ -9045,7 +9045,7 @@ Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
 if GSI_flag
     params.f_transition=300;
     x=x(n(1):n(2),:);
-    [thet0,kappa,sd,xf]=extract_bearings(x,0.25,Nfft,Fs,freq(1),freq(2),200,params.f_transition);
+    [thet0,kappa,sd,xf]=extract_bearings(x,0.05,Nfft,Fs,freq(1),freq(2),200,params.f_transition);
     
     if ~isempty(strfind('T2007',handles.myfile))
         cal07flag=1;
@@ -9058,6 +9058,9 @@ if GSI_flag
     
     if cal07flag==0
         thet=bnorm(thet0+head.brefa);
+        if isnan(thet)
+            keyboard
+        end
     else
         [junk,Icol]=calibrate_bearing_Shell2007(handles.calibration_DASAR2007_dir,handles.myfile,1);
         thet= interp1(0:360,brefa_table(:,Icol),bnorm(thet0));
@@ -9188,6 +9191,9 @@ end
 
 [thet,kappa,sd]=get_vmests([vx vy],Nsamples);
 
+if isnan(thet)
+    keyboard
+end
 
 end
 

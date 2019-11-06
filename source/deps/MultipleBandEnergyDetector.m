@@ -1,7 +1,7 @@
 %%%%MultipleBandEnergyDetector.m
 %%%  Given a time series x and a series of band parameters,
 %%%  detect transients over multiple overlapping frequency bands
-%
+%   Nfft, Fs:
 %   EqFormat:  'dB' or 'linear' for equalization function
 %
 %   burn_in_time: Time in minutes to build up equalization model.
@@ -15,18 +15,22 @@
 %
 %   threshold:  dB threshold SNR needed to exceed to start detection.
 %
-%   buffertime: How much time to stuff before and after detection start and stop when writing time series output.
+%   bufferTime: How much time to stuff before and after detection start and stop when writing time series output.
 %
 %   TolTime: How much time in seconds must pass before new detection started?
 %
 %   MinTime: Minimum time in seconds a signal needs to exceed threshold SNR to register a detection.
-%
+%   MaxTime: 
 %   debug: If 0, no subdetector output.  If 1, write subdetector SEL.  If 2, write suddetector equalization value.
 %   	If 3, write ratio of current SEL to equalization SEL (SNR estimate).
-%
-
-%    param.eq_time='10';   param_desc{K}='Equalization time (s): should be roughly twice the duration of signal of interest';K=K+1;
-%             param.bandwidth='.05';     param_desc{K}='Bandwidth of detector in kHz';K=K+1;
+%             param.Nfft=256;
+%             param.Fs =1000;
+%             param.ovlap = 0.75;
+%             param.flo_det=25;
+%             param.fhi_det=350;
+%             param.burn_in_time=1;
+%             param.eq_time='10';   param_desc{K}='Equalization time (s): should be roughly twice the duration of signal of interest';K=K+1;
+%             param.bandwidth='37';     param_desc{K}='Bandwidth of detector in kHz';K=K+1;
 %             param.threshold='10';  param_desc{K}='Threshold in dB to accept a detection';K=K+1;
 %             param.snips_chc='1';  param_desc{K}='0 for no snips file, 1 for snips file of one channel, 2 for snips file of all channels';K=K+1;
 %             param.bufferTime='0.5'; param_desc{K}='Buffer Time in seconds to store before and after each detection snip, -1 suppress snips file';K=K+1;
@@ -44,15 +48,6 @@ if isfield(params,'EqFormat')
   end
 end
 
-[~,FF,TT,B] = spectrogram(x,hanning(params.Nfft),round(params.ovlap*params.Nfft),params.Nfft,params.Fs);
-if isdB  %JINGLONG
-    B=10*log10(B); %Convert to dB
-    threshold=params.threshold;
-else
-    threshold=10.^log10(threshold); %convert to linear
-end
-Ncol=size(B,2);
-
 %%%Set up bands for subdetectors
 
 flo=params.flo_det:(0.5*params.bandwidth):params.fhi_det;
@@ -64,6 +59,17 @@ Ifhi=ceil(fhi*params.Nfft/params.Fs);
 Igood=find(Ifhi<params.fhi_det*params.Nfft/params.Fs);
 Ifhi=Ifhi(Igood);Iflo=Iflo(Igood);fhi=fhi(Igood);flo=flo(Igood);
 Ndet=length(Ifhi);
+
+[~,FF,TT,B] = spectrogram(x,hanning(params.Nfft),round(params.ovlap*params.Nfft),params.Nfft,params.Fs);
+if isdB  %JINGLONG
+    B=10*log10(B); %Convert to dB
+    threshold=params.threshold;
+else
+    threshold=10.^log10(threshold); %convert to linear
+end
+Ncol=size(B,2);
+
+
 
 %Create equalization
 Ispan=Iflo(1):Ifhi(end);
@@ -153,7 +159,7 @@ for I=((1+Iburn):Ncol)  %For every column of spectrogram (or incoming FFT)
                 case 2 %ON
                     magnitude(J)=max([magnitude(J) val(J)]);
                     if magnitude(J)==val(J)
-                        peak_index(J)=val(J);
+                        peak_index(J)=I;
                     end
                     
                     %%%Force reset?
@@ -166,10 +172,10 @@ for I=((1+Iburn):Ncol)  %For every column of spectrogram (or incoming FFT)
                             for KK=1:Ndet
                                 detection_status(KK)=-2;
                                 if isdB  %JINGLONG
-                                band.eq(KK)=(1-0.25)*val(KK)+0.25*band.eq(KK);
+                                    band.eq(KK)=(1-0.25)*val(KK)+0.25*band.eq(KK);
                                 else
-                                   band.eq(KK)=(band.eq(J).^0.25).*(val(J).^.75); %Update background estimate
-                         
+                                    band.eq(KK)=(band.eq(J).^0.25).*(val(J).^.75); %Update background estimate
+                                    
                                 end
                                 debug.eq_history(J,I)=band.eq(J);
                                 tend(KK)=I;
@@ -258,17 +264,26 @@ end
 if params.debug
     %close all
     figure(100);hold off
-    subplot(4,1,1);hold off
-    imagesc(TT,0.5*(flo+fhi),(debug.eq_history));axis('xy'); colorbar('west')
+    subplot(3,1,1);hold off
+    mineq=unique(debug.eq_history);
+    imagesc(TT,0.5*(flo+fhi),(debug.eq_history)-mineq(2));axis('xy'); colorbar('westoutside')
+    caxis([0 20])
+    title('Equalization');
+    
+    %caxis([min(min(debug.detect)) max(max(debug.detect))]);
+    subplot(3,1,2);hold off
+    imagesc(TT,0.5*(flo+fhi),(debug.detect));axis('xy'); colorbar('westoutside')
     caxis([min(min(debug.detect)) max(max(debug.detect))]);
-    subplot(4,1,2);hold off
-    imagesc(TT,0.5*(flo+fhi),(debug.detect));axis('xy'); colorbar('west')
-    caxis([min(min(debug.detect)) max(max(debug.detect))]);
-    subplot(4,1,3);hold off
-    imagesc(TT,0.5*(flo+fhi),(debug.detect-debug.eq_history));axis('xy'); colorbar('west')
-    caxis([params.threshold 30]);
-    subplot(4,1,4);hold off
-    imagesc(TT,0.5*(flo+fhi),debug.detection_status);axis('xy'); colorbar('west')
+    title('Detection');
+    
+%     subplot(4,1,3);hold off
+%     imagesc(TT,0.5*(flo+fhi),(debug.detect-debug.eq_history));axis('xy'); colorbar('westoutside')
+%     caxis([params.threshold + [0 30]]);
+%     title('Detection Excess');
+    
+    subplot(3,1,3);hold off
+    imagesc(TT,0.5*(flo+fhi),debug.detection_status);axis('xy'); colorbar('westoutside')
+    title('Detection Status');
     
     detect.tstart=dT*detect.tstart;
     detect.tend=dT*detect.tend;
