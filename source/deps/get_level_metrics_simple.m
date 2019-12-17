@@ -1,4 +1,4 @@
-%%%get_level_metrics.m%%%%
+%%%get_level_metrics_simple.m%%%%
 %function features=get_level_metrics_simple(x,Fs,bufferTime,debug)
 %   bandwidth, freq_third_octave removed
 %
@@ -224,7 +224,9 @@ features.noise.SE=features.t_Malme*(features.noise.rms.^2);
         tt=Istart/Fs+dt*(1:length(x2(Istart:end)));
         
         figure(1)
-        subplot(3,1,1);specgram(x,128,Fs,[],96);%title(sprintf('tstart: %i',(Istart-1)/Fs));
+        subplot(3,1,1);
+        plot(tt,x(Istart:end));
+        %specgram(x,128,Fs,[],96);%title(sprintf('tstart: %i',(Istart-1)/Fs));
         set(gca,'fontweight','bold','fontsize',14);
         xlabel('Time (s)');ylabel('Frequency (Hz)');
         xlimm=xlim;xlimm(1)=0;xlim(xlimm);

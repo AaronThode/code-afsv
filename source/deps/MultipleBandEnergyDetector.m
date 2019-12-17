@@ -1,6 +1,13 @@
 %%%%MultipleBandEnergyDetector.m
+% function [detect,debug]=MultipleBandEnergyDetector(x,tabs_start,params)
+%
 %%%  Given a time series x and a series of band parameters,
 %%%  detect transients over multiple overlapping frequency bands
+%%% x: time series.  Can be either a row or column vector (but haven't
+%%%             checked)
+%%% tabs_start:  datenumber representing start of x
+%   params:  structure array with the following fields...
+%
 %   Nfft, Fs:
 %   EqFormat:  'dB' or 'linear' for equalization function
 %
@@ -10,10 +17,12 @@
 %   	to monitor for signals of interest,
 %
 %   eq_time: an equalization time in seconds.  If eq_time is zero, the equalization is not updated after the first 20 samples.
+%           The longer the equalization time, the slower the changes in the
+%           threshold over time.
 %
 %   bandwidth:  The bandwidth of a subdetector--must be less than fhi_det-flo_det
 %
-%   threshold:  dB threshold SNR needed to exceed to start detection.
+%   threshold:  dB threshold (SNR) needed to exceed to start detection.
 %
 %   bufferTime: How much time to stuff before and after detection start and stop when writing time series output.
 %
@@ -23,6 +32,9 @@
 %   MaxTime: 
 %   debug: If 0, no subdetector output.  If 1, write subdetector SEL.  If 2, write suddetector equalization value.
 %   	If 3, write ratio of current SEL to equalization SEL (SNR estimate).
+%
+%  Example for bowhead whale analysis that monitors between 25 and 350 Hz,
+%  using a set of detectors with 37 Hz bandwidth.
 %             param.Nfft=256;
 %             param.Fs =1000;
 %             param.ovlap = 0.75;
@@ -30,7 +42,7 @@
 %             param.fhi_det=350;
 %             param.burn_in_time=1;
 %             param.eq_time='10';   param_desc{K}='Equalization time (s): should be roughly twice the duration of signal of interest';K=K+1;
-%             param.bandwidth='37';     param_desc{K}='Bandwidth of detector in kHz';K=K+1;
+%             param.bandwidth='37';     param_desc{K}='Bandwidth of sub-detector in kHz';K=K+1;
 %             param.threshold='10';  param_desc{K}='Threshold in dB to accept a detection';K=K+1;
 %             param.snips_chc='1';  param_desc{K}='0 for no snips file, 1 for snips file of one channel, 2 for snips file of all channels';K=K+1;
 %             param.bufferTime='0.5'; param_desc{K}='Buffer Time in seconds to store before and after each detection snip, -1 suppress snips file';K=K+1;
@@ -39,6 +51,18 @@
 %             param.MaxTime='3';     param_desc{K}= 'Maximum time in seconds a detection is permitted to have';K=K+1;
 %             param.debug='0';       param_desc{K}= '0: do not write out debug information. 1:  SEL output.  2:  equalized background noise. 3: SNR.';K=K+1;
 %
+%
+%%%%% Output
+%     detect.tstart(count)=tstart_total;
+%        detect.tend(count)=tend_total;
+%        detect.fmin(count)=min(flo(tend~=0));
+%        detect.fmax(count)=max(fhi(tend~=0));
+%        detect.amplitude(count)=max(magnitude);
+%           detect.duration=(detect.tend-detect.tstart);
+%        detect.tstart_abs=tabs_start+datenum(0,0,0,0,0,detect.tstart);
+%          detect.tend_abs=tabs_start+datenum(0,0,0,0,0,detect.tend);
+
+       
 function [detect,debug]=MultipleBandEnergyDetector(x,tabs_start,params)
 
 isdB=true;

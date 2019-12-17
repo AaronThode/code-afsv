@@ -1,4 +1,4 @@
-function [y,iflaw]=fmodany(iflaw,t0);
+function [y,iflaw]=fmodany(iflaw,t0)
 %FMODANY Signal with arbitrary frequency modulation.
 %	[Y,IFLAW]=FMODANY(IFLAW,T0) generates a frequency modulated
 %	signal whose instantaneous frequency law is approximately given by

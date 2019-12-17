@@ -22,7 +22,8 @@ for I=1:length(locations)
     wctype=-1;
     Icall=Icall+1;
     
-    if isempty(findstr(outcome,'successful'))
+    valid_results={'valid linkage','successful'};
+    if ~any(contains(outcome,valid_results,'IgnoreCase',true))
         pos.ctime=NaN;
         pos.location=[NaN NaN];
         pos.Area=NaN;
@@ -38,6 +39,7 @@ for I=1:length(locations)
     
     else
        fprintf(fid,'%15.2f\t%s\t',pos.ctime,ctime2str(pos.ctime));
+       
      
     end
     fprintf(fid,'%10.2f\t%10.2f\t%8.4f\t',pos.location(1),pos.location(2),wctype);

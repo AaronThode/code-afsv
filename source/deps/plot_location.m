@@ -63,7 +63,7 @@ if ~isempty(bearings)
         end
     end
 end
-if ~isempty(VM)
+if ~isempty(VM)&&all(~isnan(VM))
     VMn=[VM(:,1)-xg VM(:,2)-yg];
     plot(VMn(1),VMn(2),'ks','markerfacecolor',[0 0 0],'markersize',5);
 end
