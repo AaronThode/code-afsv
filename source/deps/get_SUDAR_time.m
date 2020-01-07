@@ -1,5 +1,5 @@
-function [SUDAR_true,tmin,tmax,Fs,tmin_UTC,tmax_UTC]=get_SUDAR_time(mydir,myfile) 
-%function [SUDAR_true,tmin,tmax,Fs,tmin_UTC,tmax_UTC]=get_SUDAR_time(mydir,myfile) 
+function [SUDAR_true,tmin,tmax,Fs,tmin_UTC,tmax_UTC]=get_SUDAR_time(mydir,myfile)
+%function [SUDAR_true,tmin,tmax,Fs,tmin_UTC,tmax_UTC]=get_SUDAR_time(mydir,myfile)
 %Check whether a SUDAR (SoundTrap) file exists by looking for log.xml file
 
 SUDAR_true=false;
@@ -27,24 +27,26 @@ while 1
         datte=parse_time(tline);
         %tmin=datenum(datte(1:10))+datenum(datte(12:end),2019)-datenum(2019,1,1,0,0,0);
         % %% Fixing a soundtrap with the wrong year.
-        tmin=datenum(datte);
+        
+        tmin=datenumm(datte);
+        
         
     elseif  strfind(tline, 'SamplingStopTimeLocal=')>0
         %tmax         =   datenum(parse_time(tline));
         datte=parse_time(tline);
         %tmax=datenum(datte(1:10))+datenum(datte(12:end),2019)-datenum(2019,1,1,0,0,0);
-        tmax=datenum(datte);
+        tmax=datenumm(datte);
     elseif  strfind(tline, 'SamplingStartTimeUTC=')>0
         %tmax         =   datenum(parse_time(tline));
         datte=parse_time(tline);
         %tmax=datenum(datte(1:10))+datenum(datte(12:end),2019)-datenum(2019,1,1,0,0,0);
-        tmin_UTC=datenum(datte);
+        tmin_UTC=datenumm(datte);
         
     elseif  strfind(tline, 'SamplingStopTimeUTC=')>0
         %tmax         =   datenum(parse_time(tline));
         datte=parse_time(tline);
         %tmax=datenum(datte(1:10))+datenum(datte(12:end),2019)-datenum(2019,1,1,0,0,0);
-        tmax_UTC=datenum(datte);
+        tmax_UTC=datenumm(datte);
         
     elseif  strfind(tline, '<FS>')>0
         Fs  =   str2double(parse_data(tline));
@@ -75,6 +77,15 @@ fclose(fid);
 %temp(4)=temp(4)-time_zone;
 %tmax=datenum(temp);
 
+end
+
+function tm=datenumm(datte)
+%%%%Try to handle odd formats of XML datestru
+try
+    tm=datenum(datte);
+catch
+    tm=datenum(datte,'yyyy-mm-ddTHH:MM:SS');
+end
 end
 
 function tm=parse_data(tline)
