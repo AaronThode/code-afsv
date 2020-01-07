@@ -1,5 +1,6 @@
-function [SUDAR_true,tmin,tmax,Fs,tmin_UTC,tmax_UTC]=get_SUDAR_time(mydir,myfile) %Check whether a sUDAR file exists
-%function [SUDAR_true,tmin,tmax,Fs,tmin_UTC,tmax_UTC]=get_SUDAR_time(mydir,myfile) %Check whether a sUDAR file exists
+function [SUDAR_true,tmin,tmax,Fs,tmin_UTC,tmax_UTC]=get_SUDAR_time(mydir,myfile) 
+%function [SUDAR_true,tmin,tmax,Fs,tmin_UTC,tmax_UTC]=get_SUDAR_time(mydir,myfile) 
+%Check whether a SUDAR (SoundTrap) file exists by looking for log.xml file
 
 SUDAR_true=false;
 
