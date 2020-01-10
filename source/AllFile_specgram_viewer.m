@@ -2963,35 +2963,44 @@ if	audio_stale
             if	f_min <=0 && f_max >= Fs/2
                 use_filter = false;
             else
-                %	default band-pass filter
-                df	=	0.25*[f_min f_max]; df = df(df>0);
-                df	=	min(df);
-                f	=	[f_min-[df 0] f_max+[0 df]];
-                a	=	[0 1 0];
-                rp	=	0.1;
-                rs	=	40;
-                dev	= [10^(-rs/20) (10^(rp/20)-1)/(10^(rp/20)+1)  10^(-rs/20)];
                 
-                %	low-pass filter
-                if	min(f) <= 0
-                    f	=	f(end-1:end);
-                    a	=	a(end-1:end);
-                    dev	=	dev(end-1:end);
-                    
-                    %	high-pass fiter
-                elseif	max(f) >= Fs/2
-                    f	=	f(1:2);
-                    a	=	a(1:2);
-                    dev	=	dev(1:2);
-                end
                 
-                [n,fo,ao,w] =	firpmord(f, a, dev, Fs);
-                if n>1000
-                    fprintf('Warning, filter too large for %s \n',num2str(f));
-                end
-                b			=	firpm(n,fo,ao,w);
+                w1=max([0.01 f_min*2/Fs]);
+                w2=min( [f_max*2/Fs 0.99]);
+                
+                [b,a]=butter(2,[w1 w2]);
+                
+    
+%                 %	default band-pass filter
+%                 df	=	0.25*[f_min f_max]; df = df(df>0);
+%                 df	=	min(df);
+%                 f	=	[f_min-[df 0] f_max+[0 df]];
+%                 a	=	[0 1 0];
+%                 rp	=	0.1;
+%                 rs	=	40;
+%                 dev	= [10^(-rs/20) (10^(rp/20)-1)/(10^(rp/20)+1)  10^(-rs/20)];
+%                 
+%                 %	low-pass filter
+%                 if	min(f) <= 0
+%                     f	=	f(end-1:end);
+%                     a	=	a(end-1:end);
+%                     dev	=	dev(end-1:end);
+%                     
+%                     %	high-pass fiter
+%                 elseif	max(f) >= Fs/2
+%                     f	=	f(1:2);
+%                     a	=	a(1:2);
+%                     dev	=	dev(1:2);
+%                 end
+%                 
+%                 [n,fo,ao,w] =	firpmord(f, a, dev, Fs);
+%                 if n>1000
+%                     fprintf('Warning, filter too large for %s \n',num2str(f));
+%                 end
+%                 b			=	firpm(n,fo,ao,w);
                 
                 handles.filter.b		=	b;
+                handles.filter.a		=	a;
                 handles.filter.changed	=	false;
             end
         end
@@ -3000,7 +3009,8 @@ if	audio_stale
     %	Apply filter if needed
     if	use_filter
         b	=	handles.filter.b;
-        x	=	filter(b, 1, x);
+        a   =   handles.filter.a;
+        x	=	filter(b, a, x);
     end
     
     %	Resample if not within generic sound-card limits
@@ -3365,7 +3375,7 @@ elseif azigram_flag
             if (isempty(tmp)||any(tmp(:,2)<0))
                 return
             end
-            tsec=min(box(:,1));
+            tsec=min(boxx(:,1));
             want=round(sort(tmp(:,2)));
             
             
@@ -9170,7 +9180,7 @@ else
     w2=min( [fmax*2/Fs 0.99]);
     
     [B,A]=butter(2,[w1 w2]);
-    for I=1:3,
+    for I=1:3
         y(:,I)=y(:,I)-mean(y(:,I));
         x(:,I)=filter(B,A,y(:,I));
     end
