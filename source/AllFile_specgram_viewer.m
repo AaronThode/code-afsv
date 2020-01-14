@@ -8108,8 +8108,11 @@ if isfield(Event,'localization')&&~isempty(getfield(Event,'localization'))
         VM_extra=[]; 
     end
     
-   
-    [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,35,Istation,VM_extra,'m');
+    try
+        [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,35,Istation,VM_extra,'m');
+    catch
+        disp('plot_failure');
+    end
     
     %Compare stored with recomputed results
     %     org.VM=Event.localization.location;
