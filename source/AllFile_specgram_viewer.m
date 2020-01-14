@@ -10440,7 +10440,7 @@ if isempty(list_names)
 end
 
 for I=1:length(list_names)
-    success_flag=convert_automated_airgun_into_annotations(list_names{I},filter_params);
+    success_flag=convert_automated_airgun_into_annotations(list_names{I});
     if success_flag==0
         uiwait(msgbox(sprintf('%s failed to process',list_names{I}),'Failed!','modal'));
         return

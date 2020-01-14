@@ -43,7 +43,7 @@ try
     
     
     Defaults.Events		=	Defaults.Template;
-    Defaults.edit_fields=edit_fields;
+    Defaults.edit_fields=   edit_fields;
     
     GUI_params	=	[];
     
