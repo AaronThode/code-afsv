@@ -6645,10 +6645,10 @@ switch filetype
         end
         next_letter=DASAR_letters(Iarray);
         
-        if ~strcmp(mydir(end-6),'S')
-            fprintf('Directory %s does not have form S***** \n',mydir);
-            return
-        end
+       % if ~strcmp(mydir(end-6),'S')
+       %     fprintf('Directory %s does not have form S***** \n',mydir);
+       %     return
+       % end
         mydir(end-2)=next_letter;
         %  Assume S510G0T20100831T000000.gsi form
         myfile(5)=next_letter;
@@ -8105,10 +8105,11 @@ if isfield(Event,'localization')&&~isempty(getfield(Event,'localization'))
     if isfield(Event.localization.station_position,'extra')
         VM_extra=Event.localization.station_position.extra;
     else
-        VM_extra=[];
-        
+        VM_extra=[]; 
     end
-    [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,35,Istation,VM_extra);
+    
+   
+    [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,35,Istation,VM_extra,'m');
     
     %Compare stored with recomputed results
     %     org.VM=Event.localization.location;
