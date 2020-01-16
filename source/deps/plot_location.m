@@ -9,7 +9,7 @@ function  [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM
 %  linel: length of bearing line in km...
 %  Istation: line to emphasize
 % extra_VM: additional point to plot...
-
+xg=[];yg=[];VMn=[];DASAR_coordsn=[];
 if ~exist('units','var')
     units='km';
 end
@@ -38,7 +38,8 @@ if strcmpi(units,'km')
     line0=line0/1000;
 end
 
-
+%%%%Check that DASAR_coords do not include zero%%%
+DASAR_coords=DASAR_coords(DASAR_coords(:,1)~=0,:);
 %subplot(3,1,LL);
 xg=mean(DASAR_coords(:,1));
 yg=mean(DASAR_coords(:,2));

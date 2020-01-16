@@ -167,8 +167,7 @@ elseif strfind(getenv('USER'),'ludovictenorio')
         handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
     
 else %Cedric to modify
-    handles.GSI_location_dir_template=fullfile('E:\','%s_Beaufort_Shell_DASAR\','DASARlocations\','DASAR_locations_%s.mat');
-    handles.GSI_location_dir_template=strrep(handles.GSI_location_dir_template,'\','\\');
+     handles.GSI_location_dir_template=fullfile(filesep,'~','Desktop','DASAR_locations_%s.mat');
 end
     
 handles.buttongroup.accelerometer(1)=handles.edit_normal_rotation;
@@ -3784,12 +3783,16 @@ for Idasar=1:NDasar
     end
     
     
-end
+end  %Idasar
 
 [DASAR_coords,Isite]=get_DASAR_locations(handles,strr);
 
 Ikeep=find(~isnan(theta)&theta>0);  %Remove absent or unselected DASARs
+Ikeep=Ikeep((DASAR_coords(Ikeep,1)~=0));  %Sometimes DASARs have good omni datat but are rejected from localization
+
 Igood=find(~isnan(theta)&theta>-2);  %Remove absent DASARS (used to compute center of array)
+Igood=Ikeep((DASAR_coords(Igood,1)~=0));  
+
 %theta=theta(Ikeep);
 %kappa=kappa(Ikeep);
 %Note that the Site contains all DASAR locations,
@@ -3797,6 +3800,8 @@ Igood=find(~isnan(theta)&theta>-2);  %Remove absent DASARS (used to compute cent
 
 %Using kappa gives too precise an estimate
 %[VM,Qhat,~,outcome] = vmmle_r(theta(Ikeep)',DASAR_coords(Ikeep,:),'h',kappa(Ikeep)');
+
+%%%%Since we presume accurate bearings, let kappa be calculated.
 [VM,Qhat,~,outcome] = vmmle_r(theta(Ikeep)',DASAR_coords(Ikeep,:),'h');
 mean_coords=mean(DASAR_coords(Igood,:));
 CRITVAL=4.60517; %chi2inv(0.90,2);
@@ -3805,7 +3810,7 @@ CRITVAL=4.60517; %chi2inv(0.90,2);
 
 figure(1)
 Ikeep=find(~isnan(theta(Igood))&theta(Igood)>0);
-[~,xg,yg]=plot_location(DASAR_coords(Igood,:),theta(Igood),Ikeep,VM,A,B,ANG,[],[],[],'m');
+[~,xg,yg]=plot_location(DASAR_coords(Igood,:),theta(Igood),Ikeep,VM,A,B,ANG,[],[],[],'km');
 %xlim([-0.1 0.1]);
 %ylim([-0.1 0.1]);
 
@@ -8109,7 +8114,9 @@ if isfield(Event,'localization')&&~isempty(getfield(Event,'localization'))
     end
     
     try
-        [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,35,Istation,VM_extra,'m');
+     %   [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,35,Istation,VM_extra,'m');
+    [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,3500,Istation,VM_extra,'km');
+    
     catch
         disp('plot_failure');
     end

@@ -35,7 +35,7 @@ if isempty(Ishell)
     options.WindowStyle='normal';
     defaultanswer={'2010','5'};
     answer=inputdlg(prompt,name,numlines,defaultanswer,options);
-    year=eval(answer{1});
+    year=(answer{1});
     Site=eval(answer{2});
     
     % temp=input('Enter year and Site [year Site]:');
@@ -51,7 +51,7 @@ end
 
 GSI_location_dir=sprintf(GSI_location_dir_template,year,year);
 
-prompt={'Enter a template string for a location output file:', ...
+prompt={'Location file:','Enter a template string for a location output file:', ...
     'Enter geographical restriction (Range, West,Center,East), 2x2 UTC matrix, or ''All'':', ...
     'UTM location to use if ''Range'' selected above (''2010 array'',''2012 array'',''2014 array'',or two-element vector):', ...
     'Range (km) [used only if ''Range'' selected above]:','Min Frequency range (Hz)'};
@@ -60,14 +60,15 @@ numlines=1;
 options.Resize='on';
 options.WindowStyle='normal';
 %defaultanswer={sprintf('S%i*_Huber_FilteredLocations.mat',Site),'All',sprintf('%s array',year),'10','[30 200]'};
-defaultanswer={sprintf('S%i*_Huber_FilteredLocations.mat',Site),'Range','2010 array','10','[30 200]'};
+defaultanswer={GSI_location_dir,sprintf('S%i*_Huber_FilteredLocations.mat',Site),'Range','2010 array','10','[30 200]'};
 
 answer=inputdlg(prompt,name,numlines,defaultanswer,options);
-fnames=dir(answer{1});
-loc_keyword=answer{2};
-UTM_keyword=answer{3};
-filter_params.range=eval(answer{4})*1000;
-filter_params.freq_range=eval(answer{5});
+GSI_location_dir=answer{1};
+fnames=dir(answer{2});
+loc_keyword=answer{3};
+UTM_keyword=answer{4};
+filter_params.range=eval(answer{5})*1000;
+filter_params.freq_range=eval(answer{6});
 
 filter_params.keyword=loc_keyword;
 filter_params.UTM_keyword=UTM_keyword;
