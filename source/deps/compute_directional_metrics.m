@@ -124,18 +124,21 @@ end
 % Batch_vars.climm='[0 360]'; Batch_desc{2}='Bearing Range Color Scale';
 % Batch_vars.brefa='11.7';Batch_desc{3}='Bearing bias/correction (default is 11.7 degrees)';
 % Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, 'Vector Sensor Processing');
-sec_avg=str2num(param.sec_avg);
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%Average Ix and Iy, if needed
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+sec_avg=str2double(param.sec_avg);
+
 if ~isempty(sec_avg)&&sec_avg>0
     
-    Navg=floor(sec_avg*Fs/dn);  %Samples per avg
+    Navg=min([M floor(sec_avg*Fs/dn)]);  %Spectrogram samples (columns) per avg
     fprintf('%i averages per sample.\n',Navg);
     if Navg==0
         Navg=1;
         sec_avg=dn/Fs;
     end
-    Nsnap=floor((M-Navg)/((1-ovlap)*Navg));  %Number of averaged samples per window.
+    Nsnap=max([1 floor((M-Navg)/((1-ovlap)*Navg))]);  %Number of averaged samples per window.
     Ix_avg=zeros(Nf,Nsnap);
     Iy_avg=Ix_avg;
     NV_avg=Ix_avg;

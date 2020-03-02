@@ -3788,7 +3788,7 @@ end  %Idasar
 [DASAR_coords,Isite]=get_DASAR_locations(handles,strr);
 
 Ikeep=find(~isnan(theta)&theta>0);  %Remove absent or unselected DASARs
-Ikeep=Ikeep((DASAR_coords(Ikeep,1)~=0));  %Sometimes DASARs have good omni datat but are rejected from localization
+Ikeep=Ikeep((DASAR_coords(Ikeep,1)~=0));  %Sometimes DASARs have good omni data but are rejected from localization
 
 Igood=find(~isnan(theta)&theta>-2);  %Remove absent DASARS (used to compute center of array)
 Igood=Ikeep((DASAR_coords(Igood,1)~=0));  
@@ -3811,8 +3811,8 @@ CRITVAL=4.60517; %chi2inv(0.90,2);
 figure(1)
 Ikeep=find(~isnan(theta(Igood))&theta(Igood)>0);
 [~,xg,yg]=plot_location(DASAR_coords(Igood,:),theta(Igood),Ikeep,VM,A,B,ANG,[],[],[],'km');
-%xlim([-0.1 0.1]);
-%ylim([-0.1 0.1]);
+xlim([-0.1 0.1]);
+ylim([-0.1 0.1]);
 
 hold on
 
@@ -3875,6 +3875,17 @@ elseif contains(handles.myfile(1:2),'PT')
     pos_DASAR0=[4 -1; 0 0; 4+3 -1+4.4];  %Tako City
     rot=0;  %Optional rotation of frame size we don't have alignment exact.
     DASAR_coords(Ikeep,:)=([cosd(rot) sind(rot);-sind(rot) cosd(rot)]*pos_DASAR0')';
+    return
+    
+elseif contains(handles.myfile(1:2),'PB')
+    Ikeep=double('XYZ')-double('A')+1;
+    % magnetic declination is 9.5 east.
+    pos_DASAR(1,:)=19*[cosd(90-(155+9.5)) sind(90-(155+9.5))]; %X
+    pos_DASAR(2,:)=[0 0]; %Y
+    pos_DASAR(3,:)=24*[cosd(90-(12.5+9.5)) sind(90-(12.5+9.5))]; %Z
+    
+    pos_DASAR(:,1)=pos_DASAR(:,1)+1;  %Make sure X coordinate not zero.
+    DASAR_coords(Ikeep,:)=pos_DASAR;
     return
 end
 
