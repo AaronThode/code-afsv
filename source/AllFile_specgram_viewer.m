@@ -8567,6 +8567,14 @@ if want_directionality
     end
     reactive_flag=handles.checkbox_reactive.Value;
     
+    %%AARON test if sample delay between pressure and P.V r
+    %responsible for pressure/velocity phase shift with frequency
+   
+    %Ishift=0;
+    %x(1,:)=[x(1,(1+Ishift):end) zeros(1,Ishift)];
+    %x(2:3,:)=[x(2:3,(1+Ishift):end) zeros(2,Ishift)];
+    
+    
     [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics ...
         (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
         handles.filetype,reactive_flag);
