@@ -3,6 +3,7 @@ function plot_directional_metric(TT,FF,output_array,handles,param,PdB)
 %  TT, FF, time (sec) and frequency (Hz) associated with output_array
 %  handles: handles to figure
 %  param:  climm, alg
+
 climm=eval(param.climm);
 alg_mult=eval(param.alg);
 if ~exist('PdB','var')
@@ -26,9 +27,9 @@ if strcmpi(handles.display_view,'Directionality')
     
     %%%Use alpha adjustment to display transport ratio as well
    
-     %    set(hh,'AlphaData',intensity./energy_density);
-     %    set(hh,'AlphaDataMapping','scaled')
-    %     alim([0 1]);
+%          set(hh,'AlphaData',intensity./energy_density);
+%          set(hh,'AlphaDataMapping','scaled')
+%          alim([0 1]);
     %
     
     %%%Setting transparency to SPL
