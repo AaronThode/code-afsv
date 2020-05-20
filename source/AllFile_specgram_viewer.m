@@ -32,7 +32,7 @@ function varargout = AllFile_specgram_viewer(varargin)
 
 % Edit the above text to modify the response to help AllFile_specgram_viewer
 
-% Last Modified by GUIDE v2.5 05-Sep-2019 13:52:48
+% Last Modified by GUIDE v2.5 15-May-2020 15:10:02
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
@@ -8575,19 +8575,41 @@ if want_directionality
     %x(2:3,:)=[x(2:3,(1+Ishift):end) zeros(2,Ishift)];
     
     
-    [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics ...
-        (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
-        handles.filetype,reactive_flag);
-    if strcmpi(handles.filetype,'gsi')&&~reactive_flag
-        params.f_transition=300;
-        [~,Icut]=min(abs(FF-params.f_transition));
-        [~,~,temp]=compute_directional_metrics ...
-            (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
-            'gsi',true);
-        output_array{1}((Icut+1):end,:)=temp{1}((Icut+1):end,:);
+    
+    %%%%Wavelet test
+    
+    if get(handles.checkbox_wavelet,'Value')==1
+        use_wavelets=true;
+    else
+        use_wavelets=false;
     end
-
-    plot_directional_metric(TT,FF,output_array{1},handles,azigram_param,PdB);
+    if use_wavelets
+        [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics_wavelet ...
+            (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
+            handles.filetype,reactive_flag);
+        if strcmpi(handles.filetype,'gsi')&&~reactive_flag
+            params.f_transition=300;
+            [~,Icut]=min(abs(FF-params.f_transition));
+            [~,~,temp]=compute_directional_metrics_wavelet ...
+                (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
+                'gsi',true);
+            output_array{1}((Icut+1):end,:)=temp{1}((Icut+1):end,:);
+        end
+    else
+        [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics ...
+            (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
+            handles.filetype,reactive_flag);
+        if strcmpi(handles.filetype,'gsi')&&~reactive_flag
+            params.f_transition=300;
+            [~,Icut]=min(abs(FF-params.f_transition));
+            [~,~,temp]=compute_directional_metrics ...
+                (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
+                'gsi',true);
+            output_array{1}((Icut+1):end,:)=temp{1}((Icut+1):end,:);
+        end
+    end
+    
+    plot_directional_metric(TT,FF,output_array{1},handles,azigram_param,PdB,use_wavelets);
     % To recover matrix use handles.axes1.Children.CData;
     %handles.azigram.azi=azi;
     handles.azigram=azigram_param;
@@ -8717,7 +8739,7 @@ elseif strcmp(handles.display_view,'Spectrogram')
         %     frequencies is specified, it returns the two-sided PSD.
         handles.sgram.T		=	TT;
         handles.sgram.F		=	FF;
-        handles.sgram.B		=	B;
+       % handles.sgram.B		=	B;
         handles.sgram.Nfft	=	Nfft;
         handles.sgram.ovlap	=	ovlap;
         handles.sgram.Fs	=	Fs;
@@ -8742,7 +8764,7 @@ elseif strcmp(handles.display_view,'Spectrogram')
         imagesc(t,FF/1000,ppsd);
         handles.sgram.T		=	t;
         handles.sgram.F		=	FF;
-        handles.sgram.B		=	ppsd;
+        %handles.sgram.B		=	ppsd;
         handles.sgram.Nfft	=	hdr.Nfft;
         handles.sgram.ovlap	=	ovlap;
         handles.sgram.Fs	=	Fs;
@@ -10726,7 +10748,6 @@ end
 
 
 
-
 % --- Executes on button press in checkbox_transparency.
 function checkbox_transparency_Callback(hObject, eventdata, handles)
 % hObject    handle to checkbox_transparency (see GCBO)
@@ -10734,4 +10755,16 @@ function checkbox_transparency_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_transparency
+end
+
+
+
+
+% --- Executes on button press in checkbox_wavelet.
+function checkbox_wavelet_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_wavelet (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_wavelet
 end

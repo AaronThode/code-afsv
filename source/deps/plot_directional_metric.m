@@ -1,4 +1,4 @@
-function plot_directional_metric(TT,FF,output_array,handles,param,PdB)
+function plot_directional_metric(TT,FF,output_array,handles,param,PdB,use_wavelets)
 %function plot_directional_metric(TT,FF,output_array,handles,param)
 %  TT, FF, time (sec) and frequency (Hz) associated with output_array
 %  handles: handles to figure
@@ -10,8 +10,22 @@ if ~exist('PdB','var')
    PdB=[]; 
 end
 if strcmpi(handles.display_view,'Directionality')
-    
-    hh=imagesc(TT,FF/1000,output_array);
+    if ~use_wavelets
+        hh=imagesc(TT,FF/1000,output_array);
+    else
+        hh=pcolor(TT,log2(FF/1000),output_array);
+        hh.EdgeColor='none';
+        ax=gca;
+        ytick=round(pow2(ax.YTick),3);
+        ax.YTickLabel=ytick;
+        
+         hh=pcolor(TT,(FF/1000),output_array);
+        hh.EdgeColor='none';
+        ax=gca;
+        ax.XLabel.String='Time';
+        ax.YLabel.String='Frequency';
+       
+    end
     titstr=' Azimuth';
     try
         if get(handles.checkbox_grayscale,'Value')==1
@@ -82,7 +96,9 @@ try
         ylim([0 handles.Fs/2000]);
         set(handles.edit_fmax,'String',num2str(Fs/2000));
     else
+        if ~use_wavelets
         ylim([fmin fmax]);
+        end
     end
     %ylim([0 1]);axis('xy')
     
