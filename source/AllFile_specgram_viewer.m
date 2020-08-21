@@ -8576,7 +8576,7 @@ if want_directionality
     
     
     
-    %%%%Wavelet test
+    %%%%Wavelet test%%%%%%%%%%%%%
     
     if get(handles.checkbox_wavelet,'Value')==1
         use_wavelets=true;
@@ -8596,17 +8596,28 @@ if want_directionality
             output_array{1}((Icut+1):end,:)=temp{1}((Icut+1):end,:);
         end
     else
+        %%%%Here is directional metric calculation...
         [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics ...
             (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
             handles.filetype,reactive_flag);
-        if strcmpi(handles.filetype,'gsi')&&~reactive_flag
-            params.f_transition=300;
-            [~,Icut]=min(abs(FF-params.f_transition));
-            [~,~,temp]=compute_directional_metrics ...
-                (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
-                'gsi',true);
-            output_array{1}((Icut+1):end,:)=temp{1}((Icut+1):end,:);
-        end
+        %if strcmpi(handles.filetype,'gsi')&&~reactive_flag
+            %params.f_transition=300;
+            %[~,Icut]=min(abs(FF-params.f_transition));
+            %[~,~,temp]=compute_directional_metrics ...
+            %    (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
+            %    'gsi',true);
+            %output_array{1}((Icut+1):end,:)=temp{1}((Icut+1):end,:);
+        %end
+    end
+    
+    if contains(handles.display_view,'IntensityPhase')
+        myfig=gcf;
+        myax=gca;
+        figure(1);hold on
+        plot(FF,median(output_array{1}'),'k',FF,mean(output_array{1}'),'r');grid on;hold on
+        ylim([0 90]);
+        figure(myfig);
+        axes(gca);
     end
     
     plot_directional_metric(TT,FF,output_array{1},handles,azigram_param,PdB,use_wavelets);
