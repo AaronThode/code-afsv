@@ -61,7 +61,7 @@ if strcmpi(filetype,'gsi')
     end
     
     %%%%Test alternate, faster version, used since July 29, 2018
-    tic
+   % tic
     M=floor(1+(size(x,2)-Nfft)/dn);
     x=x';
     B=zeros(size(x,2),Nfft/2+1,M);
@@ -83,7 +83,7 @@ if strcmpi(filetype,'gsi')
     energy_density=0.5*abs(normalized_velocity_autospectrum+pressure_autospectrum);
     
     Nf=Nfft/2+1;  %Should be the same as length(FF)
-    toc
+    %toc
     get_newparams=false;
     
     
@@ -134,7 +134,7 @@ sec_avg=str2double(param.sec_avg);
 if ~isempty(sec_avg)&&sec_avg>0
     
     Navg=min([M floor(sec_avg*Fs/dn)]);  %Spectrogram samples (columns) per avg
-    fprintf('%i averages per sample.\n',Navg);
+    %fprintf('%i averages per sample.\n',Navg);
     if Navg==0
         Navg=1;
         sec_avg=dn/Fs;
@@ -200,8 +200,8 @@ for J=1:length(metric_type)  %%for each request
             if ~reactive_flag(J)
                 output_array{J}=atan2d(sqrt(imag(Ix).^2+imag(Iy).^2),sqrt((real(Ix)).^2+(real(Iy)).^2));
                 
-                %output_array{J}=atan2d((imag(Ix)),((real(Ix))));
-                %output_array{J}=atan2d((imag(Iy)),((real(Iy))));
+                %output_array{J}=atan2d((imag(Ix)),((real(Ix)))); %Ix phase
+               % output_array{J}=atan2d((imag(Iy)),((real(Iy)))); %Iy phase
             else
                 output_array{J}=atan2d(sqrt(real(Ix).^2+real(Iy).^2),sqrt((imag(Ix)).^2+(imag(Iy)).^2));
             end
@@ -217,8 +217,8 @@ switch(phase_calibration_chc)
     case 'none'
         return
     case 'Arctic5G_2014'
-        %slopee=4.2460e-04;
-        slopee=1.25*4.0535e-04;
+        %slopee=4.10e-04;
+        slopee=1.25*4.1e-04;
         slopee2=5.5011e-05;
         %degree_slopee=slopee*2*pi*180/pi;
         Phasee=10*pi/180+slopee*2*pi*(FF-75);
