@@ -1,6 +1,6 @@
-%%%%compute_directional_metrics
+%%%%compute_directional_metrics.m%%%%%%%%%%%%%%%%%%%
 %function [TT,FF,output_array,PdB,param, Ix,Iy]=compute_directional_metrics(x,metric_type, ...
- %   Fs,Nfft, ovlap, param,filetype,reactive_flag)
+%   Fs,Nfft, ovlap, param,filetype,reactive_flag)
 % x:  array of vector data, each row is a separate channel
 % metric_type{Iwant}:'Directionality','ItoERatio','KEtoPERatio' ,'IntensityPhase
 %           If a cell array output_array will be a cell array
@@ -10,11 +10,12 @@
 % Fs: sampling rate in Hz
 % Nfft: FFT size used to compute frequency bin size
 % ovlap: fraction ovlap when computing spectrograms
-% Optional
+% paramaters
 %     param.sec_avg=(Batch_vars.sec_avg);
 %     param.climm=(Batch_vars.climm);
 %     param.brefa=(Batch_vars.brefa);
 %     param.alg=Batch_vars.alg;
+%     param.phase_calibration='Arctic5G_2014';
 %
 % Output:
 %  TT,FF, output_array{Nwant}:  TT vector of times and FF vector of Hz for
@@ -60,7 +61,7 @@ if strcmpi(filetype,'gsi')
     end
     
     %%%%Test alternate, faster version, used since July 29, 2018
-    tic
+   % tic
     M=floor(1+(size(x,2)-Nfft)/dn);
     x=x';
     B=zeros(size(x,2),Nfft/2+1,M);
@@ -82,7 +83,7 @@ if strcmpi(filetype,'gsi')
     energy_density=0.5*abs(normalized_velocity_autospectrum+pressure_autospectrum);
     
     Nf=Nfft/2+1;  %Should be the same as length(FF)
-    toc
+    %toc
     get_newparams=false;
     
     
@@ -133,7 +134,7 @@ sec_avg=str2double(param.sec_avg);
 if ~isempty(sec_avg)&&sec_avg>0
     
     Navg=min([M floor(sec_avg*Fs/dn)]);  %Spectrogram samples (columns) per avg
-    fprintf('%i averages per sample.\n',Navg);
+    %fprintf('%i averages per sample.\n',Navg);
     if Navg==0
         Navg=1;
         sec_avg=dn/Fs;
@@ -165,6 +166,14 @@ end  %sec_avg
 PdB=4+10*log10(2*pressure_autospectrum./(Nfft*Fs));  %%Power spectral density output
 %[~,FF,TT,PdB1] = spectrogram(x(:,1),Nfft,round(ovlap*Nfft),Nfft,Fs);
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%Correct for phase misalignment in Ix and Iy
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if ~isfield(param,'phase_calibration')
+    param.phase_calibration='Arctic5G_2014';
+end
+[Ix,Iy]=correct_phase(Ix,Iy,FF,param.phase_calibration);
+
 for J=1:length(metric_type)  %%for each request
     
     switch metric_type{J}
@@ -175,6 +184,7 @@ for J=1:length(metric_type)  %%for each request
                 mu = atan2d(imag(Ix),imag(Iy));
             end
             output_array{J}=bnorm(param.brefa+mu);
+            %output_array{J}=bnorm(mu);
         case 'ItoERatio'
             if ~reactive_flag(J)
                 intensity=sqrt((real(Ix)).^2+(real(Iy)).^2);
@@ -189,6 +199,9 @@ for J=1:length(metric_type)  %%for each request
         case 'IntensityPhase'
             if ~reactive_flag(J)
                 output_array{J}=atan2d(sqrt(imag(Ix).^2+imag(Iy).^2),sqrt((real(Ix)).^2+(real(Iy)).^2));
+                
+                %output_array{J}=atan2d((imag(Ix)),((real(Ix)))); %Ix phase
+               % output_array{J}=atan2d((imag(Iy)),((real(Iy)))); %Iy phase
             else
                 output_array{J}=atan2d(sqrt(real(Ix).^2+real(Iy).^2),sqrt((imag(Ix)).^2+(imag(Iy)).^2));
             end
@@ -196,4 +209,27 @@ for J=1:length(metric_type)  %%for each request
 end
 
 end
+
+function [Ix,Iy]=correct_phase(Ix,Iy,FF,phase_calibration_chc)
+phase_calibration_chc='Arctic5G_2014';
+Np=size(Ix,2);
+switch(phase_calibration_chc)
+    case 'none'
+        return
+    case 'Arctic5G_2014'
+        %slopee=4.10e-04;
+        slopee=1.25*4.1e-04;
+        slopee2=5.5011e-05;
+        %degree_slopee=slopee*2*pi*180/pi;
+        Phasee=10*pi/180+slopee*2*pi*(FF-75);
+        Phasee=slopee*2*pi*(FF-75);
+        %Phasee=Phasee+4*pi/180+slopee2*2*pi*(FF-75);
+        Phasee=exp(-1i*Phasee*ones(1,Np));
+        Ix=Ix.*Phasee;
+        Iy=Iy.*Phasee;
+        
+end
+
+end
+
 

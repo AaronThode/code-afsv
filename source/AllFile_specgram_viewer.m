@@ -78,16 +78,19 @@ if ispc
     if ~ isdeployed
         path([deskPath 'Ulysses'],path);
         path([deskPath 'Ulysses/deps'],path);
+        path([deskPath 'Ulysses/deps/CircStat2012a'],path);
     end
 elseif strcmpi(getenv('USER'),'thode')
     deskPath='/Users/thode/repos/code-afsv/source/';
     path([deskPath],path);
     path([deskPath '/deps'],path);
+    path([deskPath '/deps/CircStat2012a'],path);
 else
     deskPath='~/Desktop/';
     if ~ isdeployed
         path([deskPath 'Ulysses'],path);
         path([deskPath 'Ulysses/deps'],path);
+        path([deskPath 'Ulysses/deps/CircStat2012a'],path);
     end
 end
 
@@ -8576,7 +8579,7 @@ if want_directionality
     
     
     
-    %%%%Wavelet test
+    %%%%Wavelet test%%%%%%%%%%%%%
     
     if get(handles.checkbox_wavelet,'Value')==1
         use_wavelets=true;
@@ -8596,17 +8599,54 @@ if want_directionality
             output_array{1}((Icut+1):end,:)=temp{1}((Icut+1):end,:);
         end
     else
+        %%%%Here is directional metric calculation...
         [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics ...
             (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
             handles.filetype,reactive_flag);
-        if strcmpi(handles.filetype,'gsi')&&~reactive_flag
-            params.f_transition=300;
-            [~,Icut]=min(abs(FF-params.f_transition));
-            [~,~,temp]=compute_directional_metrics ...
-                (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
-                'gsi',true);
-            output_array{1}((Icut+1):end,:)=temp{1}((Icut+1):end,:);
+        %if strcmpi(handles.filetype,'gsi')&&~reactive_flag
+            %params.f_transition=300;
+            %[~,Icut]=min(abs(FF-params.f_transition));
+            %[~,~,temp]=compute_directional_metrics ...
+            %    (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
+            %    'gsi',true);
+            %output_array{1}((Icut+1):end,:)=temp{1}((Icut+1):end,:);
+        %end
+    end
+    
+    if ~contains(handles.display_view,'Directionality')
+        myfig=gcf;
+        myax=gca;
+        switch handles.display_view
+            case 'ItoERatio'
+                ylimm=[0 1];
+                fignum=3;
+            case 'KEtoPERatio'
+                ylimm=[0 10];
+                fignum=4;
+            case 'IntensityPhase'
+                ylimm=[0 90];
+                fignum=2;
+            otherwise
+                ylimm=[0 90];
         end
+        figure(fignum);hold on
+        plot(FF,prctile(output_array{1}',50),'k',FF,prctile(output_array{1}',25),'k--',FF,prctile(output_array{1}',75),'k--');
+        %plot(FF,mean(output_array{1}'),'r',FF,mean(output_array{1}')+std(output_array{1}'),'r--',FF,mean(output_array{1}')-std(output_array{1}'),'r--');grid on;hold on
+        xlabel('Frequency (Hz)');ylabel(handles.display_view);
+        ylim(ylimm)
+        figure(myfig);
+        axes(gca);
+    else
+        myfig=gcf;
+        myax=gca;
+        figure(1);hold on
+        plot(FF,bnorm(180*circ_median(output_array{1}'*pi/180)/pi),'k.', ...
+            FF,bnorm((180/pi)*(circ_mean(output_array{1}'*pi/180)+circ_std(output_array{1}'*pi/180))),'r.', ...
+            FF,bnorm((180/pi)*(circ_mean(output_array{1}'*pi/180)-circ_std(output_array{1}'*pi/180))),'g.');grid on;
+        xlabel('Frequency (Hz)');ylabel(handles.display_view);
+        %ylim([0 360])
+        figure(myfig);
+        axes(gca);
     end
     
     plot_directional_metric(TT,FF,output_array{1},handles,azigram_param,PdB,use_wavelets);
