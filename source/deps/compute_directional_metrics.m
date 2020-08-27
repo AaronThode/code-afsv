@@ -212,6 +212,8 @@ end
 
 function [Ix,Iy]=correct_phase(Ix,Iy,FF,phase_calibration_chc)
 phase_calibration_chc='Arctic5G_2014';
+%phase_calibration_chc='none';
+
 Np=size(Ix,2);
 switch(phase_calibration_chc)
     case 'none'
