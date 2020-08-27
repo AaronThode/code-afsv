@@ -8632,8 +8632,14 @@ if want_directionality
         figure(fignum);hold on
         plot(FF,prctile(output_array{1}',50),'k',FF,prctile(output_array{1}',25),'k--',FF,prctile(output_array{1}',75),'k--');
         %plot(FF,mean(output_array{1}'),'r',FF,mean(output_array{1}')+std(output_array{1}'),'r--',FF,mean(output_array{1}')-std(output_array{1}'),'r--');grid on;hold on
-        xlabel('Frequency (Hz)');ylabel(handles.display_view);
+        xlabel('Frequency (Hz)');ylabel(handles.display_view);grid on
         ylim(ylimm)
+        
+        
+        figure(10);hold on
+        plot(FF,prctile(PdB',50),'k',FF,prctile(PdB',25),'k--',FF,prctile(PdB',75),'k--');
+        xlabel('Frequency (Hz)');ylabel('PSD dB re 1 uPa^2/Hz');grid on
+        
         figure(myfig);
         axes(gca);
     else
