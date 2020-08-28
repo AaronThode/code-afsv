@@ -134,7 +134,7 @@ sec_avg=str2double(param.sec_avg);
 if ~isempty(sec_avg)&&sec_avg>0
     
     Navg=min([M floor(sec_avg*Fs/dn)]);  %Spectrogram samples (columns) per avg
-    %fprintf('%i averages per sample.\n',Navg);
+    fprintf('%i averages per sample.\n',Navg);
     if Navg==0
         Navg=1;
         sec_avg=dn/Fs;
