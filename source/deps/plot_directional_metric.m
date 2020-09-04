@@ -63,7 +63,9 @@ else
         titstr='Intensity/Energy Ratio';
     elseif strcmpi(handles.display_view,'KEtoPERatio')
         
-        imagesc(TT,FF/1000,10*log10(output_array));
+        %imagesc(TT,FF/1000,10*log10(output_array));
+          imagesc(TT,FF/1000,(output_array));
+      
         titstr='Kinetic/Potential Ratio';
         %caxis([0 90])
         caxis([-20 20])
