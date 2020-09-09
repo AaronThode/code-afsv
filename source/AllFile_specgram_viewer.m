@@ -162,17 +162,17 @@ handles.buttongroup.GSI(1)=handles.pushbutton_GSIbearing;
 handles.buttongroup.GSI(2)=handles.pushbutton_GSI_localization;
 handles.buttongroup.GSI(3)=handles.radiobutton_directionality;
 handles.buttongroup.GSI(4)=handles.radiobutton_IERatio;
-%Set default template 
-if strfind(getenv('USER'),'thode') 
+%Set default template
+if strfind(getenv('USER'),'thode')
     handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
     
-elseif strfind(getenv('USER'),'ludovictenorio') 
-        handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
+elseif strfind(getenv('USER'),'ludovictenorio')
+    handles.GSI_location_dir_template=fullfile(filesep,'Volumes','Data','Shell%s_GSI_Data','DASARlocations','DASAR_locations_%s.mat');
     
 else %Cedric to modify
-     handles.GSI_location_dir_template=fullfile(filesep,'~','Desktop','DASAR_locations_%s.mat');
+    handles.GSI_location_dir_template=fullfile(filesep,'~','Desktop','DASAR_locations_%s.mat');
 end
-    
+
 handles.buttongroup.accelerometer(1)=handles.edit_normal_rotation;
 handles.buttongroup.accelerometer(2)=handles.text_normal_rotation;
 
@@ -2094,36 +2094,36 @@ switch	Batch_mode
     case 'Process Visible Window'
         
         %  burntime: Time in seconds to build up average stats.
-%   flo_det, fhi_det:  The absolute minimum and maximum frequencies
- %   	to monitor for signals of interest, 
- %   
- %   eq_time: an equalization time in seconds.  If eq_time is zero, the equalization is not updated after the first 20 samples.
- %   
- %   bandwidth:  The bandwidth of a subdetector--must be less than fhi_det-flo_det
- %   
- %   threshold:  dB threshold SNR needed to exceed to start detection.
- %   
- %   buffertime: How much time to stuff before and after detection start and stop when writing time series output.
- %   
- %   TolTime: How much time in seconds must pass before new detection started?
- %   
- %   MinTime: Minimum time in seconds a signal needs to exceed threshold SNR to register a detection.
- %   
- %   debug: If 0, no subdetector output.  If 1, write subdetector SEL.  If 2, write suddetector equalization value.
- %   	If 3, write ratio of current SEL to equalization SEL (SNR estimate).
-
-%    param.eq_time='10';   param_desc{K}='Equalization time (s): should be roughly twice the duration of signal of interest';K=K+1;
-%             param.bandwidth='.05';     param_desc{K}='Bandwidth of detector in kHz';K=K+1;
-%             param.threshold='10';  param_desc{K}='Threshold in dB to accept a detection';K=K+1;
-%             param.snips_chc='1';  param_desc{K}='0 for no snips file, 1 for snips file of one channel, 2 for snips file of all channels';K=K+1;
-%             param.bufferTime='0.5'; param_desc{K}='Buffer Time in seconds to store before and after each detection snip, -1 suppress snips file';K=K+1;
-%             param.TolTime='1e-4';  param_desc{K}='Minimum time in seconds that must elapse for two detections to be listed as separate';K=K+1;
-%             param.MinTime='0';     param_desc{K}='Minimum time in seconds a required for a detection to be logged';K=K+1;
-%             param.MaxTime='3';     param_desc{K}= 'Maximum time in seconds a detection is permitted to have';K=K+1;
-%             param.debug='0';       param_desc{K}= '0: do not write out debug information. 1:  SEL output.  2:  equalized background noise. 3: SNR.';K=K+1;
-%           
+        %   flo_det, fhi_det:  The absolute minimum and maximum frequencies
+        %   	to monitor for signals of interest,
+        %
+        %   eq_time: an equalization time in seconds.  If eq_time is zero, the equalization is not updated after the first 20 samples.
+        %
+        %   bandwidth:  The bandwidth of a subdetector--must be less than fhi_det-flo_det
+        %
+        %   threshold:  dB threshold SNR needed to exceed to start detection.
+        %
+        %   buffertime: How much time to stuff before and after detection start and stop when writing time series output.
+        %
+        %   TolTime: How much time in seconds must pass before new detection started?
+        %
+        %   MinTime: Minimum time in seconds a signal needs to exceed threshold SNR to register a detection.
+        %
+        %   debug: If 0, no subdetector output.  If 1, write subdetector SEL.  If 2, write suddetector equalization value.
+        %   	If 3, write ratio of current SEL to equalization SEL (SNR estimate).
         
-%%%Jinglong, hardwired parameters
+        %    param.eq_time='10';   param_desc{K}='Equalization time (s): should be roughly twice the duration of signal of interest';K=K+1;
+        %             param.bandwidth='.05';     param_desc{K}='Bandwidth of detector in kHz';K=K+1;
+        %             param.threshold='10';  param_desc{K}='Threshold in dB to accept a detection';K=K+1;
+        %             param.snips_chc='1';  param_desc{K}='0 for no snips file, 1 for snips file of one channel, 2 for snips file of all channels';K=K+1;
+        %             param.bufferTime='0.5'; param_desc{K}='Buffer Time in seconds to store before and after each detection snip, -1 suppress snips file';K=K+1;
+        %             param.TolTime='1e-4';  param_desc{K}='Minimum time in seconds that must elapse for two detections to be listed as separate';K=K+1;
+        %             param.MinTime='0';     param_desc{K}='Minimum time in seconds a required for a detection to be logged';K=K+1;
+        %             param.MaxTime='3';     param_desc{K}= 'Maximum time in seconds a detection is permitted to have';K=K+1;
+        %             param.debug='0';       param_desc{K}= '0: do not write out debug information. 1:  SEL output.  2:  equalized background noise. 3: SNR.';K=K+1;
+        %
+        
+        %%%Jinglong, hardwired parameters
         params.burn_in_time=0.5; %minutes
         params.bandwidth=37;
         params.threshold=8; %dB threshold
@@ -2131,9 +2131,9 @@ switch	Batch_mode
         params.MinTime=0.1;
         params.MaxTime=5;
         params.debug=true;
-        params.eq_time=23.8; 
+        params.eq_time=23.8;
         
-         
+        
         contents=get(handles.popupmenu_Nfft,'String');
         params.Nfft=str2double(contents{get(handles.popupmenu_Nfft,'Value')});
         params.Fs=handles.Fs;
@@ -2145,44 +2145,44 @@ switch	Batch_mode
             return
         end
         params.fhi_det=1000*str2num(get(handles.edit_fmax,'String'));
-       
+        
         if isempty(params)
             return
         end
-       % [param,param_desc]=load_energy_parameters;
+        % [param,param_desc]=load_energy_parameters;
         
-         detect=MultipleBandEnergyDetector(handles.x,handles.tdate_start,params);
-       
-         %ICI=compute_ici_bothways_feature(tabs,ici_range,feature_array,feature_names, ...
-    %num_clicks,num_misses,tol_feature,tol_time,Idebug)
- 
+        detect=MultipleBandEnergyDetector(handles.x,handles.tdate_start,params);
+        
+        %ICI=compute_ici_bothways_feature(tabs,ici_range,feature_array,feature_names, ...
+        %num_clicks,num_misses,tol_feature,tol_time,Idebug)
+        
         %param.energy=param;
-         
+        
         %tel=datevec(datenum(param.nstart)-datenum(handles.tdate_min));
         %sec=tel(:,6)+60*tel(:,5)+3600*tel(:,4)+24*3600*tel(:,3);
-%         tlen=(param.nsamples);
-%         tstart=datenum(param.energy.nstart);
-%         %param.nstart=round(param.Fs*sec);
-%         
-%         climm=str2num(get(handles.edit_mindB,'String'))+[0 str2num(get(handles.edit_dBspread,'String'))];
-%         
-%         data_all=Energy_detector_review(param,fullfile(handles.mydir,handles.myfile),  ...
-%             handles.tdate_min,tstart,tlen,climm,handles.axes1,[60*burn_in_time tlen]);
-%         
-%         %%Return 'param' to a form that can be used by the input_batch
-%         %%  function
-%         fields=fieldnames(param.energy);
-%         param.energy.f_low=param.energy.f_low/1000;
-%         param.energy.f_high=param.energy.f_high/1000;
-%         param.energy.bandwidth=param.energy.bandwidth/1000;
-%         param.energy.ovlap=round(100*param.energy.ovlap/param.Nfft);
-%         
-%         for II=1:length(fields)
-%             tmp=num2str(param.energy.(fields{II}));
-%             if ~isempty(tmp)
-%                 param.energy.(fields{II})=tmp;
-%             end
-%         end
+        %         tlen=(param.nsamples);
+        %         tstart=datenum(param.energy.nstart);
+        %         %param.nstart=round(param.Fs*sec);
+        %
+        %         climm=str2num(get(handles.edit_mindB,'String'))+[0 str2num(get(handles.edit_dBspread,'String'))];
+        %
+        %         data_all=Energy_detector_review(param,fullfile(handles.mydir,handles.myfile),  ...
+        %             handles.tdate_min,tstart,tlen,climm,handles.axes1,[60*burn_in_time tlen]);
+        %
+        %         %%Return 'param' to a form that can be used by the input_batch
+        %         %%  function
+        %         fields=fieldnames(param.energy);
+        %         param.energy.f_low=param.energy.f_low/1000;
+        %         param.energy.f_high=param.energy.f_high/1000;
+        %         param.energy.bandwidth=param.energy.bandwidth/1000;
+        %         param.energy.ovlap=round(100*param.energy.ovlap/param.Nfft);
+        %
+        %         for II=1:length(fields)
+        %             tmp=num2str(param.energy.(fields{II}));
+        %             if ~isempty(tmp)
+        %                 param.energy.(fields{II})=tmp;
+        %             end
+        %         end
         
         handles.energy_parameters_default=params;
         %handles.energy_parameters_default_desc=param_desc;
@@ -2626,7 +2626,7 @@ function popupmenu_Nfft_Callback(hObject, eventdata, handles)
 
 
 if get(handles.checkbox_sameNfft,'Value') %%if same checkbox on
-   set(handles.popupmenu_WindowSize,'Value',get(handles.popupmenu_Nfft,'Value')); 
+    set(handles.popupmenu_WindowSize,'Value',get(handles.popupmenu_Nfft,'Value'));
 end
 % --- Executes during object creation, after setting all properties.
 end
@@ -2639,8 +2639,8 @@ function checkbox_sameNfft_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_sameNfft
 if get(hObject,'Value')
-   set(handles.popupmenu_WindowSize,'Value',get(handles.popupmenu_Nfft,'Value')); 
-   set(handles.popupmenu_WindowSize,'Enable','off');  %Don't allow to be set...
+    set(handles.popupmenu_WindowSize,'Value',get(handles.popupmenu_Nfft,'Value'));
+    set(handles.popupmenu_WindowSize,'Enable','off');  %Don't allow to be set...
 else
     set(handles.popupmenu_WindowSize,'Enable','on');
 end
@@ -2972,34 +2972,34 @@ if	audio_stale
                 
                 [b,a]=butter(2,[w1 w2]);
                 
-    
-%                 %	default band-pass filter
-%                 df	=	0.25*[f_min f_max]; df = df(df>0);
-%                 df	=	min(df);
-%                 f	=	[f_min-[df 0] f_max+[0 df]];
-%                 a	=	[0 1 0];
-%                 rp	=	0.1;
-%                 rs	=	40;
-%                 dev	= [10^(-rs/20) (10^(rp/20)-1)/(10^(rp/20)+1)  10^(-rs/20)];
-%                 
-%                 %	low-pass filter
-%                 if	min(f) <= 0
-%                     f	=	f(end-1:end);
-%                     a	=	a(end-1:end);
-%                     dev	=	dev(end-1:end);
-%                     
-%                     %	high-pass fiter
-%                 elseif	max(f) >= Fs/2
-%                     f	=	f(1:2);
-%                     a	=	a(1:2);
-%                     dev	=	dev(1:2);
-%                 end
-%                 
-%                 [n,fo,ao,w] =	firpmord(f, a, dev, Fs);
-%                 if n>1000
-%                     fprintf('Warning, filter too large for %s \n',num2str(f));
-%                 end
-%                 b			=	firpm(n,fo,ao,w);
+                
+                %                 %	default band-pass filter
+                %                 df	=	0.25*[f_min f_max]; df = df(df>0);
+                %                 df	=	min(df);
+                %                 f	=	[f_min-[df 0] f_max+[0 df]];
+                %                 a	=	[0 1 0];
+                %                 rp	=	0.1;
+                %                 rs	=	40;
+                %                 dev	= [10^(-rs/20) (10^(rp/20)-1)/(10^(rp/20)+1)  10^(-rs/20)];
+                %
+                %                 %	low-pass filter
+                %                 if	min(f) <= 0
+                %                     f	=	f(end-1:end);
+                %                     a	=	a(end-1:end);
+                %                     dev	=	dev(end-1:end);
+                %
+                %                     %	high-pass fiter
+                %                 elseif	max(f) >= Fs/2
+                %                     f	=	f(1:2);
+                %                     a	=	a(1:2);
+                %                     dev	=	dev(1:2);
+                %                 end
+                %
+                %                 [n,fo,ao,w] =	firpmord(f, a, dev, Fs);
+                %                 if n>1000
+                %                     fprintf('Warning, filter too large for %s \n',num2str(f));
+                %                 end
+                %                 b			=	firpm(n,fo,ao,w);
                 
                 handles.filter.b		=	b;
                 handles.filter.a		=	a;
@@ -3150,8 +3150,8 @@ catch
         
         audiowrite([save_path '.wav'],(x/(1.1*max(max(abs(x))))),round(Fs));
     else
-%        wavwrite(x/(1.1*max(max(abs(x)))),round(Fs),[save_path '.wav']);
-		audiowrite([save_path '.wav'], x/(1.1*max(max(abs(x)))),round(Fs));
+        %        wavwrite(x/(1.1*max(max(abs(x)))),round(Fs),[save_path '.wav']);
+        audiowrite([save_path '.wav'], x/(1.1*max(max(abs(x)))),round(Fs));
     end
     
 end
@@ -3340,7 +3340,7 @@ Np=str2num(answer{1});
 y_unit_amp=handles.radiobutton_timeseries.Value;
 azigram_flag=handles.radiobutton_directionality.Value;
 if azigram_flag
-   
+    
     if isempty(handles.axes1.Children.CData)
         return
     end
@@ -3764,7 +3764,7 @@ for Idasar=1:NDasar
                 cd(mydir)
                 
             end
-        else  %%%Try to see if 
+        else  %%%Try to see if
             Inum=Inum+1;
             if Inum==length(numm)
                 directory_flag=true;
@@ -3794,7 +3794,7 @@ Ikeep=find(~isnan(theta)&theta>0);  %Remove absent or unselected DASARs
 Ikeep=Ikeep((DASAR_coords(Ikeep,1)~=0));  %Sometimes DASARs have good omni data but are rejected from localization
 
 Igood=find(~isnan(theta)&theta>-2);  %Remove absent DASARS (used to compute center of array)
-Igood=Ikeep((DASAR_coords(Igood,1)~=0));  
+Igood=Ikeep((DASAR_coords(Igood,1)~=0));
 
 %theta=theta(Ikeep);
 %kappa=kappa(Ikeep);
@@ -3843,12 +3843,12 @@ if yes==1
     print(1,'-djpeg','-r300',sprintf('Localization_G_%s.jpg',tstart));
     print('-djpeg','-r300',sprintf('Spectrogram_G_%s.jpg',tstart));
     try
-               save(sprintf('DASAR_localization_%s',tstart),'DASAR_coords','Igood','theta','Ikeep','VM','A','B','ANG','xsample','tsec','range','tdoa_mat');
+        save(sprintf('DASAR_localization_%s',tstart),'DASAR_coords','Igood','theta','Ikeep','VM','A','B','ANG','xsample','tsec','range','tdoa_mat');
     catch
         save(sprintf('DASAR_localization_%s',tstart),'DASAR_coords','Igood','theta','Ikeep','VM','A','B','ANG','xsample','tsec','tdoa_mat');
         %fprintf('Position not saved. \n');
         
-       
+        
     end
 end
 %close(1)
@@ -4184,7 +4184,7 @@ while yes>1
         end
     end
     
-     %%Assign beam_str value based on earlier choices   
+    %%Assign beam_str value based on earlier choices
     switch yes
         case 2
             beam_str='CV';
@@ -4222,7 +4222,7 @@ while yes>1
                 
                 [maxx,Ishift]=max(cc);
                 
-            
+                
                 grid on;xlabel('Delay (msec)');ylabel('Amplitude');
                 title(sprintf('Max lag is %8.4f msec, %8.4f msec hilbert',1000*lags(Ishift)/Fs,1000*lags(Ishifth)/Fs));
                 
@@ -4316,9 +4316,9 @@ while yes>1
                     %h=waitbar(0,'Filtering data ...');
                     %Bsum_org=filter(flipud(matched_filter),1,Bsum')';
                     for K=1:size(Bsum,1)
-                       Bsum(K,:)=filter(flipud(matched_filter),1,Bsum(K,:)');
+                        Bsum(K,:)=filter(flipud(matched_filter),1,Bsum(K,:)');
                     end
-
+                    
                     
                 end
                 Bsum_org=Bsum;
@@ -4337,7 +4337,7 @@ while yes>1
                 titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
                 title(titstr);grid on;orient landscape
                 xlimm=xlim;
-                 if diff(xlimm)<100
+                if diff(xlimm)<100
                     set(gca,'xtick',0:5:xlimm(2));
                 else
                     set(gca,'xtick',0:100:xlimm(2));
@@ -5374,9 +5374,9 @@ for Imodel=1:length(MFP_scenario)
     
     if plot_chc==1
         if exist('MM', 'var')
-%            movie2avi(MM,'tiltTest');
-%			vid_obj	=	VideoWriter('tiltTest.avi'); %#ok<TNMLP>
-			
+            %            movie2avi(MM,'tiltTest');
+            %			vid_obj	=	VideoWriter('tiltTest.avi'); %#ok<TNMLP>
+            
         end
         keyboard
         for I=1:12
@@ -6664,10 +6664,10 @@ switch filetype
         end
         next_letter=DASAR_letters(Iarray);
         
-       % if ~strcmp(mydir(end-6),'S')
-       %     fprintf('Directory %s does not have form S***** \n',mydir);
-       %     return
-       % end
+        % if ~strcmp(mydir(end-6),'S')
+        %     fprintf('Directory %s does not have form S***** \n',mydir);
+        %     return
+        % end
         mydir(end-2)=next_letter;
         %  Assume S510G0T20100831T000000.gsi form
         myfile(5)=next_letter;
@@ -7707,12 +7707,12 @@ else
         %structure...
         new_indicies=(length(old_names)+1):length(new_names);
         for JJ=1:length(new_indicies)
-           II=new_indicies(JJ);
-           Description{II}=new_names{II};
-           for Ievent=1:length(Event_set)
-              Event_set(Ievent).(new_names{II})=Event.(new_names{II}); 
-              
-           end
+            II=new_indicies(JJ);
+            Description{II}=new_names{II};
+            for Ievent=1:length(Event_set)
+                Event_set(Ievent).(new_names{II})=Event.(new_names{II});
+                
+            end
             
         end
     end
@@ -8039,7 +8039,7 @@ Message	=	[Description(:).'; names(:).'];
 %%'automated' or 'localization'.
 Ibad=[];
 for	ii	=	1:length(names)
-     
+    
     if isstruct(Event.(names{ii}))
         Ibad=[Ibad ii];
         continue
@@ -8057,7 +8057,7 @@ for	ii	=	1:length(names)
             Message{2,ii}	=	temp;
         else
             Ibad=[Ibad ii];
-        
+            
         end
         continue
     end
@@ -8112,7 +8112,7 @@ if isfield(Event,'localization')&&~isempty(getfield(Event,'localization'))
     
     
     DASAR_coords=[Event.localization.station_position.easting Event.localization.station_position.northing];
-   
+    
     bearings=Event.localization.bearings_all;
     Igood=find(~isnan(bearings));
     
@@ -8124,13 +8124,13 @@ if isfield(Event,'localization')&&~isempty(getfield(Event,'localization'))
     if isfield(Event.localization.station_position,'extra')
         VM_extra=Event.localization.station_position.extra;
     else
-        VM_extra=[]; 
+        VM_extra=[];
     end
     
     try
-     %   [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,35,Istation,VM_extra,'m');
-    [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,3500,Istation,VM_extra,'km');
-    
+        %   [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,35,Istation,VM_extra,'m');
+        [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,3500,Istation,VM_extra,'km');
+        
     catch
         disp('plot_failure');
     end
@@ -8442,7 +8442,7 @@ end
 
 handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
 
-   
+
 %%Read off parameters from figure...
 
 %tdate_start		=	handles.tdate_start;
@@ -8572,7 +8572,7 @@ if want_directionality
     
     %%AARON test if sample delay between pressure and P.V r
     %responsible for pressure/velocity phase shift with frequency
-   
+    
     %Ishift=0;
     %x(1,:)=[x(1,(1+Ishift):end) zeros(1,Ishift)];
     %x(2:3,:)=[x(2:3,(1+Ishift):end) zeros(2,Ishift)];
@@ -8600,16 +8600,17 @@ if want_directionality
         end
     else
         %%%%Here is directional metric calculation...
+        handles.display_view='PhaseSpeed';
         [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics ...
             (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
             handles.filetype,reactive_flag);
         %if strcmpi(handles.filetype,'gsi')&&~reactive_flag
-            %params.f_transition=300;
-            %[~,Icut]=min(abs(FF-params.f_transition));
-            %[~,~,temp]=compute_directional_metrics ...
-            %    (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
-            %    'gsi',true);
-            %output_array{1}((Icut+1):end,:)=temp{1}((Icut+1):end,:);
+        %params.f_transition=300;
+        %[~,Icut]=min(abs(FF-params.f_transition));
+        %[~,~,temp]=compute_directional_metrics ...
+        %    (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
+        %    'gsi',true);
+        %output_array{1}((Icut+1):end,:)=temp{1}((Icut+1):end,:);
         %end
     end
     
@@ -8626,8 +8627,12 @@ if want_directionality
             case 'IntensityPhase'
                 ylimm=[0 90];
                 fignum=2;
+            case 'PhaseSpeed'
+                ylimm=[0 300];
+                fignum=5;
             otherwise
                 ylimm=[0 90];
+                figunum=10;
         end
         figure(fignum);hold on
         hh=plot(FF,prctile(output_array{1}',50));
@@ -8688,7 +8693,7 @@ if want_directionality
         
         clear handles1
         
-        %%%%Parameters for the automated processing 
+        %%%%Parameters for the automated processing
         azigram_param.tabs_start=handles.tdate_start;
         
         azigram_param.da=60;  %width of a sector to search azigram in degrees
@@ -8712,7 +8717,7 @@ if want_directionality
         azigram_param.threshold=15*4;  %Hz
         
         %%%This parameter fixes a probelm with DASAR sensor.  Normally
-        %%%don't adjust 
+        %%%don't adjust
         azigram_param.f_transition=300;  %Frequency at which pressure/velocity go out of phase
         
         %%%Set these to true to see the morphological image processing and
@@ -8723,13 +8728,13 @@ if want_directionality
         dBspread=str2double(handles.edit_mindB.String) + [0 str2double(handles.edit_dBspread.String)];
         azigram_param.debug.dBspread=dBspread;
         
-         %%%%%%How much data to read in at a time to RAM--solves clock drift
+        %%%%%%How much data to read in at a time to RAM--solves clock drift
         %%%%%%problem
         params.time_chunk=10*60;
         
         output=azigram_pulse_detector(xall,Fs,Nfft,ovlap,azigram_param);
         fprintf('Finished processing, starting localization...\n');
-
+        
         %%%Compute positions
         bearings=output.azi.wm.med;
         
@@ -8764,7 +8769,7 @@ if want_directionality
         output_write.goodName=azigram_param.goodName;
         
         success_flag=convert_automated_PulseTracker_into_annotations(output_write,filter_params,Igood);
-
+        
     end
 elseif strcmp(handles.display_view,'Spectrogram')
     
@@ -8786,7 +8791,7 @@ elseif strcmp(handles.display_view,'Spectrogram')
         %     frequencies is specified, it returns the two-sided PSD.
         handles.sgram.T		=	TT;
         handles.sgram.F		=	FF;
-       % handles.sgram.B		=	B;
+        % handles.sgram.B		=	B;
         handles.sgram.Nfft	=	Nfft;
         handles.sgram.ovlap	=	ovlap;
         handles.sgram.Fs	=	Fs;
@@ -8857,7 +8862,7 @@ elseif strcmp(handles.display_view,'Time Series') %%Time series
 elseif strcmp(handles.display_view,'Correlogram') %%Correlogram
     display_correlogram_series(handles,x,Fs,hdr,ovlap,Nfft)
     
-   
+    
 end  %Spectrogram, new fig
 
 handles.x	=	x;
@@ -9121,8 +9126,8 @@ mydir=pwd;
 %Ichan=str2double(get(handles.edit_chan,'String'));
 azigram_flag=handles.radiobutton_directionality.Value;
 if azigram_flag
-   disp('Can''t get bearing from azigram')
-   return
+    disp('Can''t get bearing from azigram')
+    return
 end
 DIFAR_flag=strcmpi(handles.filetype,'wav')&~isempty(strfind(handles.myfile,'DIFAR'));
 GSI_flag=strcmpi(handles.filetype,'gsi')&~azigram_flag;
@@ -9134,7 +9139,7 @@ elseif DIFAR_flag
     %[x,t,Fs,tstart,tend,head]=load_data(handles.filetype,tdate_start,tlen,channel,handles);
     disp('Cannot use this button for DIFAR files:  use Select Points instead');
     set(handles.text_filename,'String','Cannot use this button for DIFAR files:  use Select Points instead');
-
+    
     return
 end
 disp('Click on two extreme corners, click below axis twice to reject:');
@@ -9293,7 +9298,7 @@ vy=(x(:,1).*x(:,3));
 if fmin>=f_transition
     vx=(imag(hilbert(x(:,1))).*x(:,2));
     vy=(imag(hilbert(x(:,1))).*x(:,3));
-      
+    
 end
 %thet=atan2(sum(vx),sum(vy))*180/pi;
 
@@ -10613,7 +10618,7 @@ Iwant=2;
 
 if Iwant==0
     return;
-
+    
 elseif Iwant==1
     [minfreq,maxfreq]=deal(1000*str2double(handles.edit_fmin.String),1000*str2double(handles.edit_fmax.String));
     [FILENAME, PATHNAME, FILTERINDEX] = uigetfile();
@@ -10649,7 +10654,7 @@ else
         %Ichan=16-Ichan;  %Fix this; why upside down?
         %function [x,t,Fs,tmin,tmax,head]	=	...
         %load_data(filetype,tdate_start,tlen,Ichan,handles)
-
+        
         [x0,~,Fs,~,~,hdr]=load_data(handles.filetype,tdate_start,tlen,Nchan,handles);
         Nchan=1:size(x0,1);
     end
@@ -10660,7 +10665,7 @@ else
         load(param_file)
         x0=pt;
     end
-   
+    
     if ~exist('tmp','var') || ~isfield(tmp,'N_window')
         contents=get(handles.popupmenu_Nfft,'String');
         Nfft=contents{get(handles.popupmenu_Nfft,'Value')};
@@ -10670,7 +10675,7 @@ else
         %Rest=10;
         tempWindow=str2double(get(handles.edit_winlen,'String'));
         deconv_chc='1';
-
+        
         %Load saved parameters, select new ones
         %%% JULIEN, here is where you specify arbitrary beta %%%
         prompt={'Range guess(m)','water speed (m/s)','bottom speed (m/s)','Nfft','N_window', ...
@@ -10679,11 +10684,11 @@ else
         dlgTitle	=	sprintf('Warping parameters');
         lineNo		=	ones(size(prompt));
         answer		=	inputdlg(prompt,dlgTitle,lineNo,def);
-
+        
         if	isempty(answer)
             return;
         end
-
+        
         r_guess=eval(answer{1});
         c1=eval(answer{2});
         c2=eval(answer{3});
@@ -10699,9 +10704,9 @@ else
         Nmodes=eval(answer{10});
         
         tmp=struct('tdate_start',tdate_start,'tlen',tlen,'Ichan',Ichan,'Nchan',Nchan,'R',R,'Nfft',Nfft,'Fs',Fs,'N_window'...
-        ,N_window,'Ncontour',Ncontour,'r_guess',r_guess,'c1',c1,'c2',c2,'deconv_chc',deconv_chc, ...
-        'beta_transform',beta_transform,'beta',beta,'Nmodes',Nmodes);
-       
+            ,N_window,'Ncontour',Ncontour,'r_guess',r_guess,'c1',c1,'c2',c2,'deconv_chc',deconv_chc, ...
+            'beta_transform',beta_transform,'beta',beta,'Nmodes',Nmodes);
+        
         [minfreq,maxfreq]=deal(1000*str2double(handles.edit_fmin.String),1000*str2double(handles.edit_fmax.String));
     end
     
@@ -10710,24 +10715,24 @@ else
     if s_temp(1)<s_temp(2)
         x0=x0';
     end
-
+    
     if R>1
-       for J=1:size(x0,2)
-           x1(:,J)=decimate(x0(:,J),R);
-       end
-       x0=x1;
-       Fs=ceil(Fs/R);
-       N_window=N_window/R;
-       Nfft=2^nextpow2(Nfft/R);
+        for J=1:size(x0,2)
+            x1(:,J)=decimate(x0(:,J),R);
+        end
+        x0=x1;
+        Fs=ceil(Fs/R);
+        N_window=N_window/R;
+        Nfft=2^nextpow2(Nfft/R);
     end
-
+    
     N_window=1+2*floor(N_window/2);
-
+    
     stft_param=struct('Nfft',Nfft,'N_window',N_window,'Fs',Fs,'R',R);
     filt_param=struct('Ncontour',Ncontour,'r_guess',r_guess,'c1',c1,'c2',c2,'flims',[minfreq maxfreq]);
     
     if ~isfield(tmp,'f_points'); param_file='';end;
-
+    
     %%%%Function to call warping
     [modes,filtt,modes_source]=Frequency_warping(x0,stft_param,filt_param,hdr,handles,param_file,tmp);
     if isempty(modes)
@@ -10736,14 +10741,14 @@ else
     
     yes=menu('Save Result?','Yes','No');
     if yes==1
-       save FrequencyWarpingResult modes modes_source filtt filt_param stft_param x0 hdr param_file
+        save FrequencyWarpingResult modes modes_source filtt filt_param stft_param x0 hdr param_file
     end
     
     Nchan=filtt.Nchan;
     %hdr.geom.rd=hdr.geom.rd(Nchan);
     
-   % mode_stack=modes.mode_stack(:,:,Nchan); % mode_stack is unwarped time series that should be mode-dominated
-
+    % mode_stack=modes.mode_stack(:,:,Nchan); % mode_stack is unwarped time series that should be mode-dominated
+    
 end
 
 %MM=size(squeeze(mode_stack(:,:,1)));

@@ -7,7 +7,7 @@ function plot_directional_metric(TT,FF,output_array,handles,param,PdB,use_wavele
 climm=eval(param.climm);
 alg_mult=eval(param.alg);
 if ~exist('PdB','var')
-   PdB=[]; 
+    PdB=[];
 end
 if strcmpi(handles.display_view,'Directionality')
     if ~use_wavelets
@@ -19,12 +19,12 @@ if strcmpi(handles.display_view,'Directionality')
         ytick=round(pow2(ax.YTick),3);
         ax.YTickLabel=ytick;
         
-         hh=pcolor(TT,(FF/1000),output_array);
+        hh=pcolor(TT,(FF/1000),output_array);
         hh.EdgeColor='none';
         ax=gca;
         ax.XLabel.String='Time';
         ax.YLabel.String='Frequency';
-       
+        
     end
     titstr=' Azimuth';
     try
@@ -40,19 +40,19 @@ if strcmpi(handles.display_view,'Directionality')
     
     
     %%%Use alpha adjustment to display transport ratio as well
-   
-%          set(hh,'AlphaData',intensity./energy_density);
-%          set(hh,'AlphaDataMapping','scaled')
-%          alim([0 1]);
+    
+    %          set(hh,'AlphaData',intensity./energy_density);
+    %          set(hh,'AlphaDataMapping','scaled')
+    %          alim([0 1]);
     %
     
     %%%Setting transparency to SPL
     if handles.checkbox_transparency.Value&~isempty(PdB)&&all(size(PdB)==size(output_array))
-       
-            set(hh,'AlphaData',PdB);
-            set(hh,'AlphaDataMapping','scaled')
-            alim(str2double(handles.edit_mindB.String) + [0 str2double(handles.edit_dBspread.String)]);
-       
+        
+        set(hh,'AlphaData',PdB);
+        set(hh,'AlphaDataMapping','scaled')
+        alim(str2double(handles.edit_mindB.String) + [0 str2double(handles.edit_dBspread.String)]);
+        
     end
     
 else
@@ -64,8 +64,8 @@ else
     elseif strcmpi(handles.display_view,'KEtoPERatio')
         
         %imagesc(TT,FF/1000,10*log10(output_array));
-          imagesc(TT,FF/1000,(output_array));
-      
+        imagesc(TT,FF/1000,(output_array));
+        
         titstr='Kinetic/Potential Ratio';
         %caxis([0 90])
         caxis([-20 20])
@@ -74,6 +74,11 @@ else
         imagesc(TT,FF/1000,output_array);
         titstr='Kinetic/Potential Ratio';
         caxis([0 90])
+    elseif strcmpi(handles.display_view,'PhaseSpeed')
+        
+        imagesc(TT,FF/1000,output_array);
+        titstr='Phase Speed';
+        caxis([0 3])
         
     end
     
@@ -99,7 +104,7 @@ try
         set(handles.edit_fmax,'String',num2str(Fs/2000));
     else
         if ~use_wavelets
-        ylim([fmin fmax]);
+            ylim([fmin fmax]);
         end
     end
     %ylim([0 1]);axis('xy')

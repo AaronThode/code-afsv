@@ -61,7 +61,7 @@ if strcmpi(filetype,'gsi')
     end
     
     %%%%Test alternate, faster version, used since July 29, 2018
-   % tic
+    % tic
     M=floor(1+(size(x,2)-Nfft)/dn);
     x=x';
     B=zeros(size(x,2),Nfft/2+1,M);
@@ -201,9 +201,18 @@ for J=1:length(metric_type)  %%for each request
                 output_array{J}=atan2d(sqrt(imag(Ix).^2+imag(Iy).^2),sqrt((real(Ix)).^2+(real(Iy)).^2));
                 
                 %output_array{J}=atan2d((imag(Ix)),((real(Ix)))); %Ix phase
-               % output_array{J}=atan2d((imag(Iy)),((real(Iy)))); %Iy phase
+                % output_array{J}=atan2d((imag(Iy)),((real(Iy)))); %Iy phase
             else
                 output_array{J}=atan2d(sqrt(real(Ix).^2+real(Iy).^2),sqrt((imag(Ix)).^2+(imag(Iy)).^2));
+            end
+            
+        case 'PhaseSpeed'
+            if ~reactive_flag(J)
+                output_array{J}=2*pressure_autospectrum./sqrt((real(Ix)).^2+(real(Iy)).^2);
+                
+            else
+                output_array{J}=2*pressure_autospectrum./sqrt((imag(Ix)).^2+(imag(Iy)).^2);
+                
             end
     end
 end
