@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Migration Report for <code>AllFile_specgram_viewer</code></title>
+    <style type="text/css">
+        html body {
+            height: 100%;
+            padding: 0; margin: 0;
+            color: #474747;
+            font: 13px/1.384 Arial, Helvetica, sans-serif;
+        }
+        /*Report Title Header*/
+        h1 {
+            font-family: Futura, Arial, Helvetica, sans-serif;
+            font-size: 28px;
+            font-weight: 400;
+            color: #fff;
+            margin: 0;
+            padding: 15px;
+        }
+        /*Report Section Headers*/
+        h2 {
+            padding-bottom: 2px;
+            margin: 20px 0 17px 0;
+            border-bottom: 1px solid #cbcbcb;
+            color: #c45400;
+            font: normal normal 22px/1.136 Arial,Helvetica,sans-serif;
+        }
+        /*Report Subsection Headers*/
+        h3 {
+            margin: 20px 0 20px 0;
+            font: normal bold 17px/1.35 Arial, Helvetica, sans-serif;
+        }
+        ul.childHasIcon {
+            padding-left: 20px;
+        }
+        ul > li.success {
+            list-style: none;
+            /*Check-mark image*/
+            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAK2SURBVHjaVJNPaFRXFMZ/b96MmUZGURMyHaoTa0QrRReD4KIlwriRRhPpoi1ddeNG4krFRbAbceOf0qJuSoWWWlooIiKlCSkp1ARksEmpi8GSQjKJUSYk/p1J5r17vi7ee609cFf3+33n3HvO8SgdJYn+oZFODw4DBxB7hYoSMzJVZBo12a2fzr9X55XwEoOBoZGyYNCDfgEyIQkMzIRkBKupYXN89svVg8OJgU+hxMDQSBk45+GVJSJQQk5IYGbIhIfrcSF78ttrC3P336wC+ANXlzqBs0A5EgtkSMJMMRxXFN11mSm/pr05sTSXX0qBDkvqj0Qx6MBC/QuVt77Pp/uvkV9bxJzhZ5r7cx2LHwGZtMQBGUhRmSaB/Zd9rb+OD98+zub1Paxbs5FjNw9GJm2NXuDLtMz2RuUC8VsVG2T9di4fGqaQ6+ZubZTvJ69goWEy/PTKTmBDykxFc0LOOLHvMu+8cQjnjDRtXDsyTiHXTaU2xpmfP6EyO4Y5Q6EgFXQBubRMM+a0zcx4t9hHb3c/j5/Ncbr3Cpva80w9HOfU7Q8IwhbmonaagQv8x0A25ZxVzAxz4tupS0jG5323eT1XZHL+DoM3+mgFLZwzEp2c0WpmqsBKypxGLb785vcLfH3vAgCT878xeKMvAp1FM5Ecg5Wn6+8Bz1Pm3K1W0xu2UFhofDf5BX8t/snFsZPxDMSZzaLOSKw2suOPHuyaAJb9v+c+bmze/aBuTnuE6wrCgJt/fMVyox6NcNwRCTARtjLV5fkt1+vTb1WAmk+hxOzUjumOrTMLkuVTXtCdgMmHJTux2nxt/Ml88Xptat+vwCzw0qdQAmCh2lPNZBsTJluU8ySsDazdhf6j1sts5cVS548P75d+qE/vrMTw8v+28ZXIAB3ABiAHZIEV4HkMLQJBIv5nAPq180UQOlmCAAAAAElFTkSuQmCC') no-repeat;
+            padding-left: 20px;
+            margin-bottom: 5px;
+        }
+        ul.verifications > li {
+            margin: 7px 0 7px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table,th,tr,td {
+            border: 1px solid #ccc;
+            text-align: left;
+            vertical-align: top;
+            padding: 8px 15px;
+        }
+        tr:nth-child(odd) {
+            background-color: #fafafa;
+        }
+        a { color: #187dbb; text-decoration: none; }
+        a:visited { color: #004b87; text-decoration: none; }
+        a:hover { color: #004b87; text-decoration: underline;}
+        code {
+            font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+        }
+        .reportTitle {
+            min-height: 52px;
+            background: #2f7eb2;
+        }
+        .reportBody {
+            padding: 0 15px 0 15px;
+        }
+        /*Classes that are used by HTML that is added dynamically by the report generator */
+        .detailsWorkaround {
+            padding: 10px 0px;
+        }
+        .detailsWorkaroundHeader {
+            padding-right: 5px;
+            font-weight: bold;
+        }
+        .hidden {
+            display: none;
+        }
+        .visible {
+            display: block;
+        }
+        .showMore {
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="reportTitle">
+        <h1>Migration Report for <code>AllFile_specgram_viewer</code></h1>
+    </div>
+    <div class="reportBody">
+        <section>
+            <h3>Your GUIDE app was migrated to App Designer and some action is required.</h3>
+            <h2>Migration Results</h2>
+            <ul class="childHasIcon">
+                <li class="success"><b>AllFile_specgram_viewer_App.mlapp</b> file created</li>
+                <li class="success"><b>10823</b> lines of code analyzed in AllFile_specgram_viewer.m</li>
+                <li class="success"><b>112</b> components created and initialized</li>
+                <li class="success"><b>122</b> callbacks and utility functions configured and enabled to function in App Designer</li>
+            </ul>
+        </section>
+        <section>
+    <h2>Issues Requiring Action</h2>
+    <table>
+        <tr>
+            <th>Functionality</th>
+            <th>GUIDE Tag / Line #</th>
+            <th>Details</th>
+        </tr>
+        <tr><td><code>Renderer</code></td><td><div class=""><code>figure1</code></div></td><td rowspan="1"><div>This property for the component(s) is not supported in App Designer and was not migrated.</div><div class="detailsWorkaround"><span class="detailsWorkaroundHeader">Action:</span><span class="detailsWorkaroundText">Determine if this functionality is critical to your app before continuing because there is no workaround.</span></div></tr>
+<tr><td><code>clf</code></td><td><div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4331)">line 4331</a></div>
+<div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4351)">line 4351</a></div>
+<div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4617)">line 4617</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4633)">line 4633</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 8030)">line 8030</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 8105)">line 8105</a></div>
+<div class="showMore"><a href="#" onclick="toggleShowMore(this); return false;">Show more (3)</a></div>
+<div class="showMore hidden"><a href="#" onclick="toggleShowMore(this); return false;">Show less</a></div></td><td rowspan="3"><div>This function is not supported in App Designer code.</div><div class="detailsWorkaround"><span class="detailsWorkaroundHeader">Action:</span><span class="detailsWorkaroundText">Determine if this functionality is critical to your app before continuing because there is no workaround.</span></div></tr>
+<tr><td><code>getframe</code></td><td><div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5297)">line 5297</a></div>
+<div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5892)">line 5892</a></div></td></tr>
+<tr><td><code>ginput</code></td><td><div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 3353)">line 3353</a></div>
+<div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 3361)">line 3361</a></div>
+<div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 3375)">line 3375</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 3390)">line 3390</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 3995)">line 3995</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4000)">line 4000</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4027)">line 4027</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4057)">line 4057</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4083)">line 4083</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4109)">line 4109</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4374)">line 4374</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4567)">line 4567</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4694)">line 4694</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4795)">line 4795</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4888)">line 4888</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4961)">line 4961</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5077)">line 5077</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5829)">line 5829</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 6211)">line 6211</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 6837)">line 6837</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 9147)">line 9147</a></div>
+<div class="showMore"><a href="#" onclick="toggleShowMore(this); return false;">Show more (18)</a></div>
+<div class="showMore hidden"><a href="#" onclick="toggleShowMore(this); return false;">Show less</a></div></td></tr>
+<tr><td><code>CreateFcn</code></td><td><div class=""><code>checkbox_notes_readonly</code></div>
+<div class=""><code>checkbox_notes_show</code></div>
+<div class=""><code>edit_datestr</code></div>
+<div class="hidden"><code>edit_dBspread</code></div>
+<div class="hidden"><code>edit_fmax</code></div>
+<div class="hidden"><code>edit_fmin</code></div>
+<div class="hidden"><code>edit_maxfreq</code></div>
+<div class="hidden"><code>edit_mindB</code></div>
+<div class="hidden"><code>edit_minfreq</code></div>
+<div class="hidden"><code>edit_winlen</code></div>
+<div class="hidden"><code>popupmenu_Nfft</code></div>
+<div class="hidden"><code>popupmenu_ovlap</code></div>
+<div class="hidden"><code>popupmenu_scalesound</code></div>
+<div class="hidden"><code>pushbutton_notes_save</code></div>
+<div class="hidden"><code>pushbutton_notes_select</code></div>
+<div class="hidden"><code>pushbutton_playsound</code></div>
+<div class="hidden"><code>pushbutton_update</code></div>
+<div class="hidden"><code>slider_datestr</code></div>
+<div class="showMore"><a href="#" onclick="toggleShowMore(this); return false;">Show more (15)</a></div>
+<div class="showMore hidden"><a href="#" onclick="toggleShowMore(this); return false;">Show less</a></div></td><td rowspan="1"><div>This callback property for the component(s) is not supported in App Designer and was not migrated.</div><div class="detailsWorkaround"><span class="detailsWorkaroundHeader">Action:</span><span class="detailsWorkaroundText">If the callback code can be executed after all the app components have been created, then move that code to the <code>AllFile_specgram_viewer_OpeningFcn</code>.</span></div></tr>
+<tr><td><code>uicontrol</code></td><td><div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 8080)">line 8080</a></div></td><td rowspan="1"><div>Using the <code>uicontrol</code> function to dynamically add a <code>UIControl</code> object to your app is not supported in App Designer.</div><div class="detailsWorkaround"><span class="detailsWorkaroundHeader">Action:</span><span class="detailsWorkaroundText">Update your code to use the associated App Designer component. For more details, see  <a href="matlab:helpview(fullfile(docroot,'matlab', 'creating_guis', 'differences-between-app-designer-and-guide.html#mw_a37cdcf3-bb43-4e74-b28d-7b9c599f0bfd'));">GUIDE Migration Strategies</a>.</span></div></tr>
+<tr><td><code>subplot</code></td><td><div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 530)">line 530</a></div>
+<div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 546)">line 546</a></div>
+<div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 555)">line 555</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 564)">line 564</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 795)">line 795</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 824)">line 824</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 1799)">line 1799</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 1812)">line 1812</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 3199)">line 3199</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4215)">line 4215</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4219)">line 4219</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4619)">line 4619</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4635)">line 4635</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4730)">line 4730</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4742)">line 4742</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4750)">line 4750</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4762)">line 4762</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4847)">line 4847</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4867)">line 4867</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4893)">line 4893</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4896)">line 4896</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4902)">line 4902</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4983)">line 4983</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4992)">line 4992</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 4997)">line 4997</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5409)">line 5409</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5441)">line 5441</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5454)">line 5454</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5487)">line 5487</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5497)">line 5497</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5512)">line 5512</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5521)">line 5521</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5660)">line 5660</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5668)">line 5668</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5733)">line 5733</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5765)">line 5765</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5804)">line 5804</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5813)">line 5813</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5895)">line 5895</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 9427)">line 9427</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 9582)">line 9582</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 9584)">line 9584</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 9586)">line 9586</a></div>
+<div class="showMore"><a href="#" onclick="toggleShowMore(this); return false;">Show more (40)</a></div>
+<div class="showMore hidden"><a href="#" onclick="toggleShowMore(this); return false;">Show less</a></div></td><td rowspan="1"><div>This type of plot requires additional code to configure the plot.</div><div class="detailsWorkaround"><span class="detailsWorkaroundHeader">Action:</span><span class="detailsWorkaroundText">For detailed instructions, see <a href="matlab:helpview('matlab', 'appdgrfx');">Displaying Graphics in App Designer</a>.</span></div></tr>
+<tr><td><code>plotyy</code></td><td><div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 797)">line 797</a></div>
+<div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5414)">line 5414</a></div></td><td rowspan="1"><div>This functionality is not recommended.</div><div class="detailsWorkaround"><span class="detailsWorkaroundHeader">Action:</span><span class="detailsWorkaroundText">Use <code>yyaxis</code> instead.</span></div></tr>
+<tr><td><code>nargin</code></td><td><div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 6994)">line 6994</a></div>
+<div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 7124)">line 7124</a></div>
+<div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 7390)">line 7390</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 7871)">line 7871</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 8022)">line 8022</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 8096)">line 8096</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 10254)">line 10254</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 10398)">line 10398</a></div>
+<div class="showMore"><a href="#" onclick="toggleShowMore(this); return false;">Show more (5)</a></div>
+<div class="showMore hidden"><a href="#" onclick="toggleShowMore(this); return false;">Show less</a></div></td><td rowspan="1"><div>Use of <code>nargin</code> or <code>narginchk</code> might result in an error or unexpected behavior because the <code>app</code> input argument has been added to each helper function.</div><div class="detailsWorkaround"><span class="detailsWorkaroundHeader">Action:</span><span class="detailsWorkaroundText">Update your <code>nargin</code> or <code>narginchk</code> code to account for the extra input argument.</span></div></tr>
+<tr><td><code>pushbutton_update_Callback</code></td><td><div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5930)">line 5930</a></div>
+<div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5950)">line 5950</a></div>
+<div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 8198)">line 8198</a></div></td><td rowspan="7"><div>Calling a callback programmatically from another function or callback is not recommended and will error in a migrated app.</div><div class="detailsWorkaround"><span class="detailsWorkaroundHeader">Action:</span><span class="detailsWorkaroundText">In your migrated app, move the callback code to a separate app helper function and then call this helper function instead.</span></div></tr>
+<tr><td><code>edit_datestr_Callback</code></td><td><div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5927)">line 5927</a></div>
+<div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 5947)">line 5947</a></div>
+<div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 7354)">line 7354</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 8194)">line 8194</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 10502)">line 10502</a></div>
+<div class="showMore"><a href="#" onclick="toggleShowMore(this); return false;">Show more (2)</a></div>
+<div class="showMore hidden"><a href="#" onclick="toggleShowMore(this); return false;">Show less</a></div></td></tr>
+<tr><td><code>pushbutton_print_Callback</code></td><td><div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 10508)">line 10508</a></div></td></tr>
+<tr><td><code>pushbutton_notes_save_Callback</code></td><td><div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 6773)">line 6773</a></div>
+<div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 7026)">line 7026</a></div></td></tr>
+<tr><td><code>checkbox_notes_readonly_Callback</code></td><td><div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 6385)">line 6385</a></div>
+<div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 6485)">line 6485</a></div>
+<div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 7259)">line 7259</a></div>
+<div class="hidden"><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 7265)">line 7265</a></div>
+<div class="showMore"><a href="#" onclick="toggleShowMore(this); return false;">Show more (1)</a></div>
+<div class="showMore hidden"><a href="#" onclick="toggleShowMore(this); return false;">Show less</a></div></td></tr>
+<tr><td><code>pushbutton_notes_new_Callback</code></td><td><div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 6831)">line 6831</a></div></td></tr>
+<tr><td><code>checkbox_notes_delete_Callback</code></td><td><div class=""><a href="matlab:opentoline('/Users/thode/repos/code-afsv/source/AllFile_specgram_viewer.m', 6764)">line 6764</a></div></td></tr>
+    </table>
+</section>
+        <section>
+            <h2>Validate Your Migrated App</h2>
+            <p>The migration tool enables most of your app code to execute. Now, you need to fully validate your migrated app to make sure it behaves as expected. Consider doing the following verifications:</p>
+            <ul>
+                <li>Verify Layout
+                    <ul class="verifications">
+                        <li>Run your app and verify the initial layout of all components is as expected.</li>
+                        <li>If your app dynamically shows, hides, or enables additional components or options in response to selections made within the app, confirm these behave as expected.</li>
+                    </ul>
+                </li>
+                <li>Verify Callbacks
+                    <ul class="verifications">
+                        <li>Run and close your app to confirm there are no startup or termination errors.</li>
+                        <li>Exercise the workflows specific to your app, starting with the most basic, and gradually proceeding to the more complex ones.</li>
+                    </ul>
+                </li>
+            </ul>
+            <p>If unexpected errors occur, either within the app or at the MATLAB command line, address those issues before continuing with the validation. For troubleshooting assistance and additional information, see <a href="matlab:helpview(fullfile(docroot,'matlab', 'creating_guis', 'differences-between-app-designer-and-guide.html#mw_7f306e19-74d0-4c0b-989d-74ed63e32ddd'));">GUIDE Migration Strategies</a>.</p>
+        </section>
+    </div>
+    <script type="text/javascript">
+        // Toggles showing the "Show More (10)" hyperlink with the "Show less" hyperlink
+        function toggleShowMore(selectedHyperlink) {
+            // Find the parent td for the selected hyperlink ("Show more" or "Show less")
+            var td = selectedHyperlink.parentElement.parentElement;
+
+            // Toggle the "hidden" class on all of the elements but the first 3. The first 3 we want to always be
+            // visible.
+            var tags = td.children;
+            for (var i=3; i<tags.length; i++) {
+                tags[i].classList.toggle("hidden");
+            }
+        }
+    </script>
+</body>
+</html>
