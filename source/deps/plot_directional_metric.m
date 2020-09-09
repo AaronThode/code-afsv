@@ -78,7 +78,7 @@ else
         
         imagesc(TT,FF/1000,output_array);
         titstr='Phase Speed';
-        caxis([0 3])
+        caxis([1 3])
         
     end
     
