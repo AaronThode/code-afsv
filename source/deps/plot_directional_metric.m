@@ -76,10 +76,23 @@ else
         caxis([0 90])
     elseif strcmpi(handles.display_view,'PhaseSpeed')
         
-        imagesc(TT,FF/1000,output_array);
+        %%%Phase speed directly
+        hh=imagesc(TT,FF/1000,output_array);
         titstr='Phase Speed';
-        caxis([1 3])
-        
+        caxis([1000 3000])
+%         
+%         hh=imagesc(TT,FF/1000,real(acosd(1500./output_array)));
+%         titstr='Elevation angle';
+%         caxis([0 90])
+       
+        %%%Setting transparency to SPL
+        if handles.checkbox_transparency.Value&~isempty(PdB)&&all(size(PdB)==size(output_array))
+            
+            set(hh,'AlphaData',PdB);
+            set(hh,'AlphaDataMapping','scaled')
+            alim(str2double(handles.edit_mindB.String) + [0 str2double(handles.edit_dBspread.String)]);
+            
+        end
     end
     
     colorbar

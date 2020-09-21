@@ -208,10 +208,10 @@ for J=1:length(metric_type)  %%for each request
             
         case 'PhaseSpeed'
             if ~reactive_flag(J)
-                output_array{J}=2*pressure_autospectrum./sqrt((real(Ix)).^2+(real(Iy)).^2);
+                output_array{J}=1450*pressure_autospectrum./sqrt((real(Ix)).^2+(real(Iy)).^2);
                 
             else
-                output_array{J}=2*pressure_autospectrum./sqrt((imag(Ix)).^2+(imag(Iy)).^2);
+                output_array{J}=1450*pressure_autospectrum./sqrt((imag(Ix)).^2+(imag(Iy)).^2);
                 
             end
     end

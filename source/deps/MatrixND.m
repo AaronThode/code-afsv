@@ -381,7 +381,7 @@ classdef MatrixND
             elseif nargin==3
                 is_log=varargin{2};
                 scale_str=varargin{1};
-            elseif nargin==4
+            elseif nargin>=4
                 is_log=varargin{2};
                 scale_str=varargin{1};
                 plot_chc=varargin{3};
@@ -472,7 +472,13 @@ classdef MatrixND
                 case 'image'
                     imagesc(obj.bin_grid{2}, obj.bin_grid{1},matrixx);
                 case 'contourf'
-                    [C,H]=contourf(obj.bin_grid{2},obj.bin_grid{1}, obj.N,10:2:30);axis ij
+                    
+                    if nargin<5
+                        contourrs=10:2:30;
+                    else
+                        contourrs=varargin{end};
+                    end
+                    [C,H]=contourf(obj.bin_grid{2},obj.bin_grid{1}, obj.N,contourrs);axis ij
                     clabel(C,H)
                   
             end
