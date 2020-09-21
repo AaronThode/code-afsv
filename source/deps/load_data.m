@@ -4,7 +4,16 @@
 
 function [x,t,Fs,tmin,tmax,head]	=	load_data(filetype,tdate_start,tlen,Ichan,handles)
 
-%%% tmin,tmax, t are datenumbers
+% Inputs
+%   tdate_start: desired start of file in datenumber format
+%   tlen: number of seconds of data wanted
+%   Ichan: channel number or 'All'
+
+%%% tmin,tmax are datenumbers that represent the beginning and end of
+%%% file loaded.  Actual start of file should be tdate_start, if provided.
+%%%  If tdate_start is less than one, then tmin=datenum(0) and tmax is
+%%%  tmin+datenum(0,0,0,0,0,length(x)/Fs)
+
 %   x rows are samples, columns are channels
 %   head.geom.rd:  If multiple channels are present, this gives spacing
 persistent  Fs_keep keyword space
@@ -43,7 +52,7 @@ switch filetype
     case 'MAT'
         
         %%Look at THAW data
-        if ~isempty(strfind(myfile,'rcv'))
+        if contains(myfile,'rcv')
             
             tempdir=pwd;
             cd(mydir);
@@ -83,14 +92,20 @@ switch filetype
         end
         simulated=load(fullfile(mydir,myfile));
         
-%         %%%%%Uncomment to load a simple MAT file
-%         Fs=simulated.Fs;
-%         x=simulated.x;Ichan=15;
-%         
-%         %%%Check that x is vertical
-%         if size(x,2)>size(x,1)
-%             x=x';
-%         end
+        %         %%%%%Uncomment to load a simple MAT file
+        try
+            Fs=simulated.Fs;
+            x=simulated.data{1};Ichan=1;
+            tmin=simulated.tstart;
+            tmax=tmin+datenum(0,0,0,0,0,length(x)/Fs);
+        end
+        
+        %x=simulated.x;Ichan=15;
+        %
+        %         %%%Check that x is vertical
+        %         if size(x,2)>size(x,1)
+        %             x=x';
+        %         end
         %%%%%%%%%%%
         
         %%Uncomment to conduct Bering Sea call selection
@@ -144,16 +159,19 @@ switch filetype
         x=x(:,Ichan);
         
         
-        if tdate_start==-1
+        if tdate_start==-1 & isempty(tmin)
             tmin=datenum(0);
-        elseif tdate_start>0 %We are trimming beginning time
-            tmin=tdate_start;
-            tmp=datevec(tdate_start);
-            dn=1+floor(Fs*tmp(end));
+            tmax=tmin+datenum(0,0,0,0,0,length(x)/Fs);
+        elseif tdate_start>0   & ~isempty(tmin) %Requested time
+           
+            tmp=datevec(tdate_start-tmin);
+            nsec=tmp(6)+60*tmp(5)+3600*tmp(4);
+            dn=1+floor(Fs*nsec);
             x=x(dn:end,:);
             t=t(dn:end);
-        else
-            tmin=tdate_start;
+        elseif tdate_start== -1 
+            
+           % tmax=tdate_start+datenum(0,0,0,0,0,length(x)/Fs);
         end
         
         if tlen*Fs<size(x,1)
@@ -161,7 +179,7 @@ switch filetype
         end
         t=(1:length(x))/Fs;
         
-        tmax=tmin+datenum(0,0,0,0,0,max(t));
+       % tmax=tmin+datenum(0,0,0,0,0,max(t));
         try
             head.geom.rd=simulated.rd;
         catch
@@ -203,12 +221,12 @@ switch filetype
        
         %%%%Rare situations were I was testing DIFAR processing--should be
         %%%%commented out once results published.
-        if ~isempty(strfind(myfile,'Rankin'))  %%%Shannon Rankin DIFAR data
+        if contains(myfile,'Rankin')  %%%Shannon Rankin DIFAR data
             [x,t,head]=load_sonobuoy_demo([mydir '/' myfile],tdate_start,tlen,Ichan);
             tmin=datenum(1970,1,1,0,0,0);
             tmax=tmin+datenum(0,0,0,0,0,max(t));
             
-        elseif ~isempty(strfind(myfile,'DIFAR'))
+        elseif contains(myfile,'DIFAR')
             [x,t,head]=load_sonobuoy_Soldevilla([mydir '/' myfile],tdate_start,tlen,Ichan);
             tmin=datenum(1970,1,1,0,0,0);
             tmax=tmin+datenum(0,0,0,0,0,max(t));
@@ -849,7 +867,7 @@ switch filetype
         
         x			=	double(x)*sens;
         
-end
+end  %switch
 
 if isempty(tmin) || isempty(tmax)
     disp('load_data: Warning, tmin and tmax should never be empty when exiting..');
