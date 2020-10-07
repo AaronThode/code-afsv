@@ -232,18 +232,19 @@ switch(phase_calibration_chc)
         %slopee=1.25*4.1e-04;  %%%radians phase per radians frequency, original bulk run
        
         
-        %%%%00:06:30 local time on 17 August, 2014 5G
+        %%%% slopee measured at 00:06:30 local time on 17 August, 2014 5G
         %%%%23:57:28  1 seconds 10/1/2014 5G
+        %%% Also checked 04-Oct-2010 02:45:47.4 DASAR 5G, within 10° below
+        %%%     375 Hz.  This signal is lower received level.
         %slopee=1.1*4.1e-04;  %%%radians phase per radians frequency, for 
         slopee=1.2*4.1e-04;  %%%radians phase per radians frequency, for 1 sec averages 
        
         
-        Phasee=10*pi/180+slopee*2*pi*(FF-75);  %Phase is 10 degrees at 75 Hz, linear
+        %Phasee=10*pi/180+slopee*2*pi*(FF-75);  %Phase is 10 degrees at 75 Hz, linear
+        Phasee=slopee*2*pi*FF;  %Nearly identical to above (y-intercept is
+        %           -1 degrees in equation above.
         
         
-        %Phasee=slopee*2*pi*(FF-75);
-        
-        %Phasee=Phasee+4*pi/180+slopee2*2*pi*(FF-75);
         Phasee=exp(-1i*Phasee*ones(1,Np));
         
         Ix=Ix.*Phasee;
