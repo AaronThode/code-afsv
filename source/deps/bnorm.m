@@ -1,4 +1,5 @@
 function bearings=bnorm(bearings)
+% bearings are in degrees
 Ibig=find(bearings>=360);
 bearings(Ibig)=bearings(Ibig)-360;
 

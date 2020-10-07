@@ -229,13 +229,23 @@ switch(phase_calibration_chc)
         return
     case 'Arctic5G_2014'
         %slopee=4.10e-04;
-        slopee=1.25*4.1e-04;
-        slopee2=5.5011e-05;
-        %degree_slopee=slopee*2*pi*180/pi;
-        Phasee=10*pi/180+slopee*2*pi*(FF-75);
-        Phasee=slopee*2*pi*(FF-75);
+        %slopee=1.25*4.1e-04;  %%%radians phase per radians frequency, original bulk run
+       
+        
+        %%%%00:06:30 local time on 17 August, 2014 5G
+        %%%%23:57:28  1 seconds 10/1/2014 5G
+        %slopee=1.1*4.1e-04;  %%%radians phase per radians frequency, for 
+        slopee=1.2*4.1e-04;  %%%radians phase per radians frequency, for 1 sec averages 
+       
+        
+        Phasee=10*pi/180+slopee*2*pi*(FF-75);  %Phase is 10 degrees at 75 Hz, linear
+        
+        
+        %Phasee=slopee*2*pi*(FF-75);
+        
         %Phasee=Phasee+4*pi/180+slopee2*2*pi*(FF-75);
         Phasee=exp(-1i*Phasee*ones(1,Np));
+        
         Ix=Ix.*Phasee;
         Iy=Iy.*Phasee;
         
