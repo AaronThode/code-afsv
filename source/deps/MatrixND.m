@@ -422,11 +422,17 @@ classdef MatrixND
                 px_norm=(double(px.N.')./sum(double(px.N)));
                 matrixx=matrixx./(Ntotal);
                 
-                if strcmpi(obj.labels{1},'Azimuth')
-                    
-                    sortt=[find(obj.bin_grid{1}'>=180); find(obj.bin_grid{1}'<180)];
-                    matrixx=matrixx(sortt,:);
-                    obj.bin_grid{1}=bnorm(180+obj.bin_grid{1}(sortt));
+                %%%Change azimuth to directon of propagation toward...
+                Itick=(strcmpi(obj.labels,'Azimuth'));
+                if any(Itick)
+                    %if strcmpi(obj.labels{1},'Azimuth')
+                    [obj.bin_grid{Itick},Isort]=sort(bnorm(180+obj.bin_grid{Itick}));
+                    if Itick(1)
+                        matrixx=matrixx(Isort,:);
+                    else
+                        matrixx=matrixx(:,Isort);
+                    end
+                    plot_label{Itick}='Azimuth toward (deg)';
                 end
                 matrixx=cumsum(matrixx./px_norm);
                 tit_str='conditionalcumulative';
@@ -480,6 +486,7 @@ classdef MatrixND
                     end
                     [C,H]=contourf(obj.bin_grid{2},obj.bin_grid{1}, matrixx,contourrs);axis ij
                     clabel(C,H)
+                 
                   
             end
             xlabel(plot_label{2});ylabel(plot_label{1});
