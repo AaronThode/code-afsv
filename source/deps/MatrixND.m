@@ -367,7 +367,7 @@ classdef MatrixND
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function image_2D_slice(obj,varargin)
             %image_2D_slice(scale_str,is_log,plot_chc)
-            % scale_str: 'raw',joint,conditional,norm
+            % scale_str: 'raw',joint,conditional,norm, 'conditionalcumulative'
             
             plot_chc='image';
             if nargin==1
@@ -400,8 +400,8 @@ classdef MatrixND
             index2=contains(obj.permitted_labels,obj.labels{2},'IgnoreCase',true);
             plot_label{2}=obj.plot_labels{index2};
             
-            matrixx=obj.N;
-            Ntotal=sum(sum(obj.N));
+            matrixx=double(obj.N);
+            Ntotal=double(sum(sum(obj.N)));
             
             %if ~any(contains(obj.labels,'Frequency'))&~any(contains(obj.labels,'Time'))
             %   matrixx=matrixx./Ntotal;
@@ -410,25 +410,24 @@ classdef MatrixND
             tit_str='raw';
             if strcmpi(scale_str,'joint')
                 matrixx=matrixx./(Ntotal);
-            elseif strcmpi(scale_str,'conditional')
+            elseif strcmpi(scale_str,'conditional') %% shows p(label(1)|label(2))
                 px=histogram(obj,obj.labels(2));
-                px_norm=(px.N.'./sum(px.N));
+                px_norm=(double(px.N.')./double(sum(px.N)));
                 matrixx=matrixx./(Ntotal);
                 matrixx=matrixx./px_norm;
                 tit_str='conditional';
                 disp('conditional plot');
             elseif strcmpi(scale_str,'conditionalcumulative')
                 px=histogram(obj,obj.labels(2));
-                px_norm=(px.N.'./sum(px.N));
+                px_norm=(double(px.N.')./sum(double(px.N)));
                 matrixx=matrixx./(Ntotal);
                 
-                %matrixx=matrixx([90:179 1:89],:);
-                if strcmpi(obj.labels{1},'Azimuth')
+                 %if strcmpi(obj.labels{1},'Azimuth')
                    
-                    sortt=[find(obj.bin_grid{1}'>=180); find(obj.bin_grid{1}'<180)];
-                    matrixx=matrixx(sortt,:);
-                    obj.bin_grid{1}=bnorm(180+obj.bin_grid{1}(sortt));
-                end
+               %     sortt=[find(obj.bin_grid{1}'>=180); find(obj.bin_grid{1}'<180)];
+               %     matrixx=matrixx(sortt,:);
+               %     obj.bin_grid{1}=bnorm(180+obj.bin_grid{1}(sortt));
+               % end
                 matrixx=cumsum(matrixx./px_norm);
                 tit_str='conditionalcumulative';
                 disp('conditionalcumulative plot');
@@ -444,29 +443,29 @@ classdef MatrixND
                 matrixx=log10(double(matrixx));
             end
             
-            if strcmpi(scale_str,'conditionalcumulative')
-                plot(obj.bin_grid{1},matrixx);grid on
-                if strcmpi(obj.labels{1},'Azimuth')
-                    set(gca,'xtick',0:30:360);
-                    %set(gca,'xtick',obj.bin_grid{1}(sortt));
-                    xtickss=get(gca,'xticklabel');
-                    for I=1:length(xtickss)
-                       mytick{I}=int2str(bnorm(180+str2num(xtickss{I})));
-                    end
-                    set(gca,'xticklabel',mytick);
-                end
-                
-                ylim([0 1]);
-                for I=1:length(obj.bin_grid{2})
-                    legstr{I}=num2str(obj.bin_grid{2}(I));
-                end
-                legend(legstr)
-                
-                xlabel(plot_label{1});ylabel('Cumulative Fraction');
-                axis xy
-                set(gca,'fontweight','bold','fontsize',14);
-                return
-            end
+%             if strcmpi(scale_str,'conditionalcumulative')
+%                 plot(obj.bin_grid{1},matrixx);grid on
+%                 if strcmpi(obj.labels{1},'Azimuth')
+%                     set(gca,'xtick',0:30:360);
+%                     %set(gca,'xtick',obj.bin_grid{1}(sortt));
+%                     xtickss=get(gca,'xticklabel');
+%                     for I=1:length(xtickss)
+%                        mytick{I}=int2str(bnorm(180+str2num(xtickss{I})));
+%                     end
+%                     set(gca,'xticklabel',mytick);
+%                 end
+%                 
+%                 ylim([0 1]);
+%                 for I=1:length(obj.bin_grid{2})
+%                     legstr{I}=num2str(obj.bin_grid{2}(I));
+%                 end
+%                 legend(legstr)
+%                 
+%                 xlabel(plot_label{1});ylabel('Cumulative Fraction');
+%                 axis xy
+%                 set(gca,'fontweight','bold','fontsize',14);
+%                 return
+%             end
             
             switch plot_chc
                 case 'image'
@@ -474,11 +473,12 @@ classdef MatrixND
                 case 'contourf'
                     
                     if nargin<5
-                        contourrs=10:2:30;
+                       %contourrs=10:2:30;
+                        contourrs=0:0.1:1;
                     else
                         contourrs=varargin{end};
                     end
-                    [C,H]=contourf(obj.bin_grid{2},obj.bin_grid{1}, obj.N,contourrs);axis ij
+                    [C,H]=contourf(obj.bin_grid{2},obj.bin_grid{1}, matrixx,contourrs);axis ij
                     clabel(C,H)
                   
             end
