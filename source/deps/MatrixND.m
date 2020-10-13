@@ -422,12 +422,12 @@ classdef MatrixND
                 px_norm=(double(px.N.')./sum(double(px.N)));
                 matrixx=matrixx./(Ntotal);
                 
-                 %if strcmpi(obj.labels{1},'Azimuth')
-                   
-               %     sortt=[find(obj.bin_grid{1}'>=180); find(obj.bin_grid{1}'<180)];
-               %     matrixx=matrixx(sortt,:);
-               %     obj.bin_grid{1}=bnorm(180+obj.bin_grid{1}(sortt));
-               % end
+                if strcmpi(obj.labels{1},'Azimuth')
+                    
+                    sortt=[find(obj.bin_grid{1}'>=180); find(obj.bin_grid{1}'<180)];
+                    matrixx=matrixx(sortt,:);
+                    obj.bin_grid{1}=bnorm(180+obj.bin_grid{1}(sortt));
+                end
                 matrixx=cumsum(matrixx./px_norm);
                 tit_str='conditionalcumulative';
                 disp('conditionalcumulative plot');
