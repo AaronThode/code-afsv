@@ -3788,7 +3788,7 @@ for Idasar=1:NDasar
     
 end  %Idasar
 
-[DASAR_coords,Isite]=get_DASAR_locations(handles,strr);
+[DASAR_coords,Isite,xlimm,ylimm,UTMZone,UTMLetter]=get_DASAR_locations(handles,strr);
 
 Ikeep=find(~isnan(theta)&theta>0);  %Remove absent or unselected DASARs
 Ikeep=Ikeep((DASAR_coords(Ikeep,1)~=0));  %Sometimes DASARs have good omni data but are rejected from localization
@@ -3806,6 +3806,12 @@ Igood=Ikeep((DASAR_coords(Igood,1)~=0));
 
 %%%%Since we presume accurate bearings, let kappa be calculated.
 [VM,Qhat,~,outcome] = vmmle_r(theta(Ikeep)',DASAR_coords(Ikeep,:),'h');
+
+if ~isempty(UTMLetter)
+    [Lat,Long]=UTMtoLL(23,VM(2),VM(1),UTMZone(1),UTMLetter(1));
+    fprintf('Localization Lat: %6.2f N Long: %6.2f E \n',Lat,Long);
+    fprintf('Easting: %6.2f m Northing: %6.2f m \n',VM(1),VM(2));
+end
 mean_coords=mean(DASAR_coords(Igood,:));
 CRITVAL=4.60517; %chi2inv(0.90,2);
 
@@ -3814,8 +3820,8 @@ CRITVAL=4.60517; %chi2inv(0.90,2);
 figure(1)
 Ikeep=find(~isnan(theta(Igood))&theta(Igood)>0);
 [~,xg,yg]=plot_location(DASAR_coords(Igood,:),theta(Igood),Ikeep,VM,A,B,ANG,[],[],[],'km');
-xlim([-0.1 0.1]);
-ylim([-0.1 0.1]);
+xlim(xlimm);
+ylim(ylimm);
 
 hold on
 
@@ -3832,6 +3838,7 @@ end
 [tdoa_mat]=xcorr_dasars(xsample,tsec,DASAR_coords);
 
 fprintf('Position of location (can copy for annotation): %s\n',mat2str(VM,10));
+fprintf('Lat/long of location (can copy for annotation): %s\n',mat2str(VM,10));
 fprintf('Values of theta for station %s (degrees, compass standard): %s\n',mat2str(Igood),mat2str(theta(Igood),6));
 fprintf('raw tsec of selections:  %s\n',mat2str(tsec(Igood),6));
 
@@ -3855,7 +3862,7 @@ end
 end
 
 
-function [DASAR_coords,Isite]=get_DASAR_locations(handles,strr)
+function [DASAR_coords,Isite,xlimm,ylimm,UTMZone,UTMLetter]=get_DASAR_locations(handles,strr)
 %%S510G0T20100831T000000.gsi form
 %%PE19X0T20100831T000000.gsi
 DASAR_ltr=handles.myfile(5);
@@ -3864,6 +3871,12 @@ year=handles.myfile(iT(1)+(0:3));
 
 DASAR_coords=-1*ones(length(strr),2);
 Isite=-1;
+UTMZone=-1;
+UTMLetter=[];
+
+xlimm=[-0.1 0.1];
+ylimm=xlimm;
+
 %%%%  Check to see what deployment we have...
 if contains(handles.myfile(1:2),'PE')
     Ikeep=double('XYZ')-double('A')+1;
@@ -3889,6 +3902,29 @@ elseif contains(handles.myfile(1:2),'PB')
     
     pos_DASAR(:,1)=pos_DASAR(:,1)+1;  %Make sure X coordinate not zero.
     DASAR_coords(Ikeep,:)=pos_DASAR;
+    return
+    
+elseif contains(handles.myfile(1:2),'MA')
+    Ikeep=double('XYZ')-double('A')+1;
+    
+    Lat=[ 20.8081 20.8292 20.8512];
+    Long=[-156.6274 -156.6457 -156.6676];
+    
+    for II=1:3
+        [Northing,Easting,UTMZone(II),UTMLetter]=LLtoUTM(23,  Lat(II),  Long(II));
+        
+        pos_DASAR(II,1)=Easting;
+        pos_DASAR(II,2)=Northing;
+        
+    end
+   
+   
+
+    DASAR_coords(Ikeep,:)=pos_DASAR;
+    
+    xlimm=[-2.5 2.5];
+    ylimm=xlimm;
+
     return
 end
 
@@ -8649,7 +8685,7 @@ if want_directionality
         
         figure(myfig);
         axes(gca);
-    else
+    elseif 1==0
         myfig=gcf;
         myax=gca;
         figure(1);hold on
