@@ -25,6 +25,8 @@ elseif strcmp(formatt,'seconds')&ctstart>0
     ctstart=-ctstart;  %Set to zero
 end
 %fid = fopen(char(fn),'r','ieee-le');
+
+%%%Correction for clock drift; tdrift is in terms of seconds per day
 fs=head.Fs*(1+head.tdrift/86400);
 fid = fopen(char(fn),'r','ieee-be');
 

@@ -8165,7 +8165,7 @@ if isfield(Event,'localization')&&~isempty(getfield(Event,'localization'))
     
     try
         %   [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,35,Istation,VM_extra,'m');
-        [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,3500,Istation,VM_extra,'km');
+        [DASAR_coordsn,xg,yg,VMn]=plot_location(DASAR_coords,bearings,Igood,VM,A,B,ANG,5000,Istation,VM_extra,'km');
         
     catch
         disp('plot_failure');
