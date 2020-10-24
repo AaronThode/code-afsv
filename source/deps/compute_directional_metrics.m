@@ -73,7 +73,7 @@ if strcmpi(filetype,'gsi')
     
     % Ix=squeeze(real((B(1,:,:).*conj(B(2,:,:)))));
     %Iy=squeeze(real((B(1,:,:).*conj(B(3,:,:)))));
-    rho=1000;c=1500;
+    %rho=1000;c=1500;
     
     Ix=squeeze(((B(1,:,:).*conj(B(2,:,:)))));
     Iy=squeeze(((B(1,:,:).*conj(B(3,:,:)))));
@@ -129,7 +129,11 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%Average Ix and Iy, if needed
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-sec_avg=str2double(param.sec_avg);
+if ischar(param.sec_avg)
+    sec_avg=str2double(param.sec_avg);
+else
+    sec_avg=param.sec_avg;
+end
 
 if ~isempty(sec_avg)&&sec_avg>0
     

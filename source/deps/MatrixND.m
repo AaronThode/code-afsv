@@ -249,7 +249,7 @@ classdef MatrixND
         
         %%%%%%%%%%%%%%%%%%plot1Ddistribution.m%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        function plot1Ddistribution(obj,varargin)
+        function hh=plot1Ddistribution(obj,varargin)
             % function plot1Ddistribution(obj,plot_chc)
        
             %%%Check that I am 2D
@@ -264,12 +264,20 @@ classdef MatrixND
                 plot_chc=varargin{1};
             end
             
+             dx=obj.bin_grid{1}(2)-obj.bin_grid{1}(1);
+            
+           
             if nargin<3  %no normalization
                 NN=obj.N;
                 ylab='Count';
             elseif contains(varargin{2},'pdf')
-                NN=obj.N/sum(obj.N);
-                ylab='Probability';
+                NN=obj.N/(dx*sum(obj.N));
+               
+                ylab='Probability Density';
+            elseif contains(varargin{2},'cdf')
+                NN=cumsum(obj.N)/sum(obj.N);
+                ylab='Cumulative Probability';
+                
             else
                 NN=obj.N/max(obj.N);
                 ylab='Relative Probability';
@@ -277,12 +285,12 @@ classdef MatrixND
                 
             
             if strcmpi(plot_chc,'bar')
-                bar(obj.bin_grid{1},NN);grid on
+               hh = bar(obj.bin_grid{1},NN);grid on
             elseif strcmpi(plot_chc,'plot')
-               plot(obj.bin_grid{1},NN);grid on
+               hh = plot(obj.bin_grid{1},NN,'linewidth',3);grid on
             end
-             xlabel(obj.labels{1});ylabel(ylab);
-             set(gca,'fontweight','bold','fontsize',14);
+            xlabel(obj.labels{1});ylabel(ylab);
+            set(gca,'fontweight','bold','fontsize',14);
         end
         
         %%%%%%%%%%%%%%%%%%get_Tabs_bounds%%%%%%%%%%%%%%%%%%%%%%
@@ -365,7 +373,7 @@ classdef MatrixND
         
         %%%%%%%%%%%%%%%%%%image_2D_slice%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        function image_2D_slice(obj,varargin)
+        function matrixx=image_2D_slice(obj,varargin)
             %image_2D_slice(scale_str,is_log,plot_chc)
             % scale_str: 'raw',joint,conditional,norm, 'conditionalcumulative'
             
