@@ -4,7 +4,7 @@ function med = circ_median(alpha,dim)
 %   Computes the median direction for circular data.
 %
 %   Input:
-%     alpha	sample of angles in radians
+%     alpha	sample of angles in radians, from 0 to 2*pi
 %     [dim  compute along this dimension, default is 1, must 
 %           be either 1 or 2 for circ_median]
 %
@@ -39,29 +39,42 @@ for i=1:M(3-dim)
     error('circ_median only works along first two dimensions')
   end
   
-  beta = mod(beta,2*pi);
+  beta = mod(beta,2*pi);  %%Restrict range of angles between 0 and 2*pi
+  
+  %beta=sort(beta);
   n = size(beta,1);
 
-  dd = circ_dist2(beta,beta);
-  m1 = sum(dd>=0,1);
+  dd = circ_dist2(beta,beta);  % range between -pi and pi
+  m1 = sum(dd>=0,1);  %%Angles greater than this angle
   m2 = sum(dd<=0,1);
 
-  dm = abs(m1-m2);
-  if mod(n,2)==1
-    [m idx] = min(dm);
-  else
-    m = min(dm);
-    idx = find(dm==m,2);
+  dm = abs(m1-m2);  %%%Minimum vallue means m1==m2, or median
+  
+  m = min(dm);
+  idx = find(dm==m);
+    
+
+  if length(idx) > 1  %%Multiple points satisfy median criteria
+      %disp('Ties detected.') %#ok<WNTAG>
+      
+      %%%Keep only points that lie within 90 degrees of each other
+      %%%% (get rid of angles that are 180 degrees away; deal with them
+      %%%% later)...
+      delta_beta=abs(circ_dist2(beta(idx),beta(idx(1))));
+      idx=idx(delta_beta<pi/2);
+      % if length(delta_beta)>2
+      %     fprintf('Many possible medians with delta: %s\n',mat2str(delta_beta',3));
+      % end
+      
   end
 
-  if m > 1
-    warning('Ties detected.') %#ok<WNTAG>
-  end
 
-  md = circ_mean(beta(idx));
+  md = circ_mean(beta(idx));  %Tentative median
 
-  if abs(circ_dist(circ_mean(beta),md)) > abs(circ_dist(circ_mean(beta),md+pi))
-    md = mod(md+pi,2*pi);
+  %%If median is 180 degrees off from center of mass, add 180 degrees
+  circc_mean=circ_mean(beta);
+  if abs(circ_dist(circc_mean,md)) > abs(circ_dist(circc_mean,md+pi))
+    md = mod(md+pi,2*pi);  %Restrict to 0 to 2*pi
   end
   
   med(i) = md;

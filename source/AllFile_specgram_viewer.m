@@ -8685,7 +8685,7 @@ if want_directionality
         
         figure(myfig);
         axes(gca);
-    elseif 1==0
+    elseif 1==1
         myfig=gcf;
         myax=gca;
         figure(1);hold on
