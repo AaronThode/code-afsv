@@ -46,21 +46,21 @@ for I=1:M(3-dim)
     beta = mod(beta,2*pi);  %%Restrict range of angles between 0 and 2*pi
     
     %beta=sort(beta);
-    [md,beta2]=get_circ_median(beta);
+    [md,beta2,dd2]=get_circ_median(beta);
     
     med(I) = md;
     percentile(4,I)=md; %50th
     
-    [percentile(3,I),beta3m]=get_circ_median(beta2{2});  %25th
-    [percentile(2,I),beta3m]=get_circ_median(beta3m{2}); %25th-12.5=12.5 percentile
-    [percentile(1,I),beta3m]=get_circ_median(beta3m{2}); %12.5-6.25=6.25 percentile
+    [percentile(3,I),beta3m,dd3]=get_circ_median(beta2{2},dd2{2});  %25th
+    [percentile(2,I),beta3m,dd3]=get_circ_median(beta3m{2},dd3{2}); %25th-12.5=12.5 percentile
+    [percentile(1,I)]=get_circ_median(beta3m{2},dd3{2}); %12.5-6.25=6.25 percentile
     Icross=find(percentile(1:3,I)>md);
     percentile(Icross,I)=percentile(Icross,I)-2*pi;
     
     
-    [percentile(5,I),beta3p]=get_circ_median(beta2{1}); %75th
-    [percentile(6,I),beta3p]=get_circ_median(beta3p{1}); %75th+12.5=87.5 percentile
-    [percentile(7,I),beta3p]=get_circ_median(beta3p{1}); %87.5+6.2500=93.75 percentile
+    [percentile(5,I),beta3p,dd3]=get_circ_median(beta2{1},dd2{1}); %75th
+    [percentile(6,I),beta3p,dd3]=get_circ_median(beta3p{1},dd3{1}); %75th+12.5=87.5 percentile
+    [percentile(7,I)]=get_circ_median(beta3p{1},dd3{1}); %87.5+6.2500=93.75 percentile
     Icross=find(percentile(5:7,I)<md);
     II=5:7;
     percentile(II(Icross),I)=percentile(II(Icross),I)+2*pi;
@@ -78,14 +78,14 @@ end
 
 end
 
-function [md,beta_out]=get_circ_median(beta)
+function [md,beta_out,dd_out]=get_circ_median(beta,dd)
 
 debug=false;
 n = size(beta,1);
 
-
+if nargin<2
     dd = circ_dist2(beta,beta);  % range between -pi and pi
-
+end
 
 m1 = sum(dd>=0,1);  %%Angles greater than this angle
 m2 = sum(dd<=0,1);
@@ -113,9 +113,15 @@ if length(idx) > 1  %%Multiple points satisfy median criteria
     
 end
 
-dd_med=mean(dd(:,idx),2);
-beta_out{1}=beta(dd_med>0);
-beta_out{2}=beta(dd_med<0);
+dd_med=mean(dd(:,idx),2);  %%dd_values associated with median
+
+Iplus=find(dd_med>0);
+beta_out{1}=beta(Iplus);
+dd_out{1}=dd(Iplus,Iplus);
+
+Iminus=find(dd_med<=0);
+beta_out{2}=beta(Iminus);
+dd_out{2}=dd(Iminus,Iminus);
 
 
 md = circ_mean(beta(idx));  %Tentative median
@@ -125,6 +131,7 @@ circc_mean=circ_mean(beta);
 if abs(circ_dist(circc_mean,md)) > abs(circ_dist(circc_mean,md+pi))
     md = mod(md+pi,2*pi);  %Restrict to 0 to 2*pi
     beta_out=beta_out(2:-1:1);
+    dd_out=dd_out(2:-1:1);
 end
 
 if debug
