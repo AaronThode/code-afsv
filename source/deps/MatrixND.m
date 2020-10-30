@@ -169,12 +169,19 @@ classdef MatrixND
         
         %%%%%%%%%%%%%%%%%%sum_slice.m%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        function out=sum_slice(obj,sum_label)
+        function out=sum_slice(obj,sum_label,bins_sum)
             % out=sum_slice(sum_label)
             %  sum_label: string of dimension you want to sum over
+            % bins_sum: optional argument to sum over only bins_sum bins
+            %           (resampling data into larger bins)
             
             out=[];
             
+            if nargin>2
+               if bins_sum<1
+                   error('sum_slice: bins_sum must be greater than zero');
+               end
+            end
             if ~iscell(sum_label)&ischar(sum_label)
                 disp('converting char to cell')
                 temp{1}=sum_label;
@@ -183,24 +190,57 @@ classdef MatrixND
             
             pass_me=all(contains(sum_label,obj.permitted_labels,'IgnoreCase',true));
             if ~pass_me
-                disp('Labels not permitted');
+                disp('Requested label not permitted');
                 return
             end
             Iindex=find(contains(obj.labels,sum_label,'IgnoreCase',true));  %Highest dimension listed first
             
-            Iindex_out=find(~contains(obj.labels,sum_label,'IgnoreCase',true));
-            out_label=obj.labels(Iindex_out);
-            out_grid=obj.bin_grid(Iindex_out);
             
-            
-            for I=1:length(Iindex)
-                obj.N=sum(obj.N,Iindex(I));  %Iinded does not need to be sorted if squeeze is performed once.
+            if nargin>2  %resampling
+                
+                   
+                for I=1:length(Iindex)
+                    sizz=size(obj.N);
+               
+                    test=cumsum(obj.N,Iindex(I));
+                    
+                    S.type = '()';
+                    S.subs = repmat({':'},1,ndims(obj.N));
+                    
+                    S.subs{Iindex(I)} = bins_sum:bins_sum:sizz(Iindex(I)); % Specifiy index to extract
+                    
+                    test2=subsref(test,S);
+                    
+                    %%%%create layer of zeros and prepend
+                    sizz(Iindex(I))=1;
+                    obj.N=diff(cat(Iindex(I),zeros(sizz),test2),1,Iindex(I));
+                    %  obj.N=diff([0 test(bins_sum:bins_sum:end)]); 1-D equivalent
+              
+                end
+                
+                out_label=obj.labels;
+                out_grid=obj.bin_grid;
+                
+                
+                
+            else  %% sum and remove dimension
+                Iindex_out=find(~contains(obj.labels,sum_label,'IgnoreCase',true));
+                out_label=obj.labels(Iindex_out);
+                out_grid=obj.bin_grid(Iindex_out);
+                
+                for I=1:length(Iindex)
+                    obj.N=sum(obj.N,Iindex(I));  %Iinded does not need to be sorted if squeeze is performed once.
+                end
             end
-            out = MatrixND(squeeze(obj.N),out_grid,out_label,obj.permitted_labels,obj.plot_labels);
             
-        end %sum_slice
         
-        %%%%%%%%%%%%%%%%%%append_time.m%%%%%%%%%%%%%%%%%%%%%%
+        
+        out = MatrixND(squeeze(obj.N),out_grid,out_label,obj.permitted_labels,obj.plot_labels);
+        
+        
+    end %sum_slice
+    
+    %%%%%%%%%%%%%%%%%%append_time.m%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function obj=append_time(obj,obj_new)
             %obj=append_time(obj_new)
