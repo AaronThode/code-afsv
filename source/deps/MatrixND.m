@@ -170,7 +170,7 @@ classdef MatrixND
         %%%%%%%%%%%%%%%%%%sum_slice.m%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function out=sum_slice(obj,sum_label,bins_sum)
-            % out=sum_slice(sum_label)
+            % out=sum_slice(sum_label,bins_sum)
             %  sum_label: string of dimension you want to sum over
             % bins_sum: optional argument to sum over only bins_sum bins
             %           (resampling data into larger bins)
@@ -194,7 +194,8 @@ classdef MatrixND
                 return
             end
             Iindex=find(contains(obj.labels,sum_label,'IgnoreCase',true));  %Highest dimension listed first
-            
+            Iindex_out=find(~contains(obj.labels,sum_label,'IgnoreCase',true));
+             
             
             if nargin>2  %resampling
                 
@@ -202,29 +203,36 @@ classdef MatrixND
                 for I=1:length(Iindex)
                     sizz=size(obj.N);
                
-                    test=cumsum(obj.N,Iindex(I));
+                    obj.N=cumsum(obj.N,Iindex(I));
                     
                     S.type = '()';
                     S.subs = repmat({':'},1,ndims(obj.N));
                     
-                    S.subs{Iindex(I)} = bins_sum:bins_sum:sizz(Iindex(I)); % Specifiy index to extract
+                    ngrid_new=sizz(Iindex(I));
+                    S.subs{Iindex(I)} = bins_sum:bins_sum:ngrid_new; % Specifiy index to extract
                     
-                    test2=subsref(test,S);
+                    test2=subsref(obj.N,S);
                     
                     %%%%create layer of zeros and prepend
                     sizz(Iindex(I))=1;
                     obj.N=diff(cat(Iindex(I),zeros(sizz),test2),1,Iindex(I));
                     %  obj.N=diff([0 test(bins_sum:bins_sum:end)]); 1-D equivalent
-              
+                    obj.bin_grid{Iindex(I)}=obj.bin_grid{Iindex(I)}(bins_sum:bins_sum:ngrid_new);
+                    if length(bins_sum:bins_sum:ngrid_new)==1
+                        out_label=obj.labels(Iindex_out);
+                        out_grid=obj.bin_grid(Iindex_out);
+                    else
+                        out_label=obj.labels;
+                        out_grid=obj.bin_grid;
+                    end
                 end
                 
-                out_label=obj.labels;
-                out_grid=obj.bin_grid;
+               
+                
                 
                 
                 
             else  %% sum and remove dimension
-                Iindex_out=find(~contains(obj.labels,sum_label,'IgnoreCase',true));
                 out_label=obj.labels(Iindex_out);
                 out_grid=obj.bin_grid(Iindex_out);
                 
