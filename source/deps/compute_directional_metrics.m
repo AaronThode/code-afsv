@@ -63,13 +63,16 @@ end
 if strcmpi(filetype,'gsi')
     
     if length(x(1,:))<Nfft/2
+        disp('Signal sample shorter than Nfft');
         return
     end
     
     %%%%Test alternate, faster version, used since July 29, 2018
     % tic
-    x=x';
     
+    if size(x,2)>size(x,1)
+        x=x';
+    end
     
     if use_wavelet
         M=size(x,1);
@@ -79,6 +82,7 @@ if strcmpi(filetype,'gsi')
             [B(J,:,:),FF,COI] = wt(fb,x(:,J));  %use cwtfilterbank for future speed
         end
         TT=(1:M)/Fs;
+        Nf=length(FF);
     else
         dn=round((1-ovlap)*Nfft);
         M=floor(1+(size(x,1)-Nfft)/dn);
@@ -87,6 +91,8 @@ if strcmpi(filetype,'gsi')
         for J=1:size(x,2)
             [B(J,:,:),FF,TT] = spectrogram(x(:,J),Nfft,round(ovlap*Nfft),Nfft,Fs);
         end
+          Nf=Nfft/2+1;  %Should be the same as length(FF)
+  
     end
     
      %rho=1000;c=1500;
@@ -98,7 +104,6 @@ if strcmpi(filetype,'gsi')
     normalized_velocity_autospectrum=squeeze(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2);
     energy_density=0.5*abs(normalized_velocity_autospectrum+pressure_autospectrum);
     
-    Nf=Nfft/2+1;  %Should be the same as length(FF)
     %toc
     get_newparams=false;
     
@@ -183,7 +188,11 @@ if ~isempty(sec_avg)&&sec_avg>0
     pressure_autospectrum=PA_avg;
 end  %sec_avg
 
-PdB=4+10*log10(2*pressure_autospectrum./(Nfft*Fs));  %%Power spectral density output
+if ~use_wavelet
+    PdB=4+10*log10(2*pressure_autospectrum./(Nfft*Fs));  %%Power spectral density output
+else
+    PdB=sqrt(pressure_autospectrum);
+end
 %[~,FF,TT,PdB1] = spectrogram(x(:,1),Nfft,round(ovlap*Nfft),Nfft,Fs);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
