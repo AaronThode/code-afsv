@@ -13,11 +13,12 @@ if strcmpi(handles.display_view,'Directionality')
     if ~use_wavelets
         hh=imagesc(TT,FF/1000,output_array);
     else
-        hh=pcolor(TT,log2(FF/1000),output_array);
-        hh.EdgeColor='none';
-        ax=gca;
-        ytick=round(pow2(ax.YTick),3);
-        ax.YTickLabel=ytick;
+%         dbcont
+%         hh=pcolor(TT,log2(FF/1000),output_array);
+%         hh.EdgeColor='none';
+%         ax=gca;
+%         ytick=round(pow2(ax.YTick),3);
+%         ax.YTickLabel=ytick;
         
         hh=pcolor(TT,(FF/1000),output_array);
         hh.EdgeColor='none';
@@ -48,9 +49,8 @@ if strcmpi(handles.display_view,'Directionality')
     
     %%%Setting transparency to SPL
     if handles.checkbox_transparency.Value&~isempty(PdB)&&all(size(PdB)==size(output_array))
-        
-        set(hh,'AlphaData',PdB);
         set(hh,'AlphaDataMapping','scaled')
+        set(hh,'AlphaData',PdB);
         alim(str2double(handles.edit_mindB.String) + [0 str2double(handles.edit_dBspread.String)]);
         
     end

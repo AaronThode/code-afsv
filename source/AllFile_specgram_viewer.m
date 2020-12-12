@@ -8595,7 +8595,15 @@ else
     figure;
 end
 
-
+%%%Wavelet flag....
+if get(handles.checkbox_wavelet,'Value')==1
+        use_wavelets=true;
+        metric_type=[handles.display_view 'wavelet'];
+    else
+        use_wavelets=false;
+         metric_type=handles.display_view;
+end
+    
 if want_directionality
     
     if isfield(handles,'azigram')
@@ -8616,40 +8624,13 @@ if want_directionality
     
     
     
-    %%%%Wavelet test%%%%%%%%%%%%%
     
-    if get(handles.checkbox_wavelet,'Value')==1
-        use_wavelets=true;
-    else
-        use_wavelets=false;
-    end
-    if use_wavelets
-        [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics_wavelet ...
-            (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
-            handles.filetype,reactive_flag);
-        if strcmpi(handles.filetype,'gsi')&&~reactive_flag
-            params.f_transition=300;
-            [~,Icut]=min(abs(FF-params.f_transition));
-            [~,~,temp]=compute_directional_metrics_wavelet ...
-                (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
-                'gsi',true);
-            output_array{1}((Icut+1):end,:)=temp{1}((Icut+1):end,:);
-        end
-    else
-        %%%%Here is directional metric calculation...
-        %handles.display_view='PhaseSpeed';
-        [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics ...
-            (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
-            handles.filetype,reactive_flag);
-        %if strcmpi(handles.filetype,'gsi')&&~reactive_flag
-        %params.f_transition=300;
-        %[~,Icut]=min(abs(FF-params.f_transition));
-        %[~,~,temp]=compute_directional_metrics ...
-        %    (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
-        %    'gsi',true);
-        %output_array{1}((Icut+1):end,:)=temp{1}((Icut+1):end,:);
-        %end
-    end
+    %%%%Here is directional metric calculation...
+    %handles.display_view='PhaseSpeed';
+    [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics ...
+        (x,metric_type,Fs,Nfft,ovlap,azigram_param, ...
+        handles.filetype,reactive_flag);
+    
     
     if ~contains(handles.display_view,'Directionality')
         myfig=gcf;
@@ -8706,9 +8687,7 @@ if want_directionality
     handles.azigram.FF=FF;
     
     
-    
-    %%%%Take difference of azigrams
-    %%FOR LUDOVIC TENORIO
+    %%%%Use azigram detector
     if str2num(handles.edit_chan.String)>1&strcmpi(handles.filetype,'gsi')
         
         azigram_param.sec_avg='0';
@@ -8810,22 +8789,25 @@ if want_directionality
     end
 elseif strcmp(handles.display_view,'Spectrogram')
     
-    %if strcmp(handles.display_view,'Spectrogram')
-    %    axes(handles.axes1);
-    %else
-    %    figure;
-    %end
     
     if length(x(:,1))<Nfft/2
         return
     end
     if ~(strcmp(handles.filetype,'PSD'))
-        [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs);
-        %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
-        %     For real signals, variable 'B'
-        %     returns the one-sided modified periodogram estimate of the PSD of each
-        %     segment; for complex signals and in the case when a vector of
-        %     frequencies is specified, it returns the two-sided PSD.
+        
+        if ~use_wavelets
+            [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs);
+            %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
+            %     For real signals, variable 'B'
+            %     returns the one-sided modified periodogram estimate of the PSD of each
+            %     segment; for complex signals and in the case when a vector of
+            %     frequencies is specified, it returns the two-sided PSD.
+            
+        else
+            [B,FF] = cwt(x(:,1),Fs,'VoicesPerOctave',12);
+            TT=(1:size(x,1))/Fs;
+            B=abs(B).^2;
+        end
         handles.sgram.T		=	TT;
         handles.sgram.F		=	FF;
         % handles.sgram.B		=	B;
@@ -8845,7 +8827,11 @@ elseif strcmp(handles.display_view,'Spectrogram')
             %    imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
         else
             
-            imagesc(TT,FF/1000,10*log10(B));%
+           % imagesc(TT,FF/1000,10*log10(B));%
+            
+            him=pcolor(TT,FF/1000,10*log10(B));%
+            shading flat
+            
         end
     else
         
@@ -8862,7 +8848,7 @@ elseif strcmp(handles.display_view,'Spectrogram')
     axis('xy')
     fmax=str2double(get(handles.edit_fmax,'String'));
     fmin=str2double(get(handles.edit_fmin,'String'));
-    if fmax==0,
+    if fmax==0
         ylim([0 Fs/2000]);
         set(handles.edit_fmax,'String',num2str(Fs/2000));
     else

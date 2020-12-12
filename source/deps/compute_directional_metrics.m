@@ -27,6 +27,12 @@
 function [TT,FF,output_array,PdB,param,Ix,Iy]=compute_directional_metrics(x,metric_type, ...
     Fs,Nfft, ovlap, param,filetype,reactive_flag)
 
+use_wavelet=any(contains(lower(metric_type),'wavelet'));
+if use_wavelet
+    Iend=strfind(metric_type,'wavelet')-1;
+    metric_type=metric_type(1:Iend);
+end
+
 TT=[];FF=[];output_array=[];PdB=[];
 if ~iscell(metric_type)
     temp=metric_type;clear metric_type
@@ -52,7 +58,7 @@ if ischar(param.brefa)
 end
 %%%%Two files that can get active intensity directionality: *.gsi and
 %%%%*DIFAAR*.wav files.
-dn=round((1-ovlap)*Nfft);
+
 
 if strcmpi(filetype,'gsi')
     
@@ -62,18 +68,28 @@ if strcmpi(filetype,'gsi')
     
     %%%%Test alternate, faster version, used since July 29, 2018
     % tic
-    M=floor(1+(size(x,2)-Nfft)/dn);
     x=x';
-    B=zeros(size(x,2),Nfft/2+1,M);
-    %[~,FF,TT,PdB] = spectrogram(x(:,1),Nfft,round(ovlap*Nfft),Nfft,Fs);
-    for J=1:size(x,2)
-        [B(J,:,:),FF,TT] = spectrogram(x(:,J),Nfft,round(ovlap*Nfft),Nfft,Fs);
+    
+    
+    if use_wavelet
+        M=size(x,1);
+        dn=1;
+        fb=cwtfilterbank('SamplingFrequency',Fs,'SignalLength',size(x,1),'FrequencyLimits',[10 0.95*Fs/2],'VoicesPerOctave',20);
+        for J=1:size(x,2)
+            [B(J,:,:),FF,COI] = wt(fb,x(:,J));  %use cwtfilterbank for future speed
+        end
+        TT=(1:M)/Fs;
+    else
+        dn=round((1-ovlap)*Nfft);
+        M=floor(1+(size(x,1)-Nfft)/dn);
+        B=zeros(size(x,2),Nfft/2+1,M);
         
+        for J=1:size(x,2)
+            [B(J,:,:),FF,TT] = spectrogram(x(:,J),Nfft,round(ovlap*Nfft),Nfft,Fs);
+        end
     end
     
-    % Ix=squeeze(real((B(1,:,:).*conj(B(2,:,:)))));
-    %Iy=squeeze(real((B(1,:,:).*conj(B(3,:,:)))));
-    %rho=1000;c=1500;
+     %rho=1000;c=1500;
     
     Ix=squeeze(((B(1,:,:).*conj(B(2,:,:)))));
     Iy=squeeze(((B(1,:,:).*conj(B(3,:,:)))));
@@ -177,6 +193,7 @@ if ~isfield(param,'phase_calibration')
     param.phase_calibration='Arctic5G_2014';
 end
 [Ix,Iy]=correct_phase(Ix,Iy,FF,param.phase_calibration);
+
 
 for J=1:length(metric_type)  %%for each request
     
