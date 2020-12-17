@@ -51,7 +51,7 @@ if strcmpi(handles.display_view,'Directionality')
     if handles.checkbox_transparency.Value&~isempty(PdB)&&all(size(PdB)==size(output_array))
         set(hh,'AlphaDataMapping','scaled')
         set(hh,'AlphaData',PdB);
-        set(hh,'FaceAlpha','flat');
+        %set(hh,'FaceAlpha','flat');
         alim(str2double(handles.edit_mindB.String) + [0 str2double(handles.edit_dBspread.String)]);
         
     end

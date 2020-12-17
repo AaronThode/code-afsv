@@ -3918,7 +3918,6 @@ elseif contains(handles.myfile(1:2),'MA')
         
     end
    
-   
 
     DASAR_coords(Ikeep,:)=pos_DASAR;
     
@@ -8666,17 +8665,25 @@ if want_directionality
         
         figure(myfig);
         axes(gca);
+        
+        
     elseif 1==1
-        myfig=gcf;
-        myax=gca;
-        figure(1);hold on
-        plot(FF,bnorm(180*circ_median(output_array{1}'*pi/180)/pi),'k.', ...
-            FF,bnorm((180/pi)*(circ_mean(output_array{1}'*pi/180)+circ_std(output_array{1}'*pi/180))),'r.', ...
-            FF,bnorm((180/pi)*(circ_mean(output_array{1}'*pi/180)-circ_std(output_array{1}'*pi/180))),'g.');grid on;
-        xlabel('Frequency (Hz)');ylabel(handles.display_view);
-        %ylim([0 360])
-        figure(myfig);
-        axes(gca);
+        
+        %%%Uncomment to plot basic statistics of directionality
+%         myfig=gcf;
+ %        myax=gca;
+%         figure(1);hold on
+%         plot(FF,bnorm(180*circ_median(output_array{1}'*pi/180)/pi),'k.', ...
+%             FF,bnorm((180/pi)*(circ_mean(output_array{1}'*pi/180)+circ_std(output_array{1}'*pi/180))),'r.', ...
+%             FF,bnorm((180/pi)*(circ_mean(output_array{1}'*pi/180)-circ_std(output_array{1}'*pi/180))),'g.');grid on;
+%         xlabel('Frequency (Hz)');ylabel(handles.display_view);
+%         %ylim([0 360])
+%         figure(myfig);
+%         axes(gca);
+        
+        %AziVsFreqDistribution;
+        %figure(myfig);
+        %axes(gca)
     end
     
     plot_directional_metric(TT,FF,output_array{1},handles,azigram_param,PdB,use_wavelets);
