@@ -88,13 +88,13 @@ classdef MatrixND
             
             out=[];
             if ~iscell(fixed_label)&ischar(fixed_label)
-                disp('converting fixed_label char to cell')
+               % disp('converting fixed_label char to cell')
                 temp{1}=fixed_label;
                 fixed_label=temp;
             end
             
             if ~iscell(fixed_val)&isnumeric(fixed_val)
-                disp('converting fixed_val char to cell')
+                %disp('converting fixed_val char to cell')
                 temp{1}=fixed_val;
                 fixed_val=temp;
             end
@@ -141,7 +141,7 @@ classdef MatrixND
             for I=1:length(fixed_label)
                 if length(fixed_val{I})==1
                     [~,Islice{I}]=min(abs(my_grid{I}-fixed_val{I}));
-                    fprintf('extract_slice:Requested Value: %6.2f, returned value: %6.2f\n',fixed_val{I},my_grid{I}(Islice{I}));
+                    %fprintf('extract_slice:Requested Value: %6.2f, returned value: %6.2f\n',fixed_val{I},my_grid{I}(Islice{I}));
                 elseif length(fixed_val{I})==2
                     Islice{I}=find((my_grid{I}>=fixed_val{I}(1))&(my_grid{I}<fixed_val{I}(2)));
                     out_grid{Iindex(I)}=out_grid{Iindex(I)}(Islice{I});  %restrict grid as well
@@ -183,7 +183,7 @@ classdef MatrixND
                end
             end
             if ~iscell(sum_label)&ischar(sum_label)
-                disp('converting char to cell')
+               % disp('converting char to cell')
                 temp{1}=sum_label;
                 sum_label=temp;
             end
