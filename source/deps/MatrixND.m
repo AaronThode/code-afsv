@@ -349,6 +349,14 @@ classdef MatrixND
             out=[min(obj.bin_grid{Ilab}) max(obj.bin_grid{Ilab})];
         end
         
+          %%%%%%%%%%%%%%%%%%get_grid%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        function out=get_grid(obj,name)
+            Ilab=find(contains(obj.labels,name,'IgnoreCase',true));
+            out=obj.bin_grid{Ilab};
+        end
+        
         %%%%%%%%%%%accumulate_slice%%%%%%%%%%%%%%%%%%%%%%
         %  consolidate into fewer bins 
         function obj=accumulate_slice(obj,sum_label,N_accum)
