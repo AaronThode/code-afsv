@@ -575,7 +575,7 @@ classdef MatrixND
             
             axis xy
             set(gca,'fontweight','bold','fontsize',14);
-            colorbar('East')
+            colorbar('East','color','w')
             
         end
         
