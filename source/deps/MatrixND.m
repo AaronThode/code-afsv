@@ -470,9 +470,10 @@ classdef MatrixND
             Ntotal=double(sum(sum(obj.N)));
             
             %%%Change azimuth to directon of propagation toward...
-            if ~azimuth_from
-                Itick=(strcmpi(obj.labels,'Azimuth'));
-                if any(Itick)
+            Itick=(strcmpi(obj.labels,'Azimuth'));
+            if any(Itick)
+                if ~azimuth_from
+                    
                     %if strcmpi(obj.labels{1},'Azimuth')
                     [obj.bin_grid{Itick},Isort]=sort(bnorm(180+obj.bin_grid{Itick}));
                     if Itick(1)
@@ -481,7 +482,10 @@ classdef MatrixND
                         matrixx=matrixx(:,Isort);
                     end
                     plot_label{Itick}='Azimuth toward (deg)';
+                else
+                    plot_label{Itick}='Azimuth from (deg)';
                 end
+                
             end
             %if ~any(contains(obj.labels,'Frequency'))&~any(contains(obj.labels,'Time'))
             %   matrixx=matrixx./Ntotal;
