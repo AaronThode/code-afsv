@@ -430,27 +430,29 @@ classdef MatrixND
         %%%%%%%%%%%%%%%%%%image_2D_slice%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function matrixx=image_2D_slice(obj,varargin)
-            %image_2D_slice(scale_str,is_log,plot_chc)
+            %image_2D_slice(scale_str,is_log,plot_chc,azimuth_from)
             % scale_str: 'raw',joint,conditional,norm, 'conditionalcumulative'
+            %plot_chc: 'contourf','image'
             
+            is_log=false;
             plot_chc='image';
+            azimuth_from=false;
             if nargin==1
-                scale_str='raw';
-                is_log=false;
-                
+                scale_str='raw';     
             elseif nargin==2
-                is_log=false;
                 scale_str=varargin{1};
-                
             elseif nargin==3
-                is_log=varargin{2};
                 scale_str=varargin{1};
-            elseif nargin>=4
                 is_log=varargin{2};
+            elseif nargin==4
                 scale_str=varargin{1};
+                is_log=varargin{2};
                 plot_chc=varargin{3};
             else
-                
+                scale_str=varargin{1};
+                is_log=varargin{2};
+                plot_chc=varargin{3};
+                azimuth_from=varargin{4};
             end
             
             %%%Check that I am 2D
@@ -467,26 +469,8 @@ classdef MatrixND
             matrixx=double(obj.N);
             Ntotal=double(sum(sum(obj.N)));
             
-            %if ~any(contains(obj.labels,'Frequency'))&~any(contains(obj.labels,'Time'))
-            %   matrixx=matrixx./Ntotal;
-            %end
-            
-            tit_str='raw';
-            if strcmpi(scale_str,'joint')
-                matrixx=matrixx./(Ntotal);
-            elseif strcmpi(scale_str,'conditional') %% shows p(label(1)|label(2))
-                px=histogram(obj,obj.labels(2));
-                px_norm=(double(px.N.')./double(sum(px.N)));
-                matrixx=matrixx./(Ntotal);
-                matrixx=matrixx./px_norm;
-                tit_str='conditional';
-                disp('conditional plot');
-            elseif strcmpi(scale_str,'conditionalcumulative')
-                px=histogram(obj,obj.labels(2));
-                px_norm=(double(px.N.')./sum(double(px.N)));
-                matrixx=matrixx./(Ntotal);
-                
-                %%%Change azimuth to directon of propagation toward...
+            %%%Change azimuth to directon of propagation toward...
+            if ~azimuth_from
                 Itick=(strcmpi(obj.labels,'Azimuth'));
                 if any(Itick)
                     %if strcmpi(obj.labels{1},'Azimuth')
@@ -498,12 +482,32 @@ classdef MatrixND
                     end
                     plot_label{Itick}='Azimuth toward (deg)';
                 end
+            end
+            %if ~any(contains(obj.labels,'Frequency'))&~any(contains(obj.labels,'Time'))
+            %   matrixx=matrixx./Ntotal;
+            %end
+            
+            tit_str='raw';
+            if strcmpi(scale_str,'joint')
+                matrixx=matrixx./(Ntotal);
+            elseif strcmpi(scale_str,'conditional') %% shows p(label(1)|label(2))
+                px=histogram(obj,obj.labels(2));
+                px_norm=(double(px.N.')./double(sum(px.N)));
+                matrixx=matrixx./(Ntotal);
+                
+                matrixx=matrixx./px_norm;
+                tit_str='conditional';
+                disp('conditional plot');
+            elseif strcmpi(scale_str,'conditionalcumulative')
+                px=histogram(obj,obj.labels(2));
+                px_norm=(double(px.N.')./sum(double(px.N)));
+                matrixx=matrixx./(Ntotal);
+                
                 matrixx=cumsum(matrixx./px_norm);
                 tit_str='conditionalcumulative';
                 disp('conditionalcumulative plot');
-                
-                
-            elseif strfind(scale_str,'norm')
+                  
+            elseif contains(scale_str,'norm')
                 matrixx=matrixx./max(matrixx);
                 tit_str='normalized';
                 disp('normalized plot');
@@ -512,30 +516,7 @@ classdef MatrixND
             if is_log
                 matrixx=log10(double(matrixx));
             end
-            
-%             if strcmpi(scale_str,'conditionalcumulative')
-%                 plot(obj.bin_grid{1},matrixx);grid on
-%                 if strcmpi(obj.labels{1},'Azimuth')
-%                     set(gca,'xtick',0:30:360);
-%                     %set(gca,'xtick',obj.bin_grid{1}(sortt));
-%                     xtickss=get(gca,'xticklabel');
-%                     for I=1:length(xtickss)
-%                        mytick{I}=int2str(bnorm(180+str2num(xtickss{I})));
-%                     end
-%                     set(gca,'xticklabel',mytick);
-%                 end
-%                 
-%                 ylim([0 1]);
-%                 for I=1:length(obj.bin_grid{2})
-%                     legstr{I}=num2str(obj.bin_grid{2}(I));
-%                 end
-%                 legend(legstr)
-%                 
-%                 xlabel(plot_label{1});ylabel('Cumulative Fraction');
-%                 axis xy
-%                 set(gca,'fontweight','bold','fontsize',14);
-%                 return
-%             end
+           
             
             switch plot_chc
                 case 'image'
