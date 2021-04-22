@@ -430,13 +430,17 @@ classdef MatrixND
         %%%%%%%%%%%%%%%%%%image_2D_slice%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function matrixx=image_2D_slice(obj,varargin)
-            %image_2D_slice(scale_str,is_log,plot_chc,azimuth_from)
+            %image_2D_slice(scale_str,is_log,plot_chc,azimuth_from,contours)
             % scale_str: 'raw',joint,conditional,norm, 'conditionalcumulative'
             %plot_chc: 'contourf','image'
+            %aziuth_from:  if 'true' show azimuth from which sound is
+            %       coming from, not to
+            %contours: vector of contour intervals
             
             is_log=false;
             plot_chc='image';
             azimuth_from=false;
+            contourss=[];
             if nargin==1
                 scale_str='raw';     
             elseif nargin==2
@@ -448,11 +452,17 @@ classdef MatrixND
                 scale_str=varargin{1};
                 is_log=varargin{2};
                 plot_chc=varargin{3};
-            else
+            elseif nargin==5
                 scale_str=varargin{1};
                 is_log=varargin{2};
                 plot_chc=varargin{3};
                 azimuth_from=varargin{4};
+            elseif nargin==6
+                scale_str=varargin{1};
+                is_log=varargin{2};
+                plot_chc=varargin{3};
+                azimuth_from=varargin{4};
+                contourss=varargin{5};
             end
             
             %%%Check that I am 2D
@@ -527,13 +537,12 @@ classdef MatrixND
                     imagesc(obj.bin_grid{2}, obj.bin_grid{1},matrixx);
                 case 'contourf'
                     
-                    if nargin<5
+                    if isempty(contourss)
                        %contourrs=10:2:30;
-                        contourrs=0:0.1:1;
-                    else
-                        contourrs=varargin{end};
+                        contourss=0:0.1:1;
+                    
                     end
-                    [C,H]=contourf(obj.bin_grid{2},obj.bin_grid{1}, matrixx,contourrs);axis ij
+                    [C,H]=contourf(obj.bin_grid{2},obj.bin_grid{1}, matrixx,contourss);axis ij
                     clabel(C,H)
                  
                   
