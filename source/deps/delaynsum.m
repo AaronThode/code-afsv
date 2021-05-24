@@ -5,20 +5,20 @@
 %  October 17, 1996
 %  Given an angle theta, element spacing d,
 %  delay and sum an incoming signal
-%  function xtot=delaynsum(x,thta,space,Fs,goodel,cc)
+%  function [xtot,Mel,maxn]=delaynsum(x,thta,space,Fs,goodel,cc)
 % Input:
 %  x is [nsample nchan] matrix
-%  theta is in degrees, where broadside is zero.  A scalar value
+%  theta is in degrees, where broadside is zero.  Domain is [-90 90].  A scalar value
 %   space is a scalar in units of meters
 %   Fs is sampling rate in Hz
-%   goodel is vector of indicies of x that are good
+%   goodel is vector of indicies of x that are good. 
 %   cc is sound speed in meters/sec
 %   rows of x are samples, columns are channels
 % Output:
 %   xtot: beamformed time series, averaged by number of elements
 %   Mel: reference element.
-
-function [xtot,Mel]=delaynsum(x,thta,space,Fs,goodel,cc)
+%   maxn:  number of zeros inserted into start and end
+function [xtot,Mel,maxn]=delaynsum(x,thta,space,Fs,goodel,cc,Mel)
 %disp('pause');pause
 nx=size(x,1);
 thta=thta*pi/180;
@@ -30,15 +30,19 @@ xtot=[];
 if length(thta)~=1
     disp('Error, delaynsum requires scalar input for thta');
     return
-elseif length(goodel)~=size(x,2)
+elseif max(goodel)>size(x,2)
     disp('Error, length(goodel) is not the number of channels in x');
     return
 end
 
 dpt=Fs*space*sin(thta)/cc; %sample shift per element.  Must be a fraction
-fprintf('Fs is %6.2f\n',Fs);
-Mel=ceil(.5*(max(goodel)+min(goodel)));  %Reference element: number that experiences zero shift
-fprintf('Median element is %i\n',Mel);
+%fprintf('Fs is %6.2f\n',Fs);
+
+if ~exist('Mel','var')
+    Mel=ceil(.5*(max(goodel-1)+min(goodel-1)));  %Reference element: number that experiences zero shift
+end
+
+%fprintf('Median element is %i\n',Mel);
 maxn=ceil(max(abs(goodel-Mel))*abs(dpt))+1;  %%Maximum element sample shift possible
 nx_out=nx-2*maxn+1;  %%%Number of samples in trimmed signal
 xtot=zeros(nx_out,1);
@@ -53,7 +57,7 @@ end
 %%%Average in order to keep same units as Mel
 xtot=xtot/length(goodel);
 
-%Insert appropriate zeros-lost a day because of this!
+%Insert appropriate -lost a day because of this!
 %%% Transisent in beamformed series now occr at same sample indicies as Mel
 %%% reference
 

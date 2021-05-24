@@ -1,6 +1,6 @@
 function [area,a,b,ang,angax] = ellipsparms(S,critval,MD,VM)
 %ELLIPSPARMS  Calculates parameters of bivariate normal ellipse from covariance.
-%   [AREA,A,B,ANG] = ELLIPSPARMS(S,CRITVAL,MD,VM) where
+%   [AREA,A,B,ANG,angax] = ELLIPSPARMS(S,CRITVAL,MD,VM) where
 % S is the covariance matrix,
 % CRITVAL is the critical value from the chi-squared distribution,
 % MD is the mean position of the DASAR array,

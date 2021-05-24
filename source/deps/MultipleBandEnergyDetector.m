@@ -16,6 +16,7 @@
 %   flo_det, fhi_det:  The absolute minimum and maximum frequencies
 %   	to monitor for signals of interest,
 %
+%   eq: if exists, use this as the initial equalization function
 %   eq_time: an equalization time in seconds.  If eq_time is zero, the equalization is not updated after the first 20 samples.
 %           The longer the equalization time, the slower the changes in the
 %           threshold over time.
@@ -41,15 +42,15 @@
 %             param.flo_det=25;
 %             param.fhi_det=350;
 %             param.burn_in_time=1;
-%             param.eq_time='10';   param_desc{K}='Equalization time (s): should be roughly twice the duration of signal of interest';K=K+1;
-%             param.bandwidth='37';     param_desc{K}='Bandwidth of sub-detector in kHz';K=K+1;
-%             param.threshold='10';  param_desc{K}='Threshold in dB to accept a detection';K=K+1;
-%             param.snips_chc='1';  param_desc{K}='0 for no snips file, 1 for snips file of one channel, 2 for snips file of all channels';K=K+1;
-%             param.bufferTime='0.5'; param_desc{K}='Buffer Time in seconds to store before and after each detection snip, -1 suppress snips file';K=K+1;
-%             param.TolTime='1e-4';  param_desc{K}='Minimum time in seconds that must elapse for two detections to be listed as separate';K=K+1;
-%             param.MinTime='0';     param_desc{K}='Minimum time in seconds a required for a detection to be logged';K=K+1;
-%             param.MaxTime='3';     param_desc{K}= 'Maximum time in seconds a detection is permitted to have';K=K+1;
-%             param.debug='0';       param_desc{K}= '0: do not write out debug information. 1:  SEL output.  2:  equalized background noise. 3: SNR.';K=K+1;
+%             param.eq_time=10;   param_desc{K}='Equalization time (s): should be roughly twice the duration of signal of interest';K=K+1;
+%             param.bandwidth=37;     param_desc{K}='Bandwidth of sub-detector in kHz';K=K+1;
+%             param.threshold=10;  param_desc{K}='Threshold in dB to accept a detection';K=K+1;
+%             param.snips_chc=1;  param_desc{K}='0 for no snips file, 1 for snips file of one channel, 2 for snips file of all channels';K=K+1;
+%             param.bufferTime=0.5; param_desc{K}='Buffer Time in seconds to store before and after each detection snip, -1 suppress snips file';K=K+1;
+%             param.TolTime=1e-4;  param_desc{K}='Minimum time in seconds that must elapse for two detections to be listed as separate';K=K+1;
+%             param.MinTime=0;     param_desc{K}='Minimum time in seconds a required for a detection to be logged';K=K+1;
+%             param.MaxTime=3;     param_desc{K}= 'Maximum time in seconds a detection is permitted to have';K=K+1;
+%             param.debug=0;       param_desc{K}= '0: do not write out debug information. 1:  SEL output.  2:  equalized background noise. 3: SNR.';K=K+1;
 %
 %
 %%%%% Output
@@ -61,7 +62,7 @@
 %           detect.duration=(detect.tend-detect.tstart);
 %        detect.tstart_abs=tabs_start+datenum(0,0,0,0,0,detect.tstart);
 %          detect.tend_abs=tabs_start+datenum(0,0,0,0,0,detect.tend);
-
+%     debug.detector:  sum across spectrogram PSD bandwidth
        
 function [detect,debug]=MultipleBandEnergyDetector(x,tabs_start,params)
 
@@ -78,13 +79,21 @@ flo=params.flo_det:(0.5*params.bandwidth):params.fhi_det;
 fhi=flo+params.bandwidth;
 Iflo=ceil(flo*params.Nfft/params.Fs);
 %Iband=ceil(params.bandwidth*params.Nfft/params.Fs);
-Ifhi=ceil(fhi*params.Nfft/params.Fs);
+Ifhi=(fhi*params.Nfft/params.Fs);
 
-Igood=find(Ifhi<params.fhi_det*params.Nfft/params.Fs);
-Ifhi=Ifhi(Igood);Iflo=Iflo(Igood);fhi=fhi(Igood);flo=flo(Igood);
+Igood=find(Ifhi<=params.fhi_det*params.Nfft/params.Fs);
+Ifhi=ceil(Ifhi(Igood));Iflo=Iflo(Igood);fhi=fhi(Igood);flo=flo(Igood);
 Ndet=length(Ifhi);
 
+if Ndet==0
+    disp('Number of detectors is zero: bandwidth too large');
+    detect=[];debug=[];
+    return
+end
+
 [~,FF,TT,B] = spectrogram(x,hanning(params.Nfft),round(params.ovlap*params.Nfft),params.Nfft,params.Fs);
+dF=FF(2)-FF(1);
+
 if isdB  %JINGLONG
     B=10*log10(B); %Convert to dB
     threshold=params.threshold;
@@ -94,11 +103,17 @@ end
 Ncol=size(B,2);
 
 
-
-%Create equalization
+%Create equalization function
 Ispan=Iflo(1):Ifhi(end);
-[~,Iburn]=min(abs(params.burn_in_time*60-TT));
-eq=mean(B(Ispan,1:Iburn),2);
+B=B(Ispan,:);
+if ~isfield(params,'eq')
+    [~,Iburn]=min(abs(params.burn_in_time*60-TT));
+    eq=median(B(:,1:Iburn),2);
+elseif contains(params.eq,'median')
+    eq=median(B,2);
+    Iburn=1;
+end
+
 
 Ifhi=Ifhi-Iflo(1)+1;
 Iflo=Iflo-Iflo(1)+1;
@@ -112,19 +127,22 @@ Imax_time=round(params.MaxTime/dT);
 %%% Create equalization and detection functions
 if isdB  %JINGLONG
     for I=1:length(Iflo)
-        band.eq(I)=10*log10(sum(10.^(eq(Iflo(I):Ifhi(I))/10)));
-        debug.detect(I,:)=10*log10(sum(10.^(B(Iflo(I):Ifhi(I),:)/10),1));
+        band.eq(I)=10*log10(dF*sum(10.^(eq(Iflo(I):Ifhi(I))/10)));
+        debug.detect(I,:)=10*log10(dF*sum(10.^(B(Iflo(I):Ifhi(I),:)/10),1));  %Equal to dB RMS of transient
     end
 else
     for I=1:length(Iflo)
-        band.eq(I)=sum(eq(Iflo(I):Ifhi(I)));
-        debug.detect(I,:)=sum(B(Iflo(I):Ifhi(I),:),1);
+        band.eq(I)=dF*sum(eq(Iflo(I):Ifhi(I)));
+        debug.detect(I,:)=dF*sum(B(Iflo(I):Ifhi(I),:),1);
     end
     
 end
 %%%Define equalization parameter
 dn = (1-params.ovlap)*params.Nfft;
 alpha = 0.01^(dn/(params.eq_time*params.Fs));  %20 dB depression
+if isinf(params.eq_time)
+    alpha=1;
+end
 
 %%Initialize detector.
 count_estimate=round(10*length(x)/params.Fs);  %Assume around 10 detections/second
@@ -152,7 +170,7 @@ write_flag=false;
 %%  Written as for loop to make it easy
 for I=((1+Iburn):Ncol)  %For every column of spectrogram (or incoming FFT)
     global_reset=false;
-    val=debug.detect(:,I);  %Slice of spectrogram
+    val=debug.detect(:,I);  %Slice of frequency-summed spectrogram (dB rms)
     for J=1:Ndet  %For each detector
         if write_flag||global_reset %Detection has offically ended, cycle thorugh rest of detectors quickly
             continue
@@ -173,7 +191,7 @@ for I=((1+Iburn):Ncol)  %For every column of spectrogram (or incoming FFT)
                     if (I-tstart(J))>=Imin_time  %Is the detection long enough to track
                         detection_status(J)=2;
                         active_detectors=active_detectors+1;
-                        magnitude(J)=val(J);
+                        magnitude(J)=val(J);  %dB rms
                         peak_index(J)=I;
                         if active_detectors==1
                             tstart_total=I;
@@ -271,6 +289,7 @@ for I=((1+Iburn):Ncol)  %For every column of spectrogram (or incoming FFT)
         detect.fmin(count)=min(flo(tend~=0));
         detect.fmax(count)=max(fhi(tend~=0));
         detect.amplitude(count)=max(magnitude);
+        %detect.duration(count)=tstart_total-tend_total;
         %detection_status(:)=false;
         write_flag=false;
         reset_detect;
@@ -281,49 +300,53 @@ for I=((1+Iburn):Ncol)  %For every column of spectrogram (or incoming FFT)
     
 end  %I-loop through time
 
+%%%Convert times into seconds
+detect.tstart=dT*detect.tstart;
+detect.tend=dT*detect.tend;
+detect.duration=detect.tend-detect.tstart;
+
 for I=1:length(fieldnames)
     detect.(fieldnames{I})=detect.(fieldnames{I})(1:count);
 end
 
+
+
 if params.debug
     %close all
-    figure(100);hold off
-    subplot(3,1,1);hold off
+    figure(100+round(50*rand(1)));hold off
+    subplot(4,1,1);hold off
     mineq=unique(debug.eq_history);
-    imagesc(TT,0.5*(flo+fhi),(debug.eq_history)-mineq(2));axis('xy'); colorbar('westoutside')
-    caxis([0 20])
+    imagesc(TT,0.5*(flo+fhi),(debug.eq_history));axis('xy'); colorbar('westoutside')
+   % caxis([0 20])
     title('Equalization');
     
     %caxis([min(min(debug.detect)) max(max(debug.detect))]);
-    subplot(3,1,2);hold off
+    subplot(4,1,2);hold off
     imagesc(TT,0.5*(flo+fhi),(debug.detect));axis('xy'); colorbar('westoutside')
     caxis([min(min(debug.detect)) max(max(debug.detect))]);
-    title('Detection');
+    title('Detection function');
     
-%     subplot(4,1,3);hold off
-%     imagesc(TT,0.5*(flo+fhi),(debug.detect-debug.eq_history));axis('xy'); colorbar('westoutside')
-%     caxis([params.threshold + [0 30]]);
-%     title('Detection Excess');
+    subplot(4,1,3);hold off
+    imagesc(TT,0.5*(flo+fhi),(debug.detect-debug.eq_history));axis('xy'); colorbar('westoutside')
+    caxis([params.threshold + [0 30]]);
+    title('Detection Excess');
     
-    subplot(3,1,3);hold off
+    subplot(4,1,4);hold off
     imagesc(TT,0.5*(flo+fhi),debug.detection_status);axis('xy'); colorbar('westoutside')
     title('Detection Status');
     
-    detect.tstart=dT*detect.tstart;
-    detect.tend=dT*detect.tend;
     
     hold on
+    ylimm=ylim;
     for I=1:count
-        line([detect.tstart(I) detect.tend(I)],detect.fmax(I)*[1 1],'color','r','linewidth',3);
-        line(mean([detect.tstart(I) detect.tend(I)])*[1 1],[detect.fmin(I) detect.fmax(I)],'color','r','linewidth',3);
+        line([detect.tstart(I) detect.tend(I)],ylimm(2)*[1 1],'color','r','linewidth',3);
+        line(mean([detect.tstart(I) detect.tend(I)])*[1 1],ylimm,'color','r','linewidth',3);
     end
-    %pause;
-    
+    linkaxes
     
 end
 
 %%%Convert times to absolute times
-detect.duration=(detect.tend-detect.tstart);
 detect.tstart_abs=tabs_start+datenum(0,0,0,0,0,detect.tstart);
 detect.tend_abs=tabs_start+datenum(0,0,0,0,0,detect.tend);
 

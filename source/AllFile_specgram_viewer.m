@@ -3813,8 +3813,9 @@ if ~isempty(UTMLetter)
     fprintf('Easting: %6.2f m Northing: %6.2f m \n',VM(1),VM(2));
 end
 mean_coords=mean(DASAR_coords(Igood,:));
-CRITVAL=4.60517; %chi2inv(0.90,2);
-
+%CRITVAL=4.60517; %chi2inv(0.90,2);
+CRITVAL=.2107; %chi2inv(0.10,2);  %2 degrees freedom, 10th quartile
+                  
 [~,A,B,ANG,Baxis] = ellipsparms(Qhat,CRITVAL,mean_coords,VM);
 
 figure(1)
