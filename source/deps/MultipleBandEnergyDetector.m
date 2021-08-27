@@ -41,7 +41,7 @@
 %             param.ovlap = 0.75;
 %             param.flo_det=25;
 %             param.fhi_det=350;
-%             param.burn_in_time=1;
+%             param.burn_in_time=1;  %Time in minutes
 %             param.eq_time=10;   param_desc{K}='Equalization time (s): should be roughly twice the duration of signal of interest';K=K+1;
 %             param.bandwidth=37;     param_desc{K}='Bandwidth of sub-detector in kHz';K=K+1;
 %             param.threshold=10;  param_desc{K}='Threshold in dB to accept a detection';K=K+1;
@@ -114,11 +114,11 @@ elseif contains(params.eq,'median')
     Iburn=1;
 end
 
-
+%%%Adjust frequency indicies to account for filtering
 Ifhi=Ifhi-Iflo(1)+1;
 Iflo=Iflo-Iflo(1)+1;
 
-dT=TT(2)-TT(1);
+%dT=TT(2)-TT(1);
 dT=(1-params.ovlap)*params.Nfft/params.Fs;
 Imin_time=round(params.MinTime/dT);
 Itol_time=round(params.TolTime/dT);
@@ -165,6 +165,10 @@ peak_index=tstart;
 
 tstart_total=0;tend_total=0;
 write_flag=false;
+
+debug.eq_history(:,1:Iburn)=band.eq;
+debug.detection_status(:,1:Iburn)=-2;
+
 
 %%Cycle through detector.
 %%  Written as for loop to make it easy
@@ -251,12 +255,12 @@ for I=((1+Iburn):Ncol)  %For every column of spectrogram (or incoming FFT)
                     tstart(J)=0;
                     tend(J)=0;
                 case -1 %POSSIBLE OFF
-                    if isdB
-                        band.eq(J)=(alpha).*band.eq(J)+(1-alpha)*val(J); %Update background estimate
-                    else
-                        band.eq(J)=(band.eq(J).^alpha).*(val(J).^(1-alpha)); %Update background estimate
+                   % if isdB
+                    %    band.eq(J)=(alpha).*band.eq(J)+(1-alpha)*val(J); %Update background estimate
+                    %else
+                    %    band.eq(J)=(band.eq(J).^alpha).*(val(J).^(1-alpha)); %Update background estimate
                         
-                    end
+                   % end
                     if tend(J)+Itol_time<=I&&(tend(J)~=0)  %%%if enough time has passed since last detection
                         detection_status(J)=-2;
                         active_detectors=active_detectors-1;
@@ -301,9 +305,14 @@ for I=((1+Iburn):Ncol)  %For every column of spectrogram (or incoming FFT)
 end  %I-loop through time
 
 %%%Convert times into seconds
-detect.tstart=dT*detect.tstart;
-detect.tend=dT*detect.tend;
+%detect.tstart=0.5*params.Nfft/params.Fs-dT+dT*detect.tstart;
+%detect.tend=0.5*params.Nfft/params.Fs-dT+dT*detect.tend;
+
+detect.tstart=TT(detect.tstart(detect.tstart>0))';
+detect.tend=TT(detect.tend(detect.tend>0))';
+
 detect.duration=detect.tend-detect.tstart;
+debug.TT=TT;
 
 for I=1:length(fieldnames)
     detect.(fieldnames{I})=detect.(fieldnames{I})(1:count);
@@ -334,7 +343,7 @@ if params.debug
     subplot(4,1,4);hold off
     imagesc(TT,0.5*(flo+fhi),debug.detection_status);axis('xy'); colorbar('westoutside')
     title('Detection Status');
-    
+    xlabel('seconds');
     
     hold on
     ylimm=ylim;

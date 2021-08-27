@@ -248,7 +248,8 @@ classdef MatrixND
         
     end %sum_slice
     
-    %%%%%%%%%%%%%%%%%%append_time.m%%%%%%%%%%%%%%%%%%%%%%
+       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     %%%%%%%%%%%%%%%%%%append_time.m%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function obj=append_time(obj,obj_new)
             %obj=append_time(obj_new)
@@ -261,6 +262,53 @@ classdef MatrixND
             end
             Index1=find(Index1);
             obj.N=cat(Index1,obj.N,obj_new.N);
+            obj.bin_grid{Index1}=[obj.bin_grid{Index1} obj_new.bin_grid{Index1}];
+        end
+        
+        
+          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     %%%%%%%%%%%%%%%%%%append_time_with_gaps.m%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+     
+        function obj=append_time_with_gaps(obj,obj_new)
+            %obj=append_time(obj_new)
+            Index1=(contains(obj.labels,'Time','IgnoreCase',true));
+            Index2=(contains(obj_new.labels,'Time','IgnoreCase',true));
+            
+            if ~any(Index1&Index2)
+                disp('Two matricies don''t use same dimension for time; abort');
+                return
+            end
+            Index1=find(Index1);  %%%Index number of bin_grid with 'Time'
+            tabs=obj.bin_grid{Index1};
+            dt=tabs(2)-tabs(1);
+            
+            tabs_new=obj_new.bin_grid{Index1};
+            if dt~=tabs_new(2)-tabs_new(1)
+                 disp('Time interval of new object not the same; abort');
+                return
+            end
+            
+            tabs_middle=tabs(end):dt:tabs_new(1);
+            Nother=setdiff(1:ndims(obj.N),Index1);
+            
+            if length(Nother)>1
+                
+                disp('append_time_with_gaps requires 2D matrix; abort');
+                return
+            end
+            
+            if Nother==1
+                obj_mid.N=zeros(length(obj.bin_grid{Nother}),length(tabs_middle));
+            else
+                obj_mid.N=zeros(length(tabs_middle),length(obj.bin_grid{Nother}));
+            end
+            
+            obj.N=cat(Index1,obj.N,obj_mid.N);
+            obj.N=cat(Index1,obj.N,obj_new.N);
+            
+            obj.bin_grid{Index1}=[obj.bin_grid{Index1} tabs_middle];
+            
             obj.bin_grid{Index1}=[obj.bin_grid{Index1} obj_new.bin_grid{Index1}];
         end
         
@@ -432,6 +480,7 @@ classdef MatrixND
         function matrixx=image_2D_slice(obj,varargin)
             %image_2D_slice(scale_str,is_log,plot_chc,azimuth_from,contours)
             % scale_str: 'raw',joint,conditional,norm, 'conditionalcumulative'
+            % is_log, if true plot on log scale
             %plot_chc: 'contourf','image'
             %aziuth_from:  if 'true' show azimuth from which sound is
             %       coming from, not to
@@ -535,6 +584,9 @@ classdef MatrixND
             switch plot_chc
                 case 'image'
                     imagesc(obj.bin_grid{2}, obj.bin_grid{1},matrixx);
+                case 'pcolor'
+                    
+                    pcolor(obj.bin_grid{2}, obj.bin_grid{1},matrixx);
                 case 'contourf'
                     
                     if isempty(contourss)

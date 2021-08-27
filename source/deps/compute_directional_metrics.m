@@ -78,7 +78,7 @@ if strcmpi(filetype,'gsi')
         M=size(x,1);
         dn=1;
         fb=cwtfilterbank('SamplingFrequency',Fs,'SignalLength',size(x,1),'FrequencyLimits',[10 0.95*Fs/2],'VoicesPerOctave',20);
-        for J=1:size(x,2)
+        for J=1:3
             [B(J,:,:),FF,COI] = wt(fb,x(:,J));  %use cwtfilterbank for future speed
         end
         TT=(1:M)/Fs;
@@ -88,7 +88,7 @@ if strcmpi(filetype,'gsi')
         M=floor(1+(size(x,1)-Nfft)/dn);
         B=zeros(size(x,2),Nfft/2+1,M);
         
-        for J=1:size(x,2)
+        for J=1:3
             [B(J,:,:),FF,TT] = spectrogram(x(:,J),Nfft,round(ovlap*Nfft),Nfft,Fs);
         end
           Nf=Nfft/2+1;  %Should be the same as length(FF)
@@ -108,7 +108,7 @@ if strcmpi(filetype,'gsi')
     get_newparams=false;
     
     
-elseif ~isempty(strfind(filetype,'DIFAR'))
+elseif contains(filetype,'DIFAR')
     M=floor(1+(max(size(x))-Nfft)/dn);
     [Ix,Iy,TT,FF,PdB]=demultiplex_DIFAR(x,Fs,Nfft,ovlap);
     Nf=length(FF);
