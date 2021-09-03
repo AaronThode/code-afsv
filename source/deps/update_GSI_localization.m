@@ -51,7 +51,8 @@ DASAR_coords=[station_position.easting station_position.northing];
 [Event.localization.location,Event.localization.Qhat,~,Event.localization.outcome] = vmmle_r(theta(Ikeep),DASAR_coords(Ikeep,:),'h');
 mean_coords=mean(DASAR_coords(Ikeep,:));
 
-CRITVAL=4.60517; %chi2inv(0.90,2);
+%CRITVAL=4.60517; %chi2inv(0.90,2);
+CRITVAL=.2107; %chi2inv(0.10,2);  %2 degrees freedom, 10th quartile
 
 [Area,A,B,ANG,Baxis] = ellipsparms(Event.localization.Qhat,CRITVAL,mean_coords,Event.localization.location);
 Event.localization.major=A;

@@ -166,8 +166,12 @@ peak_index=tstart;
 tstart_total=0;tend_total=0;
 write_flag=false;
 
-debug.eq_history(:,1:Iburn)=band.eq;
-debug.detection_status(:,1:Iburn)=-2;
+if size(band.eq,2)>1
+    band.eq=band.eq';
+end
+debug.eq_history(Ndet,1:Iburn)=0;
+debug.eq_history(:,1:Iburn)=repmat(band.eq,1,Iburn);
+debug.detection_status(:,1:Iburn)=-2*ones(Ndet,Iburn);
 
 
 %%Cycle through detector.
