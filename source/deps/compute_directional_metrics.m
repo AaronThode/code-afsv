@@ -77,7 +77,7 @@ if strcmpi(filetype,'gsi')
     if use_wavelet
         M=size(x,1);
         dn=1;
-        fb=cwtfilterbank('SamplingFrequency',Fs,'SignalLength',size(x,1),'FrequencyLimits',[10 0.95*Fs/2],'VoicesPerOctave',20);
+        fb=cwtfilterbank('SamplingFrequency',Fs,'SignalLength',size(x,1),'FrequencyLimits',[10 0.95*Fs/2],'VoicesPerOctave',12);
         for J=1:3
             [B(J,:,:),FF,COI] = wt(fb,x(:,J));  %use cwtfilterbank for future speed
         end
