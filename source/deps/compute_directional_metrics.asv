@@ -89,7 +89,6 @@ if strcmpi(filetype,'gsi')
         B=zeros(size(x,2),Nfft/2+1,M);
         
         for J=1:3
-            fprintf('Spectrogram channel %i\n',J);
             [B(J,:,:),FF,TT] = spectrogram(x(:,J),Nfft,round(ovlap*Nfft),Nfft,Fs);
         end
           Nf=Nfft/2+1;  %Should be the same as length(FF)
@@ -190,12 +189,10 @@ if ~isempty(sec_avg)&&sec_avg>0
     pressure_autospectrum=PA_avg;
 end  %sec_avg
 
-if ~all(contains(metric_type,'Directionality'))
-    if ~use_wavelet
-        PdB=4+10*log10(2*pressure_autospectrum./(Nfft*Fs));  %%Power spectral density output
-    else
-        PdB=sqrt(pressure_autospectrum);
-    end
+if ~use_wavelet
+    PdB=4+10*log10(2*pressure_autospectrum./(Nfft*Fs));  %%Power spectral density output
+else
+    PdB=sqrt(pressure_autospectrum);
 end
 %[~,FF,TT,PdB1] = spectrogram(x(:,1),Nfft,round(ovlap*Nfft),Nfft,Fs);
 
@@ -213,9 +210,9 @@ for J=1:length(metric_type)  %%for each request
     switch metric_type{J}
         case 'Directionality'
             if ~reactive_flag(J)
-                mu = single(atan2d(real(Ix),real(Iy)));
+                mu = atan2d(real(Ix),real(Iy));
             else
-                mu = single(atan2d(imag(Ix),imag(Iy)));
+                mu = atan2d(imag(Ix),imag(Iy));
             end
             output_array{J}=bnorm(param.brefa+mu);
             %output_array{J}=bnorm(mu);
