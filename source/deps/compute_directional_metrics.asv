@@ -113,16 +113,20 @@ else  %%All other data is coming on on other channels.
         clear x
     end
     
+    
+    %%%Correct gain as needed
      %rho=1000;c=1500;
     
     Ix=squeeze(((B(1,:,:).*conj(B(2,:,:)))));
     Iy=squeeze(((B(1,:,:).*conj(B(3,:,:)))));
     
-    if ~all(contains(metric_type,'Directionality'))
+    
+    %if ~all(contains(metric_type,'Directionality'))  %%%Attempt to save
+    %time and memory, but need this if trying to use transparency
         pressure_autospectrum=squeeze(abs(B(1,:,:)).^2);
         normalized_velocity_autospectrum=squeeze(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2);
         energy_density=0.5*abs(normalized_velocity_autospectrum+pressure_autospectrum);
-    end
+    %end
     %toc
     get_newparams=false;
     clear B    
@@ -196,14 +200,14 @@ if ~isempty(sec_avg)&&sec_avg>0
     pressure_autospectrum=PA_avg;
 end  %sec_avg
 
-if ~all(contains(metric_type,'Directionality'))
+%if ~all(contains(metric_type,'Directionality'))  %%An attempt to be more efficient, not worth is
     if ~use_wavelet
         PdB=4+10*log10(2*pressure_autospectrum./(Nfft*Fs));  %%Power spectral density output
     else
         PdB=sqrt(pressure_autospectrum);
     end
-end
-%[~,FF,TT,PdB1] = spectrogram(x(:,1),Nfft,round(ovlap*Nfft),Nfft,Fs);
+%end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%Correct for phase misalignment in Ix and Iy
@@ -211,7 +215,7 @@ end
 if ~isfield(param,'phase_calibration')
     param.phase_calibration='Arctic5G_2014';
 end
-[Ix,Iy]=correct_phase_and_gain(Ix,Iy,FF,param.instrument,param.phase_calibration);
+[Ix,Iy]=correct_phase(Ix,Iy,FF,param.instrument,param.phase_calibration);
 
 
 for J=1:length(metric_type)  %%for each request
@@ -259,41 +263,59 @@ end
 
 end
 
-function [Ix,Iy]=correct_phase_and_gain(Ix,Iy,FF,ins,phase_calibration_chc)
+function Gains=correct_gain(
+function [Ix,Iy]=correct_phase(Ix,Iy,FF,instrument_type,phase_calibration_chc)
 phase_calibration_chc='Arctic5G_2014';
 %phase_calibration_chc='none';
 
 Np=size(Ix,2);
 
-if strcmpi(filetype,'wav')
-    return
-end
-switch(phase_calibration_chc)
-    case 'none'
+switch instrument_type
+    case 'DASAR'
+        
+        switch(phase_calibration_chc)
+            case 'none'
+                return
+            case 'Arctic5G_2014'
+                %slopee=4.10e-04;
+                %slopee=1.25*4.1e-04;  %%%radians phase per radians frequency, original bulk run
+                
+                
+                %%%% slopee measured at 00:06:30 local time on 17 August, 2014 5G
+                %%%%23:57:28  1 seconds 10/1/2014 5G
+                %%% Also checked 04-Oct-2010 02:45:47.4 DASAR 5G, within 10° below
+                %%%     375 Hz.  This signal is lower received level.
+                %slopee=1.1*4.1e-04;  %%%radians phase per radians frequency, for
+                slopee=1.2*4.1e-04;  %%%radians phase per radians frequency, for 1 sec averages
+                
+                
+                %Phasee=10*pi/180+slopee*2*pi*(FF-75);  %Phase is 10 degrees at 75 Hz, linear
+                Phasee=slopee*2*pi*FF;  %Nearly identical to above (y-intercept is
+                %           -1 degrees in equation above.
+                
+                
+                Phasee=exp(-1i*Phasee*ones(1,Np));
+                
+                Ix=Ix.*Phasee;
+                Iy=Iy.*Phasee;
+                
+        end
+    case 'drifter'
+        
+        HH_omni = getSensitivity(FF,'GTI-M35-300-omni');
+        HH_vel = getSensitivity(FF,'GTI-M35-300-directional');
+        HH_total=HH_omni.*HH_vel;
+        
+        Ix=Ix.*(HH_total.');
+        Iy=Iy.*(HH_total.');
+        
+        
+        %%%figure;
+        % semilogx(FF,HH_omni,FF, HH_vel);grid on;
         return
-    case 'Arctic5G_2014'
-        %slopee=4.10e-04;
-        %slopee=1.25*4.1e-04;  %%%radians phase per radians frequency, original bulk run
-       
+    otherwise
         
-        %%%% slopee measured at 00:06:30 local time on 17 August, 2014 5G
-        %%%%23:57:28  1 seconds 10/1/2014 5G
-        %%% Also checked 04-Oct-2010 02:45:47.4 DASAR 5G, within 10° below
-        %%%     375 Hz.  This signal is lower received level.
-        %slopee=1.1*4.1e-04;  %%%radians phase per radians frequency, for 
-        slopee=1.2*4.1e-04;  %%%radians phase per radians frequency, for 1 sec averages 
-       
-        
-        %Phasee=10*pi/180+slopee*2*pi*(FF-75);  %Phase is 10 degrees at 75 Hz, linear
-        Phasee=slopee*2*pi*FF;  %Nearly identical to above (y-intercept is
-        %           -1 degrees in equation above.
-        
-        
-        Phasee=exp(-1i*Phasee*ones(1,Np));
-        
-        Ix=Ix.*Phasee;
-        Iy=Iy.*Phasee;
-        
+        return
 end
 
 end

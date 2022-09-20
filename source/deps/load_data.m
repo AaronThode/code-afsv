@@ -33,6 +33,7 @@ head=[];
 head.multichannel=false;
 head.linked=false;
 head.vector_sensor=false;
+head.instrument=[];  %%Used to trigger whether further calibration needed on spectrogram
 
 filetype	=	upper(filetype);
 
@@ -76,7 +77,7 @@ switch filetype
             head.Fs=Fs;
             head.multichannel=0;
             head.linked=0;
-    
+            
             if tdate_start==-1
                 tdate_start=tmin;
                 
@@ -111,43 +112,43 @@ switch filetype
         
         %%Uncomment to conduct Bering Sea call selection
         %%% size(x)=[ 5(zplot)           4 (rplot)          8       16033]
-%         name='Bering Sea Simulations';
-%         numlines=1;
-%         if ndims(simulated.x)>3
-%             
-%             prompt={sprintf('Depths: %s',mat2str(simulated.zplot)), ...
-%                 sprintf('Ranges: %s',mat2str(simulated.rplot)), ...
-%                 sprintf('Modes: %s', mat2str(1:size(simulated.x,3)))};
-%             defaultanswer={'22','22000',''};
-%             
-%         else
-%             prompt={sprintf('Depths: %s',mat2str(simulated.zplot)), ...
-%                 sprintf('Ranges: %s',mat2str(simulated.rplot))};
-%             defaultanswer={'22','22000'};
-%         end
-%         answer=inputdlg(prompt,name,numlines,defaultanswer);
-%         [~,Iz]=min(abs(eval(answer{1})-simulated.zplot));
-%         [~,Ir]=min(abs(eval(answer{2})-simulated.rplot));
-%         if isempty(deblank(answer{3}))
-%             Imode=[];
-%         else
-%             Imode=eval(answer{3});
-%         end
-%         if ndims(simulated.x)>3
-%             if isempty(Imode)
-%                 simulated.x=squeeze(sum(simulated.x,3));
-%                
-%             else
-%                 Imode=min([Imode size(simulated.x,3)]);
-%                 simulated.x=squeeze(simulated.x(:,:,Imode,:));
-%             end
-%             %figure;spectrogram(X,WINDOW,NOVERLAP,NFFT,Fs)
-%         end
-%          x=squeeze(simulated.x(Iz,Ir,:));
-%         Fs=simulated.Fs;
+        %         name='Bering Sea Simulations';
+        %         numlines=1;
+        %         if ndims(simulated.x)>3
+        %
+        %             prompt={sprintf('Depths: %s',mat2str(simulated.zplot)), ...
+        %                 sprintf('Ranges: %s',mat2str(simulated.rplot)), ...
+        %                 sprintf('Modes: %s', mat2str(1:size(simulated.x,3)))};
+        %             defaultanswer={'22','22000',''};
+        %
+        %         else
+        %             prompt={sprintf('Depths: %s',mat2str(simulated.zplot)), ...
+        %                 sprintf('Ranges: %s',mat2str(simulated.rplot))};
+        %             defaultanswer={'22','22000'};
+        %         end
+        %         answer=inputdlg(prompt,name,numlines,defaultanswer);
+        %         [~,Iz]=min(abs(eval(answer{1})-simulated.zplot));
+        %         [~,Ir]=min(abs(eval(answer{2})-simulated.rplot));
+        %         if isempty(deblank(answer{3}))
+        %             Imode=[];
+        %         else
+        %             Imode=eval(answer{3});
+        %         end
+        %         if ndims(simulated.x)>3
+        %             if isempty(Imode)
+        %                 simulated.x=squeeze(sum(simulated.x,3));
+        %
+        %             else
+        %                 Imode=min([Imode size(simulated.x,3)]);
+        %                 simulated.x=squeeze(simulated.x(:,:,Imode,:));
+        %             end
+        %             %figure;spectrogram(X,WINDOW,NOVERLAP,NFFT,Fs)
+        %         end
+        %          x=squeeze(simulated.x(Iz,Ir,:));
+        %         Fs=simulated.Fs;
         
         
-       %%%%%%%%%%%%%
+        %%%%%%%%%%%%%
         %x=simulated.x_sweep';
         if strcmp(Ichan,'all')
             Ichan=1:size(x,2);
@@ -164,15 +165,15 @@ switch filetype
             tmin=datenum(0);
             tmax=tmin+datenum(0,0,0,0,0,length(x)/Fs);
         elseif tdate_start>0   & ~isempty(tmin) %Requested time
-           
+            
             tmp=datevec(tdate_start-tmin);
             nsec=tmp(6)+60*tmp(5)+3600*tmp(4);
             dn=1+floor(Fs*nsec);
             x=x(dn:end,:);
             t=t(dn:end);
-        elseif tdate_start== -1 
+        elseif tdate_start== -1
             
-           % tmax=tdate_start+datenum(0,0,0,0,0,length(x)/Fs);
+            % tmax=tdate_start+datenum(0,0,0,0,0,length(x)/Fs);
         end
         
         if tlen*Fs<size(x,1)
@@ -180,7 +181,7 @@ switch filetype
         end
         t=(1:length(x))/Fs;
         
-       % tmax=tmin+datenum(0,0,0,0,0,max(t));
+        % tmax=tmin+datenum(0,0,0,0,0,max(t));
         try
             head.geom.rd=simulated.rd;
         catch
@@ -189,6 +190,8 @@ switch filetype
         head.Nchan=size(x,2);
         %x=x';
     case 'GSI'
+        
+        head.instrument='DASAR';
         
         button_chc=get(handles.togglebutton_ChannelBeam,'String');
         beamform_data=0;
@@ -219,7 +222,7 @@ switch filetype
             end
         end
         
-       
+        
         %%%%Rare situations were I was testing DIFAR processing--should be
         %%%%commented out once results published.
         if contains(myfile,'Rankin')  %%%Shannon Rankin DIFAR data
@@ -252,7 +255,7 @@ switch filetype
             tmax=tmin+datenum(0,0,1,0,0,0);
         end
         
-       
+        
         
         Fs=head.Fs;
         
@@ -519,14 +522,14 @@ switch filetype
         [x,tmin,tmax,Fs,head]=read_synchronized_dat_file([mydir '/' myfile],tdate_start,tlen,0); %output in uPa
         %[x,tmin,tmax]=read_dat_file([mydir '/' myfile],Fs,tdate_start,tlen,1);  %Voltage output
         t=(1:size(x,1))/Fs;
-       
-       
+        
+        
         head.Nchan=size(x,2);
         
         if head.Nchan>1
-             head.multichannel=true;
+            head.multichannel=true;
         end
-         %%%If beamforming is desired for a look at a given direction...
+        %%%If beamforming is desired for a look at a given direction...
         beamform_data=0;
         get_geometry=0;
         if strcmpi(dat_chc,'angle')&&~strcmpi(Ichan,'all')
@@ -558,49 +561,49 @@ switch filetype
         
         
         
-%         switch Fs
-%             case 50000
-%                 head.calcurv=[
-%                     1.179288464673746e+06
-%                     -3.417289147406752e+06
-%                     3.972100408634462e+06
-%                     -2.459193259685826e+06
-%                     8.904700994689314e+05
-%                     -1.924134277822444e+05
-%                     2.476608484423531e+04
-%                     -2.235739303825218e+03
-%                     2.904887584919255e+02
-%                     -5.381149759460806e+00
-%                     7.841554559708414e-03
-%                     ];
-%             case 6250
-%                 head.calcurv=[
-%                     -9.864342626384007e+06
-%                     2.675183405132254e+07
-%                     -3.072255757018830e+07
-%                     1.946983114345214e+07
-%                     -7.445224085881455e+06
-%                     1.766054734429601e+06
-%                     -2.570588847834060e+05
-%                     2.188411119767746e+04
-%                     -9.803725367146685e+02
-%                     1.959124505642275e+01
-%                     -2.811936435415921e-01];
-%             case 12500
-%                 head.calcurv=[
-%                     9.262441626302190e+07
-%                     -2.151487191990283e+08
-%                     2.069375942078056e+08
-%                     -1.063702102525421e+08
-%                     3.153159716612202e+07
-%                     -5.458152352141772e+06
-%                     5.382152297627985e+05
-%                     -2.765563363629215e+04
-%                     6.113088605208859e+02
-%                     -1.301582987521525e+00
-%                     -1.634557871607174e-01];
-%         end
-%         
+        %         switch Fs
+        %             case 50000
+        %                 head.calcurv=[
+        %                     1.179288464673746e+06
+        %                     -3.417289147406752e+06
+        %                     3.972100408634462e+06
+        %                     -2.459193259685826e+06
+        %                     8.904700994689314e+05
+        %                     -1.924134277822444e+05
+        %                     2.476608484423531e+04
+        %                     -2.235739303825218e+03
+        %                     2.904887584919255e+02
+        %                     -5.381149759460806e+00
+        %                     7.841554559708414e-03
+        %                     ];
+        %             case 6250
+        %                 head.calcurv=[
+        %                     -9.864342626384007e+06
+        %                     2.675183405132254e+07
+        %                     -3.072255757018830e+07
+        %                     1.946983114345214e+07
+        %                     -7.445224085881455e+06
+        %                     1.766054734429601e+06
+        %                     -2.570588847834060e+05
+        %                     2.188411119767746e+04
+        %                     -9.803725367146685e+02
+        %                     1.959124505642275e+01
+        %                     -2.811936435415921e-01];
+        %             case 12500
+        %                 head.calcurv=[
+        %                     9.262441626302190e+07
+        %                     -2.151487191990283e+08
+        %                     2.069375942078056e+08
+        %                     -1.063702102525421e+08
+        %                     3.153159716612202e+07
+        %                     -5.458152352141772e+06
+        %                     5.382152297627985e+05
+        %                     -2.765563363629215e+04
+        %                     6.113088605208859e+02
+        %                     -1.301582987521525e+00
+        %                     -1.634557871607174e-01];
+        %         end
+        %
     case 'ADI'
         [x,tmin,tmax,fs]=read_adi_file(mydir,myfile,[],0,tlen,0);
         
@@ -764,26 +767,16 @@ switch filetype
         end
         
         
-        %%%Get start times and sensitivities for various files...
+        %%%Get start times and sensitivities for various file types...
         [head,sens,Fs,tmin,tmax]=get_WAV_start_time_and_sens(mydir,myfile, Nsamples,Fs);
-            
+        
         
         tdate_vec	=	datevec(tdate_start - tmin);
         nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);  %Ignores differences in days
         N1			=	1 + round(nsec*handles.Fs);
         N2			=	N1 + round(tlen*handles.Fs);
         
-        if contains(myfile,'DIFAR')
-            head.multichannel=true;
-            head.vector_sensor=true;
-        end
-        
-        %%%%ONR drifter check
-        if contains(myfile,'drifter')
-            head.vector_sensor=true;
-           
-        end
-        
+       
         try
             if verLessThan('matlab', '8.2.0.29')
                 [x,Fs]		=	wavread(fullfile(mydir,myfile),[N1 N2],'native');
@@ -803,7 +796,7 @@ switch filetype
             head.multichannel=true;
         end
         
-       
+        
         if ~strcmp(Ichan,'all')
             x		=	x(:,Ichan);
         end
@@ -841,94 +834,104 @@ end
 
 end  %function load_data
 
- function [head,sens,Fs,tmin,tmax]=get_WAV_start_time_and_sens(mydir,myfile, Nsamples,Fs)
-         
-      [head.cable_factor,sens]=get_ADAT24_cable_factor;
-       
+function [head,sens,Fs,tmin,tmax]=get_WAV_start_time_and_sens(mydir,myfile, Nsamples,Fs)
+
+if contains(myfile,'DIFAR')
+    head.multichannel=true;
+    head.vector_sensor=true;
+    head.instrument='DIFAR';
+end
+[head.cable_factor,sens]=get_ADAT24_cable_factor;
+
+try
+    done=false;
+    [SUDAR_true,tmin,tmax,FsSUDAR]=get_SUDAR_time(mydir,myfile); %Check whether a SUDAR file exists
+    head.instrument='SoundTrap';
+    
+    if SUDAR_true
+        sens=(10^(186/20))/(2^15);
+        Fs=FsSUDAR;
+        done=true;
+    end
+    
+    if ~done
         try
-            done=false;
-            [SUDAR_true,tmin,tmax,FsSUDAR]=get_SUDAR_time(mydir,myfile); %Check whether a SUDAR file exists
-            
-            if SUDAR_true
-                sens=(10^(186/20))/(2^15);
-                Fs=FsSUDAR;
+            [Berchok_true,tmin,tmax]=get_Berchok_time(mydir,myfile,Nsamples,Fs); %Check whether a Catherine Berchok file exists
+            if Berchok_true
+                sens=1;
+                
+                % kludge Code for testing beta=-3;
+                %                         disp('WARNING!  DOWNLOADING TEST FILE');
+                %                         data=load('/Users/thode/Projects/RightWhaleDetection/Publications/Refractive_Invariant/DataExample.dir/Animal_faint/AveragedCallBeta1Range15kmModes1n2/StackedResult.mat');
+                %
+                %                         x=data.xtot;
+                %                         %x=data.xref;
+                %                         Fs=data.Fs;
+                %                         t=1:length(x);
+                %                         tmin=datenum([1970 1 1 0 0 0]);
+                %                         tmax=tmin+datenum(0,0,0,0,0,length(x)/Fs);
+                %                         head.Nchan=1;
+                %
+                %                         return
+                
+                %%End of kludge
                 done=true;
             end
-            
-            if ~done
-                try
-                    [Berchok_true,tmin,tmax]=get_Berchok_time(mydir,myfile,Nsamples,Fs); %Check whether a Catherine Berchok file exists
-                    if Berchok_true
-                        sens=1;
-                        
-                        % kludge Code for testing beta=-3;
-%                         disp('WARNING!  DOWNLOADING TEST FILE');
-%                         data=load('/Users/thode/Projects/RightWhaleDetection/Publications/Refractive_Invariant/DataExample.dir/Animal_faint/AveragedCallBeta1Range15kmModes1n2/StackedResult.mat');
-%                       
-%                         x=data.xtot;
-%                         %x=data.xref;
-%                         Fs=data.Fs;
-%                         t=1:length(x);
-%                         tmin=datenum([1970 1 1 0 0 0]);
-%                         tmax=tmin+datenum(0,0,0,0,0,length(x)/Fs);
-%                         head.Nchan=1;
-%                         
-%                         return
-                        
-                        %%End of kludge
-                        done=true;
-                    end
-                catch
-                    %keyboard
-                end
-            end
-            
-            
-            if contains(myfile,'LL017_Set4_3min.wav.x.wav')
-                sens=3162;
-            end
-            
-            
-            if ~done
-                
-                if contains(myfile,'drifter')
-                    tmin	=	convert_date_drifter(myfile);
-                    %drifter-5V-2022-261-100939-GMT-n00535.wav%
-                    sens=1; %placeholder
-                else
-                    
-                    tmin	=	convert_date(myfile,'_');
-                    if isempty(tmin)
-                        tmin=datenum([1970 1 1 0 0 0]);
-                    end
-                end
-                
-                tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
-            end
+            head.instrument='BerchokData';
         catch
-            disp([myfile ': convert_date failure']);
-            try
-                tmin=datenum(get(handles.text_mintime,'String'));
-            catch
-                minn	=	input('Enter start date in format [yr mo day hr min sec] or hit return: ');
-                if isempty(minn)
-                    minn=[1970 1 1 0 0 0];
-                end
-                tmin	=	datenum(minn);
-            end
-            tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
+            %keyboard
         end
- end
- 
- 
- function tmin=convert_date_drifter(myfile)
-    Idash=findstr(myfile,'-');
-    year=str2num(myfile((Idash(2)+1):(Idash(3)-1)));
-    JD=str2num(myfile((Idash(3)+1):(Idash(4)-1)));
-    hr=str2num(myfile(Idash(4)+(1:2)));
-    minn=str2num(myfile(Idash(4)+(3:4)));
-    secc=str2num(myfile(Idash(4)+(5:6)));
-    tmin=datenum(year,0,JD,hr,minn,secc);
- 
- end
- 
+    end
+    
+    
+    if contains(myfile,'LL017_Set4_3min.wav.x.wav')
+        sens=3162;
+        head.instrument='Arctic_VLA_Emma';
+    end
+    
+    
+    if ~done
+        
+        if contains(myfile,'drifter')
+            tmin	=	convert_date_drifter(myfile);
+            %drifter-5V-2022-261-100939-GMT-n00535.wav%
+            sens=1; %placeholder
+            head.instrument='drifter';
+            head.vector_sensor=true;
+            
+        else
+            
+            tmin	=	convert_date(myfile,'_');
+            if isempty(tmin)
+                tmin=datenum([1970 1 1 0 0 0]);
+            end
+        end
+        
+        tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
+    end
+catch
+    disp([myfile ': convert_date failure']);
+    try
+        tmin=datenum(get(handles.text_mintime,'String'));
+    catch
+        minn	=	input('Enter start date in format [yr mo day hr min sec] or hit return: ');
+        if isempty(minn)
+            minn=[1970 1 1 0 0 0];
+        end
+        tmin	=	datenum(minn);
+    end
+    tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
+end
+end
+
+
+function tmin=convert_date_drifter(myfile)
+Idash=findstr(myfile,'-');
+year=str2num(myfile((Idash(2)+1):(Idash(3)-1)));
+JD=str2num(myfile((Idash(3)+1):(Idash(4)-1)));
+hr=str2num(myfile(Idash(4)+(1:2)));
+minn=str2num(myfile(Idash(4)+(3:4)));
+secc=str2num(myfile(Idash(4)+(5:6)));
+tmin=datenum(year,0,JD,hr,minn,secc);
+
+end

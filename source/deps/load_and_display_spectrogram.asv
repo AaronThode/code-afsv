@@ -330,14 +330,13 @@ update_button_visibility;
             %%Add spectral calibration curve, if present
             switch hdr.instrument
                 case 'drifter'
-                    if Ichan>=1 & Ichan<=8
+                    if Ichan>=1 and Ichan<=8
                         senss=getSensitivity(FF,'HTI-92WB');
                     elseif Ichan==9
                         senss=getSensitivity(FF,'GTI-M35-300-omni');
                     elseif Ichan>=10 || Ichan<=11
                         senss=getSensitivity(FF,'GTI-M35-300-directional');
                     end
-                    senss=senss.^2;
                 case 'DASAR'
                     senss=1;
                     
@@ -345,7 +344,7 @@ update_button_visibility;
             
             if ~isfield(hdr,'calcurv')
                 %%%KEY SPECTROGRAM IMAGE COMMAND
-                imagesc(TT,FF/1000,10*log10(B.*senss.'));%
+                imagesc(TT,FF/1000,10*log10(B)+sens);%
                 
             else
                 Xp_cal_fin=polyval(hdr.calcurv,FF/Fs);

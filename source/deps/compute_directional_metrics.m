@@ -113,16 +113,24 @@ else  %%All other data is coming on on other channels.
         clear x
     end
     
+    
+    %%%Correct gain as needed
+    Gains=correct_gain(FF,param.instrument);
+    %for J=1:3
+     %  B(J,:,:)=squeeze(B(J,:,:)).*Gains(:,J);
+    %end
      %rho=1000;c=1500;
     
     Ix=squeeze(((B(1,:,:).*conj(B(2,:,:)))));
     Iy=squeeze(((B(1,:,:).*conj(B(3,:,:)))));
     
-    if ~all(contains(metric_type,'Directionality'))
+    
+    %if ~all(contains(metric_type,'Directionality'))  %%%Attempt to save
+    %time and memory, but need this if trying to use transparency
         pressure_autospectrum=squeeze(abs(B(1,:,:)).^2);
         normalized_velocity_autospectrum=squeeze(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2);
         energy_density=0.5*abs(normalized_velocity_autospectrum+pressure_autospectrum);
-    end
+    %end
     %toc
     get_newparams=false;
     clear B    
@@ -196,14 +204,14 @@ if ~isempty(sec_avg)&&sec_avg>0
     pressure_autospectrum=PA_avg;
 end  %sec_avg
 
-if ~all(contains(metric_type,'Directionality'))
+%if ~all(contains(metric_type,'Directionality'))  %%An attempt to be more efficient, not worth is
     if ~use_wavelet
         PdB=4+10*log10(2*pressure_autospectrum./(Nfft*Fs));  %%Power spectral density output
     else
         PdB=sqrt(pressure_autospectrum);
     end
-end
-%[~,FF,TT,PdB1] = spectrogram(x(:,1),Nfft,round(ovlap*Nfft),Nfft,Fs);
+%end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%Correct for phase misalignment in Ix and Iy
@@ -211,7 +219,7 @@ end
 if ~isfield(param,'phase_calibration')
     param.phase_calibration='Arctic5G_2014';
 end
-[Ix,Iy]=correct_phase_and_gain(Ix,Iy,FF,param.instrument,param.phase_calibration);
+[Ix,Iy]=correct_phase(Ix,Iy,FF,param.instrument,param.phase_calibration);
 
 
 for J=1:length(metric_type)  %%for each request
@@ -259,7 +267,24 @@ end
 
 end
 
-function [Ix,Iy]=correct_phase_and_gain(Ix,Iy,FF,instrument_type,phase_calibration_chc)
+function Gains=correct_gain(FF,instrument_type)
+switch instrument_type
+    case 'DASAR'
+        Gains=ones(size(FF),3);
+    case 'drifter'
+        Gains(:,1) = getSensitivity(FF,'GTI-M35-300-omni')';
+        Gains(:,2) = getSensitivity(FF,'GTI-M35-300-directional')';
+        Gains(:,3)=Gains(:,2);
+        
+        % figure;
+        %semilogx(FF,20*log10(Gains(:,1)),FF, 20*log10(Gains(:,2)));grid on;
+    otherwise
+        Gains=ones(size(FF),3);
+end
+
+end
+
+function [Ix,Iy]=correct_phase(Ix,Iy,FF,instrument_type,phase_calibration_chc)
 phase_calibration_chc='Arctic5G_2014';
 %phase_calibration_chc='none';
 
@@ -295,8 +320,12 @@ switch instrument_type
                 Iy=Iy.*Phasee;
                 
         end
-    case drifter
+    case 'drifter'
         
+       
+        %%%figure;
+        % semilogx(FF,HH_omni,FF, HH_vel);grid on;
+        return
     otherwise
         
         return
