@@ -259,47 +259,41 @@ end
 
 end
 
-function [Ix,Iy]=correct_phase_and_gain(Ix,Iy,FF,instrument_type,phase_calibration_chc)
+function [Ix,Iy]=correct_phase_and_gain(Ix,Iy,FF,ins,phase_calibration_chc)
 phase_calibration_chc='Arctic5G_2014';
 %phase_calibration_chc='none';
 
 Np=size(Ix,2);
 
-switch instrument_type
-    case 'DASAR'
-        
-        switch(phase_calibration_chc)
-            case 'none'
-                return
-            case 'Arctic5G_2014'
-                %slopee=4.10e-04;
-                %slopee=1.25*4.1e-04;  %%%radians phase per radians frequency, original bulk run
-                
-                
-                %%%% slopee measured at 00:06:30 local time on 17 August, 2014 5G
-                %%%%23:57:28  1 seconds 10/1/2014 5G
-                %%% Also checked 04-Oct-2010 02:45:47.4 DASAR 5G, within 10° below
-                %%%     375 Hz.  This signal is lower received level.
-                %slopee=1.1*4.1e-04;  %%%radians phase per radians frequency, for
-                slopee=1.2*4.1e-04;  %%%radians phase per radians frequency, for 1 sec averages
-                
-                
-                %Phasee=10*pi/180+slopee*2*pi*(FF-75);  %Phase is 10 degrees at 75 Hz, linear
-                Phasee=slopee*2*pi*FF;  %Nearly identical to above (y-intercept is
-                %           -1 degrees in equation above.
-                
-                
-                Phasee=exp(-1i*Phasee*ones(1,Np));
-                
-                Ix=Ix.*Phasee;
-                Iy=Iy.*Phasee;
-                
-        end
-    case drifter
-        
-    otherwise
-        
+if strcmpi(filetype,'wav')
+    return
+end
+switch(phase_calibration_chc)
+    case 'none'
         return
+    case 'Arctic5G_2014'
+        %slopee=4.10e-04;
+        %slopee=1.25*4.1e-04;  %%%radians phase per radians frequency, original bulk run
+       
+        
+        %%%% slopee measured at 00:06:30 local time on 17 August, 2014 5G
+        %%%%23:57:28  1 seconds 10/1/2014 5G
+        %%% Also checked 04-Oct-2010 02:45:47.4 DASAR 5G, within 10° below
+        %%%     375 Hz.  This signal is lower received level.
+        %slopee=1.1*4.1e-04;  %%%radians phase per radians frequency, for 
+        slopee=1.2*4.1e-04;  %%%radians phase per radians frequency, for 1 sec averages 
+       
+        
+        %Phasee=10*pi/180+slopee*2*pi*(FF-75);  %Phase is 10 degrees at 75 Hz, linear
+        Phasee=slopee*2*pi*FF;  %Nearly identical to above (y-intercept is
+        %           -1 degrees in equation above.
+        
+        
+        Phasee=exp(-1i*Phasee*ones(1,Np));
+        
+        Ix=Ix.*Phasee;
+        Iy=Iy.*Phasee;
+        
 end
 
 end
