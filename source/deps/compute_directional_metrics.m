@@ -60,7 +60,7 @@ end
 %%%%*DIFAAR*.wav files.
 
 
-if strcmpi(filetype,'gsi')
+if ~contains(filetype,'DIFAR')
     
     if length(x(1,:))<Nfft/2
         disp('Signal sample shorter than Nfft');
@@ -110,7 +110,7 @@ if strcmpi(filetype,'gsi')
     get_newparams=false;
     clear B
     
-elseif contains(filetype,'DIFAR')
+else
     M=floor(1+(max(size(x))-Nfft)/dn);
     [Ix,Iy,TT,FF,PdB]=demultiplex_DIFAR(x,Fs,Nfft,ovlap);
     Nf=length(FF);
@@ -205,7 +205,7 @@ end
 if ~isfield(param,'phase_calibration')
     param.phase_calibration='Arctic5G_2014';
 end
-[Ix,Iy]=correct_phase(Ix,Iy,FF,param.phase_calibration);
+[Ix,Iy]=correct_phase(Ix,Iy,FF,filetype,param.phase_calibration);
 
 
 for J=1:length(metric_type)  %%for each request
@@ -253,11 +253,15 @@ end
 
 end
 
-function [Ix,Iy]=correct_phase(Ix,Iy,FF,phase_calibration_chc)
+function [Ix,Iy]=correct_phase(Ix,Iy,FF,filetype,phase_calibration_chc)
 phase_calibration_chc='Arctic5G_2014';
 %phase_calibration_chc='none';
 
 Np=size(Ix,2);
+
+if strcmpi(filetype,'wav')
+    return
+end
 switch(phase_calibration_chc)
     case 'none'
         return

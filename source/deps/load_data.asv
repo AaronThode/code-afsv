@@ -32,7 +32,7 @@ tmax=[];
 head=[];
 head.multichannel=false;
 head.linked=false;
-head.vector_sensor=false;
+head.drifter=false;
 
 filetype	=	upper(filetype);
 
@@ -773,17 +773,6 @@ switch filetype
         N1			=	1 + round(nsec*handles.Fs);
         N2			=	N1 + round(tlen*handles.Fs);
         
-        if contains(myfile,'DIFAR')
-            head.multichannel=true;
-            head.vector_sensor=true;
-        end
-        
-        %%%%ONR drifter check
-        if contains(myfile,'drifter')
-            head.vector_sensor=true;
-           
-        end
-        
         try
             if verLessThan('matlab', '8.2.0.29')
                 [x,Fs]		=	wavread(fullfile(mydir,myfile),[N1 N2],'native');
@@ -803,7 +792,14 @@ switch filetype
             head.multichannel=true;
         end
         
-       
+        if contains(myfile,'DIFAR')
+            head.multichannel=true;
+        end
+        
+        if contains(myfile,'drifter')
+            head.drifter=true;
+        end
+        
         if ~strcmp(Ichan,'all')
             x		=	x(:,Ichan);
         end
@@ -894,15 +890,13 @@ end  %function load_data
                 if contains(myfile,'drifter')
                     tmin	=	convert_date_drifter(myfile);
                     %drifter-5V-2022-261-100939-GMT-n00535.wav%
-                    sens=1; %placeholder
-                else
-                    
-                    tmin	=	convert_date(myfile,'_');
-                    if isempty(tmin)
-                        tmin=datenum([1970 1 1 0 0 0]);
-                    end
+                   
                 end
                 
+                tmin	=	convert_date(myfile,'_');
+                if isempty(tmin)
+                    tmin=datenum([1970 1 1 0 0 0]);
+                end
                 tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
             end
         catch
@@ -919,16 +913,12 @@ end  %function load_data
             tmax	=	tmin + datenum(0,0,0,0,0,Nsamples/Fs);
         end
  end
- 
- 
  function tmin=convert_date_drifter(myfile)
     Idash=findstr(myfile,'-');
     year=str2num(myfile((Idash(2)+1):(Idash(3)-1)));
     JD=str2num(myfile((Idash(3)+1):(Idash(4)-1)));
-    hr=str2num(myfile(Idash(4)+(1:2)));
-    minn=str2num(myfile(Idash(4)+(3:4)));
-    secc=str2num(myfile(Idash(4)+(5:6)));
-    tmin=datenum(year,0,JD,hr,minn,secc);
+    hr=str2num(myfile(Idash(4)+(0:5)));
+    keyboard
  
  end
  
