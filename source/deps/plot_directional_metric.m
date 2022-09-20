@@ -27,6 +27,7 @@ if strcmpi(handles.display_view,'Directionality')
         ax.YLabel.String='Frequency';
         
     end
+     colorbar
     titstr=' Azimuth';
     try
         if get(handles.checkbox_grayscale,'Value')==1
@@ -61,24 +62,29 @@ else
     if strcmpi(handles.display_view,'ItoERatio')
         
         imagesc(TT,FF/1000,output_array);caxis([0 1])
+        hbar=colorbar;
         titstr='Intensity/Energy Ratio';
     elseif strcmpi(handles.display_view,'KEtoPERatio')
         
         %imagesc(TT,FF/1000,10*log10(output_array));
         imagesc(TT,FF/1000,(output_array));
-        
+         hbar=colorbar;
         titstr='Kinetic/Potential Ratio';
         %caxis([0 90])
-        caxis([-20 20])
+        %caxis([-20 20])
+        caxis([-10 10]);
+        hbar.Ticks=[-10 -6 -3 3 6 10];
     elseif strcmpi(handles.display_view,'IntensityPhase')
         
         imagesc(TT,FF/1000,output_array);
-        titstr='Kinetic/Potential Ratio';
+        hbar=colorbar;
+        titstr='IntensityPhase';
         caxis([0 90])
     elseif strcmpi(handles.display_view,'PhaseSpeed')
         
         %%%Phase speed directly
         hh=imagesc(TT,FF/1000,output_array);
+        hbar=colorbar;
         titstr='Phase Speed';
         caxis([1000 3000])
 %         
@@ -96,7 +102,7 @@ else
         end
     end
     
-    colorbar
+   
     
     %%%Set colorscale
     if get(handles.checkbox_grayscale,'Value')==1

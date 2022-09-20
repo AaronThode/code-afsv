@@ -116,9 +116,9 @@ else  %%All other data is coming on on other channels.
     
     %%%Correct gain as needed
     Gains=correct_gain(FF,param.instrument);
-    %for J=1:3
-     %  B(J,:,:)=squeeze(B(J,:,:)).*Gains(:,J);
-    %end
+    for J=1:3
+      B(J,:,:)=squeeze(B(J,:,:)).*Gains(:,J);
+    end
      %rho=1000;c=1500;
     
     Ix=squeeze(((B(1,:,:).*conj(B(2,:,:)))));
