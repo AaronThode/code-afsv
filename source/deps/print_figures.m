@@ -47,5 +47,6 @@ disp(['Printing %s ...' save_name]);
 if ~OwnFig
     exportapp(gcf,sprintf('%s.jpg',save_path))
 else
+    set(gcf,'pos',[136         231        1255         766]);
     print(gcf,'-djpeg','-r300',sprintf('%s.jpg',save_path));
 end
