@@ -147,7 +147,7 @@ if get_newparams
     Batch_vars=get_Azigram_Callback(param);
     param.sec_avg=(Batch_vars.sec_avg);
     param.climm=(Batch_vars.climm);
-    if ischar(Batch_vars.brefa)
+    if ~strcmpi(filetype,'gsi')
         param.brefa=eval(Batch_vars.brefa);
         %%%Don't alter hdr.brefa, which contains the correction.
     else
@@ -231,7 +231,7 @@ for J=1:length(metric_type)  %%for each request
             else
                 mu = single(atan2d(imag(Ix),imag(Iy)));
             end
-            output_array{J}=bnorm((param.brefa)+mu);
+            output_array{J}=bnorm(param.brefa+mu);
             %output_array{J}=bnorm(mu);
         case 'ItoERatio'
             if ~reactive_flag(J)

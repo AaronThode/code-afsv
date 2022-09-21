@@ -894,10 +894,10 @@ try
     if ~done
         
         if contains(myfile,'drifter')
-            tmin	=	convert_date_drifter(myfile);
-            %drifter-5V-2022-261-100939-GMT-n00535.wav%
+            tmin	=	convert_date_drifterM35(myfile);
+            %drifterM35-5V-2022-261-100939-GMT-n00535.wav%
             sens=1; %placeholder
-            head.instrument='drifter';
+            head.instrument='drifterM35';
             head.vector_sensor=true;
             
         else
@@ -926,7 +926,7 @@ end
 end
 
 
-function tmin=convert_date_drifter(myfile)
+function tmin=convert_date_drifterM35(myfile)
 Idash=findstr(myfile,'-');
 year=str2num(myfile((Idash(2)+1):(Idash(3)-1)));
 JD=str2num(myfile((Idash(3)+1):(Idash(4)-1)));

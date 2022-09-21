@@ -187,7 +187,7 @@ update_button_visibility;
         
         if strcmpi(handles.filetype,'gsi')
             azigram_param.brefa=hdr.brefa;
-        elseif contains(azigram_param.instrument,'drifter')
+        elseif contains(handles.file_flags.instrument,'drifterM35')
             azigram_param.brefa=-15.5;
         else
             azigram_param.brefa=0;
@@ -331,7 +331,7 @@ update_button_visibility;
             
             %%Add spectral calibration curve, if present
             switch hdr.instrument
-                case 'drifter'
+                case 'drifterM35'
                     if Ichan>=1 & Ichan<=8
                         senss=getSensitivity(FF,'HTI-92WB');
                     elseif Ichan==9
