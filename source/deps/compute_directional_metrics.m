@@ -227,7 +227,7 @@ for J=1:length(metric_type)  %%for each request
     switch metric_type{J}
         case 'Directionality'
             if ~reactive_flag(J)
-                mu = single(atan2d(real(Ix),real(Iy)));
+                mu = single(atan2d(real(Ix),real(Iy)));  %Compass convention (usually atan2d(y,x))
             else
                 mu = single(atan2d(imag(Ix),imag(Iy)));
             end
@@ -270,7 +270,7 @@ end
 function Gains=correct_gain(FF,instrument_type)
 switch instrument_type
     case 'DASAR'
-        Gains=ones(size(FF),3);
+        Gains=ones(length(FF),3);
     case 'drifter'
         Gains(:,1) = getSensitivity(FF,'GTI-M35-300-omni')';
         Gains(:,2) = getSensitivity(FF,'GTI-M35-300-directional')';
@@ -279,7 +279,7 @@ switch instrument_type
         % figure;
         %semilogx(FF,20*log10(Gains(:,1)),FF, 20*log10(Gains(:,2)));grid on;
     otherwise
-        Gains=ones(size(FF),3);
+        Gains=ones(length(FF),3);
 end
 
 end
@@ -322,6 +322,9 @@ switch instrument_type
         end
     case 'drifter'
         
+        %%%Oddly enough, the directional channels seem 90° out of phase...
+        Ix=Ix.*exp(1i*pi/2);
+        Iy=Iy.*exp(1i*pi/2);
        
         %%%figure;
         % semilogx(FF,HH_omni,FF, HH_vel);grid on;

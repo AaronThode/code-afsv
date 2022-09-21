@@ -191,7 +191,6 @@ switch filetype
         %x=x';
     case 'GSI'
         
-        head.instrument='DASAR';
         
         button_chc=get(handles.togglebutton_ChannelBeam,'String');
         beamform_data=0;
@@ -240,7 +239,9 @@ switch filetype
             head.multichannel=true;
             head.linked=true;
             head.Nchan=3;
-            
+            head.instrument='DASAR';
+             head.vector_sensor=true;
+        
             
             if isempty(keyword)
                 prompt = {'Enter a keyword for GSI calibration [DASARC]:'};

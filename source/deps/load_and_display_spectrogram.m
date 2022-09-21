@@ -16,17 +16,17 @@ handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String')
 
 %%Read off parameters from figure...
 
-%tdate_start		=	handles.tdate_start;
-if isfield(handles,'tlen')
-    tlen	=	handles.tlen;
-else
-    tlen=[];
-end
+%if isfield(handles,'tlen')
+%    tlen	=	handles.tlen;
+%else
+%    tlen=[];
+%end
 
-if isempty(tlen)
+
+%if isempty(tlen)
     tlen    =   str2double(get(handles.edit_winlen,'String'));
     handles.tlen=tlen;
-end
+%end
 mydir	=	pwd;
 
 %%%Select channels we want to download.
@@ -187,6 +187,8 @@ update_button_visibility;
         
         if strcmpi(handles.filetype,'gsi')
             azigram_param.brefa=hdr.brefa;
+        elseif contains(azigram_param.instrument,'drifter')
+            azigram_param.brefa=-15.5;
         else
             azigram_param.brefa=0;
         end
@@ -296,7 +298,7 @@ update_button_visibility;
                 axes(gca);
             end  %%%if display_view, directionality
             
-        end
+        end  %if statistics
         plot_directional_metric(TT,FF,output_array{1},handles,azigram_param,PdB,use_wavelets);
         % To recover matrix use handles.axes1.Children.CData;
         %handles.azigram.azi=azi;

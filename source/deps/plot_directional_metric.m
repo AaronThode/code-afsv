@@ -129,8 +129,6 @@ try
     end
     %ylim([0 1]);axis('xy')
     
-    
-    colorbar;
     % set(gcf,'pos',[30   322  1229   426])
     set(gca,'fontweight','bold','fontsize',14);
     xlabel('Time (sec)');ylabel('Frequency (kHz)');
