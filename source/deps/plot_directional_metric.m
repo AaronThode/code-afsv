@@ -73,7 +73,8 @@ else
         %caxis([0 90])
         %caxis([-20 20])
         caxis([-10 10]);
-        hbar.Ticks=[-10 -6 -3 3 6 10];
+         caxis([-3 3]);
+        hbar.Ticks=[-10 -6 -3 0 3 6 10];
     elseif strcmpi(handles.display_view,'IntensityPhase')
         
         imagesc(TT,FF/1000,output_array);

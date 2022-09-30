@@ -113,17 +113,28 @@ else  %%All other data is coming on on other channels.
         clear x
     end
     
-    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%Correct gain as needed
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     Gains=correct_gain(FF,param.instrument);
-    for J=1:3
-      B(J,:,:)=squeeze(B(J,:,:)).*Gains(:,J);
-    end
-     %rho=1000;c=1500;
+    %temp=10*log10(abs(squeeze(B(2,:,:))));
+    %myfig=gcf;
+    %figure; for III=1:3,subplot(3,1,III);imagesc(TT,FF,temp);ylim([0 2000]);colorbar;end
+    %figure(myfig);
     
+    for J=1:3
+        B(J,:,:)=squeeze(B(J,:,:)).*Gains(:,J);
+    end
+   % temp2=10*log10(abs(squeeze(B(2,:,:))));
+    %rho=1000;c=1500;
+    
+    %myfig=gcf;
+    %figure; for III=1:3,subplot(3,1,III);imagesc(TT,FF,temp2-temp);ylim([0 2000]);colorbar;end
+    %figure(myfig);
+    
+   
     Ix=squeeze(((B(1,:,:).*conj(B(2,:,:)))));
     Iy=squeeze(((B(1,:,:).*conj(B(3,:,:)))));
-    
     
     %if ~all(contains(metric_type,'Directionality'))  %%%Attempt to save
     %time and memory, but need this if trying to use transparency
@@ -267,6 +278,8 @@ end
 
 end
 
+%%%%%%%SubFunctions%%%%%%%%%%%%%
+
 function Gains=correct_gain(FF,instrument_type)
 switch instrument_type
     case 'DASAR'
@@ -274,6 +287,11 @@ switch instrument_type
     case 'drifterM35'
         Gains(:,1) = getSensitivity(FF,'GTI-M35-300-omni')';
         Gains(:,2) = getSensitivity(FF,'GTI-M35-300-directional')';
+        
+        %%%Test of whether a true conversion to velcoity is needed:
+        %%%dp/dx=rho*p/(i*k)=-i*rho*c*p/(2*pi*f)
+        %Gains(:,2)=Gains(:,2)./(2*pi*FF);
+        
         Gains(:,3)=Gains(:,2);
         
         % figure;
@@ -283,6 +301,10 @@ switch instrument_type
 end
 
 end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%function [Ix,Iy]=correct_phase(Ix,Iy,FF,instrument_type,phase_calibration_chc)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function [Ix,Iy]=correct_phase(Ix,Iy,FF,instrument_type,phase_calibration_chc)
 phase_calibration_chc='Arctic5G_2014';
@@ -323,6 +345,8 @@ switch instrument_type
     case 'drifterM35'
         
         %%%Oddly enough, the directional channels seem 90° out of phase...
+        %%%  Perhaps the M35 measured pressure gradient (difference between
+        %%%  hydrophones) and not velocity?
         Ix=Ix.*exp(1i*pi/2);
         Iy=Iy.*exp(1i*pi/2);
        
