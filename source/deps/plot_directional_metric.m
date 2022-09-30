@@ -81,6 +81,14 @@ else
         hbar=colorbar;
         titstr='IntensityPhase';
         caxis([0 90])
+    elseif strcmpi(handles.display_view,'Polarization')
+        
+        %imagesc(TT,FF/1000,10*log10(abs(output_array)));
+        imagesc(TT,FF/1000,output_array);
+        
+        hbar=colorbar;
+        titstr='Polarization';
+        caxis([-1 1])
     elseif strcmpi(handles.display_view,'PhaseSpeed')
         
         %%%Phase speed directly

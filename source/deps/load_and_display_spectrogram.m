@@ -35,6 +35,8 @@ mydir	=	pwd;
 
 want_directionality=strcmp(handles.display_view,'Directionality')||strcmpi(handles.display_view,'KEtoPERatio');
 want_directionality=want_directionality||strcmpi(handles.display_view,'ItoERatio')||strcmpi(handles.display_view,'IntensityPhase');
+want_directionality=want_directionality||strcmpi(handles.display_view,'Polarization');
+
 if want_directionality&strcmpi(handles.filetype,'gsi')
     Ichan='all';
 elseif want_directionality&contains(handles.myfile,'drifter')
@@ -226,7 +228,7 @@ update_button_visibility;
         else
             %%%%Here is directional metric calculation...
             %handles.display_view='PhaseSpeed';
-            
+            %handles.display_view='Polarization';
             [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics ...
                 (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
                 handles.filetype,reactive_flag);

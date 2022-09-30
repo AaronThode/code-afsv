@@ -138,9 +138,11 @@ else  %%All other data is coming on on other channels.
     
     %if ~all(contains(metric_type,'Directionality'))  %%%Attempt to save
     %time and memory, but need this if trying to use transparency
-        pressure_autospectrum=squeeze(abs(B(1,:,:)).^2);
-        normalized_velocity_autospectrum=squeeze(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2);
-        energy_density=0.5*abs(normalized_velocity_autospectrum+pressure_autospectrum);
+    pressure_autospectrum=squeeze(abs(B(1,:,:)).^2);
+    normalized_velocity_autospectrum=squeeze(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2);
+    energy_density=0.5*abs(normalized_velocity_autospectrum+pressure_autospectrum);
+    polarization=(real(B(2,:,:)).*imag(B(3,:,:))-real(B(3,:,:)).*imag(B(2,:,:)));
+    polarization=-2*squeeze(polarization./(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2));
     %end
     %toc
     get_newparams=false;
@@ -255,6 +257,10 @@ for J=1:length(metric_type)  %%for each request
             output_array{J}=intensity./energy_density;
         case 'KEtoPERatio'
             output_array{J}=normalized_velocity_autospectrum./pressure_autospectrum;
+        case 'Polarization'
+           % output_array{J}=(real(Ix).*imag(Iy)-real(Iy).*imag(Ix))./pressure_autospectrum;
+            
+            output_array{J}=polarization;
         case 'IntensityPhase'
             if ~reactive_flag(J)
                 output_array{J}=atan2d(sqrt(imag(Ix).^2+imag(Iy).^2),sqrt((real(Ix)).^2+(real(Iy)).^2));
