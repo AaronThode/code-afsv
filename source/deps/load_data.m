@@ -769,6 +769,7 @@ switch filetype
         
         
         %%%Get start times and sensitivities for various file types...
+        
         [head,sens,Fs,tmin,tmax]=get_WAV_start_time_and_sens(mydir,myfile, Nsamples,Fs);
         
         
@@ -816,6 +817,9 @@ end
 %%Store whether multichannel data, regardless of original file format.
 if min(size(x))>1
     head.multichannel=true;
+else
+    head.multichannel=false;
+    head.vector_sensor=false;
 end
 
 if ~isfield(head,'linked')
@@ -836,6 +840,9 @@ end
 end  %function load_data
 
 function [head,sens,Fs,tmin,tmax]=get_WAV_start_time_and_sens(mydir,myfile, Nsamples,Fs)
+
+head.vector_sensor=false;
+head.multichannel=false;
 
 if contains(myfile,'DIFAR')
     head.multichannel=true;

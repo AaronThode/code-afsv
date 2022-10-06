@@ -344,6 +344,8 @@ update_button_visibility;
                     senss=senss.^2;
                 case 'DASAR'
                     senss=1;
+                otherwise
+                    senss=1;
                     
             end
             
