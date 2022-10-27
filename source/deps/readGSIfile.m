@@ -2,8 +2,8 @@ function [y,t,head]=readGSIfile(rawfile,cbegin,tlen,nchan,formatt,calibrate)
 %function [y,t,head]=readGSIfile(rawfile,cbegin,tlen,nchan,formatt,calibrate)
 % Input Parameters:
 % rawfile = Include extension;
-% cbegin = Start time;
-% tlen = Length of sample to load;
+% cbegin = Start time in c-time;
+% tlen = Length of sample to load in second;
 % nchan = Index of desired channel, 1 for sound;
 % formatt = Describes time input, string 'ctime' or 'datenum';
 % calibrate = String 'calibrate' to convert Volts to microP;
