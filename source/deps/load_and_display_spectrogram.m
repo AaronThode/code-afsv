@@ -4,7 +4,7 @@
 function handles = load_and_display_spectrogram(app, handles)
 
 %cla;
-hold off
+%hold off
 
 %What type of Display?
 handles.old_display_view=[];
