@@ -61,7 +61,7 @@ else
     %%%Effective velocity j/Sp
     if strcmpi(handles.display_view,'ItoERatio')
         
-        imagesc(TT,FF/1000,output_array);caxis([0 1])
+        hh=imagesc(TT,FF/1000,output_array);caxis([0 1])
         hbar=colorbar;
         titstr='Intensity/Energy Ratio';
     elseif strcmpi(handles.display_view,'KEtoPERatio')
@@ -77,10 +77,19 @@ else
         hbar.Ticks=[-10 -6 -3 0 3 6 10];
     elseif strcmpi(handles.display_view,'IntensityPhase')
         
-        imagesc(TT,FF/1000,output_array);
+        hh=imagesc(TT,FF/1000,output_array);
         hbar=colorbar;
         titstr='IntensityPhase';
         caxis([0 90])
+        
+        %%%Setting transparency to SPL
+        if handles.checkbox_transparency.Value&~isempty(PdB)&&all(size(PdB)==size(output_array))
+            set(hh,'AlphaDataMapping','scaled')
+            set(hh,'AlphaData',PdB);
+            %set(hh,'FaceAlpha','flat');
+            alim(str2double(handles.edit_mindB.String) + [0 str2double(handles.edit_dBspread.String)]);
+            
+        end
     elseif strcmpi(handles.display_view,'Polarization')
         
         %imagesc(TT,FF/1000,10*log10(abs(output_array)));
