@@ -819,7 +819,7 @@ if min(size(x))>1
     head.multichannel=true;
 else
     head.multichannel=false;
-    head.vector_sensor=false;
+    %head.vector_sensor=false;
 end
 
 if ~isfield(head,'linked')
