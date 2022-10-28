@@ -192,34 +192,22 @@ switch filetype
     case 'GSI'
         
         
-        button_chc=get(handles.togglebutton_ChannelBeam,'String');
-        beamform_data=0;
-        get_geometry=0;
-        if strcmpi(button_chc,'angle')&&~strcmpi(Ichan,'all')
-            beamform_data=1;
-            get_geometry=1;
-        elseif strcmpi(Ichan,'all')
-            Ichan=1:3;
-            beamform_data=0;
-            get_geometry=1;
-        end
+       % button_chc=get(handles.togglebutton_ChannelBeam,'String');
+       % beamform_data=0;
         
-        if beamform_data==1
-            thta=Ichan;
+        if strcmpi(Ichan,'all')
             Ichan=1:3;
-        end
-        
-        if beamform_data==0
+        else
             if max(Ichan)>3
                 disp('Channel too high, restricting to 3');
                 Ichan=3;
             end
-            
             if min(Ichan)<1
                 disp('Channel too low, restricting to 1');
                 Ichan=1;
             end
         end
+        
         
         
         %%%%Rare situations were I was testing DIFAR processing--should be
@@ -256,22 +244,21 @@ switch filetype
             tmax=tmin+datenum(0,0,1,0,0,0);
         end
         
-        
-        
+         
         Fs=head.Fs;
         
         %head.Nchan=length(Ichan);
-        if beamform_data==1
-            %y=x(:,1)-fudge_factor_velocity*(cos(angles(I)*pi/180)*x(:,3)+sin(angles(I)*pi/180)*x(:,2)); %switch x and y to get compass bearing
-            
-            thta=thta-head.brefa;  %%Convert to local reference
-            x0=x(:,1)+sind(thta)*x(:,2)+cosd(thta)*x(:,3);
-            x=x0/2; %Turn into equivalent of one channel.
-            
-            %x=sqrt(x(:,1).*x(:,2)*sin(thta*pi/180)+x(:,1).*x(:,3)*cos(thta*pi/180));
-            %x=sqrt(x0.*y);
-        end
         
+        %%%Old version of beamforming code that does not account for
+        %%%pressure/velocity phase adjustment...
+%         if beamform_data==1
+%             %y=x(:,1)-fudge_factor_velocity*(cos(angles(I)*pi/180)*x(:,3)+sin(angles(I)*pi/180)*x(:,2)); %switch x and y to get compass bearing
+%             
+%             thta=thta-head.brefa;  %%Convert to local reference
+%             x0=x(:,1)+sind(thta)*x(:,2)+cosd(thta)*x(:,3);
+%             x=x0/2; %Turn into equivalent of one channel.
+%         end
+%         
         
     case 'MT'
         %[x,t,Fs]=load_mt_mult(handles.mydir,tdate_start,tlen);

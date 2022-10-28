@@ -9,16 +9,22 @@ alg_mult=eval(param.alg);
 if ~exist('PdB','var')
     PdB=[];
 end
-if strcmpi(handles.display_view,'Directionality')
+
+if strcmpi(handles.display_view,'AdditiveBeamforming')
+    
+    hh=imagesc(TT,FF/1000,10*log10(abs(output_array)));
+    format_spectrogram_image;
+     titstr='Additive Beamforming';
+elseif strcmpi(handles.display_view,'Directionality')
     if ~use_wavelets
         hh=imagesc(TT,FF/1000,output_array);
     else
-%         dbcont
-%         hh=pcolor(TT,log2(FF/1000),output_array);
-%         hh.EdgeColor='none';
-%         ax=gca;
-%         ytick=round(pow2(ax.YTick),3);
-%         ax.YTickLabel=ytick;
+        %         dbcont
+        %         hh=pcolor(TT,log2(FF/1000),output_array);
+        %         hh.EdgeColor='none';
+        %         ax=gca;
+        %         ytick=round(pow2(ax.YTick),3);
+        %         ax.YTickLabel=ytick;
         
         hh=surface(TT,(FF/1000),output_array);
         hh.EdgeColor='none';
@@ -27,7 +33,7 @@ if strcmpi(handles.display_view,'Directionality')
         ax.YLabel.String='Frequency';
         
     end
-     colorbar
+    colorbar
     titstr=' Azimuth';
     try
         if get(handles.checkbox_grayscale,'Value')==1
@@ -68,12 +74,12 @@ else
         
         %imagesc(TT,FF/1000,10*log10(output_array));
         imagesc(TT,FF/1000,(output_array));
-         hbar=colorbar;
+        hbar=colorbar;
         titstr='Kinetic/Potential Ratio';
         %caxis([0 90])
         %caxis([-20 20])
         caxis([-10 10]);
-         caxis([-3 3]);
+        caxis([-3 3]);
         hbar.Ticks=[-10 -6 -3 0 3 6 10];
     elseif strcmpi(handles.display_view,'IntensityPhase')
         
@@ -105,11 +111,11 @@ else
         hbar=colorbar;
         titstr='Phase Speed';
         caxis([1000 3000])
-%         
-%         hh=imagesc(TT,FF/1000,real(acosd(1500./output_array)));
-%         titstr='Elevation angle';
-%         caxis([0 90])
-       
+        %
+        %         hh=imagesc(TT,FF/1000,real(acosd(1500./output_array)));
+        %         titstr='Elevation angle';
+        %         caxis([0 90])
+        
         %%%Setting transparency to SPL
         if handles.checkbox_transparency.Value&~isempty(PdB)&&all(size(PdB)==size(output_array))
             
@@ -120,7 +126,7 @@ else
         end
     end
     
-   
+    
     
     %%%Set colorscale
     if get(handles.checkbox_grayscale,'Value')==1
@@ -155,4 +161,44 @@ try
         get(handles.text_filename,'String'),titstr));
 catch
     disp('catch in plot_directional_metric');
+end
+
+    function format_spectrogram_image
+        grid on
+        axis('xy')
+        fmax=str2double(get(handles.edit_fmax,'String'));
+        fmin=str2double(get(handles.edit_fmin,'String'));
+        if fmax==0
+            ylim([0 Fs/2000]);
+            set(handles.edit_fmax,'String',num2str(Fs/2000));
+        else
+            ylim([fmin fmax]);
+        end
+        %ylim([0 1]);axis('xy')
+        climm(1)=str2double(get(handles.edit_mindB,'String'));
+        climm(2)=climm(1)+str2double(get(handles.edit_dBspread,'String'));
+        %%If switching from correlogram, reset to suggested values
+        if climm(1)==0&&climm(2)<1
+            climm=[40 70];
+            set(handles.edit_mindB,'String',num2str(climm(1)));
+            set(handles.edit_dBspread,'String',num2str(climm(2)));
+            climm(2)=sum(climm);
+        end
+        
+        caxis(climm);
+        if get(handles.checkbox_grayscale,'Value')==1
+            colormap(flipud(gray));
+        else
+            colormap(jet);
+        end
+        colorbar;
+        % set(gcf,'pos',[30   322  1229   426])
+        set(gca,'fontweight','bold','fontsize',14);
+        xlabel('Time (sec)');ylabel('Frequency (kHz)');
+        xlim([0 str2num(handles.edit_winlen.String)]);
+        if ~strcmp(handles.display_view,'Spectrogram')
+            title(get(handles.text_filename,'String'));
+        end
+    end  %%%format_spectrogram_image
+
 end

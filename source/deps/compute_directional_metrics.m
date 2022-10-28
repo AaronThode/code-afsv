@@ -2,7 +2,9 @@
 %function [TT,FF,output_array,PdB,param, Ix,Iy]=compute_directional_metrics(x,metric_type, ...
 %   Fs,Nfft, ovlap, param,filetype,reactive_flag)
 % x:  array of vector data, each row is a separate channel
-% metric_type{Iwant}:'Directionality','ItoERatio','KEtoPERatio' ,'IntensityPhase
+% metric_type{Iwant}:'Directionality','ItoERatio','KEtoPERatio',
+%       'IntensityPhase', 'Polarization','AdditiveBeamforming'
+%           metric_type can also be a string.
 %           If a cell array output_array will be a cell array
 % filetype: 'DIFAR' or 'gsi'
 % reactive_flag:  if true, compute reactive intensity.  Vector same size as
@@ -28,6 +30,7 @@
 function [TT,FF,output_array,PdB,param,Ix,Iy]=compute_directional_metrics(x,metric_type, ...
     Fs,Nfft, ovlap, param,filetype,reactive_flag)
 
+
 use_wavelet=any(contains(lower(metric_type),'wavelet'));
 if ~isfield(param,'instrument')
     param.instrument='DASAR';
@@ -38,7 +41,7 @@ if use_wavelet
     metric_type=metric_type(1:Iend);
 end
 
-TT=[];FF=[];output_array=[];PdB=[];
+TT=[];FF=[];output_array=[];PdB=[];Ix=[];Iy=[];
 if ~iscell(metric_type)
     temp=metric_type;clear metric_type
     metric_type{1}=temp;
@@ -49,10 +52,10 @@ if length(metric_type)~=length(reactive_flag)
     return
 end
 
-Ix=[];Iy=[];
 if strcmpi(filetype,'PSD')
     return
 end
+
 
 if ~exist('reactive_flag','var')
     reactive_flag=false;
@@ -125,6 +128,19 @@ else  %%All other data is coming on on other channels.
     for J=1:3
         B(J,:,:)=squeeze(B(J,:,:)).*Gains(:,J);
     end
+    
+    %%% If AdditiveBeamforming, conduct here and leave...
+    if any(strcmpi(metric_type,'AdditiveBeamforming'))
+        [B(2,:,:),B(3,:,:)]=correct_phase(squeeze(conj(B(2,:,:))),squeeze(conj(B(3,:,:))),FF,param.instrument);
+        B(2:3,:,:)=conj(B(2:3,:,:));
+        thta=param.thta-param.brefa;  %%Convert to local reference
+        Iout=find(strcmpi(metric_type,'AdditiveBeamforming'));
+        
+        output_array{Iout}=squeeze(B(1,:,:)+sind(thta)*B(2,:,:)+cosd(thta)*B(3,:,:));
+        %x0=x(:,1)+sind(thta)*x(:,2)+cosd(thta)*x(:,3);
+        return
+    end
+    
    % temp2=10*log10(abs(squeeze(B(2,:,:))));
     %rho=1000;c=1500;
     
@@ -229,10 +245,8 @@ end  %sec_avg
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%Correct for phase misalignment in Ix and Iy
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if ~isfield(param,'phase_calibration')
-    param.phase_calibration='Arctic5G_2014';
-end
-[Ix,Iy]=correct_phase(Ix,Iy,FF,param.instrument,param.phase_calibration);
+
+[Ix,Iy]=correct_phase(Ix,Iy,FF,param.instrument);
 
 
 for J=1:length(metric_type)  %%for each request
@@ -312,7 +326,7 @@ end
 %%function [Ix,Iy]=correct_phase(Ix,Iy,FF,instrument_type,phase_calibration_chc)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [Ix,Iy]=correct_phase(Ix,Iy,FF,instrument_type,phase_calibration_chc)
+function [Ix,Iy]=correct_phase(Ix,Iy,FF,instrument_type)
 phase_calibration_chc='Arctic5G_2014';
 %phase_calibration_chc='none';
 
@@ -324,6 +338,16 @@ switch instrument_type
         switch(phase_calibration_chc)
             case 'none'
                 return
+            case 'AlisonDASARCalibration'
+                fe = [0 93 148 200 250 360 500]';
+                pex = [0 -3 -7.8 -18.3 -25 -60 -90]';
+                phaseex = interp1(fe,pex,FF);
+                phaseex(isnan(phaseex)) = 0;
+                Phasee=exp(1i*(pi/180)*phaseex*ones(1,Np));
+                
+                
+                Ix=Ix.*Phasee;
+                Iy=Iy.*Phasee;
             case 'Arctic5G_2014'
                 %slopee=4.10e-04;
                 %slopee=1.25*4.1e-04;  %%%radians phase per radians frequency, original bulk run

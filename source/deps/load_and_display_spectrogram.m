@@ -25,24 +25,29 @@ handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String')
 
 
 %if isempty(tlen)
-    tlen    =   str2double(get(handles.edit_winlen,'String'));
-    handles.tlen=tlen;
+tlen    =   str2double(get(handles.edit_winlen,'String'));
+handles.tlen=tlen;
 %end
 mydir	=	pwd;
 
 %%%Select channels we want to download.
 %%% If we are  creating an image using directional info, and not just
-%%%spectrogram, then download multiple channels
+%%%spectrogram, then download multiple channels.
 
 want_directionality=strcmp(handles.display_view,'Directionality')||strcmpi(handles.display_view,'KEtoPERatio');
 want_directionality=want_directionality||strcmpi(handles.display_view,'ItoERatio')||strcmpi(handles.display_view,'IntensityPhase');
 want_directionality=want_directionality||strcmpi(handles.display_view,'Polarization');
 
+%%%Also download all channels if pushbutton says 'angle' instead of
+%%%'channel'
+button_chc=get(handles.togglebutton_ChannelBeam,'String');
+want_directionality=want_directionality || strcmpi(button_chc,'angle');
+
 if want_directionality&strcmpi(handles.filetype,'gsi')
     Ichan='all';
 elseif want_directionality&contains(handles.myfile,'drifter')
     disp('Selecting channels 9 through 11 of ONR drifter');
-   % Ichan=9:11;
+    % Ichan=9:11;
     Ichan=[9 11 10];  %M35 axes are omni, NS, EW
 else
     Ichan	=	eval(get(handles.edit_chan,'String'));
@@ -197,8 +202,14 @@ update_button_visibility;
         end
         
         azigram_param.instrument=hdr.instrument;  %%%Inform instrument type
-    
+        
         reactive_flag=handles.checkbox_reactive.Value;
+        button_chc=get(handles.togglebutton_ChannelBeam,'String');
+        if strcmpi(button_chc,'angle')
+            azigram_param.thta= eval(get(handles.edit_chan,'String'));
+            handles.display_view='AdditiveBeamforming';
+        end
+        
         
         %%AARON test if sample delay between pressure and P.V r
         %responsible for pressure/velocity phase shift with frequency
@@ -249,6 +260,17 @@ update_button_visibility;
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         display_statistics=false;
         if display_statistics
+            plot_statistics(output_array);
+        end
+        
+        plot_directional_metric(TT,FF,output_array{1},handles,azigram_param,PdB,use_wavelets);
+        % To recover matrix use handles.axes1.Children.CData;
+        %handles.azigram.azi=azi;
+        handles.azigram=azigram_param;
+        handles.azigram.TT=TT;
+        handles.azigram.FF=FF;
+        
+        function plot_statistics(output_array)
             
             %%%If not plotting bearing
             if ~contains(handles.display_view,'Directionality')
@@ -302,14 +324,9 @@ update_button_visibility;
             end  %%%if display_view, directionality
             
         end  %if statistics
-        plot_directional_metric(TT,FF,output_array{1},handles,azigram_param,PdB,use_wavelets);
-        % To recover matrix use handles.axes1.Children.CData;
-        %handles.azigram.azi=azi;
-        handles.azigram=azigram_param;
-        handles.azigram.TT=TT;
-        handles.azigram.FF=FF;
         
     end  %process directional data
+
 
     function display_spectrogram
         
@@ -333,22 +350,8 @@ update_button_visibility;
             handles.sgram.Fs	=	Fs;
             
             %%Add spectral calibration curve, if present
-            switch hdr.instrument
-                case 'drifterM35'
-                    if Ichan>=1 & Ichan<=8
-                        senss=getSensitivity(FF,'HTI-92WB');
-                    elseif Ichan==9
-                        senss=getSensitivity(FF,'GTI-M35-300-omni');
-                    elseif Ichan>=10 || Ichan<=11
-                        senss=getSensitivity(FF,'GTI-M35-300-directional');
-                    end
-                    senss=senss.^2;
-                case 'DASAR'
-                    senss=1;
-                otherwise
-                    senss=1;
-                    
-            end
+            senss=get_spectral_sensitivity(Ichan,FF,hdr.instrument);
+            
             
             if ~isfield(hdr,'calcurv')
                 %%%KEY SPECTROGRAM IMAGE COMMAND
@@ -377,12 +380,38 @@ update_button_visibility;
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%Format plot%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        format_spectrogram_image;
         
+        
+    end %display_spectrogram
+
+%%%%%%%%%%%
+    function senss=get_spectral_sensitivity(Ichan,FF,instrument)
+        
+        switch instrument
+            case 'drifterM35'
+                if Ichan>=1 & Ichan<=8
+                    senss=getSensitivity(FF,'HTI-92WB');
+                elseif Ichan==9
+                    senss=getSensitivity(FF,'GTI-M35-300-omni');
+                elseif Ichan>=10 || Ichan<=11
+                    senss=getSensitivity(FF,'GTI-M35-300-directional');
+                end
+                senss=senss.^2;
+            case 'DASAR'
+                senss=1;
+            otherwise
+                senss=1;
+                
+        end
+    end %function get_spectral_sensitivity
+
+    function format_spectrogram_image
         grid on
         axis('xy')
         fmax=str2double(get(handles.edit_fmax,'String'));
         fmin=str2double(get(handles.edit_fmin,'String'));
-        if fmax==0,
+        if fmax==0
             ylim([0 Fs/2000]);
             set(handles.edit_fmax,'String',num2str(Fs/2000));
         else
@@ -413,8 +442,9 @@ update_button_visibility;
         if ~strcmp(handles.display_view,'Spectrogram')
             title(get(handles.text_filename,'String'));
         end
-    end %display_spectrogram
+    end  %%%format_spectrogram_image
 
+%%%%%%%%
     function update_button_visibility
         %set(handles.pushbutton_GSIbearing,'vis','on');
         %set(handles.pushbutton_GSI_localization,'vis','on');
