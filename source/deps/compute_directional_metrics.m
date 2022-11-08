@@ -133,10 +133,15 @@ else  %%All other data is coming on on other channels.
     if any(strcmpi(metric_type,'AdditiveBeamforming'))
         [B(2,:,:),B(3,:,:)]=correct_phase(squeeze(conj(B(2,:,:))),squeeze(conj(B(3,:,:))),FF,param.instrument);
         B(2:3,:,:)=conj(B(2:3,:,:));
+        
+        %%%%Additive beamforming
         thta=param.thta-param.brefa;  %%Convert to local reference
         Iout=find(strcmpi(metric_type,'AdditiveBeamforming'));
-        
         output_array{Iout}=squeeze(B(1,:,:)+sind(thta)*B(2,:,:)+cosd(thta)*B(3,:,:));
+        
+        
+        %%%Debug options, including |v|/p
+        %output_array{Iout}=squeeze((sqrt(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2))./abs(B(1,:,:)));
         %x0=x(:,1)+sind(thta)*x(:,2)+cosd(thta)*x(:,3);
         return
     end
@@ -302,8 +307,26 @@ end
 
 function Gains=correct_gain(FF,instrument_type)
 switch instrument_type
-    case 'DASAR'
+    case 'DASAR'  %%%Remember energy is arriving as normal modes so a slight vertical offset.
         Gains=ones(length(FF),3);
+        %Gains(:,2:3)=Gains(:,2:3)*cosd(28)*exp(1i*2*pi*(-2)/180); %150 Hz bowhead
+        %Gains(:,2:3)=Gains(:,2:3)*cosd(20)*exp(1i*2*pi*(-4)/180); %250 Hz bowhead
+       
+        
+        %%%%Thought normal modes might explain this, but better using a
+        %%%%frequency-independent factor.
+       D=18; c=1500;
+       k=2*pi*FF/c;
+       cos_elevation=real(sqrt(k.^2-(pi/D).^2)./k);
+       f_trans=150;
+       cos_elevation(FF>=f_trans)=cos_elevation(FF>=f_trans).*0.8;
+       
+       phasse=-7*ones(size(FF));
+       phasse(FF>=350)=4;
+       %Gains(:,2:3)=Gains(:,2:3).*cos_elevation.*exp(1i*2*pi*(phasse)/180); %10-Apr-2020 00:02:03.000 287 (110 and -6 null) deg Arctic5G_2014 5G 100-150 Hz 17 m water depth
+        Gains(:,2:3)=Gains(:,2:3).*cosd(25).*exp(1i*2*pi*(phasse)/180); %10-Apr-2020 00:02:03.000 287 (110 and -6 null) deg Arctic5G_2014 5G 100-150 Hz 17 m water depth
+      
+        
     case 'drifterM35'
         Gains(:,1) = getSensitivity(FF,'GTI-M35-300-omni')';
         Gains(:,2) = getSensitivity(FF,'GTI-M35-300-directional')';
@@ -327,7 +350,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function [Ix,Iy]=correct_phase(Ix,Iy,FF,instrument_type)
-phase_calibration_chc='Arctic5G_2014';
+phase_calibration_chc='Arctic5G_2014'; %AlisonDASARCalibration Arctic5G_2014
 %phase_calibration_chc='none';
 
 Np=size(Ix,2);
