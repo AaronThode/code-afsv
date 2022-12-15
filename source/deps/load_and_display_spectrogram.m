@@ -228,7 +228,7 @@ update_button_visibility;
         if use_wavelets
             [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics_wavelet ...
                 (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
-                handles.filetype,reactive_flag);
+                reactive_flag);
             if strcmpi(handles.filetype,'gsi')&&~reactive_flag
                 params.f_transition=300;
                 [~,Icut]=min(abs(FF-params.f_transition));
@@ -243,7 +243,7 @@ update_button_visibility;
             %handles.display_view='Polarization';
             [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics ...
                 (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
-                handles.filetype,reactive_flag);
+               reactive_flag);
             %if strcmpi(handles.filetype,'gsi')&&~reactive_flag
             %params.f_transition=300;
             %[~,Icut]=min(abs(FF-params.f_transition));

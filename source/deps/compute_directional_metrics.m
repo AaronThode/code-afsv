@@ -6,7 +6,6 @@
 %       'IntensityPhase', 'Polarization','AdditiveBeamforming'
 %           metric_type can also be a string.
 %           If a cell array output_array will be a cell array
-% filetype: 'DIFAR' or 'gsi'
 % reactive_flag:  if true, compute reactive intensity.  Vector same size as
 %           metric_type
 % Fs: sampling rate in Hz
@@ -28,7 +27,7 @@
 %  Ix, Iy:  x and y active intensity
 
 function [TT,FF,output_array,PdB,param,Ix,Iy]=compute_directional_metrics(x,metric_type, ...
-    Fs,Nfft, ovlap, param,filetype,reactive_flag)
+    Fs,Nfft, ovlap, param,reactive_flag)
 
 
 use_wavelet=any(contains(lower(metric_type),'wavelet'));
@@ -51,11 +50,6 @@ if length(metric_type)~=length(reactive_flag)
     disp('Metric type not same length as reactive flag');
     return
 end
-
-if strcmpi(filetype,'PSD')
-    return
-end
-
 
 if ~exist('reactive_flag','var')
     reactive_flag=false;

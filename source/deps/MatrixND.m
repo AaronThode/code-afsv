@@ -1,4 +1,18 @@
 classdef MatrixND
+    %%%Methods%%%%
+    %  out=extract_slice(obj,fixed_label,fixed_val)
+    %  out=sum_slice(obj,sum_label,bins_sum); %Sums over one dimension
+    %  obj=append_time(obj,obj_new);
+    %  obj=append_time_with_gaps(obj,obj_new)
+    %  obj=plus(obj,obj_new)
+    %  obj=histogram(obj,sum_label)
+    %  obj=transpose_2D(obj)
+    %  hh=plot1Ddistribution(obj,varargin)
+    %  out=get_Tabs_bounds(obj)
+    %  out=get_grid(obj,name)
+    %  out=accumulate_slice(obj,sum_label,Nbins_to_combine)
+    %  matrixx=image_2D_slice(obj,varargin)
+    
     properties
         N
         bin_grid
@@ -173,7 +187,7 @@ classdef MatrixND
             % out=sum_slice(sum_label,bins_sum)
             %  sum_label: string of dimension you want to sum over
             % bins_sum: optional argument to sum over only bins_sum bins
-            %           (resampling data into larger bins)
+            %           
             
             out=[];
             
@@ -228,16 +242,12 @@ classdef MatrixND
                 end
                 
                
-                
-                
-                
-                
             else  %% sum and remove dimension
                 out_label=obj.labels(Iindex_out);
                 out_grid=obj.bin_grid(Iindex_out);
                 
                 for I=1:length(Iindex)
-                    obj.N=sum(obj.N,Iindex(I));  %Iinded does not need to be sorted if squeeze is performed once.
+                    obj.N=sum(obj.N,Iindex(I));  %Iindex does not need to be sorted if squeeze is performed once.
                 end
             end
             
@@ -248,8 +258,8 @@ classdef MatrixND
         
     end %sum_slice
     
-       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     %%%%%%%%%%%%%%%%%%append_time.m%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%append_time.m%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function obj=append_time(obj,obj_new)
             %obj=append_time(obj_new)
@@ -407,9 +417,8 @@ classdef MatrixND
         
         %%%%%%%%%%%accumulate_slice%%%%%%%%%%%%%%%%%%%%%%
         %  consolidate into fewer bins 
-        function obj=accumulate_slice(obj,sum_label,N_accum)
-            %out=accumulate_slice(obj,sum_label,Nbins_to_sum)
-            
+        function obj=accumulate_slice(obj,sum_label,Nbins_to_combine)
+            %out=accumulate_slice(obj,sum_label,Nbins_to_combine)
             
             if ~iscell(sum_label)&ischar(sum_label)
                 disp('accumulate_slice:converting char to cell')
@@ -438,12 +447,12 @@ classdef MatrixND
             bin_edges=[bin_edges-0.5*dX bin_edges(end)+0.5*dX];
             
             
-            edges_A=bin_edges(unique([1:N_accum:length(bin_edges) length(bin_edges)]));
-            edges_A_mid=edges_A(1:(end-1))+0.5*dX*N_accum;
+            edges_A=bin_edges(unique([1:Nbins_to_combine:length(bin_edges) length(bin_edges)]));
+            edges_A_mid=edges_A(1:(end-1))+0.5*dX*Nbins_to_combine;
             obj.bin_grid{Iindex}=edges_A_mid;
             
-            Nbins_out=floor(Nbin./N_accum);
-            subs=ones(N_accum,1)*(1:Nbins_out);
+            Nbins_out=floor(Nbin./Nbins_to_combine);
+            subs=ones(Nbins_to_combine,1)*(1:Nbins_out);
             subs=subs(:);
             subs=[subs; (Nbins_out+1)*ones(Nbin-length(subs),1)];
             Nbins_out=Nbins_out+1;
@@ -488,7 +497,7 @@ classdef MatrixND
             
             is_log=false;
             plot_chc='image';
-            azimuth_from=false;
+            azimuth_from=true;
             contourss=[];
             if nargin==1
                 scale_str='raw';     
@@ -528,6 +537,15 @@ classdef MatrixND
             matrixx=double(obj.N);
             Ntotal=double(sum(sum(obj.N)));
             
+            xplot=obj.bin_grid{2};
+            yplot=obj.bin_grid{1};
+            if strcmpi(obj.labels{2},'Frequency') && max(xplot>10000)
+                xplot=xplot/1000;
+                plot_label{2}='Frequency (kHz)';
+            elseif strcmpi(obj.labels{1},'Frequency') && max(yplot>10000)
+                yplot=yplot/1000;
+                plot_label{1}='Frequency (kHz)';
+            end
             %%%Change azimuth to directon of propagation toward...
             Itick=(strcmpi(obj.labels,'Azimuth'));
             if any(Itick)
@@ -579,25 +597,26 @@ classdef MatrixND
             if is_log
                 matrixx=log10(double(matrixx));
             end
-           
+            
             
             switch plot_chc
                 case 'image'
-                    imagesc(obj.bin_grid{2}, obj.bin_grid{1},matrixx);
+                    
+                    imagesc(xplot, yplot,matrixx);
                 case 'pcolor'
                     
-                    pcolor(obj.bin_grid{2}, obj.bin_grid{1},matrixx);
+                    pcolor(xplot, yplot,matrixx);
                 case 'contourf'
                     
                     if isempty(contourss)
-                       %contourrs=10:2:30;
+                        %contourrs=10:2:30;
                         contourss=0:0.1:1;
-                    
+                        
                     end
-                    [C,H]=contourf(obj.bin_grid{2},obj.bin_grid{1}, matrixx,contourss);axis ij
+                    [C,H]=contourf(xplot,yplot, matrixx,contourss);axis ij
                     clabel(C,H)
-                 
-                  
+                    
+                    
             end
             xlabel(plot_label{2});ylabel(plot_label{1});
             title(sprintf('%s,%i samples',tit_str,Ntotal));
@@ -622,6 +641,7 @@ classdef MatrixND
             axis xy
             set(gca,'fontweight','bold','fontsize',14);
             colorbar('East','color','w')
+            set(gca,'gridcolor','w');grid on
             
         end
         

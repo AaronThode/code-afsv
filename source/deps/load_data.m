@@ -801,12 +801,12 @@ if isempty(tmin) || isempty(tmax)
 end
 
 
-%%Store whether multichannel data, regardless of original file format.
+%%If output data has multiple channels, mark it so
 if min(size(x))>1
     head.multichannel=true;
-else
-    head.multichannel=false;
-    %head.vector_sensor=false;
+%else
+%    head.multichannel=false;
+    
 end
 
 if ~isfield(head,'linked')
