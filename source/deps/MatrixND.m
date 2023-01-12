@@ -1,6 +1,7 @@
 classdef MatrixND
     %%%Methods%%%%
-    %  out=extract_slice(obj,fixed_label,fixed_val)
+    %  out=extract_slice(obj,fixed_label,fixed_val);  %fixed val can be a
+    %   scalar or two-element vector (for extracing a range of slices)
     %  out=sum_slice(obj,sum_label,bins_sum); %Sums over one dimension
     %  obj=append_time(obj,obj_new);
     %  obj=append_time_with_gaps(obj,obj_new)
@@ -129,7 +130,7 @@ classdef MatrixND
             
             my_grid=obj.bin_grid(Iindex);
             
-            
+            %%%Indicies of dimensions that will remain
             Iindex_out=find(~contains(obj.labels,fixed_label,'IgnoreCase',true));
             
              %%% Keep fixed_label variable in output if fixed_val is a range
@@ -488,10 +489,17 @@ classdef MatrixND
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function matrixx=image_2D_slice(obj,varargin)
             %image_2D_slice(scale_str,is_log,plot_chc,azimuth_from,contours)
-            % scale_str: 'raw',joint,conditional,norm, 'conditionalcumulative'
+            % scale_str: 'raw', joint, conditional, maxnorm, 'conditionalcumulative'
+            %           raw: plot raw counts
+            %           joint; plot p(X and Y)
+            %           conditional; plot(Y|X)  (matrix/sum(matrix));
+            %           maxnorm: plot(X and Y) divided by maximum value of
+            %                   Y along X
+            %           conditional cumulative:  plot cumulative
+            %           distribution of p(Y|X);
             % is_log, if true plot on log scale
             %plot_chc: 'contourf','image'
-            %aziuth_from:  if 'true' show azimuth from which sound is
+            %aziuth_from:  if 'true' (the default) show azimuth from which sound is
             %       coming from, not to
             %contours: vector of contour intervals
             
@@ -588,7 +596,7 @@ classdef MatrixND
                 tit_str='conditionalcumulative';
                 disp('conditionalcumulative plot');
                   
-            elseif contains(scale_str,'norm')
+            elseif contains(scale_str,'maxnorm')
                 matrixx=matrixx./max(matrixx);
                 tit_str='normalized';
                 disp('normalized plot');
@@ -635,7 +643,7 @@ classdef MatrixND
             
             Itick=strcmpi(obj.labels,'Time');
             if any(Itick)
-                datetick(strr(Itick),'HH');
+                datetick(strr(Itick),'HH:MM');
             end
             
             axis xy
