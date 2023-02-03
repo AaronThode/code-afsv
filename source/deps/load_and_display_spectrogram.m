@@ -258,9 +258,9 @@ update_button_visibility;
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%% decide whether to plot percentile stats
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        display_statistics=false;
+        display_statistics=app.HistogramCheckBox.Value;
         if display_statistics
-            plot_statistics(output_array);
+            plot_statistics_histogram(output_array);
         end
         
         plot_directional_metric(TT,FF,output_array{1},handles,azigram_param,PdB,use_wavelets);
@@ -269,6 +269,66 @@ update_button_visibility;
         handles.azigram=azigram_param;
         handles.azigram.TT=TT;
         handles.azigram.FF=FF;
+        
+        function plot_statistics_histogram(output_array)
+            
+            %%%If not plotting bearing
+            
+            myfig=gcf;
+            myax=gca;
+            
+            switch handles.display_view
+                case 'Directionality'
+                    gridd=2:2:360;  %Dominant azimuth grid
+                    fignum=9;
+                    ylimm=[0 360];
+                case 'ItoERatio'
+                    ylimm=[0 1];
+                    gridd=0:0.02:1;  %Transport velocity
+                    fignum=3;
+                case 'KEtoPERatio'
+                    ylimm=[-6 10];
+                    gridd=-6:0.5:6;
+                    
+                    fignum=4;
+                case 'IntensityPhase'
+                    ylimm=[0 90];
+                    fignum=2;
+                    gridd=0:2:90;  %arctangent of reactive to active intensity
+                    
+                case 'PhaseSpeed'
+                    ylimm=[0 300];
+                    fignum=5;
+                case 'Polarization'
+                     ylimm=[-1 1];
+                    fignum=12;
+                    gridd=-1:0.05:1;  %arctangent of reactive to active intensity
+                   
+                otherwise
+                    gridd=20:1:110;  %Standard power spectral density, dB re 1uPa^2/Hz
+                    ylimm=[0 90];
+                    figunum=10;
+            end
+            
+            
+            %%%Display statistics if desired
+
+            figure('Name',handles.display_view);
+            IF_lim=find(FF>=1000*str2num(handles.edit_fmin.String)&FF<=1000*str2num(handles.edit_fmax.String));
+            histt=zeros(length(gridd)-1,length(IF_lim));
+            for If=1:length(IF_lim)  %%For each frequency
+                histt(:,If)=histcounts(output_array{1}(IF_lim(If),:),gridd);
+            end
+            
+            imagesc(FF(IF_lim)/1000,gridd,histt./max(histt));
+            xlabel('kHz')
+            ylabel(handles.display_view);
+            set(gca,'fontweight','bold','fontsize',14);
+            axis xy
+            figure(myfig);
+            axes(gca);
+            
+        end  %if statistics
         
         function plot_statistics(output_array)
             

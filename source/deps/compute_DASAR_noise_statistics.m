@@ -111,7 +111,7 @@ for It=1:Ntotal_window
     % J_KEtoPE=3;
     % J_phase=4;
     
-    for If=1:length(FF)
+    for If=1:length(FF)  %%For each frequency
         %Iwant=Isort(If,Iper(Ipp):Iper(Ipp+1));
         
         output.AziVsPdB.N(:,:,If,It)=single(histcounts2(azi{J_azi}(If,:),PdB(If,:),params.grid.azi,params.grid.PdB));
