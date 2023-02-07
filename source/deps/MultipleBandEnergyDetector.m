@@ -17,7 +17,7 @@
 %   	to monitor for signals of interest,
 %
 %   eq: if exists, use this as the initial equalization function
-%   eq_time: an equalization time in seconds.  If eq_time is zero, the equalization is not updated after the first 20 samples.
+%   eq_time: an equalization time in seconds.  If eq_time is Inf, the equalization is not updated after the first 20 samples.
 %           The longer the equalization time, the slower the changes in the
 %           threshold over time.
 %
@@ -58,7 +58,8 @@
 %        detect.tend(count)=tend_total;
 %        detect.fmin(count)=min(flo(tend~=0));
 %        detect.fmax(count)=max(fhi(tend~=0));
-%        detect.amplitude(count)=max(magnitude);
+%        detect.dB_RMS(count): dB re 1uPa amplitude RMS of signal
+%                    (10*log10(sum(10.^(temp(1:2:end)/10),1)))
 %           detect.duration=(detect.tend-detect.tstart);
 %        detect.tstart_abs=tabs_start+datenum(0,0,0,0,0,detect.tstart);
 %          detect.tend_abs=tabs_start+datenum(0,0,0,0,0,detect.tend);
@@ -146,7 +147,7 @@ end
 
 %%Initialize detector.
 count_estimate=round(10*length(x)/params.Fs);  %Assume around 10 detections/second
-fieldnames={'tstart','tend','duration','amplitude','fmin','fmax'};
+fieldnames={'tstart','tend','duration','dB_RMS','fmin','fmax'};
 for I=1:length(fieldnames)
     detect.(fieldnames{I})=zeros(count_estimate,1);
 end
@@ -296,7 +297,14 @@ for I=((1+Iburn):Ncol)  %For every column of spectrogram (or incoming FFT)
         detect.tend(count)=tend_total;
         detect.fmin(count)=min(flo(tend~=0));
         detect.fmax(count)=max(fhi(tend~=0));
-        detect.amplitude(count)=max(magnitude);
+        
+        if isdB  %JINGLONG
+            temp=magnitude(tend~=0);
+            detect.dB_RMS(count)=10*log10(sum(10.^(temp(1:2:end)/10),1));  %Equal to dB RMS of transient
+            
+        else
+        end
+        
         %detect.duration(count)=tstart_total-tend_total;
         %detection_status(:)=false;
         write_flag=false;
@@ -362,6 +370,8 @@ end
 %%%Convert times to absolute times
 detect.tstart_abs=tabs_start+datenum(0,0,0,0,0,detect.tstart);
 detect.tend_abs=tabs_start+datenum(0,0,0,0,0,detect.tend);
+debug.flo=flo;
+debug.fhi=fhi;
 
 
     function reset_detect
