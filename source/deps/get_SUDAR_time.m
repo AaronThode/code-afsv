@@ -1,5 +1,5 @@
-function [SUDAR_true,tmin,tmax,Fs,tmin_UTC,tmax_UTC]=get_SUDAR_time(mydir,myfile)
-%function [SUDAR_true,tmin,tmax,Fs,tmin_UTC,tmax_UTC]=get_SUDAR_time(mydir,myfile)
+function [SUDAR_true,tmin,tmax,Fs,cal_dB,tmin_UTC,tmax_UTC]=get_SUDAR_time(mydir,myfile)
+%function [SUDAR_true,tmin,tmax,Fs,cal_dB,tmin_UTC,tmax_UTC]=get_SUDAR_time(mydir,myfile)
 %Check whether a SUDAR (SoundTrap) file exists by looking for log.xml file
 
 SUDAR_true=false;
@@ -22,7 +22,11 @@ while 1
     
     if ~ischar(tline), break, end
     %   ??  Date parsing can be done with inbuilt matlab functions
-    if      strfind(tline, 'SamplingStartTimeLocal=')>0
+    if contains(tline,'AUDIO Gain="Low"')
+        cal_dB=185.8;
+    elseif contains(tline,'AUDIO Gain="High"')
+        cal_dB=173.1;
+    elseif      strfind(tline, 'SamplingStartTimeLocal=')>0
         %tmin         =  datenum(parse_time(tline));  %%Works for me
         datte=parse_time(tline);
         %tmin=datenum(datte(1:10))+datenum(datte(12:end),2019)-datenum(2019,1,1,0,0,0);

@@ -840,11 +840,11 @@ end
 
 try
     done=false;
-    [SUDAR_true,tmin,tmax,FsSUDAR]=get_SUDAR_time(mydir,myfile); %Check whether a SUDAR file exists
+    [SUDAR_true,tmin,tmax,FsSUDAR,cal_dB]=get_SUDAR_time(mydir,myfile); %Check whether a SUDAR file exists
     head.instrument='SoundTrap';
     
     if SUDAR_true
-        sens=(10^(186/20))/(2^15);
+        sens=(10^(cal_dB/20))/(2^16);
         Fs=FsSUDAR;
         done=true;
     end
