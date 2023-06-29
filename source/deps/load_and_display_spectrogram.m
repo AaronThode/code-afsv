@@ -168,6 +168,7 @@ elseif strcmp(handles.display_view,'Spectrogram')
     
     display_spectrogram;
     
+    
 elseif strcmp(handles.display_view,'Time Series') %%Time series
     display_time_series(handles,x,Fs,hdr);
     
@@ -415,7 +416,8 @@ update_button_visibility;
             
             if ~isfield(hdr,'calcurv')
                 %%%KEY SPECTROGRAM IMAGE COMMAND
-                imagesc(TT,FF/1000,10*log10(B.*senss.'));%
+                B=10*log10(B.*senss.');
+                imagesc(TT,FF/1000,B);%
                 
             else
                 Xp_cal_fin=polyval(hdr.calcurv,FF/Fs);
@@ -426,7 +428,34 @@ update_button_visibility;
                 %    imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
                 
             end
-        else
+            
+            %%%Display summary statistics of entire window
+            if app.checkbox_histogram.Value
+                
+                percentil=fliplr([0.05 0.1 0.5 0.75 0.9 0.998]);
+                for Ileg=1:length(percentil)
+                    legstr{Ileg}=num2str(100*percentil(Ileg));
+                end
+                
+                Iper=round(length(TT)*percentil);
+                B_sort=sort(B,2);
+                stats=B_sort(:,Iper);
+                myfig=gcf; figure(1);
+                
+                FF_plot=FF;xlab='Hz';
+                fmin=eval(app.edit_fmin.Value)*1000;fmax=eval(app.edit_fmax.Value)*1000;
+                if max(FF>5000)
+                    FF_plot=FF/1000;xlab='kHz';
+                    fmin=fmin/1000;fmax=fmax/1000;
+                end
+                plot(FF_plot,stats);grid on;xlabel(xlab);ylabel('dB Percentile');
+                xlim([fmin fmax]);
+                legend(legstr);
+                figure(myfig);
+            end %if checkbox_histogram
+            
+            %keyboard
+        else  %%if PSD file
             ppsd=10*log10(x);
             imagesc(t,FF/1000,ppsd);
             handles.sgram.T		=	t;

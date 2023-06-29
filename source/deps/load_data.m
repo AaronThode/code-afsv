@@ -768,9 +768,11 @@ switch filetype
        
         try
             if verLessThan('matlab', '8.2.0.29')
-                [x,Fs]		=	wavread(fullfile(mydir,myfile),[N1 N2],'native');
+                %[x,Fs]		=	wavread(fullfile(mydir,myfile),[N1 N2],'native');
+                [x,Fs]		=	wavread(fullfile(mydir,myfile),[N1 N2]);%Returns a value normalized between -1 and 1
             else
-                [x,Fs]		=	audioread(fullfile(mydir,myfile),[N1 N2],'native');
+                %[x,Fs]		=	audioread(fullfile(mydir,myfile),[N1 N2],'native');
+                [x,Fs]		=	audioread(fullfile(mydir,myfile),[N1 N2]);  %Returns a value normalized between -1 and 1
             end
         catch
             x=[];
@@ -836,17 +838,23 @@ if contains(myfile,'DIFAR')
     head.vector_sensor=true;
     head.instrument='DIFAR';
 end
-[head.cable_factor,sens]=get_ADAT24_cable_factor;
+[head.cable_factor,sens]=get_ADAT24_cable_factor;  %%Warning! sens needs to be adjusted as x now scaled between -1 and 1
 
-try
+try  %%%Check for SOUNDTRAP INFO by looking for a log.xml file
     done=false;
     [SUDAR_true,tmin,tmax,FsSUDAR,cal_dB]=get_SUDAR_time(mydir,myfile); %Check whether a SUDAR file exists
     head.instrument='SoundTrap';
     
     if SUDAR_true
         sens=(10^(cal_dB/20))/(2^16);
+        sens=power(10,cal_dB/20);
         Fs=FsSUDAR;
         done=true;
+        
+        % [y, Fs] = wavread(filename) ; % read wav data from file
+        %cal = 173.3; % value from calibration sheet
+        %cal = power (10, cal / 20); % convert calibration from dB into ratio
+        %y = y * cal;
     end
     
     if ~done
@@ -880,13 +888,13 @@ try
     
     
     if contains(myfile,'LL017_Set4_3min.wav.x.wav')
-        sens=3162;
+        sens=3162;  %%Need to check after 2023 because x now Returns a value normalized between -1 and 1
         head.instrument='Arctic_VLA_Emma';
     end
     
     
     if ~done
-        
+        %%%%Check that files is associated with SQUALL-E ONR drifter
         if contains(myfile,'drifter')
             tmin	=	convert_date_drifterM35(myfile);
             %drifterM35-5V-2022-261-100939-GMT-n00535.wav%

@@ -5,6 +5,29 @@ function [SUDAR_true,tmin,tmax,Fs,cal_dB,tmin_UTC,tmax_UTC]=get_SUDAR_time(mydir
 SUDAR_true=false;
 
 [pathstr,fname,~] = fileparts(myfile);
+
+%%%Calibration information
+serial_number=strfind(fname,'.')-1;
+if isempty(serial_number)
+    disp('No serial number or period embedded in file name');
+    return
+end
+serial_number=fname(1:serial_number);
+switch serial_number
+    case '335573046'
+        high_gain=172.8;
+        low_gain=185;
+    case '336338975'  %confirmed against 1 kHz calibration tone.
+        high_gain=173.6;
+        low_gain=186;
+    case '671117351'  %%These calibration values do not match measurements
+        high_gain=176.4-4;
+        low_gain=188.9-4;
+    case '738238496'
+        high_gain=173.1;
+        low_gain=185.8;
+end
+
 fname_log=fullfile(mydir,[fname '.log.xml']);
 fname_found=dir(fname_log);
 
@@ -16,6 +39,7 @@ if isempty(fname_found)
 end
 SUDAR_true=true;
 
+highgain_flag=[];
 fid=fopen(fname_log,'r');
 while 1
     tline	=	fgetl(fid);
@@ -23,9 +47,9 @@ while 1
     if ~ischar(tline), break, end
     %   ??  Date parsing can be done with inbuilt matlab functions
     if contains(tline,'AUDIO Gain="Low"')
-        cal_dB=185.8;
+        highgain_flag=false;
     elseif contains(tline,'AUDIO Gain="High"')
-        cal_dB=173.1;
+        highgain_flag=true;
     elseif      strfind(tline, 'SamplingStartTimeLocal=')>0
         %tmin         =  datenum(parse_time(tline));  %%Works for me
         datte=parse_time(tline);
@@ -67,6 +91,18 @@ while 1
 end
 fclose(fid);
 
+if isempty(highgain_flag)
+    disp('WARNING!  No gain information found in SoundTrap XML file, assuming high-gain ');
+    highgain_flag=true;
+end
+
+if highgain_flag
+    cal_dB=high_gain;
+else
+    cal_dB=low_gain;
+end
+
+fprintf('SoundTrap Gain is %6.2f dB \n',cal_dB);
 %Option to convert to local time if not accurate..
 %Convert to local time using filename as a clue...
 %Idot=findstr(fname,'.')+7;
