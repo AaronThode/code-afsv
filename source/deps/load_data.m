@@ -832,7 +832,8 @@ function [head,sens,Fs,tmin,tmax]=get_WAV_start_time_and_sens(mydir,myfile, Nsam
 
 head.vector_sensor=false;
 head.multichannel=false;
-
+head.instrument='Unknown';
+  
 if contains(myfile,'DIFAR')
     head.multichannel=true;
     head.vector_sensor=true;

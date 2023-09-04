@@ -102,7 +102,8 @@ else
     cal_dB=low_gain;
 end
 
-fprintf('SoundTrap Gain is %6.2f dB \n',cal_dB);
+%fprintf('SoundTrap Gain is %6.2f dB \n',cal_dB);
+
 %Option to convert to local time if not accurate..
 %Convert to local time using filename as a clue...
 %Idot=findstr(fname,'.')+7;

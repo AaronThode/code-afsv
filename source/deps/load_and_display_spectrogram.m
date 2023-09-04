@@ -259,10 +259,11 @@ update_button_visibility;
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%% decide whether to plot percentile stats
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        display_statistics=app.HistogramCheckBox.Value;
-        if display_statistics
-            plot_statistics_histogram(output_array);
-        end
+       % display_statistics=app.HistogramCheckBox.Value;
+       display_statistics=app.checkbox_histogram.Value;
+       if display_statistics
+           plot_statistics_histogram(output_array);
+       end
         
         plot_directional_metric(TT,FF,output_array{1},handles,azigram_param,PdB,use_wavelets);
         % To recover matrix use handles.axes1.Children.CData;

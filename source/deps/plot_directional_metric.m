@@ -16,6 +16,16 @@ if strcmpi(handles.display_view,'AdditiveBeamforming')
     format_spectrogram_image;
      titstr='Additive Beamforming';
 elseif strcmpi(handles.display_view,'Directionality')
+
+    %%%convert to mask if desired
+    if eval(param.mask)
+        crange=eval(param.climm);
+        temp=zeros(size(output_array));
+        Igood=find(output_array>=crange(1)&output_array<=crange(2));
+        temp(Igood)=1;
+        output_array=temp;
+
+    end
     if ~use_wavelets
         hh=imagesc(TT,FF/1000,output_array);
     else
@@ -38,13 +48,17 @@ elseif strcmpi(handles.display_view,'Directionality')
     try
         if get(handles.checkbox_grayscale,'Value')==1
             colormap(flipud(gray));
+            caxis(climm);
+        elseif eval(param.mask)==1
+            colormap(flipud(gray))
         else
             colormap(hsv);
+            caxis(climm);
         end
     catch
         colormap(hsv);
     end
-    caxis(climm);
+    
     
     
     %%%Use alpha adjustment to display transport ratio as well

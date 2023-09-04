@@ -175,6 +175,7 @@ if get_newparams
     Batch_vars=get_Azigram_Callback(param);
     param.sec_avg=(Batch_vars.sec_avg);
     param.climm=(Batch_vars.climm);
+    param.mask=(Batch_vars.mask);
     if ischar(Batch_vars.brefa)
         param.brefa=eval(Batch_vars.brefa);
         %%%Don't alter hdr.brefa, which contains the correction.
