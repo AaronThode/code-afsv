@@ -53,7 +53,7 @@ elseif strcmpi(handles.display_view,'Directionality')
             colormap(flipud(gray))
         else
             colormap(hsv);
-            caxis(climm);
+            clim(climm);
         end
     catch
         colormap(hsv);
