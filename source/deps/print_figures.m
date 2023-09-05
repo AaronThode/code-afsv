@@ -36,8 +36,18 @@ if OwnFig
 else
     strr='Screen';
 end
-save_name=sprintf('soundsamp_%s_%s_%s_%s_%s', ...
-    handles.myfile(1:Idot),datestr(tdate_start,30),chan,handles.display_view,strr);
+save_name=sprintf('soundsamp_%s_%s_%s_%s', ...
+    handles.myfile(1:Idot),datestr(tdate_start,30),chan,handles.display_view);
+
+if contains(handles.display_view,'Directionality')
+    azi_range=eval(handles.azigram.climm);
+    save_name=sprintf('%s_%iTo%iDeg',save_name,azi_range(1),azi_range(2));
+    if contains(handles.azigram.mask,'1')
+        save_name=[save_name 'Mask'];
+    end
+end
+
+save_name=sprintf('%s_%s', save_name,strr);
 
 save_path	=	fullfile(handles.outputdir, save_name);
 disp(['Printing %s ...' save_name]);
