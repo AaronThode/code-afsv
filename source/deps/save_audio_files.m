@@ -30,7 +30,12 @@ Islash=strfind(handles.mydir,filesep);
 chan=get(handles.edit_chan,'String');
 
 %save_name=sprintf('soundsamp%s_%s',handles.myfile((Islash(end)+1):end),datestr(tdate_start,30));
-save_name_wav=sprintf('soundsamp%s_%s_%3.1fx',handles.myfile,datestr(tdate_start,30),handles.audio_scale);
+try
+    playback_scale=eval(app.popupmenu_scalesound.Value(2:end));
+catch
+    playback_scale=1;
+end
+save_name_wav=sprintf('soundsamp%s_%s_%3.1fx',handles.myfile,datestr(tdate_start,30),playback_scale);
 save_name_mat=sprintf('soundsamp%s_%s',handles.myfile,datestr(tdate_start,30));
 
 disp(['Saving ...' save_name_wav]);
@@ -52,7 +57,7 @@ catch
     matVers=version('-release');
     
     if(str2double(matVers(1:4))>2012 || strcmp(matVers,'2012b'))
-        audiowrite([save_path '.wav'],(x/(1.1*max(max(abs(x))))),round(Fs*handles.audio_scale));
+        audiowrite([save_path '.wav'],(x/(1.1*max(max(abs(x))))),round(Fs*playback_scale));
         % audiowrite([save_path '_32d.wav'],(x/(1.1*max(max(abs(x))))),round(Fs/32));
         
         %audiowrite([save_path '.wav'],(x/(1.1*max(max(abs(x))))),round(Fs));

@@ -234,11 +234,11 @@ if ~isempty(sec_avg)&&sec_avg>0
 end  %sec_avg
 
 %if ~all(contains(metric_type,'Directionality'))  %%An attempt to be more efficient, not worth is
-    if ~use_wavelet
-        PdB=4+10*log10(2*pressure_autospectrum./(Nfft*Fs));  %%Power spectral density output
-    else
-        PdB=sqrt(pressure_autospectrum);
-    end
+if ~use_wavelet
+    PdB=4+10*log10(2*pressure_autospectrum./(Nfft*Fs));  %%Power spectral density output
+else
+    PdB=sqrt(pressure_autospectrum);
+end
 %end
 
 
