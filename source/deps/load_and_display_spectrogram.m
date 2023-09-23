@@ -142,6 +142,10 @@ else %if spectrogram
     contents=get(handles.popupmenu_ovlap,'String');
     ovlap=str2double(contents{get(handles.popupmenu_ovlap,'Value')})/100;
     ovlap=min([1-1/Nfft ovlap]);
+
+    handles.sgram.ovlap=ovlap;
+    handles.sgram.Nfft=Nfft;
+    handles.sgram.Nfft_window=Nfft_window;
     
 end  %if PSD
 
@@ -399,6 +403,9 @@ update_button_visibility;
             
             %%% KEY SPECTROGRAM COMMAND
             [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs);
+
+            
+
             %B=(2*abs(B).^2)/(Nfft*Fs); %Power spectral density...
             %     For real signals, variable 'B'
             %     returns the one-sided modified periodogram estimate of the PSD of each
