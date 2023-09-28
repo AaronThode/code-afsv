@@ -49,6 +49,9 @@ elseif want_directionality&contains(handles.myfile,'drifter')
     disp('Selecting channels 9 through 11 of ONR drifter');
     % Ichan=9:11;
     Ichan=[9 11 10];  %M35 axes are omni, NS, EW
+    
+    Ichan=[10 11 12];  %VS-209 axes
+    
 else
     Ichan	=	eval(get(handles.edit_chan,'String'));
 end
