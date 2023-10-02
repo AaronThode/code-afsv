@@ -15,7 +15,7 @@ if strcmpi(handles.display_view,'AdditiveBeamforming')
     hh=imagesc(TT,FF/1000,10*log10(abs(output_array)));
     format_spectrogram_image;
      titstr='Additive Beamforming';
-elseif strcmpi(handles.display_view,'Directionality')
+elseif strcmpi(handles.display_view,'Azimuth')
 
     %%%convert to mask if desired
     if eval(param.mask)

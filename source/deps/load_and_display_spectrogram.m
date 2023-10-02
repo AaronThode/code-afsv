@@ -34,7 +34,7 @@ mydir	=	pwd;
 %%% If we are  creating an image using directional info, and not just
 %%%spectrogram, then download multiple channels.
 
-want_directionality=strcmp(handles.display_view,'Directionality')||strcmpi(handles.display_view,'KEtoPERatio');
+want_directionality=strcmp(handles.display_view,'Azimuth')||strcmp(handles.display_view,'Elevation')||strcmpi(handles.display_view,'KEtoPERatio');
 want_directionality=want_directionality||strcmpi(handles.display_view,'ItoERatio')||strcmpi(handles.display_view,'IntensityPhase');
 want_directionality=want_directionality||strcmpi(handles.display_view,'Polarization');
 
@@ -45,13 +45,7 @@ want_directionality=want_directionality || strcmpi(button_chc,'angle');
 
 if want_directionality&strcmpi(handles.filetype,'gsi')
     Ichan='all';
-elseif want_directionality&contains(handles.myfile,'drifter')
-    disp('Selecting channels 9 through 11 of ONR drifter');
-    % Ichan=9:11;
-    Ichan=[9 11 10];  %M35 axes are omni, NS, EW
-    
-    Ichan=[10 11 12];  %VS-209 axes
-    
+
 else
     Ichan	=	eval(get(handles.edit_chan,'String'));
 end
@@ -73,6 +67,7 @@ try
     handles.file_flags.multichannel=hdr.multichannel;
     handles.file_flags.linked=hdr.linked;
     handles.file_flags.vector_sensor=hdr.vector_sensor;
+    handles.file_flags.array=hdr.array;
     handles.file_flags.instrument=hdr.instrument;
     
     %%%Change file display if a transformation of a basic file has
@@ -546,12 +541,6 @@ update_button_visibility;
 
 %%%%%%%%
     function update_button_visibility
-        %set(handles.pushbutton_GSIbearing,'vis','on');
-        %set(handles.pushbutton_GSI_localization,'vis','on');
-        %set(handles.pushbutton_next_linked_annotation,'vis','on');
-        %set(handles.pushbutton_previous_linked_annotation,'vis','on');
-        %set(handles.pushbutton_next_linked_annotation,'enable','on');
-        %set(handles.pushbutton_previous_linked_annotation,'enable','on');
         
         if strcmpi(handles.filetype,'psd')
             set(handles.pushbutton_binary,'vis','off');
@@ -568,48 +557,44 @@ update_button_visibility;
             set(handles.pushbutton_save,'vis','on');
             set(handles.radiobutton_correlogram,'vis','on');
             set(handles.radiobutton_timeseries,'vis','on');
-            %set(handles.radiobutton_directionality,'vis','on');
             
         end
         
-        if handles.file_flags.multichannel
+        flag_names=fieldnames(handles.file_flags);
+        for Inames=1:length(flag_names)
+            if contains(flag_names{Inames},'instrument')
+                continue
+            end
+            if handles.file_flags.(flag_names{Inames})
+                status='on';
+            else
+                status='off';
+            end
+            for II=1:length(handles.buttongroup.(flag_names{Inames}))
+                set(handles.buttongroup.(flag_names{Inames})(II),'vis',status);
+                set(handles.buttongroup.(flag_names{Inames})(II),'enable',status);
+            end
+        end
+       
+        if contains(handles.file_flags.instrument,'DASAR')
             status='on';
         else
             status='off';
         end
-        for II=1:length(handles.buttongroup.array)
-            set(handles.buttongroup.array(II),'vis',status);
-            set(handles.buttongroup.array(II),'enable',status);
-        end
-        
-        
-        %%%Are these vector sensor files?
-        [~,~,~,~,~,hdr]=load_data(handles.filetype,-1,10,1,handles,app);
-        if hdr.vector_sensor||strcmpi(handles.filetype,'gsi')||~isempty(strfind(handles.myfile,'DIFAR'))
-            status='on';
-        else
-            status='off';
-        end
-        
-        for II=1:length(handles.buttongroup.linked)
-            set(handles.buttongroup.linked(II),'vis',status);
-            set(handles.buttongroup.linked(II),'enable',status);
-        end
-        
         for II=1:length(handles.buttongroup.GSI)
             set(handles.buttongroup.GSI(II),'vis',status);
             set(handles.buttongroup.GSI(II),'enable',status);
         end
-        
-        if strcmpi(lower(handles.filetype),'gsi')||handles.file_flags.multichannel
+         
+
+        if contains(handles.file_flags.instrument,'SQUALLE')
             status='on';
         else
             status='off';
         end
-        
-        for II=1:length(handles.buttongroup.multichan)
-            set(handles.buttongroup.multichan(II),'vis',status);
-            set(handles.buttongroup.multichan(II),'enable',status);
+        for I=1:length(handles.buttongroup.SQUALLE)
+            set(handles.buttongroup.SQUALLE(I),'Vis',status);
+            set(handles.buttongroup.SQUALLE(I),'enable',status);
         end
         
     end %update button_visibility

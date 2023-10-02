@@ -12,14 +12,24 @@ function [x,t,Fs,tmin,tmax,head]	=	load_data(filetype,tdate_start,tlen,Ichan,han
 %   Ichan: channel number or 'All'
 %   handles, app: structures that store other data and links to graphical
 %   objects
-
-%%% tmin,tmax are datenumbers that represent the beginning and end of
-%%% file loaded.  Actual start of file should be tdate_start, if provided.
-%%%  If tdate_start is less than one, then tmin=datenum(0) and tmax is
-%%%  tmin+datenum(0,0,0,0,0,length(x)/Fs)
-
+%
+% Outputs
 %   x rows are samples, columns are channels
-%   head.geom.rd:  If multiple channels are present, this gives spacing
+%   time in seconds
+%%% tmin,tmax are datenumbers that represent the beginning and end of
+%%%     file loaded.  Actual start of file should be tdate_start, if provided.
+%%%     If tdate_start is less than one, then tmin=datenum(0) and tmax is
+%%%     tmin+datenum(0,0,0,0,0,length(x)/Fs)
+%%% head:
+%       multichannel: is true if more than one channel
+%       array:  is true if coherent array processing is allows
+%       vector_sensor: is true if data is 2 or 3-D vector sensor
+%       linked: is true if other instruments are deployed simultaneously in
+%           single location (e.g. DASARs)
+%       instrument: string containing instrument type
+%       geom.rd:  If multiple channels are present on a linear array, this
+%           gives coordinates
+
 persistent  Fs_keep keyword space
 
 mydir=handles.mydir;
@@ -37,6 +47,7 @@ head=[];
 head.multichannel=false;
 head.linked=false;
 head.vector_sensor=false;
+head.array=false;
 head.instrument=[];  %%Used to trigger whether further calibration needed on spectrogram
 
 filetype	=	upper(filetype);
@@ -194,13 +205,11 @@ switch filetype
         head.Nchan=size(x,2);
         %x=x';
     case 'GSI'
-
-
-        % button_chc=get(handles.togglebutton_ChannelBeam,'String');
-        % beamform_data=0;
+     
 
         if strcmpi(Ichan,'all')
             Ichan=1:3;
+           
         else
             if max(Ichan)>3
                 disp('Channel too high, restricting to 3');
@@ -211,8 +220,6 @@ switch filetype
                 Ichan=1;
             end
         end
-
-
 
         %%%%Rare situations were I was testing DIFAR processing--should be
         %%%%commented out once results published.
@@ -225,15 +232,16 @@ switch filetype
             [x,t,head]=load_sonobuoy_Soldevilla([mydir '/' myfile],tdate_start,tlen,Ichan);
             tmin=datenum(1970,1,1,0,0,0);
             tmax=tmin+datenum(0,0,0,0,0,max(t));
-
+            head.instrument='DIFAR';
         else
             [x,t,head]=readGSIfile([mydir '/' myfile],tdate_start,tlen,Ichan,'datenum','nocalibrate');
-            head.multichannel=true;
             head.linked=true;
+            head.vector_sensor=true;
+            head.multichannel=true;
+            head.array=false;
             head.Nchan=3;
             head.instrument='DASAR';
-            head.vector_sensor=true;
-
+           
 
             if isempty(keyword)
                 prompt = {'Enter a keyword for GSI calibration [DASARC]:'};
@@ -272,7 +280,7 @@ switch filetype
         tmin=head.tstart;
         tmax=head.tend;
         Fs=head.Fs;
-
+        head.instrument='Acousonde';
         if tdate_start>0
             tdate_vec=datevec(tdate_start-tmin);
             nsec=tdate_vec(6)+60*tdate_vec(5)+3600*tdate_vec(4);
@@ -286,6 +294,7 @@ switch filetype
         %Load accelerometer data as desired
         %% Template: CB_Accel_X_2014_02100958.mt
         if strfind(head.abbrev,'Accel')
+            head.instrument='Accelerometer';
             mystr='XYZ';
             Ispace=strfind(myfile,'_');
             Ispace=Ispace(2)+1;
@@ -333,9 +342,7 @@ switch filetype
 
             head.myfile=myfile;
 
-            % guidata(handles.myfile);  %Saves new file name...
-            %guidata(hObject, handles);  %Saves new file name...
-            %guidata(hObject, handles);
+            
             %
         else
             if Ichan>1
@@ -615,6 +622,7 @@ switch filetype
         Fs=head.fs;
         sio_chc=get(handles.togglebutton_ChannelBeam,'String');
         head.multichannel=true;
+        head.array=true;
         t=(1:length(x))/Fs;
 
         tmin=head.tfs;
@@ -699,8 +707,6 @@ switch filetype
         sens=sens*10.^(sens_hydro/20);
         %sens=1;
 
-
-
         tdate_vec	=	datevec(tdate_start - tmin);
         nsec		=	tdate_vec(6) + 60*tdate_vec(5) + 3600*tdate_vec(4);  %Ignores differences in days
         N1			=	1 + round(nsec*handles.Fs);
@@ -779,7 +785,6 @@ switch filetype
             end
         catch
             x=[];
-
             t=[];
             head.Nchan=0;
             return
@@ -790,10 +795,58 @@ switch filetype
             head.multichannel=true;
         end
 
-        Ichan=get_WAV_Ichan(Ichan);
+        if contains(head.instrument,'SQUALLE')
+            %%%Revised instrument name, capabilities, and Ichan
+            instrument_chc=app.SQUALLEDropDown.Value;
+            %%Import configuration file
+            config_file=dir([mydir filesep '*acoustic_config*']);
+            TI=readtable([mydir filesep config_file.name]);
+
+            switch instrument_chc
+                case 'Individual Channel'
+                    %%Don't to anything, simply us inputted Ichan
+                    head.multichannel=true;
+                    head.array=false;
+                case 'Vector sensor'
+                    Igood=TI.Channel(contains(TI.sensor_type,'VS'));
+                    %%%sensor type should be of form 'VS-XXX-omni,X/Y/Z
+                    sensor_type=TI.sensor_type(Igood);
+                    Ichan=[];
+                    Ichan(1)=Igood(contains(sensor_type,'omni'));
+                    Ichan(2)=Igood(contains(sensor_type,'X')|contains(sensor_type,'E/W'));
+                    Ichan(3)=Igood(contains(sensor_type,'Y')|contains(sensor_type,'N/S'));
+                    Ichan(4)=Igood(contains(sensor_type,'Z')|contains(sensor_type,'U/D'));
+                    head.instrument='SQUALLE_VS';
+                    head.vector_sensor=true;
+                    head.array=false;
+                    head.multichannel=true;
+                case 'Vertical array'
+                    Igood=TI.Channel((TI.X_m==0) & (contains(TI.sensor_type,'HTI')));
+                    head.geom.rd=TI.Z_m(Igood);
+                    [head.geom.rd,Isort]=sort(head.geom.rd,'descend');
+                    Ichan=Igood(Isort);
+                    head.instrument='SQUALLE_VLA';
+                    head.vector_sensor=false;
+                    head.array=true;
+                    head.multichannel=true;
+                case 'Horizontal array'
+                    Igood=TI.Channel((TI.X_m>=0) | (TI.X_m+TI.Y_m+TI.Z_m==0) );
+                    head.geom.rd=TI.Z_m(Igood);
+                    [head.geom.rd,Isort]=sort(head.geom.rd,'descend');
+                    Ichan=Igood(Isort);
+                    head.instrument='SQUALLE_VLA';
+                    head.vector_sensor=false;
+                    head.array=true;
+                    head.multichannel=true;
+
+            end
+
+        end
+          
 
         if ~strcmp(Ichan,'all')
             x		=	x(:,Ichan);
+            
         end
 
         t	=	(1:length(x))/Fs;
@@ -827,16 +880,7 @@ if teager
 end
 
 
-%%%Inner function
-    function Ichan=get_WAV_Ichan(Ichan)
 
-        %%%If this is a SQUALLE file, will need to do something complicated
-        if app.SQUALLEDropDownLabel.Visible & strcmpi(head.instrument,'SQUALLE')
-           keyboard
-           %head.geom.rd;
-        
-        end
-    end
 end  %function load_data
 
 function [head,sens,Fs,tmin,tmax]=get_WAV_start_time_and_sens(mydir,myfile, Nsamples,Fs)
@@ -892,18 +936,18 @@ if contains(myfile,'LL017_Set4_3min.wav.x.wav')
 end
 
 if ~done
- %%%%Check whether we have an ONR SQUALL-E drifter file...
-        config_file=dir([mydir filesep '*acoustic_config*']);
-        if contains(myfile,'drifter') & ~isempty(config_file)
-            done=true;
-            tmin	=	convert_date_drifterM35(myfile);
-            tmax    =   tmin+datenum(0,0,0,0,0,Nsamples/Fs);
-            %drifterM35-5V-2022-261-100939-GMT-n00535.wav%
-            sens=1; %placeholder
-           
-            head.instrument='SQUALLE';
-            %head.vector_sensor=true;
-        end
+    %%%%Check whether we have an ONR SQUALL-E drifter file...
+    config_file=dir([mydir filesep '*acoustic_config*']);
+    if contains(myfile,'drifter') & ~isempty(config_file)
+        done=true;
+        tmin	=	convert_date_SQUALLE(myfile);
+        tmax    =   tmin+datenum(0,0,0,0,0,Nsamples/Fs);
+        %drifterM35-5V-2022-261-100939-GMT-n00535.wav%
+        sens=1; %placeholder
+
+        head.instrument='SQUALLE';
+        %head.vector_sensor=true;
+    end
 end
 
 if ~done
@@ -934,7 +978,7 @@ end
 
 
 
-function tmin=convert_date_drifterM35(myfile)
+function tmin=convert_date_SQUALLE(myfile)
 Idash=findstr(myfile,'-');
 year=str2num(myfile((Idash(2)+1):(Idash(3)-1)));
 JD=str2num(myfile((Idash(3)+1):(Idash(4)-1)));

@@ -2,7 +2,7 @@
 %function [TT,FF,output_array,PdB,param, Ix,Iy]=compute_directional_metrics(x,metric_type, ...
 %   Fs,Nfft, ovlap, param,filetype,reactive_flag)
 % x:  array of vector data, each row is a separate channel
-% metric_type{Iwant}:'Directionality','ItoERatio','KEtoPERatio',
+% metric_type{Iwant}:'Azimuth','Elevation','ItoERatio','KEtoPERatio',
 %       'IntensityPhase', 'Polarization','AdditiveBeamforming'
 %           metric_type can also be a string.
 %           If a cell array output_array will be a cell array
@@ -151,7 +151,6 @@ else  %%All other data is coming on on other channels.
     Ix=squeeze(((B(1,:,:).*conj(B(2,:,:)))));
     Iy=squeeze(((B(1,:,:).*conj(B(3,:,:)))));
     
-    %if ~all(contains(metric_type,'Directionality'))  %%%Attempt to save
     %time and memory, but need this if trying to use transparency
     pressure_autospectrum=squeeze(abs(B(1,:,:)).^2);
     normalized_velocity_autospectrum=squeeze(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2);
@@ -233,7 +232,6 @@ if ~isempty(sec_avg)&&sec_avg>0
     pressure_autospectrum=PA_avg;
 end  %sec_avg
 
-%if ~all(contains(metric_type,'Directionality'))  %%An attempt to be more efficient, not worth is
 if ~use_wavelet
     PdB=4+10*log10(2*pressure_autospectrum./(Nfft*Fs));  %%Power spectral density output
 else
@@ -252,7 +250,15 @@ end
 for J=1:length(metric_type)  %%for each request
     
     switch metric_type{J}
-        case 'Directionality'
+        case 'Azimuth'
+            if ~reactive_flag(J)
+                mu = single(atan2d(real(Ix),real(Iy)));  %Compass convention (usually atan2d(y,x))
+            else
+                mu = single(atan2d(imag(Ix),imag(Iy)));
+            end
+            output_array{J}=bnorm((param.brefa)+mu);
+            %output_array{J}=bnorm(mu);
+        case 'Elevation'
             if ~reactive_flag(J)
                 mu = single(atan2d(real(Ix),real(Iy)));  %Compass convention (usually atan2d(y,x))
             else

@@ -13,7 +13,7 @@ mydir=pwd;
 
 %Ichan='all';  %Hardwire first channel
 %Ichan=str2double(get(handles.edit_chan,'String'));
-azigram_flag=handles.radiobutton_directionality.Value;
+azigram_flag=handles.radiobutton_azimuth.Value;
 if azigram_flag
     disp('Can''t get bearing from azigram')
     return
