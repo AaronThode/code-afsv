@@ -1,4 +1,4 @@
-%%%%compute_directional_metrics.m%%%%%%%%%%%%%%%%%%%
+%%%%compute_directional_metrics_compact.m%%%%%%%%%%%%%%%%%%%
 %function [TT,FF,output_array,PdB,param, Ix,Iy]=compute_directional_metrics(x,metric_type, ...
 %   Fs,Nfft, ovlap, param,filetype,reactive_flag)
 % x:  array of vector data, each row is a separate channel

@@ -282,10 +282,14 @@ update_button_visibility;
             myax=gca;
             
             switch handles.display_view
-                case 'Directionality'
+                case 'Azimuth'
                     gridd=2:2:360;  %Dominant azimuth grid
                     fignum=9;
                     ylimm=[0 360];
+                case 'Elevation'
+                    gridd=-90:2:90;  %Dominant azimuth grid
+                    fignum=10;
+                    ylimm=[-90 90];
                 case 'ItoERatio'
                     ylimm=[0 1];
                     gridd=0:0.02:1;  %Transport velocity
@@ -337,7 +341,7 @@ update_button_visibility;
         function plot_statistics(output_array)
             
             %%%If not plotting bearing
-            if ~contains(handles.display_view,'Directionality')
+            if ~contains(handles.display_view,'Azimuth')&~contains(handles.display_view,'Elevation')
                 
                 myfig=gcf;
                 myax=gca;
