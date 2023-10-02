@@ -783,6 +783,7 @@ switch filetype
                 %[x,Fs]		=	audioread(fullfile(mydir,myfile),[N1 N2],'native');
                 [x,Fs]		=	audioread(fullfile(mydir,myfile),[N1 N2]);  %Returns a value normalized between -1 and 1
             end
+            
         catch
             x=[];
             t=[];

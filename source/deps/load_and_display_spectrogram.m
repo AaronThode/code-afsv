@@ -118,7 +118,7 @@ else %if spectrogram
         set(handles.edit_winlen,'String',num2str(tlen));
     end
     
-    if size(x,2)>1
+    if size(x,2)>size(x,1)
         x=x';
     end
     
@@ -247,16 +247,12 @@ update_button_visibility;
             [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics ...
                 (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
                reactive_flag);
-            %if strcmpi(handles.filetype,'gsi')&&~reactive_flag
-            %params.f_transition=300;
-            %[~,Icut]=min(abs(FF-params.f_transition));
-            %[~,~,temp]=compute_directional_metrics ...
-            %    (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
-            %    'gsi',true);
-            %output_array{1}((Icut+1):end,:)=temp{1}((Icut+1):end,:);
-            %end
+           
         end
         
+        if isempty(output_array)
+            return
+        end
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%% decide whether to plot percentile stats

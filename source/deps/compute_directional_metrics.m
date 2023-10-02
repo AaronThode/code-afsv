@@ -29,6 +29,9 @@
 function [TT,FF,output_array,PdB,param,Ix,Iy]=compute_directional_metrics(x,metric_type, ...
     Fs,Nfft, ovlap, param,reactive_flag)
 
+if size(x,1)<size(x,2)
+    x=x.';
+end
 
 use_wavelet=any(contains(lower(metric_type),'wavelet'));
 if ~isfield(param,'instrument')
@@ -76,7 +79,7 @@ if contains(param.instrument,'DIFAR')
         get_newparams=true;
     end
 else  %%All other data is coming on on other channels.
-    if length(x(1,:))<Nfft/2
+    if max(size(x))<Nfft/2
         disp('Signal sample shorter than Nfft');
         return
     end
@@ -84,8 +87,13 @@ else  %%All other data is coming on on other channels.
     %%%%Test alternate, faster version, used since July 29, 2018
     % tic
     
-    if size(x,2)>size(x,1)
-        x=x';
+    
+
+    if any(contains(metric_type,'Elevation'))
+        if min(size(x))<4
+           f = errordlg('Elevation angle requires 4-channels.', 'Elevation button error!', 'modal');
+           return
+        end
     end
     
     if use_wavelet
