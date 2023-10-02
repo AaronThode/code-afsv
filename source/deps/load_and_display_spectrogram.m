@@ -66,7 +66,7 @@ try
         return
     end
     [x,t,Fs,tstart,~,hdr]=load_data(handles.filetype, ...
-        handles.tdate_start,tlen,Ichan,handles);
+        handles.tdate_start,tlen,Ichan,handles,app);
     
     %%%%Keywords to describe whether data if multiple channel array, whether
     %%%%linked to a sparse array, or if a vector sensor.
@@ -584,7 +584,7 @@ update_button_visibility;
         
         
         %%%Are these vector sensor files?
-        [~,~,~,~,~,hdr]=load_data(handles.filetype,-1,10,1,handles);
+        [~,~,~,~,~,hdr]=load_data(handles.filetype,-1,10,1,handles,app);
         if hdr.vector_sensor||strcmpi(handles.filetype,'gsi')||~isempty(strfind(handles.myfile,'DIFAR'))
             status='on';
         else

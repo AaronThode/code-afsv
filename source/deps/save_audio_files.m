@@ -23,8 +23,8 @@ catch
 end
 
 
-%[x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles);
-[x,~,Fs,~,~,hdr]=load_data(handles.filetype,tdate_start,tlen,Ichan,handles);
+%[x,t,Fs,tstart,junk,hdr]=load_data(handles.filetype,handles.tdate_min,tdate_start,tlen,Ichan,handles,app);
+[x,~,Fs,~,~,hdr]=load_data(handles.filetype,tdate_start,tlen,Ichan,handles,app);
 
 Islash=strfind(handles.mydir,filesep);
 chan=get(handles.edit_chan,'String');

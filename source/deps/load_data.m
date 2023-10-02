@@ -1,14 +1,17 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% function load_data.m%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%function [x,t,Fs,tmin,tmax,head]	=	load_data(filetype,tdate_start,tlen,Ichan,handles)
+%function [x,t,Fs,tmin,tmax,head]	=	load_data(filetype,tdate_start,tlen,Ichan,handles,app)
 
-function [x,t,Fs,tmin,tmax,head]	=	load_data(filetype,tdate_start,tlen,Ichan,handles)
+function [x,t,Fs,tmin,tmax,head]	=	load_data(filetype,tdate_start,tlen,Ichan,handles,app)
 
 % Inputs
+%   filetype: string (e.g. 'WAV')
 %   tdate_start: desired start of file in datenumber format
 %   tlen: number of seconds of data wanted
 %   Ichan: channel number or 'All'
+%   handles, app: structures that store other data and links to graphical
+%   objects
 
 %%% tmin,tmax are datenumbers that represent the beginning and end of
 %%% file loaded.  Actual start of file should be tdate_start, if provided.
@@ -757,7 +760,7 @@ switch filetype
 
 
         %%%Get start times and sensitivities for various file types...
-        [head,sens,Fs,tmin,tmax]=get_WAV_start_time_and_sens(mydir,myfile, Nsamples,Fs);
+        [head,sens,Fs, tmin,tmax]=get_WAV_start_time_and_sens(mydir,myfile,Nsamples,Fs);
 
 
         tdate_vec	=	datevec(tdate_start - tmin);
@@ -787,6 +790,7 @@ switch filetype
             head.multichannel=true;
         end
 
+        Ichan=get_WAV_Ichan(Ichan);
 
         if ~strcmp(Ichan,'all')
             x		=	x(:,Ichan);
@@ -823,6 +827,16 @@ if teager
 end
 
 
+%%%Inner function
+    function Ichan=get_WAV_Ichan(Ichan)
+
+        %%%If this is a SQUALLE file, will need to do something complicated
+        if app.SQUALLEDropDownLabel.Visible & strcmpi(head.instrument,'SQUALLE')
+           keyboard
+           %head.geom.rd;
+        
+        end
+    end
 end  %function load_data
 
 function [head,sens,Fs,tmin,tmax]=get_WAV_start_time_and_sens(mydir,myfile, Nsamples,Fs)

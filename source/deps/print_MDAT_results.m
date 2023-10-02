@@ -17,7 +17,7 @@ if mychc==2  %%Multiphone data...
     figure(1)
     set(gcf,'pos',[291         628        1513         991]);
     Iplot=0;
-    [x,~,Fs,~,~,head]=load_data(handles.filetype, tdate_start,tlen,'all',handles);
+    [x,~,Fs,~,~,head]=load_data(handles.filetype, tdate_start,tlen,'all',handles,app);
     
     for Ichan=1:head.Nchan
         

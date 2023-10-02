@@ -1,10 +1,10 @@
-function handles=function_beamform_data(app,handles);
+function handles=function_beamform_data(app,handles)
 tdate_start=handles.tdate_start;
 tlen=handles.tlen;
 mydir=pwd;
 Ichan='all';  %Hardwire first channel
 %set(handles.togglebutton_ChannelBeam,'String','Channel');
-[x,t,Fs,~,~,head]=load_data(handles.filetype, tdate_start,tlen,Ichan,handles);
+[x,t,Fs,~,~,head]=load_data(handles.filetype, tdate_start,tlen,Ichan,handles,app);
 
 %If not multichannel data, return
 if isempty(x)||~head.multichannel
