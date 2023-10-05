@@ -5,6 +5,9 @@ function plot_directional_metric(TT,FF,output_array,handles,param,PdB,use_wavele
 %  param:  climm, alg
 
 climm=eval(param.climm);
+if strcmpi(handles.display_view,'Elevation')
+      climm=[-90 90];
+end
 alg_mult=eval(param.alg);
 if ~exist('PdB','var')
     PdB=[];
@@ -15,7 +18,7 @@ if strcmpi(handles.display_view,'AdditiveBeamforming')
     hh=imagesc(TT,FF/1000,10*log10(abs(output_array)));
     format_spectrogram_image;
      titstr='Additive Beamforming';
-elseif strcmpi(handles.display_view,'Azimuth')
+elseif strcmpi(handles.display_view,'Azimuth')|strcmpi(handles.display_view,'Elevation')
 
     %%%convert to mask if desired
     if eval(param.mask)
@@ -44,7 +47,8 @@ elseif strcmpi(handles.display_view,'Azimuth')
         
     end
     colorbar
-    titstr=' Azimuth';
+
+    titstr=handles.display_view;
     try
         if get(handles.checkbox_grayscale,'Value')==1
             colormap(flipud(gray));
@@ -52,7 +56,11 @@ elseif strcmpi(handles.display_view,'Azimuth')
         elseif eval(param.mask)==1
             colormap(flipud(gray))
         else
-            colormap(hsv);
+            if strcmpi(handles.display_view,'Elevation')
+                colormap(jet)
+            else
+                colormap(hsv);
+            end
             clim(climm);
         end
     catch

@@ -26,7 +26,7 @@ function [x,t,Fs,tmin,tmax,head]	=	load_data(filetype,tdate_start,tlen,Ichan,han
 %       vector_sensor: is true if data is 2 or 3-D vector sensor
 %       linked: is true if other instruments are deployed simultaneously in
 %           single location (e.g. DASARs)
-%       instrument: string containing instrument type
+%       instrument: string containing instrument type and A/D desc. 'SQUALLE_5V_24bit'
 %       geom.rd:  If multiple channels are present on a linear array, this
 %           gives coordinates
 
@@ -48,7 +48,7 @@ head.multichannel=false;
 head.linked=false;
 head.vector_sensor=false;
 head.array=false;
-head.instrument=[];  %%Used to trigger whether further calibration needed on spectrogram
+head.instrument={[]};  %%Used to trigger whether further calibration needed on spectrogram
 
 filetype	=	upper(filetype);
 
@@ -232,7 +232,9 @@ switch filetype
             [x,t,head]=load_sonobuoy_Soldevilla([mydir '/' myfile],tdate_start,tlen,Ichan);
             tmin=datenum(1970,1,1,0,0,0);
             tmax=tmin+datenum(0,0,0,0,0,max(t));
-            head.instrument='DIFAR';
+            for JJ=1:3
+                head.instrument{JJ}={'DIFAR'};
+            end
         else
             [x,t,head]=readGSIfile([mydir '/' myfile],tdate_start,tlen,Ichan,'datenum','nocalibrate');
             head.linked=true;
@@ -240,8 +242,9 @@ switch filetype
             head.multichannel=true;
             head.array=false;
             head.Nchan=3;
-            head.instrument='DASAR';
-           
+            for JJ=1:head.Nchan
+                head.instrument{JJ}={'DASAR_1V_1bit'};
+            end
 
             if isempty(keyword)
                 prompt = {'Enter a keyword for GSI calibration [DASARC]:'};
@@ -280,7 +283,7 @@ switch filetype
         tmin=head.tstart;
         tmax=head.tend;
         Fs=head.Fs;
-        head.instrument='Acousonde';
+        head.instrument={'Acousonde'};
         if tdate_start>0
             tdate_vec=datevec(tdate_start-tmin);
             nsec=tdate_vec(6)+60*tdate_vec(5)+3600*tdate_vec(4);
@@ -294,7 +297,7 @@ switch filetype
         %Load accelerometer data as desired
         %% Template: CB_Accel_X_2014_02100958.mt
         if strfind(head.abbrev,'Accel')
-            head.instrument='Accelerometer';
+            head.instrument={'Accelerometer'};
             mystr='XYZ';
             Ispace=strfind(myfile,'_');
             Ispace=Ispace(2)+1;
@@ -796,28 +799,35 @@ switch filetype
             head.multichannel=true;
         end
 
-        if contains(head.instrument,'SQUALLE')
+        if any(contains(head.instrument,'SQUALLE'))
             %%%Revised instrument name, capabilities, and Ichan
             instrument_chc=app.SQUALLEDropDown.Value;
             %%Import configuration file
             config_file=dir([mydir filesep '*acoustic_config*']);
             TI=readtable([mydir filesep config_file.name]);
+            instrument_base=head.instrument{1};
 
             switch instrument_chc
                 case 'Individual Channel'
                     %%Don't to anything, simply us inputted Ichan
                     head.multichannel=true;
                     head.array=false;
+                    head.instrument{1}=sprintf('%s_%s',instrument_base,TI.sensor_type{Ichan(1)});
                 case 'Vector sensor'
                     Igood=TI.Channel(contains(TI.sensor_type,'VS'));
                     %%%sensor type should be of form 'VS-XXX-omni,X/Y/Z
                     sensor_type=TI.sensor_type(Igood);
                     Ichan=[];
                     Ichan(1)=Igood(contains(sensor_type,'omni'));
-                    Ichan(2)=Igood(contains(sensor_type,'X')|contains(sensor_type,'E/W'));
-                    Ichan(3)=Igood(contains(sensor_type,'Y')|contains(sensor_type,'N/S'));
-                    Ichan(4)=Igood(contains(sensor_type,'Z')|contains(sensor_type,'U/D'));
-                    head.instrument='SQUALLE_VS';
+                    Ichan(2)=Igood(contains(sensor_type,'X')|contains(sensor_type,'EW'));
+                    Ichan(3)=Igood(contains(sensor_type,'Y')|contains(sensor_type,'NS'));
+                    Ichan(4)=Igood(contains(sensor_type,'Z')|contains(sensor_type,'UD'));
+                    if isempty(Ichan(4))
+                        Ichan=Ichan(1:3);
+                    end
+                    for JJ=1:length(Ichan)
+                        head.instrument{JJ}=sprintf('%s_%s',instrument_base,TI.sensor_type{Ichan(JJ)});
+                    end
                     head.vector_sensor=true;
                     head.array=false;
                     head.multichannel=true;
@@ -826,16 +836,20 @@ switch filetype
                     head.geom.rd=TI.Z_m(Igood);
                     [head.geom.rd,Isort]=sort(head.geom.rd,'descend');
                     Ichan=Igood(Isort);
-                    head.instrument='SQUALLE_VLA';
+                    for JJ=1:length(Ichan)
+                        head.instrument{JJ}=sprintf('%s_VLA_%s',instrument_base,TI.sensor_type{Ichan(JJ)});
+                    end
                     head.vector_sensor=false;
                     head.array=true;
                     head.multichannel=true;
                 case 'Horizontal array'
-                    Igood=TI.Channel((TI.X_m>=0) | (TI.X_m+TI.Y_m+TI.Z_m==0) );
+                    Igood=TI.Channel(contains(TI.sensor_type,'HTI')&(TI.X_m>0) | (TI.X_m+TI.Y_m+TI.Z_m==0) );
                     head.geom.rd=TI.Z_m(Igood);
                     [head.geom.rd,Isort]=sort(head.geom.rd,'descend');
                     Ichan=Igood(Isort);
-                    head.instrument='SQUALLE_VLA';
+                    for JJ=1:length(Ichan)
+                        head.instrument{JJ}=sprintf('%s_HLA_%s',instrument_base,TI.sensor_type{Ichan(JJ)});
+                    end
                     head.vector_sensor=false;
                     head.array=true;
                     head.multichannel=true;
@@ -893,14 +907,16 @@ head.instrument='Unknown';
 if contains(myfile,'DIFAR')
     head.multichannel=true;
     head.vector_sensor=true;
-    head.instrument='DIFAR';
+    for JJ=1:3
+        head.instrument{JJ}={'DIFAR'};
+    end
 end
 %[head.cable_factor,sens]=get_ADAT24_cable_factor;  %%Warning! sens needs to be adjusted as x now scaled between -1 and 1
 
 try  %%%Check for SOUNDTRAP INFO by looking for a log.xml file
     done=false;
     [SUDAR_true,tmin,tmax,FsSUDAR,cal_dB]=get_SUDAR_time(mydir,myfile); %Check whether a SUDAR file exists
-    head.instrument='SoundTrap';
+    head.instrument={'SoundTrap'};
 
     if SUDAR_true
         sens=(10^(cal_dB/20))/(2^16);
@@ -921,7 +937,7 @@ if ~done
         if Berchok_true
             sens=1;
             done=true;
-            head.instrument='BerchokData';
+            head.instrument={'BerchokData'};
         end
 
     catch
@@ -932,7 +948,7 @@ end
 
 if contains(myfile,'LL017_Set4_3min.wav.x.wav')
     sens=3162;  %%Need to check after 2023 because x now Returns a value normalized between -1 and 1
-    head.instrument='Arctic_VLA_Emma';
+    head.instrument={'Arctic_VLA_Emma'};
     done=true;
 end
 
@@ -946,7 +962,7 @@ if ~done
         %drifterM35-5V-2022-261-100939-GMT-n00535.wav%
         sens=1; %placeholder
 
-        head.instrument='SQUALLE';
+        head.instrument={'SQUALLE_5V_24bit'};
         %head.vector_sensor=true;
     end
 end

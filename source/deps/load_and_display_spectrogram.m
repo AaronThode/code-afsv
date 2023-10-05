@@ -417,7 +417,7 @@ update_button_visibility;
             handles.sgram.Fs	=	Fs;
             
             %%Add spectral calibration curve, if present
-            senss=get_spectral_sensitivity(Ichan,FF,hdr.instrument);
+            senss=getSensitivity_wrapper(Ichan,FF,hdr.instrument);
             
             
             if ~isfield(hdr,'calcurv')
@@ -425,7 +425,7 @@ update_button_visibility;
                 B=10*log10(B.*senss.');
                 imagesc(TT,FF/1000,B);%
                 
-            else
+            else  %%%Factor in cable distortion
                 Xp_cal_fin=polyval(hdr.calcurv,FF/Fs);
                 
                 imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
@@ -481,7 +481,7 @@ update_button_visibility;
     end %display_spectrogram
 
 %%%%%%%%%%%
-    function senss=get_spectral_sensitivity(Ichan,FF,instrument)
+    function senss=getSensitivity_wrapper(Ichan,FF,instrument)
         
         switch instrument
             case 'drifterM35'

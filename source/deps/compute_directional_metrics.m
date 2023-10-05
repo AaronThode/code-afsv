@@ -6,6 +6,7 @@
 %       'IntensityPhase', 'Polarization','AdditiveBeamforming'
 %           metric_type can also be a string.
 %           If a cell array output_array will be a cell array
+%           If 'wavelet' appended to metric_type string, will use wavelets
 % reactive_flag:  if true, compute reactive intensity.  Vector same size as
 %           metric_type
 % Fs: sampling rate in Hz
@@ -32,7 +33,9 @@ function [TT,FF,output_array,PdB,param,Ix,Iy]=compute_directional_metrics(x,metr
 if size(x,1)<size(x,2)
     x=x.';
 end
+Nchan=size(x,2);
 
+use_elevation=any(contains(metric_type,'Elevation'));
 use_wavelet=any(contains(lower(metric_type),'wavelet'));
 if ~isfield(param,'instrument')
     param.instrument='DASAR';
@@ -84,23 +87,17 @@ else  %%All other data is coming on on other channels.
         return
     end
     
-    %%%%Test alternate, faster version, used since July 29, 2018
-    % tic
-    
-    
-
-    if any(contains(metric_type,'Elevation'))
-        if min(size(x))<4
-           f = errordlg('Elevation angle requires 4-channels.', 'Elevation button error!', 'modal');
-           return
-        end
+  %%%%Check if four channels exist if want elevation
+    if use_elevation & Nchan<4
+        f = errordlg('Elevation angle requires 4-channels.', 'Elevation button error!', 'modal');
+        return
     end
     
     if use_wavelet
         M=size(x,1);
         dn=1;
         fb=cwtfilterbank('SamplingFrequency',Fs,'SignalLength',size(x,1),'FrequencyLimits',[10 0.95*Fs/2],'VoicesPerOctave',12);
-        for J=1:3
+        for J=1:Nchan
             [B(J,:,:),FF,COI] = wt(fb,x(:,J));  %use cwtfilterbank for future speed
         end
         TT=(1:M)/Fs;
@@ -108,9 +105,9 @@ else  %%All other data is coming on on other channels.
     else
         dn=round((1-ovlap)*Nfft);
         M=floor(1+(size(x,1)-Nfft)/dn);
-        B=zeros(size(x,2),Nfft/2+1,M);
+        B=zeros(Nchan,Nfft/2+1,M);
         
-        for J=1:3
+        for J=1:Nchan
             fprintf('Spectrogram channel %i\n',J);
             [B(J,:,:),FF,TT] = spectrogram(x(:,J),Nfft,round(ovlap*Nfft),Nfft,Fs);
         end
@@ -121,13 +118,13 @@ else  %%All other data is coming on on other channels.
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%Correct gain as needed
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    Gains=correct_gain(FF,param.instrument);
+    Gains=correct_gain(FF,param.instrument,Nchan);
     %temp=10*log10(abs(squeeze(B(2,:,:))));
     %myfig=gcf;
     %figure; for III=1:3,subplot(3,1,III);imagesc(TT,FF,temp);ylim([0 2000]);colorbar;end
     %figure(myfig);
     
-    for J=1:3
+    for J=1:Nchan
         B(J,:,:)=squeeze(B(J,:,:)).*Gains(:,J);
     end
     
@@ -158,13 +155,33 @@ else  %%All other data is coming on on other channels.
    
     Ix=squeeze(((B(1,:,:).*conj(B(2,:,:)))));
     Iy=squeeze(((B(1,:,:).*conj(B(3,:,:)))));
+    if Nchan>3  %%Needed to compute transport velocity
+          Iz=squeeze(((B(1,:,:).*conj(B(4,:,:)))));
+   end
     
     %time and memory, but need this if trying to use transparency
     pressure_autospectrum=squeeze(abs(B(1,:,:)).^2);
-    normalized_velocity_autospectrum=squeeze(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2);
+
+    if Nchan<4
+        normalized_velocity_autospectrum=squeeze(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2);
+    else
+        %normalized_velocity_autospectrum=0.5*param.rho.*squeeze(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2+abs(B(4,:,:)).^2);
+        normalized_velocity_autospectrum=squeeze(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2+abs(B(4,:,:)).^2);
+    end
+    
     energy_density=0.5*abs(normalized_velocity_autospectrum+pressure_autospectrum);
-    polarization=(real(B(2,:,:)).*imag(B(3,:,:))-real(B(3,:,:)).*imag(B(2,:,:)));
-    polarization=-2*squeeze(polarization./(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2));
+
+    %%%WARNING! Polarization needs updating
+    %%%  Im(v x conj(v))/|Q|
+    if Nchan<4
+        polarization=(real(B(2,:,:)).*imag(B(3,:,:))-real(B(3,:,:)).*imag(B(2,:,:)));
+        polarization=-2*squeeze(polarization./(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2));
+    else
+        p1=(real(B(3,:,:)).*imag(B(4,:,:))-real(B(4,:,:)).*imag(B(3,:,:)));
+        p2=(real(B(4,:,:)).*imag(B(2,:,:))-real(B(2,:,:)).*imag(B(4,:,:)));
+        p3=(real(B(2,:,:)).*imag(B(3,:,:))-real(B(3,:,:)).*imag(B(2,:,:)));
+        polarization=(abs(p1).^2+abs(p2).^2+abs(p3).^2)./(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2+abs(B(4,:,:)).^2);
+    end
     %end
     %toc
     get_newparams=false;
@@ -222,18 +239,27 @@ if ~isempty(sec_avg)&&sec_avg>0
     NV_avg=Ix_avg;
     PA_avg=Ix_avg;
     TT_avg=zeros(1,Nsnap);
+
+    if Nchan>3
+        Iz_avg=Ix_avg;
+    end
     for J=1:Nsnap
         index=floor((J-1)*(Navg*(1-ovlap)))+(1:Navg);
         Ix_avg(:,J)=mean(Ix(:,index),2);
         Iy_avg(:,J)=mean(Iy(:,index),2);
+        if Nchan>3
+            Iz_avg(:,J)=mean(Iz(:,index),2);
+        end
         NV_avg(:,J)=mean(normalized_velocity_autospectrum(:,index),2);
         PA_avg(:,J)=mean(pressure_autospectrum(:,index),2);
         TT_avg(J)=mean(TT(index));
     end
     Ix=Ix_avg;
     Iy=Iy_avg;
-    
-    
+    if Nchan>3
+        Iz=Iz_avg;
+    end
+
     TT=TT_avg;
     energy_density=0.5*abs(NV_avg+PA_avg);
     normalized_velocity_autospectrum=NV_avg;
@@ -267,20 +293,31 @@ for J=1:length(metric_type)  %%for each request
             output_array{J}=bnorm((param.brefa)+mu);
             %output_array{J}=bnorm(mu);
         case 'Elevation'
-            if ~reactive_flag(J)
-                mu = single(atan2d(real(Ix),real(Iy)));  %Compass convention (usually atan2d(y,x))
+
+             if ~reactive_flag(J)
+                mu = (atand(real(Iz)/sqrt((real(Iy)).^2+(real(Ix)).^2)));
             else
-                mu = single(atan2d(imag(Ix),imag(Iy)));
+                mu = (atand(imag(Iz)/sqrt((imag(Iy)).^2+(imag(Ix)).^2)));
             end
-            output_array{J}=bnorm((param.brefa)+mu);
-            %output_array{J}=bnorm(mu);
-        case 'ItoERatio'
-            if ~reactive_flag(J)
-                intensity=sqrt((real(Ix)).^2+(real(Iy)).^2);
-            else
-                intensity=sqrt((imag(Ix)).^2+(imag(Iy)).^2);
-            end
+            output_array{J}=(param.brefa+mu);
+     
             
+        case 'ItoERatio'
+
+            if Nchan>3
+                if ~reactive_flag(J)
+                    intensity=sqrt((real(Ix)).^2+(real(Iy)).^2+(real(Iz)).^2);
+                else
+                    intensity=sqrt((imag(Ix)).^2+(imag(Iy)).^2+(imag(Iz)).^2);
+                end
+            else
+                if ~reactive_flag(J)
+                    intensity=sqrt((real(Ix)).^2+(real(Iy)).^2);
+                else
+                    intensity=sqrt((imag(Ix)).^2+(imag(Iy)).^2);
+                end
+            end
+
             %%%Effective velocity j/Sp
             output_array{J}=intensity./energy_density;
         case 'KEtoPERatio'
@@ -290,22 +327,36 @@ for J=1:length(metric_type)  %%for each request
             
             output_array{J}=polarization;
         case 'IntensityPhase'
-            if ~reactive_flag(J)
-                output_array{J}=atan2d(sqrt(imag(Ix).^2+imag(Iy).^2),sqrt((real(Ix)).^2+(real(Iy)).^2));
-                
-                %output_array{J}=atan2d((imag(Ix)),((real(Ix)))); %Ix phase
-                % output_array{J}=atan2d((imag(Iy)),((real(Iy)))); %Iy phase
+
+            if Nchan>3
+                if ~reactive_flag(J)
+                    output_array{J}=atan2d(sqrt(imag(Ix).^2+imag(Iy).^2+imag(Iz).^2),sqrt((real(Ix)).^2+(real(Iy)).^2+real(Iz).^2));
+                else
+                    output_array{J}=atan2d(sqrt(real(Ix).^2+real(Iy).^2+real(Iz).^2),sqrt((imag(Ix)).^2+(imag(Iy)).^2+imag(Iz).^2));
+                end
             else
-                output_array{J}=atan2d(sqrt(real(Ix).^2+real(Iy).^2),sqrt((imag(Ix)).^2+(imag(Iy)).^2));
+                if ~reactive_flag(J)
+                    output_array{J}=atan2d(sqrt(imag(Ix).^2+imag(Iy).^2),sqrt((real(Ix)).^2+(real(Iy)).^2));
+                else
+                    output_array{J}=atan2d(sqrt(real(Ix).^2+real(Iy).^2),sqrt((imag(Ix)).^2+(imag(Iy)).^2));
+                end
             end
             
         case 'PhaseSpeed'
-            if ~reactive_flag(J)
-                output_array{J}=1450*pressure_autospectrum./sqrt((real(Ix)).^2+(real(Iy)).^2);
-                
+            if Nchan>3
+                if ~reactive_flag(J)
+                    output_array{J}=1450*pressure_autospectrum./sqrt((real(Ix)).^2+(real(Iy)).^2+(real(Iz)).^2);
+                else
+                    output_array{J}=1450*pressure_autospectrum./sqrt((imag(Ix)).^2+(imag(Iy)).^2+(imag(Iz)).^2);
+
+                end
             else
-                output_array{J}=1450*pressure_autospectrum./sqrt((imag(Ix)).^2+(imag(Iy)).^2);
-                
+                if ~reactive_flag(J)
+                    output_array{J}=1450*pressure_autospectrum./sqrt((real(Ix)).^2+(real(Iy)).^2);
+                else
+                    output_array{J}=1450*pressure_autospectrum./sqrt((imag(Ix)).^2+(imag(Iy)).^2);
+
+                end
             end
     end
 end
@@ -314,10 +365,10 @@ end
 
 %%%%%%%SubFunctions%%%%%%%%%%%%%
 
-function Gains=correct_gain(FF,instrument_type)
+function Gains=correct_gain(FF,instrument_type,Nchan)
 switch instrument_type
     case 'DASAR'  %%%Remember energy is arriving as normal modes so a slight vertical offset.
-        Gains=ones(length(FF),3);
+        Gains=ones(length(FF),Nchan);
         %Gains(:,2:3)=Gains(:,2:3)*cosd(28)*exp(1i*2*pi*(-2)/180); %150 Hz bowhead
         %Gains(:,2:3)=Gains(:,2:3)*cosd(20)*exp(1i*2*pi*(-4)/180); %250 Hz bowhead
        
@@ -333,7 +384,7 @@ switch instrument_type
        phasse=-7*ones(size(FF));
        phasse(FF>=350)=4;
        %Gains(:,2:3)=Gains(:,2:3).*cos_elevation.*exp(1i*2*pi*(phasse)/180); %10-Apr-2020 00:02:03.000 287 (110 and -6 null) deg Arctic5G_2014 5G 100-150 Hz 17 m water depth
-        Gains(:,2:3)=Gains(:,2:3).*cosd(25).*exp(1i*2*pi*(phasse)/180); %10-Apr-2020 00:02:03.000 287 (110 and -6 null) deg Arctic5G_2014 5G 100-150 Hz 17 m water depth
+        Gains(:,2:Nchan)=Gains(:,2:Nchan).*cosd(25).*exp(1i*2*pi*(phasse)/180); %10-Apr-2020 00:02:03.000 287 (110 and -6 null) deg Arctic5G_2014 5G 100-150 Hz 17 m water depth
       
         
     case 'drifterM35'
@@ -349,7 +400,7 @@ switch instrument_type
         % figure;
         %semilogx(FF,20*log10(Gains(:,1)),FF, 20*log10(Gains(:,2)));grid on;
     otherwise
-        Gains=ones(length(FF),3);
+        Gains=ones(length(FF),Nchan);
 end
 
 end
