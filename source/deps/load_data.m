@@ -847,6 +847,7 @@ function [head,amplitude_scale,Fs,Ichan,tmin,tmax]=get_WAV_info(mydir,myfile, Ns
 
 head.vector_sensor=false;
 head.multichannel=false;
+head.array=false;
 head.instrument{1}='Unknown';
 
 if contains(myfile,'DIFAR')
@@ -861,9 +862,10 @@ end
 try  %%%Check for SOUNDTRAP INFO by looking for a log.xml file
     done=false;
     [SUDAR_true,tmin,tmax,FsSUDAR,cal_dB]=get_SUDAR_time(mydir,myfile); %Check whether a SUDAR file exists
-    head.instrument{1}='SoundTrap';
-
+    
     if SUDAR_true
+        head.instrument{1}='SoundTrap_HTI-96minsensor';
+
         %amplitude_scale=(10^(cal_dB/20))/(2^16);
         amplitude_scale=power(10,cal_dB/20);
         Fs=FsSUDAR;
@@ -959,7 +961,7 @@ if ~done
                     head.instrument{JJ}=sprintf('%s_HLA_%ssensor',instrument_base,TI.sensor_type{Ichan(JJ)});
                 end
                 head.vector_sensor=false;
-                head.array=true;
+                head.array=false;
                 head.multichannel=true;
 
 
@@ -969,8 +971,7 @@ if ~done
 end  %%If not done
 
 if ~done
-    %%%%Check that files is associated with SQUALL-E ONR drifter
-
+    
     tmin	=	convert_date(myfile,'_');
 
     if isempty(tmin)
