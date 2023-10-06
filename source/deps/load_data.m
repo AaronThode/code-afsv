@@ -26,7 +26,10 @@ function [x,t,Fs,tmin,tmax,head]	=	load_data(filetype,tdate_start,tlen,Ichan,han
 %       vector_sensor: is true if data is 2 or 3-D vector sensor
 %       linked: is true if other instruments are deployed simultaneously in
 %           single location (e.g. DASARs)
-%       instrument: string containing instrument type and A/D desc. 'SQUALLE_5V_24bit'
+%       instrument: cell array with strings containing instrument type a for each Ichan:
+%           'SQUALLE_HTI-92WBsensor', or
+%           'DASAR_DASAR-omnisensor' (since DASAR has own calibration
+%           function)
 %       geom.rd:  If multiple channels are present on a linear array, this
 %           gives coordinates
 
@@ -34,7 +37,6 @@ persistent  Fs_keep keyword space
 
 mydir=handles.mydir;
 myfile=handles.myfile;
-teager=get(handles.checkbox_teager,'Value');
 set(handles.edit_normal_rotation,'Vis','Off');  %Set off for the moment
 set(handles.text_normal_rotation,'Vis','Off');  %Set off for the moment
 
@@ -48,7 +50,7 @@ head.multichannel=false;
 head.linked=false;
 head.vector_sensor=false;
 head.array=false;
-head.instrument={[]};  %%Used to trigger whether further calibration needed on spectrogram
+head.instrument{1}='';  %%Used to trigger whether further calibration needed on spectrogram
 
 filetype	=	upper(filetype);
 
@@ -242,9 +244,10 @@ switch filetype
             head.multichannel=true;
             head.array=false;
             head.Nchan=3;
-            for JJ=1:head.Nchan
-                head.instrument{JJ}={'DASAR_1V_1bit'};
-            end
+
+            head.instrument{1}='DASAR_DASAR-omnisensor';
+            head.instrument{2}='DASAR_DASAR-Xsensor';
+            head.instrument{3}='DASAR_DASAR-Ysensor';
 
             if isempty(keyword)
                 prompt = {'Enter a keyword for GSI calibration [DASARC]:'};
@@ -254,7 +257,7 @@ switch filetype
                 answer = inputdlg(prompt,dlg_title,num_lines,def);
                 keyword=answer{1};
             end
-            x=calibrate_GSI_signal(x, keyword);
+            x=calibrate_GSI_signal(x, keyword);  %units of uPa
             tmin=datenum(1970,1,1,0,0,head.ctbc);
             tmax=tmin+datenum(0,0,1,0,0,0);
         end
@@ -283,7 +286,7 @@ switch filetype
         tmin=head.tstart;
         tmax=head.tend;
         Fs=head.Fs;
-        head.instrument={'Acousonde'};
+        head.instrument{1}='Acousonde';
         if tdate_start>0
             tdate_vec=datevec(tdate_start-tmin);
             nsec=tdate_vec(6)+60*tdate_vec(5)+3600*tdate_vec(4);
@@ -297,7 +300,9 @@ switch filetype
         %Load accelerometer data as desired
         %% Template: CB_Accel_X_2014_02100958.mt
         if strfind(head.abbrev,'Accel')
-            head.instrument={'Accelerometer'};
+            for JJ=1:3
+                head.instrument{JJ}='Accelerometer';
+            end
             mystr='XYZ';
             Ispace=strfind(myfile,'_');
             Ispace=Ispace(2)+1;
@@ -705,9 +710,9 @@ switch filetype
 
         %a 2 V pk-pk signal yields 0.9 pk-pak amp at 3 kHz or channel 2
         %(audio)
-        sens=.9*2/0.9;  %Convert to volts
+        amplitude_scale=.9*2/0.9;  %Convert to volts
         sens_hydro=172; %dB re uPa/V
-        sens=sens*10.^(sens_hydro/20);
+        amplitude_scale=amplitude_scale*10.^(sens_hydro/20);
         %sens=1;
 
         tdate_vec	=	datevec(tdate_start - tmin);
@@ -747,7 +752,7 @@ switch filetype
 
         t	=	(1:length(x))/Fs;
 
-        x			=	double(x)*sens;
+        x			=	double(x)*amplitude_scale;
     case 'WAV' %% Includes SUDAR and SQUALLE (ONR drifter) data
 
         %Check version of MATLAB
@@ -768,8 +773,10 @@ switch filetype
         end
 
 
-        %%%Get start times and sensitivities for various file types...
-        [head,sens,Fs, tmin,tmax]=get_WAV_start_time_and_sens(mydir,myfile,Nsamples,Fs);
+        %%%Get start additional information about WAV file, including
+        %%%channels desired, absolute times, and amplitude scaling (for
+        %%%non-frequency dependent calibration, e.g. SoundTrap)
+        [head,amplitude_scale,Fs, Ichan, tmin,tmax]=get_WAV_info(mydir,myfile,Nsamples,Fs,Ichan, app);
 
 
         tdate_vec	=	datevec(tdate_start - tmin);
@@ -799,75 +806,11 @@ switch filetype
             head.multichannel=true;
         end
 
-        if any(contains(head.instrument,'SQUALLE'))
-            %%%Revised instrument name, capabilities, and Ichan
-            instrument_chc=app.SQUALLEDropDown.Value;
-            %%Import configuration file
-            config_file=dir([mydir filesep '*acoustic_config*']);
-            TI=readtable([mydir filesep config_file.name]);
-            instrument_base=head.instrument{1};
-
-            switch instrument_chc
-                case 'Individual Channel'
-                    %%Don't to anything, simply us inputted Ichan
-                    head.multichannel=true;
-                    head.array=false;
-                    head.instrument{1}=sprintf('%s_%s',instrument_base,TI.sensor_type{Ichan(1)});
-                case 'Vector sensor'
-                    Igood=TI.Channel(contains(TI.sensor_type,'VS'));
-                    %%%sensor type should be of form 'VS-XXX-omni,X/Y/Z
-                    sensor_type=TI.sensor_type(Igood);
-                    Ichan=[];
-                    Ichan(1)=Igood(contains(sensor_type,'omni'));
-                    Ichan(2)=Igood(contains(sensor_type,'X')|contains(sensor_type,'EW'));
-                    Ichan(3)=Igood(contains(sensor_type,'Y')|contains(sensor_type,'NS'));
-                    Ichan(4)=Igood(contains(sensor_type,'Z')|contains(sensor_type,'UD'));
-                    if isempty(Ichan(4))
-                        Ichan=Ichan(1:3);
-                    end
-                    for JJ=1:length(Ichan)
-                        head.instrument{JJ}=sprintf('%s_%s',instrument_base,TI.sensor_type{Ichan(JJ)});
-                    end
-                    head.vector_sensor=true;
-                    head.array=false;
-                    head.multichannel=true;
-                case 'Vertical array'
-                    Igood=TI.Channel((TI.X_m==0) & (contains(TI.sensor_type,'HTI')));
-                    head.geom.rd=TI.Z_m(Igood);
-                    [head.geom.rd,Isort]=sort(head.geom.rd,'descend');
-                    Ichan=Igood(Isort);
-                    for JJ=1:length(Ichan)
-                        head.instrument{JJ}=sprintf('%s_VLA_%s',instrument_base,TI.sensor_type{Ichan(JJ)});
-                    end
-                    head.vector_sensor=false;
-                    head.array=true;
-                    head.multichannel=true;
-                case 'Horizontal array'
-                    Igood=TI.Channel(contains(TI.sensor_type,'HTI')&(TI.X_m>0) | (TI.X_m+TI.Y_m+TI.Z_m==0) );
-                    head.geom.rd=TI.Z_m(Igood);
-                    [head.geom.rd,Isort]=sort(head.geom.rd,'descend');
-                    Ichan=Igood(Isort);
-                    for JJ=1:length(Ichan)
-                        head.instrument{JJ}=sprintf('%s_HLA_%s',instrument_base,TI.sensor_type{Ichan(JJ)});
-                    end
-                    head.vector_sensor=false;
-                    head.array=true;
-                    head.multichannel=true;
-
-            end
-
-        end
-          
-
         if ~strcmp(Ichan,'all')
             x		=	x(:,Ichan);
-            
         end
-
         t	=	(1:length(x))/Fs;
-
-        x			=	double(x)*sens;
-
+        x			=	double(x)*amplitude_scale;
 end  %switch
 
 if isempty(tmin) || isempty(tmax)
@@ -889,26 +832,28 @@ if ~isfield(head,'multichannel')
 end
 
 %%%Optional Teager-Kaiser filtering...
+teager=get(handles.checkbox_teager,'Value');
 if teager
     %%Assume that x is in form [ channel time]
     x=x(:,2:end-1).^2-x(:,1:end-2).*x(:,3:end);
 end
 
-
-
 end  %function load_data
 
-function [head,sens,Fs,tmin,tmax]=get_WAV_start_time_and_sens(mydir,myfile, Nsamples,Fs)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%get_WAV_info%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [head,amplitude_scale,Fs,Ichan,tmin,tmax]=get_WAV_info(mydir,myfile, Nsamples,Fs,Ichan, app)
+%%%Put information about instrument, amplitude scale, and absolute time in
+%%%here
 
 head.vector_sensor=false;
 head.multichannel=false;
-head.instrument='Unknown';
+head.instrument{1}='Unknown';
 
 if contains(myfile,'DIFAR')
     head.multichannel=true;
     head.vector_sensor=true;
     for JJ=1:3
-        head.instrument{JJ}={'DIFAR'};
+        head.instrument{JJ}='DIFAR';
     end
 end
 %[head.cable_factor,sens]=get_ADAT24_cable_factor;  %%Warning! sens needs to be adjusted as x now scaled between -1 and 1
@@ -916,11 +861,11 @@ end
 try  %%%Check for SOUNDTRAP INFO by looking for a log.xml file
     done=false;
     [SUDAR_true,tmin,tmax,FsSUDAR,cal_dB]=get_SUDAR_time(mydir,myfile); %Check whether a SUDAR file exists
-    head.instrument={'SoundTrap'};
+    head.instrument{1}='SoundTrap';
 
     if SUDAR_true
-        sens=(10^(cal_dB/20))/(2^16);
-        sens=power(10,cal_dB/20);
+        %amplitude_scale=(10^(cal_dB/20))/(2^16);
+        amplitude_scale=power(10,cal_dB/20);
         Fs=FsSUDAR;
         done=true;
 
@@ -935,9 +880,9 @@ if ~done
     try
         [Berchok_true,tmin,tmax]=get_Berchok_time(mydir,myfile,Nsamples,Fs); %Check whether a Catherine Berchok file exists
         if Berchok_true
-            sens=1;
+            amplitude_scale=1;
             done=true;
-            head.instrument={'BerchokData'};
+            head.instrument{1}='BerchokData';
         end
 
     catch
@@ -947,8 +892,8 @@ end
 
 
 if contains(myfile,'LL017_Set4_3min.wav.x.wav')
-    sens=3162;  %%Need to check after 2023 because x now Returns a value normalized between -1 and 1
-    head.instrument={'Arctic_VLA_Emma'};
+    amplitude_scale=3162;  %%Need to check after 2023 because x now Returns a value normalized between -1 and 1
+    head.instrument{1}='Arctic_VLA_Emma';
     done=true;
 end
 
@@ -960,12 +905,68 @@ if ~done
         tmin	=	convert_date_SQUALLE(myfile);
         tmax    =   tmin+datenum(0,0,0,0,0,Nsamples/Fs);
         %drifterM35-5V-2022-261-100939-GMT-n00535.wav%
-        sens=1; %placeholder
+        amplitude_scale=5; %5 V scale, and the audioread scales the max to 1.
 
-        head.instrument={'SQUALLE_5V_24bit'};
+        instrument_base='SQUALLE';
+
+        %%%Revised instrument name, capabilities, and Ichan
+        instrument_chc=app.SQUALLEDropDown.Value;
+        %%Import configuration file
+        config_file=dir([mydir filesep '*acoustic_config*']);
+        TI=readtable([mydir filesep config_file.name]);
+       
+        switch instrument_chc
+            case 'Individual Channel'
+                %%Don't to anything, simply us inputted Ichan
+                head.multichannel=true;
+                head.array=false;
+                head.instrument{1}=sprintf('%s_%ssensor',instrument_base,TI.sensor_type{Ichan(1)});
+            case 'Vector sensor'
+                Igood=TI.Channel(contains(TI.sensor_type,'VS'));
+                %%%sensor type should be of form 'VS-XXX-omni,X/Y/Z
+                sensor_type=TI.sensor_type(Igood);
+                Ichan=[];
+                Ichan(1)=Igood(contains(sensor_type,'omni'));
+                Ichan(2)=Igood(contains(sensor_type,'X')|contains(sensor_type,'EW'));
+                Ichan(3)=Igood(contains(sensor_type,'Y')|contains(sensor_type,'NS'));
+                Ichan(4)=Igood(contains(sensor_type,'Z')|contains(sensor_type,'UD'));
+                if isempty(Ichan(4))
+                    Ichan=Ichan(1:3);
+                end
+                for JJ=1:length(Ichan)
+                    head.instrument{JJ}=sprintf('%s_%ssensor',instrument_base,TI.sensor_type{Ichan(JJ)});
+                end
+                head.vector_sensor=true;
+                head.array=false;
+                head.multichannel=true;
+            case 'Vertical array'
+                Igood=TI.Channel((TI.X_m==0) & (contains(TI.sensor_type,'HTI')));
+                head.geom.rd=TI.Z_m(Igood);
+                [head.geom.rd,Isort]=sort(head.geom.rd,'descend');
+                Ichan=Igood(Isort);
+                for JJ=1:length(Ichan)
+                    head.instrument{JJ}=sprintf('%s_VLA_%ssensor',instrument_base,TI.sensor_type{Ichan(JJ)});
+                end
+                head.vector_sensor=false;
+                head.array=true;
+                head.multichannel=true;
+            case 'Horizontal array'
+                Igood=TI.Channel(contains(TI.sensor_type,'HTI')&(TI.X_m>0) | (TI.X_m+TI.Y_m+TI.Z_m==0) );
+                head.geom.rd=TI.Z_m(Igood);
+                [head.geom.rd,Isort]=sort(head.geom.rd,'descend');
+                Ichan=Igood(Isort);
+                for JJ=1:length(Ichan)
+                    head.instrument{JJ}=sprintf('%s_HLA_%ssensor',instrument_base,TI.sensor_type{Ichan(JJ)});
+                end
+                head.vector_sensor=false;
+                head.array=true;
+                head.multichannel=true;
+
+
+        end
         %head.vector_sensor=true;
-    end
-end
+    end  %if SQUALLE
+end  %%If not done
 
 if ~done
     %%%%Check that files is associated with SQUALL-E ONR drifter

@@ -198,7 +198,7 @@ update_button_visibility;
         
         if strcmpi(handles.filetype,'gsi')
             azigram_param.brefa=hdr.brefa;
-        elseif contains(handles.file_flags.instrument,'drifterM35')
+        elseif contains(handles.file_flags.instrument{1},'SQUALLE')
             azigram_param.brefa=-15.5;
         else
             azigram_param.brefa=0;
@@ -416,13 +416,20 @@ update_button_visibility;
             handles.sgram.ovlap	=	ovlap;
             handles.sgram.Fs	=	Fs;
             
-            %%Add spectral calibration curve, if present
-            senss=getSensitivity_wrapper(Ichan,FF,hdr.instrument);
-            
+            %%Add spectral calibration curve, if present.  Only one channel
+            %%allowed
+            %senss=getSensitivity_wrapper(Ichan,FF,hdr.instrument{Ichan})
+            [sensor_name]=parse_instrument_string(hdr.instrument{1});
+            if isempty(sensor_name)
+                disp('No sensor identified with this channel')
+                return
+            end
+            senss=getSensitivity(FF,sensor_name,'units','uPa/V');
+            %getSensitivity(f,'GTI-M35-300-omni','nbits',16,'Vmax',2,'uPa/V') etc.
             
             if ~isfield(hdr,'calcurv')
                 %%%KEY SPECTROGRAM IMAGE COMMAND
-                B=10*log10(B.*senss.');
+                B=10*log10(B.*(abs(senss).^2)');
                 imagesc(TT,FF/1000,B);%
                 
             else  %%%Factor in cable distortion
@@ -481,25 +488,25 @@ update_button_visibility;
     end %display_spectrogram
 
 %%%%%%%%%%%
-    function senss=getSensitivity_wrapper(Ichan,FF,instrument)
-        
-        switch instrument
-            case 'drifterM35'
-                if Ichan>=1 & Ichan<=8
-                    senss=getSensitivity(FF,'HTI-92WB');
-                elseif Ichan==9
-                    senss=getSensitivity(FF,'GTI-M35-300-omni');
-                elseif Ichan>=10 || Ichan<=11
-                    senss=getSensitivity(FF,'GTI-M35-300-directional');
-                end
-                senss=senss.^2;
-            case 'DASAR'
-                senss=1;
-            otherwise
-                senss=1;
-                
-        end
-    end %function get_spectral_sensitivity
+%     function senss=getSensitivity_wrapper(Ichan,FF,instrument)
+%         
+%         switch instrument
+%             case 'drifterM35'
+%                 if Ichan>=1 & Ichan<=8
+%                     senss=getSensitivity(FF,'HTI-92WB');
+%                 elseif Ichan==9
+%                     senss=getSensitivity(FF,'GTI-M35-300-omni');
+%                 elseif Ichan>=10 || Ichan<=11
+%                     senss=getSensitivity(FF,'GTI-M35-300-directional');
+%                 end
+%                 senss=senss.^2;
+%             case 'DASAR'
+%                 senss=1;
+%             otherwise
+%                 senss=1;
+%                 
+%         end
+%     end %function get_spectral_sensitivity
 
     function format_spectrogram_image
         grid on
@@ -533,9 +540,9 @@ update_button_visibility;
         % set(gcf,'pos',[30   322  1229   426])
         set(gca,'fontweight','bold','fontsize',14);
         xlabel('Time (sec)');ylabel('Frequency (kHz)');
-        xlim([0 str2num(handles.edit_winlen.String)]);
+        xlim([0 str2double(handles.edit_winlen.String)]);
         if ~strcmp(handles.display_view,'Spectrogram')
-            title(get(handles.text_filename,'String'));
+            title([get(handles.text_filename,'String') ' ' sensor_name]);
         end
     end  %%%format_spectrogram_image
 
@@ -576,7 +583,7 @@ update_button_visibility;
             end
         end
        
-        if contains(handles.file_flags.instrument,'DASAR')
+        if contains(handles.file_flags.instrument{1},'DASAR')
             status='on';
         else
             status='off';
@@ -587,7 +594,7 @@ update_button_visibility;
         end
          
 
-        if contains(handles.file_flags.instrument,'SQUALLE')
+        if contains(handles.file_flags.instrument{1},'SQUALLE')
             status='on';
         else
             status='off';

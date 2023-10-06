@@ -118,7 +118,17 @@ else  %%All other data is coming on on other channels.
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%Correct gain as needed
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    Gains=correct_gain(FF,param.instrument,Nchan);
+    Gains=zeros(length(FF),Nchan);
+    for IJ=1:Nchan
+        [sensor_name]=parse_instrument_string(param.instrument{IJ});
+        if isempty(sensor_name)
+            disp('No sensor identified with this channel')
+            return
+        end
+        Gains(:,IJ)=getSensitivity(FF,sensor_name,'units','uPa/V').';
+    end
+
+   % Gains=correct_gain(FF,param.instrument,Nchan);
     %temp=10*log10(abs(squeeze(B(2,:,:))));
     %myfig=gcf;
     %figure; for III=1:3,subplot(3,1,III);imagesc(TT,FF,temp);ylim([0 2000]);colorbar;end
@@ -130,8 +140,8 @@ else  %%All other data is coming on on other channels.
     
     %%% If AdditiveBeamforming, conduct here and leave...
     if any(strcmpi(metric_type,'AdditiveBeamforming'))
-        [B(2,:,:),B(3,:,:)]=correct_phase(squeeze(conj(B(2,:,:))),squeeze(conj(B(3,:,:))),FF,param.instrument);
-        B(2:3,:,:)=conj(B(2:3,:,:));
+       % [B(2,:,:),B(3,:,:)]=correct_phase(squeeze(conj(B(2,:,:))),squeeze(conj(B(3,:,:))),FF,param.instrument);
+        %B(2:3,:,:)=conj(B(2:3,:,:));
         
         %%%%Additive beamforming
         thta=param.thta-param.brefa;  %%Convert to local reference
@@ -278,7 +288,7 @@ end
 %%%%%%%%%Correct for phase misalignment in Ix and Iy
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[Ix,Iy]=correct_phase(Ix,Iy,FF,param.instrument);
+%[Ix,Iy]=correct_phase(Ix,Iy,FF,param.instrument);
 
 
 for J=1:length(metric_type)  %%for each request
@@ -365,114 +375,118 @@ end
 
 %%%%%%%SubFunctions%%%%%%%%%%%%%
 
-function Gains=correct_gain(FF,instrument_type,Nchan)
-switch instrument_type
-    case 'DASAR'  %%%Remember energy is arriving as normal modes so a slight vertical offset.
-        Gains=ones(length(FF),Nchan);
-        %Gains(:,2:3)=Gains(:,2:3)*cosd(28)*exp(1i*2*pi*(-2)/180); %150 Hz bowhead
-        %Gains(:,2:3)=Gains(:,2:3)*cosd(20)*exp(1i*2*pi*(-4)/180); %250 Hz bowhead
-       
-        
-        %%%%Thought normal modes might explain this, but better using a
-        %%%%frequency-independent factor.
-       D=18; c=1500;
-       k=2*pi*FF/c;
-       cos_elevation=real(sqrt(k.^2-(pi/D).^2)./k);
-       f_trans=150;
-       cos_elevation(FF>=f_trans)=cos_elevation(FF>=f_trans).*0.8;
-       
-       phasse=-7*ones(size(FF));
-       phasse(FF>=350)=4;
-       %Gains(:,2:3)=Gains(:,2:3).*cos_elevation.*exp(1i*2*pi*(phasse)/180); %10-Apr-2020 00:02:03.000 287 (110 and -6 null) deg Arctic5G_2014 5G 100-150 Hz 17 m water depth
-        Gains(:,2:Nchan)=Gains(:,2:Nchan).*cosd(25).*exp(1i*2*pi*(phasse)/180); %10-Apr-2020 00:02:03.000 287 (110 and -6 null) deg Arctic5G_2014 5G 100-150 Hz 17 m water depth
-      
-        
-    case 'drifterM35'
-        Gains(:,1) = getSensitivity(FF,'GTI-M35-300-omni')';
-        Gains(:,2) = getSensitivity(FF,'GTI-M35-300-directional')';
-        
-        %%%Test of whether a true conversion to velcoity is needed:
-        %%%dp/dx=rho*p/(i*k)=-i*rho*c*p/(2*pi*f)
-        %Gains(:,2)=Gains(:,2)./(2*pi*FF);
-        
-        Gains(:,3)=Gains(:,2);
-        
-        % figure;
-        %semilogx(FF,20*log10(Gains(:,1)),FF, 20*log10(Gains(:,2)));grid on;
-    otherwise
-        Gains=ones(length(FF),Nchan);
-end
-
-end
+% function Gains=correct_gain(FF,instrument_type,Nchan)
+% switch instrument_type
+%     case 'DASAR'  %%%Remember energy is arriving as normal modes so a slight vertical offset.
+%         Gains=ones(length(FF),Nchan);
+%         %Gains(:,2:3)=Gains(:,2:3)*cosd(28)*exp(1i*2*pi*(-2)/180); %150 Hz bowhead
+%         %Gains(:,2:3)=Gains(:,2:3)*cosd(20)*exp(1i*2*pi*(-4)/180); %250 Hz bowhead
+%        
+%         
+%         %%%%Thought normal modes might explain this, but better using a
+%         %%%%frequency-independent factor.
+%         D=18; c=1500;
+%         k=2*pi*FF/c;
+%         cos_elevation=real(sqrt(k.^2-(pi/D).^2)./k);
+%         f_trans=150;
+%         cos_elevation(FF>=f_trans)=cos_elevation(FF>=f_trans).*0.8;
+% 
+%         phasse=-7*ones(size(FF));
+%         phasse(FF>=350)=4;
+%         %Gains(:,2:3)=Gains(:,2:3).*cos_elevation.*exp(1i*2*pi*(phasse)/180); %10-Apr-2020 00:02:03.000 287 (110 and -6 null) deg Arctic5G_2014 5G 100-150 Hz 17 m water depth
+%         Gains(:,2:Nchan)=Gains(:,2:Nchan).*cosd(25).*exp(1i*2*pi*(phasse)/180); %10-Apr-2020 00:02:03.000 287 (110 and -6 null) deg Arctic5G_2014 5G 100-150 Hz 17 m water depth
+% 
+%         
+%     case 'drifterM35'
+%         Gains(:,1) = getSensitivity(FF,'GTI-M35-300-omni')';
+%         Gains(:,2) = getSensitivity(FF,'GTI-M35-300-directional')';
+%         
+%         %%%Test of whether a true conversion to velcoity is needed:
+%         %%%dp/dx=rho*p/(i*k)=-i*rho*c*p/(2*pi*f)
+%         %Gains(:,2)=Gains(:,2)./(2*pi*FF);
+%         
+%         Gains(:,3)=Gains(:,2);
+%         
+%         % figure;
+%         %semilogx(FF,20*log10(Gains(:,1)),FF, 20*log10(Gains(:,2)));grid on;
+%     otherwise
+%         Gains=ones(length(FF),Nchan);
+% end
+% 
+% end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%function [Ix,Iy]=correct_phase(Ix,Iy,FF,instrument_type,phase_calibration_chc)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [Ix,Iy]=correct_phase(Ix,Iy,FF,instrument_type)
-phase_calibration_chc='Arctic5G_2014'; %AlisonDASARCalibration Arctic5G_2014
-%phase_calibration_chc='none';
-
-Np=size(Ix,2);
-
-switch instrument_type
-    case 'DASAR'
-        
-        switch(phase_calibration_chc)
-            case 'none'
-                return
-            case 'AlisonDASARCalibration'
-                fe = [0 93 148 200 250 360 500]';
-                pex = [0 -3 -7.8 -18.3 -25 -60 -90]';
-                phaseex = interp1(fe,pex,FF);
-                phaseex(isnan(phaseex)) = 0;
-                Phasee=exp(1i*(pi/180)*phaseex*ones(1,Np));
-                
-                
-                Ix=Ix.*Phasee;
-                Iy=Iy.*Phasee;
-            case 'Arctic5G_2014'
-                %slopee=4.10e-04;
-                %slopee=1.25*4.1e-04;  %%%radians phase per radians frequency, original bulk run
-                
-                
-                %%%% slopee measured at 00:06:30 local time on 17 August, 2014 5G
-                %%%%23:57:28  1 seconds 10/1/2014 5G
-                %%% Also checked 04-Oct-2010 02:45:47.4 DASAR 5G, within 10° below
-                %%%     375 Hz.  This signal is lower received level.
-                %slopee=1.1*4.1e-04;  %%%radians phase per radians frequency, for
-                slopee=1.2*4.1e-04;  %%%radians phase per radians frequency, for 1 sec averages
-                
-                
-                %Phasee=10*pi/180+slopee*2*pi*(FF-75);  %Phase is 10 degrees at 75 Hz, linear
-                Phasee=slopee*2*pi*FF;  %Nearly identical to above (y-intercept is
-                %           -1 degrees in equation above.
-                
-                
-                Phasee=exp(-1i*Phasee*ones(1,Np));
-                
-                Ix=Ix.*Phasee;
-                Iy=Iy.*Phasee;
-                
-                
-             
-        end
-    case 'drifterM35'
-        
-        %%%Oddly enough, the directional channels seem 90° out of phase...
-        %%%  Perhaps the M35 measured pressure gradient (difference between
-        %%%  hydrophones) and not velocity?
-        Ix=Ix.*exp(1i*pi/2);
-        Iy=Iy.*exp(1i*pi/2);
-       
-        %%%figure;
-        % semilogx(FF,HH_omni,FF, HH_vel);grid on;
-        return
-    otherwise
-        
-        return
-end
-
-end
+% function [Ix,Iy]=correct_phase(Ix,Iy,FF,instrument_type)
+% phase_calibration_chc='none'; %AlisonDASARCalibration Arctic5G_2014
+% %phase_calibration_chc='none';
+% 
+% Np=size(Ix,2);
+% 
+% [sensor_name]=parse_instrument_string(instrument_type{1});
+% if isempty(sensor_name)
+%     disp('No sensor identified with this channel')
+%     return
+% end
+% 
+% switch sensor_name
+%     case 'DASAR'
+%         
+%         switch(phase_calibration_chc)
+%             case 'none'
+%                 return
+%             case 'AlisonDASARCalibration'
+%                 fe = [0 93 148 200 250 360 500]';
+%                 pex = [0 -3 -7.8 -18.3 -25 -60 -90]';
+%                 phaseex = interp1(fe,pex,FF);
+%                 phaseex(isnan(phaseex)) = 0;
+%                 Phasee=exp(1i*(pi/180)*phaseex*ones(1,Np));
+%                 
+%                 
+%                 Ix=Ix.*Phasee;
+%                 Iy=Iy.*Phasee;
+%             case 'Arctic5G_2014'
+%                 %slopee=4.10e-04;
+%                 %slopee=1.25*4.1e-04;  %%%radians phase per radians frequency, original bulk run
+%                 
+%                 
+%                 %%%% slopee measured at 00:06:30 local time on 17 August, 2014 5G
+%                 %%%%23:57:28  1 seconds 10/1/2014 5G
+%                 %%% Also checked 04-Oct-2010 02:45:47.4 DASAR 5G, within 10° below
+%                 %%%     375 Hz.  This signal is lower received level.
+%                 %slopee=1.1*4.1e-04;  %%%radians phase per radians frequency, for
+%                 slopee=1.2*4.1e-04;  %%%radians phase per radians frequency, for 1 sec averages
+%                 
+%                 
+%                 %Phasee=10*pi/180+slopee*2*pi*(FF-75);  %Phase is 10 degrees at 75 Hz, linear
+%                 Phasee=slopee*2*pi*FF;  %Nearly identical to above (y-intercept is
+%                 %           -1 degrees in equation above.
+%                 
+%                 
+%                 Phasee=exp(-1i*Phasee*ones(1,Np));
+%                 
+%                 Ix=Ix.*Phasee;
+%                 Iy=Iy.*Phasee;
+%               
+%         end
+%     case 'drifterM35'
+%         
+%         %%%Oddly enough, the directional channels seem 90° out of phase...
+%         %%%  Perhaps the M35 measured pressure gradient (difference between
+%         %%%  hydrophones) and not velocity?
+%         Ix=Ix.*exp(1i*pi/2);
+%         Iy=Iy.*exp(1i*pi/2);
+%        
+%         %%%figure;
+%         % semilogx(FF,HH_omni,FF, HH_vel);grid on;
+%         return
+%     otherwise
+%         
+%         return
+% end
+% 
+% end
 
 
