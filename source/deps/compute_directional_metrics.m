@@ -305,9 +305,9 @@ for J=1:length(metric_type)  %%for each request
         case 'Elevation'
 
              if ~reactive_flag(J)
-                mu = (atand(real(Iz)/sqrt((real(Iy)).^2+(real(Ix)).^2)));
+                mu = (atand(real(Iz)./sqrt((real(Iy)).^2+(real(Ix)).^2)));
             else
-                mu = (atand(imag(Iz)/sqrt((imag(Iy)).^2+(imag(Ix)).^2)));
+                mu = (atand(imag(Iz)./sqrt((imag(Iy)).^2+(imag(Ix)).^2)));
             end
             output_array{J}=(param.brefa+mu);
      

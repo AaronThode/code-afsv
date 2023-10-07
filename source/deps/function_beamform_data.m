@@ -114,7 +114,7 @@ switch beam_process_chc
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
         if strcmp(beamchc,'freqvspwr')
-            B=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
+            B{1}=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
 
             figure(20);
             imagesc(Ksout.freq,[],10*log10(abs(Ksout.EE)));xlabel('frequency (Hz)');ylabel('Eigenvalue');colorbar
@@ -133,7 +133,7 @@ switch beam_process_chc
 
             ray_angles=plot_beamforming_results(true); % peakpicking
             return
-            
+
 
         elseif strcmp(beamchc,'angvstime') %Individual snapshots
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -182,17 +182,17 @@ switch beam_process_chc
 
         end
 
-       
+
     case 'Minimum Variance'
         beam_str='MV';
 
-        B=MV_beamforming(app, Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
+        B{1}=MV_beamforming(app, Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
     case 'Both'
         beam_str='CVnMV';
 
-        B=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
+        B{1}=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
 
-        B2=MV_beamforming(app, Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
+        B{2}=MV_beamforming(app, Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
     case 'Relection Coefficient estimation'
         beam_str='RC';
 
@@ -559,7 +559,7 @@ write_CSDM;
 
         Bsum=zeros(length(angles),size(x,1));
         rd=head.geom.rd(Igood_el);
-        
+
         for Isnap=1:length(angles)
             if rem(Isnap,10)==0,disp(Isnap);end
             xtot=delaynsum(x,angles(Isnap),rd,Fs,Igood_el,cc);
@@ -601,8 +601,8 @@ write_CSDM;
             set(gca,'xtick',0:100:xlimm(2));
 
         end
-       % printstr=sprintf('SinAngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
-       % print(gcf,'-djpeg','-r300',[printstr '.jpg']);
+        % printstr=sprintf('SinAngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
+        % print(gcf,'-djpeg','-r300',[printstr '.jpg']);
         %saveas(gcf,[printstr '.fig'],'fig')
 
         %plot migration angle...
@@ -679,38 +679,40 @@ write_CSDM;
         ray_angles=[];
         %Plot beamforming output
         try
-            close(1);
+            close(1);close(100)
         end
 
-        figure(1);clf
-%         if yes==4||yes_eigen*yes==2
-%             subplot(2,1,1)
-%         end
+        clr='krgb';
+        for Ifig=1:length(B)
 
-        %Image of beamform output vs look angle and frequency.
-        imagesc(Ksout.freq/1000,angles,10*log10(B'));
-        colorbar
-        cmap=colormap;
-        caxis([60 100])
-        caxis('auto');
-        set(gca,'fontweight','bold','fontsize',14);
-        xlabel('Frequency (kHz)');ylabel('Angle from horizontal (deg)');grid on;
-        title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
-        set(gcf,'colormap',cmap(1:4:64,:));
+            figure(1+Ifig);clf
+            %         if yes==4||yes_eigen*yes==2
+            %             subplot(2,1,1)
+            %         end
 
-        figure(2);clf
-%         if yes==4||yes_eigen*yes==2
-%             subplot(2,1,1)
-%         end
+            %Image of beamform output vs look angle and frequency.
+            imagesc(Ksout.freq/1000,angles,10*log10(B{Ifig}'));
+            colorbar
+            cmap=colormap;
+            caxis([60 100])
+            caxis('auto');
+            set(gca,'fontweight','bold','fontsize',14);
+            xlabel('Frequency (kHz)');ylabel('Angle from horizontal (deg)');grid on;
+            title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
+            set(gcf,'colormap',cmap(1:4:64,:));
 
-        %%%Plot summed beampattern
-        df=Ksout.freq(2)-Ksout.freq(1);
-        Bsum=sum(10*log10((B)))/length(Ksout.freq);
-        plot(Bsum,angles,'k');
-        set(gca,'fontweight','bold','fontsize',14);axis('ij');
-        xlabel('Mean dB Beampower ');ylabel('Angle from horizontal (deg)');grid on;
-        title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
 
+
+            figure(100);
+           
+            %%%Plot summed beampattern
+            df=Ksout.freq(2)-Ksout.freq(1);
+            Bsum=sum(10*log10((B{Ifig})))/length(Ksout.freq);
+            plot(Bsum,angles,clr(Ifig));hold on
+            set(gca,'fontweight','bold','fontsize',14);axis('ij');
+            xlabel('Mean dB Beampower ');ylabel('Angle from horizontal (deg)');grid on;
+            title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
+        end
         if ~peak_picking
             return
         end
@@ -888,5 +890,5 @@ write_CSDM;
         end
     end
 
-   
+
 end  %function_beamform_data

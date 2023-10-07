@@ -5,7 +5,7 @@ function plot_directional_metric(TT,FF,output_array,handles,param,PdB,use_wavele
 %  param:  climm, alg
 
 climm=eval(param.climm);
-if strcmpi(handles.display_view,'Elevation')
+if strcmpi(handles.display_view,'Elevation')& max(climm)==360
       climm=[-90 90];
 end
 alg_mult=eval(param.alg);
@@ -52,7 +52,7 @@ elseif strcmpi(handles.display_view,'Azimuth')|strcmpi(handles.display_view,'Ele
     try
         if get(handles.checkbox_grayscale,'Value')==1
             colormap(flipud(gray));
-            caxis(climm);
+            clim(climm);
         elseif eval(param.mask)==1
             colormap(flipud(gray))
         else
