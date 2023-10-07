@@ -802,15 +802,15 @@ switch filetype
             return
         end
 
-        if head.Nchan>1
-            head.multichannel=true;
-        end
 
         if ~strcmp(Ichan,'all')
             x		=	x(:,Ichan);
         end
-         head.Nchan	=	size(x,2);
-       
+        head.Nchan	=	size(x,2);
+        if head.Nchan>1
+            head.multichannel=true;
+        end
+
         t	=	(1:length(x))/Fs;
         x			=	double(x)*amplitude_scale;
 end  %switch
@@ -903,7 +903,7 @@ end
 
 if ~done
     %%%%Check whether we have an ONR SQUALL-E drifter file...
-    config_file=dir([mydir filesep '*acoustic_config*']);
+    config_file=dir([mydir filesep 'acoustic_config*']);
     if contains(myfile,'drifter') & ~isempty(config_file)
         done=true;
         tmin	=	convert_date_SQUALLE(myfile);
@@ -916,7 +916,7 @@ if ~done
         %%%Revised instrument name, capabilities, and Ichan
         instrument_chc=app.SQUALLEDropDown.Value;
         %%Import configuration file
-        config_file=dir([mydir filesep '*acoustic_config*']);
+       % config_file=dir([mydir filesep 'acoustic_config*']);
         try
             TI=readtable([mydir filesep config_file.name]);
         catch
