@@ -1,9 +1,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% function load_data.m%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%function [x,t,Fs,tmin,tmax,head]	=	load_data(filetype,tdate_start,tlen,Ichan,handles,app)
+%function [x,t,Fs,tmin,tmax,head,Ichan]	=	load_data(filetype,tdate_start,tlen,Ichan,handles,app)
 
-function [x,t,Fs,tmin,tmax,head]	=	load_data(filetype,tdate_start,tlen,Ichan,handles,app)
+function [x,t,Fs,tmin,tmax,head,Ichan]	=	load_data(filetype,tdate_start,tlen,Ichan,handles,app)
 
 % Inputs
 %   filetype: string (e.g. 'WAV')
@@ -32,6 +32,7 @@ function [x,t,Fs,tmin,tmax,head]	=	load_data(filetype,tdate_start,tlen,Ichan,han
 %           function)
 %       geom.rd:  If multiple channels are present on a linear array, this
 %           gives coordinates
+%   Ichan:  indicies of downloaded data.
 
 persistent  Fs_keep keyword space
 
@@ -801,7 +802,6 @@ switch filetype
             return
         end
 
-        head.Nchan	=	size(x,2);
         if head.Nchan>1
             head.multichannel=true;
         end
@@ -809,6 +809,8 @@ switch filetype
         if ~strcmp(Ichan,'all')
             x		=	x(:,Ichan);
         end
+         head.Nchan	=	size(x,2);
+       
         t	=	(1:length(x))/Fs;
         x			=	double(x)*amplitude_scale;
 end  %switch
@@ -937,8 +939,10 @@ if ~done
                 Ichan(2)=Igood(contains(sensor_type,'X')|contains(sensor_type,'EW'));
                 Ichan(3)=Igood(contains(sensor_type,'Y')|contains(sensor_type,'NS'));
                 Ichan(4)=Igood(contains(sensor_type,'Z')|contains(sensor_type,'UD'));
+                head.Nchan=4;
                 if isempty(Ichan(4))
                     Ichan=Ichan(1:3);
+                    head.Nchan=3;
                 end
                 for JJ=1:length(Ichan)
                     head.instrument{JJ}=sprintf('%s_%ssensor',instrument_base,TI.sensor_type{Ichan(JJ)});

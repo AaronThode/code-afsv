@@ -59,7 +59,7 @@ try
         fprintf('%s does not exist! \n',fullfile(handles.mydir,handles.myfile));
         return
     end
-    [x,t,Fs,tstart,~,hdr]=load_data(handles.filetype, ...
+    [x,t,Fs,tstart,~,hdr,Ichan]=load_data(handles.filetype, ...
         handles.tdate_start,tlen,Ichan,handles,app);
     
     %%%%Keywords to describe whether data if multiple channel array, whether
