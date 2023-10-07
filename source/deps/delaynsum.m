@@ -5,7 +5,7 @@
 %  October 17, 1996
 %  Given an angle theta, element spacing d,
 %  delay and sum an incoming signal
-%  function [xtot,Mel,maxn]=delaynsum(x,thta,space,Fs,goodel,cc)
+%  function [xtot,Mel,maxn]=delaynsum(x,thta,rd,Fs,goodel,cc)
 % Input:
 %  x is [nsample nchan] matrix
 %  theta is in degrees, where broadside is zero.  Domain is [-90 90].  A scalar value
@@ -18,15 +18,21 @@
 %   xtot: beamformed time series, averaged by number of elements
 %   Mel: reference element.
 %   maxn:  number of zeros inserted into start and end
-function [xtot,Mel,maxn]=delaynsum(x,thta,space,Fs,goodel,cc,Mel)
+function [xtot,Mel,maxn]=delaynsum(x,thta,rd,Fs,goodel,cc,Mel)
 %disp('pause');pause
 nx=size(x,1);
-thta=thta*pi/180;
+%thta=thta*pi/180;
 if ~exist('cc','var')
    cc=1500;
 end
 
 xtot=[];
+
+% Waterfall plot of data for debugging
+%figure
+%waterfall(x')
+%view(0,60);
+
 if length(thta)~=1
     disp('Error, delaynsum requires scalar input for thta');
     return
@@ -35,21 +41,27 @@ elseif max(goodel)>size(x,2)
     return
 end
 
-dpt=Fs*space*sin(thta)/cc; %sample shift per element.  Must be a fraction
-%fprintf('Fs is %6.2f\n',Fs);
-
 if ~exist('Mel','var')
     Mel=ceil(.5*(max(goodel-1)+min(goodel-1)));  %Reference element: number that experiences zero shift
 end
 
+rd=rd-rd(Mel);
+dpt=Fs*rd*sind(thta)/cc; %sample shift per element.  Must be a fraction
+%fprintf('Fs is %6.2f\n',Fs);
+
+
 %fprintf('Median element is %i\n',Mel);
-maxn=ceil(max(abs(goodel-Mel))*abs(dpt))+1;  %%Maximum element sample shift possible
-nx_out=nx-2*maxn+1;  %%%Number of samples in trimmed signal
+%maxn=ceil(max(abs(goodel-Mel))*abs(dpt))+1;  %%Maximum element sample shift possible
+maxn=ceil(max(abs(dpt)));
+
+nx_out=nx-2*maxn;  %%%Number of samples in trimmed signal
 xtot=zeros(nx_out,1);
 
 for I=1:length(goodel) %From deep to shallow
-	n=ceil(dpt*(Mel-goodel(I))); %n decreases toward surface
-	index=maxn+n+(0:(nx-2*maxn));  %%%sample shift is zero at reference element (Mel)
+    %n=ceil(dpt*(Mel-goodel(I))); %n decreases toward surface
+	n=ceil(dpt(I)); %n decreases toward surface
+	
+	index=1+maxn+n+(0:(nx-2*maxn-1));  %%%sample shift is zero at reference element (Mel)
 	xtot=xtot+x(index,goodel(I));
 end
 

@@ -54,6 +54,7 @@ end
 
 switch basic_process_chc
     case 'Time delay and sum'
+        input_plane_wave_parameters;
         process_timedelaynsum;
         return
     case 'Cross correlation between two phones'
@@ -74,11 +75,12 @@ else
     return
 end
 
-create_CSDM;
+frange=[];angles=[];Igood_el=[];cc=[];
+[Ksout,ftmp]=create_CSDM(freq_process_chc);
 
 %%%What type of beamforming do we apply?
-yes=menu('Beamform?','No','Conventional','MV','Both','Reflection Coefficient Estimation','MFP');
-e
+%yes=menu('Beamform?','No','Conventional','MV','Both','Reflection Coefficient Estimation','MFP');
+
 list_beam={'Conventional','Minimum Variance','Both','Relection Coefficient estimation','Matched Field Processing'};
 [Ichc,made_chc] = listdlg('PromptString','Choose basic approach', ...
     'SelectionMode','single', 'ListString',list_beam);
@@ -92,15 +94,12 @@ end
 %%%Input look directions and other parameters for array processing
 
 if ~contains(beam_process_chc,'Matched Field')
-
     input_plane_wave_parameters;
-
 end  %if not MFP
 
 %%Assign beam_str value based on earlier choices
-switch yes
-    case 2
-        beam_str='CV';
+switch beam_process_chc
+    case 'Conventional'
         Ndim=ndims(Ksout.Kstot);
 
         if Ndim==3
@@ -133,12 +132,13 @@ switch yes
             end
 
             ray_angles=plot_beamforming_results(true); % peakpicking
+            return
+            
 
+        elseif strcmp(beamchc,'angvstime') %Individual snapshots
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%%%%Individual snapshots and ray tracing%%%%
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-        elseif strcmp(beamchc,'angvstime') %Individual snapshots
             Bsum=zeros(length(angles),length(Ksout.t));
             df=Ksout.freq(2)-Ksout.freq(1);
             %plot(Bsum,angles,'k');
@@ -177,147 +177,143 @@ switch yes
             saveas(gcf,[printstr '.fig'],'fig')
 
 
-
-
             %%Permit ray tracing if desired
             prep_ray_trace;
 
-
-        elseif strcmp(beamchc,'delaynsum') %Individual snapshots
-
-
-            Bsum=zeros(length(angles),size(x,1));
-            space=head.geom.rd(Igood_el);
-            space=space(2)-space(1);
-            for Isnap=1:length(angles)
-                if rem(Isnap,10)==0,disp(Isnap);end
-                xtot=delaynsum(x,-angles(Isnap),space,Fs,Igood_el,cc);
-                % Bsum(Isnap,:)=abs(hilbert(xtot'));
-                Bsum(Isnap,:)=xtot';
-            end
-
-
-            %Optional matched filter Ludovic...
-            if exist('matched_filter','var')
-                %x_filt=zeros(N,Nel);
-                %h=waitbar(0,'Filtering data ...');
-                %Bsum_org=filter(flipud(matched_filter),1,Bsum')';
-                for K=1:size(Bsum,1)
-                    Bsum(K,:)=filter(flipud(matched_filter),1,Bsum(K,:)');
-                end
-
-
-            end
-            Bsum_org=Bsum;
-            Bsum=abs(hilbert(Bsum.'))';
-            Bsum=Bsum/max(max(Bsum));
-            Bsum=20*log10(Bsum);
-
-            %plot vs sin angle
-            tt=(1:length(xtot))/Fs;
-            figure(20);clf;
-            pcolor(tt*1000,sin(angles*pi/180),Bsum);shading flat
-            caxis([-20 0]);colorbar
-            set(gca,'fontweight','bold','fontsize',14)
-            xlabel('Time (msec)');ylabel('sine of Elevation angle');
-            ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
-            titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
-            title(titstr);grid on;orient landscape
-            xlimm=xlim;
-            if diff(xlimm)<100
-                set(gca,'xtick',0:5:xlimm(2));
-            else
-                set(gca,'xtick',0:100:xlimm(2));
-
-            end
-            printstr=sprintf('SinAngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
-            print(gcf,'-djpeg','-r300',[printstr '.jpg']);
-            saveas(gcf,[printstr '.fig'],'fig')
-
-            %plot migration angle...
-            figure(21);clf;
-            pcolor(tt*1000,angles,Bsum);shading flat;axis('ij')
-            caxis([-20 0]);colorbar
-            set(gca,'fontweight','bold','fontsize',14)
-            xlabel('Time (msec)');ylabel('Elevation angle (deg)');
-            ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
-            titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
-            title(titstr);grid on;orient landscape
-            xlimm=xlim;
-            if diff(xlimm)<100
-                set(gca,'xtick',0:5:xlimm(2));
-            else
-                set(gca,'xtick',0:100:xlimm(2));
-
-            end
-            printstr=sprintf('AngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
-            print(gcf,'-djpeg','-r300',[printstr '.jpg']);
-            saveas(gcf,[printstr '.fig'],'fig')
-
-            %Repeat using cross-correlation result (to remove
-            %   complexities in time waveform)
-            figure(21)
-            uiwait(msgbox('Please select a box to cross-correlate with other beams (matched filter), hit return to skip:'));
-            tmp=ginput(2);
-            % tmp=[];
-            if isempty(tmp)
-                prep_ray_trace;
-                return
-            end
-
-            Bsum_corr=zeros(length(angles),size(Bsum,2));
-            angle_want=mean(tmp(:,2));
-            indd=round(tmp(1,1)*Fs):round(Fs*tmp(2,1));
-            [~,Iang]=min(abs(angle_want-angles));
-            x_match=fliplr((Bsum_org(Iang,:)));Nx=length(x_match);
-
-            for Iang=1:length(angles)
-                Bsum_corr(Iang,:)= conv(x_match,Bsum_org(Iang,:),'same');
-
-            end
-            Bsum_corr=20*log10(abs(hilbert(Bsum_corr.')))';
-            Bsum_corr=Bsum_corr-max(max(Bsum_corr));
-            %Bsum_conv=Bsum_conv./max(max(Bsum_conv));
-            %plot vs sin angle
-            figure(22)
-            imagesc(1000*(1:size(Bsum_corr,2))/Fs,(angles),Bsum_corr);
-            caxis([-20 0]);colorbar
-            set(gca,'fontweight','bold','fontsize',14)
-            xlabel('Time (msec)');ylabel('sine of Elevation angle');
-            ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
-            titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
-            title(titstr);grid on;orient landscape
-            xlimm=xlim;
-            if diff(xlimm)<100
-                set(gca,'xtick',0:5:xlimm(2));
-            else
-                set(gca,'xtick',0:100:xlimm(2));
-
-            end
-            printstr=sprintf('MatchSinAngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
-            % print(gcf,'-djpeg',[printstr '.jpg']);
-            % saveas(gcf,[printstr '.fig'],'fig')
-            %%Permit ray tracing if desired
-            prep_ray_trace;
-
-            return
         end
 
-    case 3
+       
+    case 'Minimum Variance'
         beam_str='MV';
 
         B=MV_beamforming(app, Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
-    case 4
+    case 'Both'
         beam_str='CVnMV';
 
         B=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
 
         B2=MV_beamforming(app, Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
-    case 5
+    case 'Relection Coefficient estimation'
         beam_str='RC';
 
         R=derive_reflection_coefficient2(app, Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
-    case 6
+    case 'Matched Field Processing'
+
+        matched_field_processing;
+        return
+
+end
+
+plot_beamforming_results(true); %peak picking
+
+write_CSDM;
+
+%%Inner function for prepping a ray trace and/or invariant trace
+    function [Ksout,ftmp]=create_CSDM(freq_process_chc)
+
+
+        switch freq_process_chc
+            case 'Trace T-F Contour'
+                Nf=input('Enter number of harmonics:');
+                if isempty(Nf)
+                    Nf=1;
+                end
+
+                ftmp=ginput(Nf);
+                frange=ftmp(:,2)*1000;
+
+                Nbad=input('Enter number of bad frequencies: ');
+                if ~isempty(Nbad)
+                    fbad=ginput(Nbad);
+                    fbad=fbad(:,2)*1000;
+                else
+                    fbad=[];
+                end
+                fr=input('Enter frequency band to search (10):');
+                if isempty(fr)
+                    fr=10;
+                end
+
+                [Ksout,Ns]=extractKsbest_contour(app, x,ovlap,Nfft,chann, frange,fr,fbad,Fs,Nfft,'keep_zeros');
+                %    Ksout: structure array containing
+                %     Kstot CSDM size(Nel,Nel,Nfreq)
+                %     freq: frequencies corresponding to Ks in third dimension
+                %     fcontour: frequencies detected, (Is,If)--can use to make contours..
+                %     fcount: Number of times each frequency has been averaged..
+                %     fpower: Power in each bin
+
+                %[Kstot,Ks_eig,Nsnap,freq_all,pwr_est,SNRest]=extractKsexact_MDAT(x,ovlap,Nfft,chann,1000*[fmin fmax],Fs,-1,Nfft);
+
+                axes(handles.axes1)
+                hold on
+                plot(Ksout.tcontour,Ksout.fcontour/1000,'o');
+                hold off
+
+
+            case 'All in Frequency Band'  %extractKsexact
+                %%process all frequencies over a given range
+                disp('Select bounding box for time and range:');
+                ftmp=ginput(2);
+
+                %Trim x...
+                Igood=( t>=min(ftmp(:,1))&t<=max(ftmp(:,1)));
+                x=x(Igood,:);
+
+
+                frange=sort(ftmp(:,2)*1000);
+                fprintf('frange: %6.2f to %6.2f Hz\n',frange);
+                prompt1={'Threshold (dB)', };
+                def1={'-Inf'};
+                answer=inputdlg(prompt1,'CSDM threshold?',1,def1);
+
+                threshold=eval(answer{1});
+
+                [Ksout.Kstot,Ksout.freq,Ksout.VV,Ksout.EE]=extractKsexact(x,ovlap,Nfft,chann,frange,Fs,-1,Nfft,0,threshold);
+                if ~isempty(Ksout.EE)
+                    %Ksout.SNR=Ksout.EE(1,:)./Ksout.EE(2,:);
+                    Ksout.SNR=Ksout.EE(1,:)./sum(Ksout.EE(2:end,:));
+                else
+                    Ksout.SNR=Inf*ones(size(Ksout.freq));
+                end
+
+                figure
+                plot(Ksout.freq,10*log10(Ksout.SNR),'-x');ylabel('dB SNR');xlabel('Freq (Hz)')
+                grid on;title('estimated SNR of CSDM frequency components: first eignvalue/sum(rest)')
+
+                %%%%%%%%%Extract individual frames and ray trace%%%%%%%%%
+
+            case 'Individual Frames (and ray tracing)' %%Extract frames and ray trace
+                disp('Select bounding box for time and range:');
+                ftmp=ginput(2);
+
+                %Trim x...
+                Igood=( t>=min(ftmp(:,1))&t<=max(ftmp(:,1)));
+                x=x(Igood,:);
+
+
+                frange=sort(ftmp(:,2)*1000);
+                fprintf('frange: %6.2f to %6.2f Hz\n',frange);
+                prompt1={'Threshold (dB)', 'optional FFT for longer FFT of small segments'};
+                def1={'-Inf',''};
+                answer=inputdlg(prompt1,'CSDM threshold?',1,def1);
+
+                threshold=eval(answer{1});
+                if isempty(answer{2})
+                    Nfft2=Nfft;
+                else
+                    Nfft2=eval(answer{2});
+                end
+
+                [Ksout.Kstot,Ksout.freq,Ksout.t]=extractKsframes(x,ovlap,Nfft2,chann,frange,Fs,Nfft,0,threshold);
+
+
+        end
+
+    end %process_freq_chc
+
+
+    function matched_field_processing
+
         beam_str='MFP';
 
         prompt1={'Model file..','tilt offset between top and bottom phone (m)','ranges (m)', 'depths (m):','plot intermediate images?', ...
@@ -375,56 +371,8 @@ switch yes
                 write_covmat(app, Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
             end
         end
-        return
-end
+    end %function matched_field_processing
 
-if ~correlation_flag
-    plot_beamforming_results(true); %ppeak picking
-    yes=menu('Beamform?','No','Conventional','MV','Both','Reflection Coefficient Estimation','MFP');
-else
-    yes=0;
-end
-
-if correlation_flag
-    return
-end
-
-yes=menu('Save CSDM?','Yes','No');
-if yes==1
-
-    Ksout.Nfft=Nfft;
-    Ksout.ovlap=ovlap;
-    V1=squeeze(Ksout.VV(:,1,:));
-    for If=1:length(Ksout.freq)
-        Ksout.Kstot_eig(:,:,If)=V1(:,If)*V1(:,If)';
-
-    end
-
-
-    %     srcname=sprintf('CSDM_Nfft%i_%s_flipped',Nfft,datestr(tdate_start,30));
-    %     write_covmat(Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
-    %
-    figure
-    imagesc(Ksout.freq,[],10*log10(abs(Ksout.EE)));
-    xlabel('frequency (Hz)')
-    ylabel('eigenvalue:')
-    title(sprintf('eigenvectors of %s',srcname))
-    orient landscape
-    for I=1:3
-        figure(I+1)
-        imagesc(abs(squeeze(Ksout.VV(:,I,:))));
-
-    end
-    srcname=sprintf('CSDM_Nfft%i_%s',Nfft,datestr(tdate_start,30));
-    save(srcname,'Ksout','head','tdate_start','tlen');
-    write_covmat(app, Ksout.freq,Ksout.Kstot,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
-
-    srcname=sprintf('CSDM_Nfft%i_%s_eigenvector',Nfft,datestr(tdate_start,30));
-    write_covmat(app, Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
-
-end
-
-%%Inner function for prepping a ray trace and/or invariant trace
     function prep_ray_trace(ray_angles2,dt_data)
 
         repeat=1;
@@ -494,10 +442,10 @@ end
     end
 
     function input_plane_wave_parameters
-        prompt1={'Vector of angles (deg) [(-20:0.2:20)]','Vector of sin angles (deg) [(-0.2:0.005:0.2)]', ...
+        prompt1={'Vector of angles (deg)','Vector of sin angles (deg) ', ...
             'hydrophone indicies [all]','sound speed (m/sec)', 'matched filter? (1=yes, 0=no)' ...
             };
-        def1={'-10:0.2:10', '-0.3:0.005:0.3',sprintf('[1:%i]',length(chann)),'1480','1'};
+        def1={'-90:2:90', '',sprintf('[1:%i]',length(chann)),'1480','0'};
 
         answer=inputdlg(prompt1,'Beamforming parameters',1,def1);
         try
@@ -543,7 +491,8 @@ end
         fprintf('frange: %6.2f to %6.2f Hz\n',frange);
         prompt1={'Min Freq (Hz)', 'Max Freq (Hz)','Max delay (msec)', ...
             'scale option [biased, unbiased, coeff]'};
-        def1={num2str(frange(1)),num2str(frange(2)),num2str(1000*2*head.geom.spacing(2)/1472),'unbiased'};
+        spacing=abs(head.geom.rd(1)-head.geom.rd(end));
+        def1={num2str(frange(1)),num2str(frange(2)),num2str(1000*2*spacing/1500),'unbiased'};
         answer=inputdlg(prompt1,'Check Xcorr selections',1,def1);
 
         if isempty(answer)
@@ -559,7 +508,7 @@ end
             'SampleRate', Fs);
 
         %fvtool(bpFilt);
-        x=filtfilt(bpFilt,x);
+        x=filtfilt(bpFilt,x(:,[1 end]));
 
         %%Simple time domain cross-correlation
         [cc,lags]=xcov(x(:,1),x(:,2),maxlag,scaleopt);
@@ -577,7 +526,9 @@ end
 
 
         grid on;xlabel('Delay (msec)');ylabel('Amplitude');
-        title(sprintf('Max lag is %8.4f msec, %8.4f msec hilbert',1000*lags(Ishift)/Fs,1000*lags(Ishifth)/Fs));
+        dt_lag=lags(Ishift)/Fs;
+        angle_est=asind(1500*dt_lag/spacing);
+        title(sprintf('Max lag is %8.4f msec (%4.3f degrees), %8.4f msec hilbert',dt_lag*1000,angle_est,1000*lags(Ishifth)/Fs));
 
     end
 
@@ -607,11 +558,11 @@ end
         x=filter(bpFilt,x);
 
         Bsum=zeros(length(angles),size(x,1));
-        space=head.geom.rd(Igood_el);
-        space=space(2)-space(1);
+        rd=head.geom.rd(Igood_el);
+        
         for Isnap=1:length(angles)
             if rem(Isnap,10)==0,disp(Isnap);end
-            xtot=delaynsum(x,-angles(Isnap),space,Fs,Igood_el,cc);
+            xtot=delaynsum(x,angles(Isnap),rd,Fs,Igood_el,cc);
             % Bsum(Isnap,:)=abs(hilbert(xtot'));
             Bsum(Isnap,:)=xtot';
         end
@@ -631,7 +582,7 @@ end
         Bsum_org=Bsum;
         Bsum=abs(hilbert(Bsum.'))';
         Bsum=Bsum/max(max(Bsum));
-        Bsum=20*log10(Bsum);
+        %Bsum=20*log10(Bsum);
 
         %plot vs sin angle
         tt=(1:length(xtot))/Fs;
@@ -650,9 +601,9 @@ end
             set(gca,'xtick',0:100:xlimm(2));
 
         end
-        printstr=sprintf('SinAngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
-        print(gcf,'-djpeg','-r300',[printstr '.jpg']);
-        saveas(gcf,[printstr '.fig'],'fig')
+       % printstr=sprintf('SinAngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
+       % print(gcf,'-djpeg','-r300',[printstr '.jpg']);
+        %saveas(gcf,[printstr '.fig'],'fig')
 
         %plot migration angle...
         figure(21);clf;
@@ -670,9 +621,9 @@ end
             set(gca,'xtick',0:100:xlimm(2));
 
         end
-        printstr=sprintf('AngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
-        print(gcf,'-djpeg','-r300',[printstr '.jpg']);
-        saveas(gcf,[printstr '.fig'],'fig')
+        %printstr=sprintf('AngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
+        %print(gcf,'-djpeg','-r300',[printstr '.jpg']);
+        %saveas(gcf,[printstr '.fig'],'fig')
 
         %Repeat using cross-correlation result (to remove
         %   complexities in time waveform)
@@ -730,10 +681,11 @@ end
         try
             close(1);
         end
+
         figure(1);clf
-        if yes==4||yes_eigen*yes==2
-            subplot(2,1,1)
-        end
+%         if yes==4||yes_eigen*yes==2
+%             subplot(2,1,1)
+%         end
 
         %Image of beamform output vs look angle and frequency.
         imagesc(Ksout.freq/1000,angles,10*log10(B'));
@@ -747,9 +699,9 @@ end
         set(gcf,'colormap',cmap(1:4:64,:));
 
         figure(2);clf
-        if yes==4||yes_eigen*yes==2
-            subplot(2,1,1)
-        end
+%         if yes==4||yes_eigen*yes==2
+%             subplot(2,1,1)
+%         end
 
         %%%Plot summed beampattern
         df=Ksout.freq(2)-Ksout.freq(1);
@@ -899,158 +851,42 @@ end
         end
     end %function plot_beamforming_results
 
-    function ftmp=process_freq_chc
-        if Ichc==1
-            Nf=input('Enter number of harmonics:');
-            if isempty(Nf)
-                Nf=1;
+    function write_CSDM
+
+        yes=menu('Save CSDM?','Yes','No');
+        if yes==1
+
+            Ksout.Nfft=Nfft;
+            Ksout.ovlap=ovlap;
+            V1=squeeze(Ksout.VV(:,1,:));
+            for If=1:length(Ksout.freq)
+                Ksout.Kstot_eig(:,:,If)=V1(:,If)*V1(:,If)';
+
             end
 
-            ftmp=ginput(Nf);
-            frange=ftmp(:,2)*1000;
-
-            Nbad=input('Enter number of bad frequencies: ');
-            if ~isempty(Nbad)
-                fbad=ginput(Nbad);
-                fbad=fbad(:,2)*1000;
-            else
-                fbad=[];
-            end
-            fr=input('Enter frequency band to search (10):');
-            if isempty(fr)
-                fr=10;
-            end
-
-            [Ksout,Ns]=extractKsbest_contour(app, x,ovlap,Nfft,chann, frange,fr,fbad,Fs,Nfft,'keep_zeros');
-            %    Ksout: structure array containing
-            %     Kstot CSDM size(Nel,Nel,Nfreq)
-            %     freq: frequencies corresponding to Ks in third dimension
-            %     fcontour: frequencies detected, (Is,If)--can use to make contours..
-            %     fcount: Number of times each frequency has been averaged..
-            %     fpower: Power in each bin
-
-            %[Kstot,Ks_eig,Nsnap,freq_all,pwr_est,SNRest]=extractKsexact_MDAT(x,ovlap,Nfft,chann,1000*[fmin fmax],Fs,-1,Nfft);
-
-            axes(handles.axes1)
-            hold on
-            plot(Ksout.tcontour,Ksout.fcontour/1000,'o');
-            hold off
-        elseif Ichc==2  %extractKsexact
-            %%process all frequencies over a given range
-            disp('Select bounding box for time and range:');
-            ftmp=ginput(2);
-
-            %Trim x...
-            Igood=( t>=min(ftmp(:,1))&t<=max(ftmp(:,1)));
-            x=x(Igood,:);
-
-
-            frange=sort(ftmp(:,2)*1000);
-            fprintf('frange: %6.2f to %6.2f Hz\n',frange);
-            prompt1={'Threshold (dB)', };
-            def1={'-Inf'};
-            answer=inputdlg(prompt1,'CSDM threshold?',1,def1);
-
-            threshold=eval(answer{1});
-
-            [Ksout.Kstot,Ksout.freq,Ksout.VV,Ksout.EE]=extractKsexact(x,ovlap,Nfft,chann,frange,Fs,-1,Nfft,0,threshold);
-            if ~isempty(Ksout.EE)
-                %Ksout.SNR=Ksout.EE(1,:)./Ksout.EE(2,:);
-                Ksout.SNR=Ksout.EE(1,:)./sum(Ksout.EE(2:end,:));
-            else
-                Ksout.SNR=Inf*ones(size(Ksout.freq));
-            end
-
+            %     srcname=sprintf('CSDM_Nfft%i_%s_flipped',Nfft,datestr(tdate_start,30));
+            %     write_covmat(Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
+            %
             figure
-            plot(Ksout.freq,10*log10(Ksout.SNR),'-x');ylabel('dB SNR');xlabel('Freq (Hz)')
-            grid on;title('estimated SNR of CSDM frequency components: first eignvalue/sum(rest)')
+            imagesc(Ksout.freq,[],10*log10(abs(Ksout.EE)));
+            xlabel('frequency (Hz)')
+            ylabel('eigenvalue:')
+            title(sprintf('eigenvectors of %s',srcname))
+            orient landscape
+            for I=1:3
+                figure(I+1)
+                imagesc(abs(squeeze(Ksout.VV(:,I,:))));
 
-            %%%%%%%%%Extract individual frames and ray trace%%%%%%%%%
-        elseif Ichc==3 %%Extract frames and ray trace
-            disp('Select bounding box for time and range:');
-            ftmp=ginput(2);
-
-            %Trim x...
-            Igood=( t>=min(ftmp(:,1))&t<=max(ftmp(:,1)));
-            x=x(Igood,:);
-
-
-            frange=sort(ftmp(:,2)*1000);
-            fprintf('frange: %6.2f to %6.2f Hz\n',frange);
-            prompt1={'Threshold (dB)', 'optional FFT for longer FFT of small segments'};
-            def1={'-Inf',''};
-            answer=inputdlg(prompt1,'CSDM threshold?',1,def1);
-
-            threshold=eval(answer{1});
-            if isempty(answer{2})
-                Nfft2=Nfft;
-            else
-                Nfft2=eval(answer{2});
             end
+            srcname=sprintf('CSDM_Nfft%i_%s',Nfft,datestr(tdate_start,30));
+            save(srcname,'Ksout','head','tdate_start','tlen');
+            write_covmat(app, Ksout.freq,Ksout.Kstot,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
 
-            [Ksout.Kstot,Ksout.freq,Ksout.t]=extractKsframes(x,ovlap,Nfft2,chann,frange,Fs,Nfft,0,threshold);
-
-        elseif Ichc==4 %% simple time and delay on filtered signal...
-
-            delay_and_sum_flag=true;
-            disp('Select bounding box for time and range:');
-            ftmp=ginput(2);
-
-            %Trim x...
-            Igood=( t>=min(ftmp(:,1))&t<=max(ftmp(:,1)));
-            x=x(Igood,:);
-
-
-            frange=sort(ftmp(:,2)*1000);
-            fprintf('frange: %6.2f to %6.2f Hz\n',frange);
-            prompt1={'Min Freq (Hz)', 'Max Freq (Hz)'};
-            def1={num2str(frange(1)),num2str(frange(2))};
-            answer=inputdlg(prompt1,'Check frequency selection',1,def1);
-
-            frange=[eval(answer{1}) eval(answer{2})];
-
-            bpFilt = designfilt('bandpassiir', 'FilterOrder', 20, ...
-                'HalfPowerFrequency1', frange(1), 'HalfPowerFrequency2', frange(2),...
-                'SampleRate', Fs);
-
-            %fvtool(bpFilt);
-            x=filter(bpFilt,x);
-
-        elseif Ichc==5 %% simple cross correlation on filtered signal...
-
-            correlation_flag=true;
-            disp('Select bounding box for time and range:');
-            ftmp=ginput(2);
-
-            %Trim x...
-            Igood=( t>=min(ftmp(:,1))&t<=max(ftmp(:,1)));
-            x=x(Igood,:);
-            t=t(Igood);
-
-            frange=sort(ftmp(:,2)*1000);
-            fprintf('frange: %6.2f to %6.2f Hz\n',frange);
-            prompt1={'Min Freq (Hz)', 'Max Freq (Hz)','Max delay (msec)', ...
-                'scale option [biased, unbiased, coeff]'};
-            def1={num2str(frange(1)),num2str(frange(2)),num2str(1000*2*head.geom.spacing(2)/1472),'unbiased'};
-            answer=inputdlg(prompt1,'Check Xcorr selections',1,def1);
-
-            if isempty(answer)
-                return
-            end
-            frange=[eval(answer{1}) eval(answer{2})];
-            maxlag=ceil(eval(answer{3})*Fs/1000);
-            scaleopt=answer{4};
-            %maxopt=answer{5};
-
-            bpFilt = designfilt('bandpassiir', 'FilterOrder', 20, ...
-                'HalfPowerFrequency1', frange(1), 'HalfPowerFrequency2', frange(2),...
-                'SampleRate', Fs);
-
-            %fvtool(bpFilt);
-            x=filtfilt(bpFilt,x);
+            srcname=sprintf('CSDM_Nfft%i_%s_eigenvector',Nfft,datestr(tdate_start,30));
+            write_covmat(app, Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
 
         end
+    end
 
-    end %process_freq_chc
-
+   
 end  %function_beamform_data

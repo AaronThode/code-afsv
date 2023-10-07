@@ -4,12 +4,12 @@ function [SUDAR_true,tmin,tmax,Fs,cal_dB,tmin_UTC,tmax_UTC]=get_SUDAR_time(mydir
 
 SUDAR_true=false;
 
-[pathstr,fname,~] = fileparts(myfile);
+[~,fname,~] = fileparts(myfile);
 
 %%%Calibration information
 serial_number=strfind(fname,'.')-1;
 if isempty(serial_number)
-    disp('No serial number or period embedded in file name');
+    disp('get_SUDAR_time: No serial number or period embedded in file name');
     return
 end
 serial_number=fname(1:serial_number);

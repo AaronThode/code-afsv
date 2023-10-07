@@ -6,7 +6,7 @@ end
 for If=1:length(freq)
     for Iang=1:length(angles)
         % lambda=1500/freq(If);
-        w=exp((1i*2*pi*Lz*freq(If)/c)*sin(angles(Iang)*pi/180));
+        w=exp((-1i*2*pi*Lz*freq(If)/c)*sind(angles(Iang)));
 
         %B(If,Iang)=real(w'*Ks{If}*w)/(norm(Ks{If})*norm(w).^2);
         w=w/norm(w);

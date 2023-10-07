@@ -1,5 +1,12 @@
+%function [B,wout]=conventional_beamforming(Ks,angles,freq,Lz,c,yesnorm)
 function [B,wout]=conventional_beamforming(Ks,angles,freq,Lz,c,yesnorm)
+    %Inputs:
+    %  Ks:  cross-spectral density matrix [Nel, Nel, Nfreq];
+    %  freq: frequencies in Hz
+    %  Lz: positions in meters
+    %  c: sound speed m/sec
 % output: wout(element,freq,angle));
+
 B=zeros(length(freq),length(angles));
 if size(Lz,2)>1
     Lz=Lz.';
@@ -12,7 +19,7 @@ winn=hanning(length(Lz));
 for If=1:length(freq)
     for Iang=1:length(angles)
         % lambda=1500/freq(If);
-        w=exp((-1i*2*pi*Lz*freq(If)/c)*sin(angles(Iang)*pi/180));
+        w=exp((-1i*2*pi*Lz*freq(If)/c)*sind(angles(Iang)));
         w=w.*winn;
         
         w=w/norm(w);

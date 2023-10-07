@@ -14,3 +14,5 @@ Ulysses_Mac
 Ulysses_Win32
 Archive.zip
 *.asv
+*.fig
+*.jpg
