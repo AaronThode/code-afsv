@@ -4,7 +4,7 @@ tlen=handles.tlen;
 mydir=pwd;
 Ichan='all';  %Hardwire first channel
 %set(handles.togglebutton_ChannelBeam,'String','Channel');
-[x,t,Fs,~,~,head]=load_data(handles.filetype, tdate_start,tlen,Ichan,handles,app);
+[x,t,Fs,~,~,head,Ichan]=load_data(handles.filetype, tdate_start,tlen,Ichan,handles,app);
 
 %If not multichannel data, return
 if isempty(x)||~head.multichannel||~head.array
@@ -33,9 +33,21 @@ fmax=str2double(get(handles.edit_fmax,'String'));
 chann=1:head.Nchan; %We now assume that any bad channels are marked in the LOG files.
 %end
 
-Ichc=menu('Enter type of frequency processing:','Contour', ...
-    'All (averaged)','Individual Frames (and ray tracing)', ...
-    'Time delay and sum','Cross correlation between two phones');
+list_freq={'Trace T-F Contour','All (averaged)','Individual Frames (and ray tracing)', ...
+    'Time delay and sum','Cross correlation between two phones'};
+[Ichc,made_chc] = listdlg('PromptString','Choose Broadband Frequency Processing', ...
+    'SelectionMode','single', 'ListString',list_freq);
+
+if made_chc
+    freq_process_chc=list_freq{Ichc};
+else
+    disp('Canceled processing');
+    return
+end
+
+% Ichc=menu('','Contour', ...
+%     'All (averaged)','Individual Frames (and ray tracing)', ...
+%     'Time delay and sum','Cross correlation between two phones');
 
 delay_and_sum_flag=false;  %Boolean variable is true if delay and sum option selected
 correlation_flag=false;
