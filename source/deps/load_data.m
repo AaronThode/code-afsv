@@ -915,7 +915,12 @@ if ~done
         instrument_chc=app.SQUALLEDropDown.Value;
         %%Import configuration file
         config_file=dir([mydir filesep '*acoustic_config*']);
-        TI=readtable([mydir filesep config_file.name]);
+        try
+            TI=readtable([mydir filesep config_file.name]);
+        catch
+            errordlg('Could not read acoustic config file for SQUALLE data','SQUALLE fail!');
+            return
+        end
        
         switch instrument_chc
             case 'Individual Channel'
@@ -952,6 +957,7 @@ if ~done
                 head.vector_sensor=false;
                 head.array=true;
                 head.multichannel=true;
+                head.Nchan=length(Igood);
             case 'Horizontal array'
                 Igood=TI.Channel(contains(TI.sensor_type,'HTI')&(TI.X_m>0) | (TI.X_m+TI.Y_m+TI.Z_m==0) );
                 head.geom.rd=TI.Z_m(Igood);

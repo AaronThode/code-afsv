@@ -7,12 +7,12 @@ Ichan='all';  %Hardwire first channel
 [x,t,Fs,~,~,head]=load_data(handles.filetype, tdate_start,tlen,Ichan,handles,app);
 
 %If not multichannel data, return
-if isempty(x)||~head.multichannel
+if isempty(x)||~head.multichannel||~head.array
     uiwait(msgbox('CSDM requires multichannel data or non-zero x value'));
     return
 end
 %Will need to have columns be channels, rows time
-if floor(tlen*Fs)~=size(x,1)
+if size(x,1)<size(x,2)
     x=x.';
 end
 %%For MDAT file, channel 1 is already shallowest channel, so remove data below...

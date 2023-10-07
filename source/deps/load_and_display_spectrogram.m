@@ -400,7 +400,7 @@ update_button_visibility;
         if ~(strcmp(handles.filetype,'PSD'))
             
             %%% KEY SPECTROGRAM COMMAND
-            [S,FF,TT,B] = spectrogram(x(:,1),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs);
+            [S,FF,TT,PSDD] = spectrogram(x(:,1),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs);
 
             
 
@@ -429,13 +429,13 @@ update_button_visibility;
             
             if ~isfield(hdr,'calcurv')
                 %%%KEY SPECTROGRAM IMAGE COMMAND
-                B=10*log10(B.*(abs(senss).^2)');
-                imagesc(TT,FF/1000,B);%
+                PSDD=10*log10(PSDD.*(abs(senss).^2)');
+                imagesc(TT,FF/1000,PSDD);%
                 
             else  %%%Factor in cable distortion
                 Xp_cal_fin=polyval(hdr.calcurv,FF/Fs);
                 
-                imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
+                imagesc(TT,FF/1000,10*log10(PSDD)+Xp_cal_fin*ones(1,length(TT)));
                 %elseif isfield(hdr,'cable_factor')
                 %    Xp_cal_fin=20*log10(1+hdr.cable_factor*FF);  %Unit resistance 140 ohm, capacitance 110 nF
                 %    imagesc(TT,FF/1000,10*log10(B)+Xp_cal_fin*ones(1,length(TT)));
@@ -451,7 +451,7 @@ update_button_visibility;
                 end
                 
                 Iper=round(length(TT)*percentil);
-                B_sort=sort(B,2);
+                B_sort=sort(PSDD,2);
                 stats=B_sort(:,Iper);
                 myfig=gcf; figure(1);
                 
