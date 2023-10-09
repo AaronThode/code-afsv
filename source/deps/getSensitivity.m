@@ -25,24 +25,36 @@ parse(p,varargin{:});
 
 switch sensor
     case 'DASAR-omni'  %%%Remember energy is arriving as normal modes so a slight vertical offset.
+
+        DASAR_chc='Aaron';  %Aaron or Alison
         H=ones(1,length(FF));
 
-        slopee=1.2*4.1e-04;  %%%radians phase per radians frequency, for 1 sec averages
+        switch DASAR_chc
+            case 'Aaron'
+                %%%% slopee measured at 00:06:30 local time on 17 August, 2014 5G
+                %                 %%%%23:57:28  1 seconds 10/1/2014 5G
+                %                 %%% Also checked 04-Oct-2010 02:45:47.4 DASAR 5G, within 10° below
+                %                 %%%     375 Hz.  This signal is lower received level.
+                %                 %slopee=1.1*4.1e-04;  %%%radians phase per radians frequency, for
+                %                 slopee=1.2*4.1e-04;  %%%radians phase per radians frequency, for 1 sec averages
+                %
+                slopee=1.2*4.1e-04;  %%%radians phase per radians frequency, for 1 sec averages
 
 
-        %Phasee=10*pi/180+slopee*2*pi*(FF-75);  %Phase is 10 degrees at 75 Hz, linear
-        Phasee=slopee*2*pi*FF;  %Nearly identical to above (y-intercept is
-        %           -1 degrees in equation above.
+                %Phasee=10*pi/180+slopee*2*pi*(FF-75);  %Phase is 10 degrees at 75 Hz, linear
+                Phasee=slopee*2*pi*FF;  %Nearly identical to above (y-intercept is
+                %           -1 degrees in equation above.
 
 
-        %fe = [0 93 148 200 250 360 500]';
-        %pex = [0 -3 -7.8 -18.3 -25 -60 -90]';
-        %phaseex = interp1(fe,pex,FF);
-        %phaseex(isnan(phaseex)) = 0;
-        %Phasee=exp(1i*(pi/180)*phaseex);
-
+            case 'Alison'
+                fe = [0 93 148 200 250 360 500]';
+                pex = [0 -3 -7.8 -18.3 -25 -60 -90]';
+                phaseex = interp1(fe,pex,FF);
+                phaseex(isnan(phaseex)) = 0;
+                Phasee=exp(1i*(pi/180)*phaseex);
+        end
         H=H.*exp(-1i*Phasee.');
-   
+
         return
     case {'DASAR-directional','DASAR-X','DASAR-Y'}
         %%%%Thought normal modes might explain this, but better using a
