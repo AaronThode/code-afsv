@@ -923,6 +923,7 @@ if ~done
             errordlg('Could not read acoustic config file for SQUALLE data','SQUALLE fail!');
             return
         end
+        head.linked=false;
        
         switch instrument_chc
             case 'Individual Channel'

@@ -6,6 +6,10 @@ function handles = load_and_display_spectrogram(app, handles)
 %cla;
 %hold off
 
+handles.tdate_start=datenum(app.edit_datestr.Value); 
+handles.tdate_min=datenum(app.text_mintime.Text);
+handles.tdate_max=datenum(app.text_maxtime.Text);
+
 %What type of Display?
 handles.old_display_view=[];
 if isfield(handles,'display_view')
@@ -15,17 +19,9 @@ end
 handles.display_view=get(get(handles.uipanel_display,'SelectedObject'),'String');
 
 
-%%Read off parameters from figure...
-
-%if isfield(handles,'tlen')
-%    tlen	=	handles.tlen;
-%else
-%    tlen=[];
-%end
-
-
 %if isempty(tlen)
-tlen    =   str2double(get(handles.edit_winlen,'String'));
+tlen=str2double(app.edit_winlen.Value);
+%tlen    =   str2double(get(handles.edit_winlen,'String'));
 handles.tlen=tlen;
 %end
 mydir	=	pwd;
@@ -78,8 +74,8 @@ try
     else
         additional_text=[];
     end
-    set(handles.text_filename,'String',[fullfile(handles.mydir, handles.myfile) ' ' additional_text]);
-    
+    %set(handles.text_filename,'String',[fullfile(handles.mydir, handles.myfile) ' ' additional_text]);
+   
 catch
     uiwait(errordlg('Cannot load spectrogram: perhaps event or time desired too close to edge'));
     return
