@@ -1,6 +1,7 @@
 %function handles=function_beamform_data(app,handles)
 function handles=function_beamform_data(app,handles)
 
+%close all
 %%%Gather basic parameters fro GUI interface
 tdate_start=handles.tdate_start;
 tlen=handles.tlen;
@@ -533,7 +534,6 @@ write_CSDM;
     end
 
     function process_timedelaynsum
-        delay_and_sum_flag=true;
         disp('Select bounding box for time and range:');
         ftmp=ginput(2);
 
@@ -588,7 +588,8 @@ write_CSDM;
         tt=(1:length(xtot))/Fs;
         figure(20);clf;
         pcolor(tt*1000,sind(angles),Bsum);shading flat
-        caxis([-20 0]);colorbar
+        %caxis([-20 0]);
+        colorbar
         set(gca,'fontweight','bold','fontsize',14)
         xlabel('Time (msec)');ylabel('sine of Elevation angle');
         ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
@@ -608,7 +609,8 @@ write_CSDM;
         %plot migration angle...
         figure(21);clf;
         pcolor(tt*1000,angles,Bsum);shading flat;axis('ij')
-        caxis([-20 0]);colorbar
+        %caxis([-20 0]);
+        % colorbar
         set(gca,'fontweight','bold','fontsize',14)
         xlabel('Time (msec)');ylabel('Elevation angle (deg)');
         ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
@@ -621,13 +623,32 @@ write_CSDM;
             set(gca,'xtick',0:100:xlimm(2));
 
         end
+        colorbar
+        
+         figure(22);clf;
+        pcolor(tt*1000,angles,20*log10(Bsum));shading flat;axis('ij')
+        caxis([-20 0]);
+        % colorbar
+        set(gca,'fontweight','bold','fontsize',14)
+        xlabel('Time (msec)');ylabel('Elevation angle (deg)');
+        ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
+        titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
+        title(titstr);grid on;orient landscape
+        xlimm=xlim;
+        if diff(xlimm)<100
+            set(gca,'xtick',0:5:xlimm(2));
+        else
+            set(gca,'xtick',0:100:xlimm(2));
+
+        end
+        colorbar
         %printstr=sprintf('AngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
         %print(gcf,'-djpeg','-r300',[printstr '.jpg']);
         %saveas(gcf,[printstr '.fig'],'fig')
 
         %Repeat using cross-correlation result (to remove
         %   complexities in time waveform)
-        figure(21)
+        figure(25)
         uiwait(msgbox('Please select a box to cross-correlate with other beams (matched filter), hit return to skip:'));
         tmp=ginput(2);
         % tmp=[];
@@ -699,7 +720,7 @@ write_CSDM;
             set(gca,'fontweight','bold','fontsize',14);
             xlabel('Frequency (kHz)');ylabel('Angle from horizontal (deg)');grid on;
             title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
-            set(gcf,'colormap',cmap(1:4:64,:));
+            %set(gcf,'colormap',cmap(1:4:64,:));
 
 
 
