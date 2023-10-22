@@ -850,7 +850,8 @@ function [head,amplitude_scale,Fs,Ichan,tmin,tmax]=get_WAV_info(mydir,myfile, Ns
 head.vector_sensor=false;
 head.multichannel=false;
 head.array=false;
-head.instrument{1}='Unknown';
+head.instrument{1}='Instrument_Unknownsensor';%DASAR_5Volt_24bit_DASARsensor
+amplitude_scale=1;
 
 if contains(myfile,'DIFAR')
     head.multichannel=true;
