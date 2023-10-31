@@ -461,6 +461,10 @@ update_button_visibility;
                 xlim([fmin fmax]);
                 legend(legstr);
                 figure(myfig);
+                keyboard
+                try
+                    close(1)
+                end
             end %if checkbox_histogram
             
             %keyboard

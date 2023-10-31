@@ -984,6 +984,8 @@ end  %%If not done
 
 if ~done
     
+    %%%See if a datenumber string is contained between underscored
+    %%%delimiteres, e.g. datestr(now,30)='20231023T112539';
     tmin	=	convert_date(myfile,'_');
 
     if isempty(tmin)
@@ -993,6 +995,7 @@ if ~done
             tmin=datenum(get(handles.text_mintime,'String'));
         catch
             minn	=	input('Enter start date in format [yr mo day hr min sec] or hit return: ');
+            %minn =[];
             if isempty(minn)
                 minn=[1970 1 1 0 0 0];
             end

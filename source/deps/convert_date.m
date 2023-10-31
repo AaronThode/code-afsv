@@ -3,12 +3,13 @@
 % function tstart=convert_date(data,delimiter),
 %%get start date from file name.
 %%Two types of filenames, one "MT" style the other MATLAB 'T" style
-%%Start intelligent search for a timestamp in string name...
+%%Start intelligent search for a timestamp in string name, where
+% the date is sandwiched between two delimiters...
 
 
 function tstart=convert_date(data,delimiter)
 tstart=[];
-mt_style_flag=~isempty(strfind(data,'Sound'));
+mt_style_flag=contains(data,'Sound');
 fname_bounds=findstr(data,delimiter);
 
 Idot=findstr(data,'.');
