@@ -844,14 +844,22 @@ end  %function load_data
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%get_WAV_info%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [head,amplitude_scale,Fs,Ichan,tmin,tmax]=get_WAV_info(mydir,myfile, Nsamples,Fs,Ichan, app)
-%%%Put information about instrument, amplitude scale, and absolute time in
-%%%here
+%function [head,amplitude_scale,Fs,Ichan,tmin,tmax]=get_WAV_info(mydir,myfile, Nsamples,Fs,Ichan, app)
 
+%%%Put information about instrument, amplitude scale, and absolute time in
+%%%here.  Note that Fs and Ichan are optional but can be modified here.
+
+%%%Dipswitches required, along with required variables.
 head.vector_sensor=false;
 head.multichannel=false;
 head.array=false;
-head.instrument{1}='Instrument_Unknownsensor';%DASAR_5Volt_24bit_DASARsensor
+head.instrument{1}='Instrument_Unknownsensor';%DASAR_5Volt_24bit_DASARsensor, _*sensor
 amplitude_scale=1;
+%Fs=NaN;
+tmin=0;
+tmax=Inf;
+
+
 
 if contains(myfile,'DIFAR')
     head.multichannel=true;
@@ -980,7 +988,31 @@ if ~done
         end
         %head.vector_sensor=true;
     end  %if SQUALLE
-end  %%If not done
+end
+
+%%%Check if sensor name is in WAV file (e.g. DURIP device)
+if ~done && (contains(myfile,'AnalogData') && contains(myfile,'sensor'))
+    Istart=strfind(myfile,'_');Istart=Istart(end)+1;
+    Iend=strfind(myfile,'sensor')-1;
+    instrument_base=myfile(Istart:Iend);
+    head.instrument{1}=sprintf('%s-omnisensor',instrument_base);
+    head.instrument{2}=sprintf('%s-Xsensor',instrument_base);
+    head.instrument{3}=sprintf('%s-Ysensor',instrument_base);
+    head.instrument{4}=sprintf('%s-Zsensor',instrument_base);
+    head.vector_sensor=true;
+    head.array=false;
+    head.multichannel=true;
+    amplitude_scale=1;
+    done=true;
+
+    Iend=Istart-2;
+    Istart=strfind(myfile,'AnalogData')+length('AnalogData')+1;
+    tmin=datenum(myfile(Istart:Iend),'ddmmmyyyy-HHMM');
+    tmax=tmin+datenum(0,0,0,0,0,Nsamples/Fs);
+
+end
+
+%%If not done
 
 if ~done
     

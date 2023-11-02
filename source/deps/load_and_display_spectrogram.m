@@ -39,7 +39,7 @@ want_directionality=want_directionality||strcmpi(handles.display_view,'Polarizat
 button_chc=get(handles.togglebutton_ChannelBeam,'String');
 want_directionality=want_directionality || strcmpi(button_chc,'angle');
 
-if want_directionality&strcmpi(handles.filetype,'gsi')
+if want_directionality&(handles.file_flags.vector_sensor||handles.file_flags.array)
     Ichan='all';
 
 else
