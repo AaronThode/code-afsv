@@ -1,5 +1,6 @@
 function [sensor_name,bits,Vmax]=parse_instrument_string(namee)
 % Exxample: DASAR_5Volt_24bit_DASARsensor
+%%%Look for sensor name in the form '_XXXXsensor'
 
 Islash=strfind(namee,'_');
 if isempty(Islash),Islash=0;end
