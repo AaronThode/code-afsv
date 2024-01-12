@@ -65,7 +65,7 @@ classdef MatrixND
                 end
                 
                 if ~exist('permitted_labels','var')
-                    td.permitted_labels={'Azimuth','ItoE', 'KEtoPE','IntensityPhase','PSD','Frequency','Time'};
+                    td.permitted_labels={'Azimuth','Elevation','ItoE', 'KEtoPE','IntensityPhase','PSD','Frequency','Time'};
                 else
                     td.permitted_labels=permitted_labels;
                 end
@@ -73,7 +73,7 @@ classdef MatrixND
                 
                 
                 if ~exist('plot_labels','var')
-                    td.plot_labels={'Azimuth (deg)','Transport velocity', ...
+                    td.plot_labels={'Azimuth (deg)','Elevation (deg)','Transport velocity', ...
                         'Kinetic/Potential ratio','Intensity Phase','PSD (dB re 1uPa^2/Hz)','Frequency (Hz)','Time'};
                 else
                     td.plot_labels=plot_labels;
@@ -493,8 +493,10 @@ classdef MatrixND
             %           raw: plot raw counts
             %           joint; plot p(X and Y)
             %           conditional; plot(Y|X)  (matrix/sum(matrix));
-            %           maxnorm: plot(X and Y) divided by maximum value of
+            %           MaxnormPerX: plot(X and Y) divided by maximum value of
             %                   Y along X
+            %           MaxnormPerY:  plot(X and Y) divided by maxicumm
+            %           value of X along Y
             %           conditional cumulative:  plot cumulative
             %           distribution of p(Y|X);
             % is_log, if true plot on log scale
@@ -596,8 +598,13 @@ classdef MatrixND
                 tit_str='conditionalcumulative';
                 disp('conditionalcumulative plot');
                   
-            elseif contains(scale_str,'maxnorm')
+            elseif contains(scale_str,'MaxnormPerX','IgnoreCase',true)
                 matrixx=matrixx./max(matrixx);
+                tit_str='normalized';
+                disp('normalized plot');
+            elseif contains(scale_str,'MaxnormPerY','IgnoreCase',true)
+                matrixx=matrixx';
+                matrixx=(matrixx./max(matrixx))';
                 tit_str='normalized';
                 disp('normalized plot');
             end

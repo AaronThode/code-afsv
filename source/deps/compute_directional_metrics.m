@@ -106,12 +106,12 @@ else  %%All other data is coming on on other channels.
         dn=round((1-ovlap)*Nfft);
         M=floor(1+(size(x,1)-Nfft)/dn);
         B=zeros(Nchan,Nfft/2+1,M);
-        
+
         for J=1:Nchan
             fprintf('Spectrogram channel %i\n',J);
             [B(J,:,:),FF,TT] = spectrogram(x(:,J),Nfft,round(ovlap*Nfft),Nfft,Fs);
         end
-          Nf=Nfft/2+1;  %Should be the same as length(FF)
+        Nf=Nfft/2+1;  %Should be the same as length(FF)
         clear x
     end
     
@@ -169,6 +169,13 @@ else  %%All other data is coming on on other channels.
           Iz=squeeze(((B(1,:,:).*conj(B(4,:,:)))));
    end
     
+
+   %%%%Debug
+%    figure
+%    subplot(3,1,1);imagesc(TT,FF/1000,log10(abs(real(Ix)))); colormap(jet);ylim([0 12]);xlim([0 1]);caxis([10 20]);axis xy
+%    subplot(3,1,2);imagesc(TT,FF/1000,log10(abs(real(Iy)))); colormap(jet);ylim([0 12]);xlim([0 1]);caxis([10 20]);axis xy
+%    subplot(3,1,3);imagesc(TT,FF/1000,log10(abs(real(Iz)))); colormap(jet);ylim([0 12]);xlim([0 1]);caxis([10 20]);axis xy
+
     %time and memory, but need this if trying to use transparency
     pressure_autospectrum=squeeze(abs(B(1,:,:)).^2);
 
@@ -305,11 +312,12 @@ for J=1:length(metric_type)  %%for each request
         case 'Elevation'
 
              if ~reactive_flag(J)
-                mu = (atand(real(Iz)./sqrt((real(Iy)).^2+(real(Ix)).^2)));
+                mu = single(atand(real(Iz)./sqrt((real(Iy)).^2+(real(Ix)).^2)));
             else
-                mu = (atand(imag(Iz)./sqrt((imag(Iy)).^2+(imag(Ix)).^2)));
+                mu = single(atand(imag(Iz)./sqrt((imag(Iy)).^2+(imag(Ix)).^2)));
             end
-            output_array{J}=(param.brefa+mu);
+            %output_array{J}=(param.brefa+mu);
+            output_array{J}=(mu);
      
             
         case 'ItoERatio'
@@ -329,29 +337,27 @@ for J=1:length(metric_type)  %%for each request
             end
 
             %%%Effective velocity j/Sp
-            output_array{J}=intensity./energy_density;
+            output_array{J}=single(intensity./energy_density);
         case 'KEtoPERatio'
-            output_array{J}=normalized_velocity_autospectrum./pressure_autospectrum;
+            output_array{J}=single(normalized_velocity_autospectrum./pressure_autospectrum);
         case 'Polarization'
            % output_array{J}=(real(Ix).*imag(Iy)-real(Iy).*imag(Ix))./pressure_autospectrum;
             
             output_array{J}=polarization;
         case 'IntensityPhase'
-
-            if Nchan>3
-                if ~reactive_flag(J)
-                    output_array{J}=atan2d(sqrt(imag(Ix).^2+imag(Iy).^2+imag(Iz).^2),sqrt((real(Ix)).^2+(real(Iy)).^2+real(Iz).^2));
-                else
-                    output_array{J}=atan2d(sqrt(real(Ix).^2+real(Iy).^2+real(Iz).^2),sqrt((imag(Ix)).^2+(imag(Iy)).^2+imag(Iz).^2));
-                end
+            if ~reactive_flag(J)
+                output_array{J}=atan2d(sqrt(imag(Ix).^2+imag(Iy).^2),sqrt((real(Ix)).^2+(real(Iy)).^2));
             else
-                if ~reactive_flag(J)
-                    output_array{J}=atan2d(sqrt(imag(Ix).^2+imag(Iy).^2),sqrt((real(Ix)).^2+(real(Iy)).^2));
-                else
-                    output_array{J}=atan2d(sqrt(real(Ix).^2+real(Iy).^2),sqrt((imag(Ix)).^2+(imag(Iy)).^2));
-                end
+                output_array{J}=atan2d(sqrt(real(Ix).^2+real(Iy).^2),sqrt((imag(Ix)).^2+(imag(Iy)).^2));
             end
-            
+            output_array{J}=single(output_array{J});
+        case 'IntensityPhaseZ'
+            if ~reactive_flag(J)
+                output_array{J}=atan2d(imag(Iz),real(Iz));
+            else
+                output_array{J}=atan2d(real(Iz),imag(Iz));
+            end
+            output_array{J}=single(output_array{J});
         case 'PhaseSpeed'
             if Nchan>3
                 if ~reactive_flag(J)
@@ -368,6 +374,7 @@ for J=1:length(metric_type)  %%for each request
 
                 end
             end
+            output_array{J}=single(output_array{J});
     end
 end
 
