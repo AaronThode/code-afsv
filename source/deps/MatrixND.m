@@ -168,7 +168,7 @@ classdef MatrixND
             
             %Iindex is the dimension, Islice is the element in that dimension
             %subsasgn, subsref
-            %https://www.mathworks.com/matlabcentral/answers/344423-index-slice-of-nd-array-of-unknown-dimension
+            %https://urldefense.com/v3/__https://www.mathworks.com/matlabcentral/answers/344423-index-slice-of-nd-array-of-unknown-dimension__;!!Mih3wA!FQAYaU4t51R8Ztqzaw4IvERO1BXgijqsm7WBUB91V0FrW6H62PHlCm-7HCAfnTBs6UBdO1FU8GP06z4N9lqBCg$ 
             %  Above lists how to remove a dimension of an array
             
             S.type = '()';
@@ -633,6 +633,7 @@ classdef MatrixND
                     
                     
             end
+            matrixx = []; % clear this from memory
             xlabel(plot_label{2});ylabel(plot_label{1});
             title(sprintf('%s,%i samples',tit_str,Ntotal));
             strr='yx';
