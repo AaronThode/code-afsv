@@ -2,7 +2,8 @@ classdef MatrixND
     %%%Methods%%%%
     %  out=extract_slice(obj,fixed_label,fixed_val);  %fixed val can be a
     %   scalar or two-element vector (for extracing a range of slices)
-    %  out=sum_slice(obj,sum_label,bins_sum); %Sums over one dimension
+    %  out=sum_slice(obj,sum_label,bins_sum); %Sums over dimensions. 
+    % %         e.g:   temp.sum_slice({'Frequency','Azimuth'});
     %  obj=append_time(obj,obj_new);
     %  obj=append_time_with_gaps(obj,obj_new)
     %  obj=plus(obj,obj_new)
@@ -108,7 +109,7 @@ classdef MatrixND
                 fixed_label=temp;
             end
             
-            if ~iscell(fixed_val)&isnumeric(fixed_val)
+            if ~iscell(fixed_val)&(isnumeric(fixed_val)|isdatetime(fixed_val))
                 %disp('converting fixed_val char to cell')
                 temp{1}=fixed_val;
                 fixed_val=temp;
@@ -433,35 +434,53 @@ classdef MatrixND
                 return
             end
             
-            %%%Check that I am 2D
-            if length(obj.labels)>2
-                disp('MatrixND: accumulate_slice: must be 1 or 2D matrix');
-                return
-            end
-            
             Iindex=find(contains(obj.labels,sum_label,'IgnoreCase',true));  %Highest dimension listed first
             Iother=find(~contains(obj.labels,sum_label,'IgnoreCase',true));  %for loop
            
             Nbin=length(obj.bin_grid{Iindex});
+
+            %%%Define new grid
             bin_edges=obj.bin_grid{Iindex};
+            datetime_flag=false;
+
+            if isdatetime(bin_edges)
+                datetime_flag=true;
+
+                bin_edges=datenum(bin_edges);
+                if size(bin_edges,1)>0
+                    bin_edges=bin_edges.';
+                end
+            end
             dX=bin_edges(2)-bin_edges(1);
             bin_edges=[bin_edges-0.5*dX bin_edges(end)+0.5*dX];
-            
-            
             edges_A=bin_edges(unique([1:Nbins_to_combine:length(bin_edges) length(bin_edges)]));
             edges_A_mid=edges_A(1:(end-1))+0.5*dX*Nbins_to_combine;
-            obj.bin_grid{Iindex}=edges_A_mid;
-            
-            Nbins_out=floor(Nbin./Nbins_to_combine);
-            subs=ones(Nbins_to_combine,1)*(1:Nbins_out);
+            if datetime_flag
+                obj.bin_grid{Iindex}=datetime(edges_A_mid,'ConvertFrom','datenum');
+            else
+                obj.bin_grid{Iindex}=edges_A_mid;
+            end
+
+            %%%Define summation indicies for accumarray function
+             
+            Nbins_out=floor(Nbin./Nbins_to_combine);  %Number of output vins
+            subs=ones(Nbins_to_combine,1)*(1:Nbins_out);  %%repmat function
             subs=subs(:);
-            subs=[subs; (Nbins_out+1)*ones(Nbin-length(subs),1)];
+            subs=[subs; (Nbins_out+1)*ones(Nbin-length(subs),1)]; %Make sure not to crash;
             Nbins_out=Nbins_out+1;
+
+            %%%Check that I am 2D
+            if length(obj.labels)>3
+                disp('MatrixND: accumulate_slice: can''t accumulate a 4-D matrix or higher');
+                return
+            end
+            
+          
             
             if isempty(Iother) %1-D arrayu
                 A=accumarray(subs(:),obj.N);
                 obj.N=A;
-            else
+            elseif length(Iother)==1 %2-D array
                 Nother=length(obj.bin_grid{Iother});
                 for I=1:Nother
                     
@@ -479,7 +498,48 @@ classdef MatrixND
                 S.subs = repmat({':'},1,ndims(obj.N));
                 S.subs{Iindex}=1:length(A);
                 obj.N= subsref(obj.N,S);
+
+            elseif length(Iother)==2 %%3-D array
+
+                obj.N=permute(obj.N,[Iindex Iother]);
+                for I=1:Nbins_out
+                    J=(subs==I);  %indicies to sum.
+                    obj.N(I,:,:)=sum(obj.N(J,:,:),1);
+                end
+                obj.N=obj.N(1:Nbins_out,:,:);
+                
+                if Iindex>1
+                    Iout=Iother+1;
+                    Iout=[Iout(1):Iout(Iindex-1) 1 Iother(Iindex:end)];
+                    obj.N=permute(obj.N,Iout);
+                end
+               
             
+%                 switch Iindex
+% 
+%                     case 3
+%                     
+%                     for I=1:Nbins_out
+%                         J=find(subs==I);  %indicies to sum.
+%                         obj.N(:,:,I)=sum(obj.N(:,:,J),3);
+%                     end
+%                     obj.N=obj.N(:,:,1:Nbins_out);
+%                 end
+            elseif length(Iother)==3 %%3-D array
+
+                obj.N=permute(obj.N,[Iindex Iother]);
+                for I=1:Nbins_out
+                    J=(subs==I);  %indicies to sum.
+                    obj.N(I,:,:,:)=sum(obj.N(J,:,:,:),1);
+                end
+                obj.N=obj.N(1:Nbins_out,:,:,:);
+
+                if Iindex>1
+                    Iout=Iother+1;
+                    Iout=[Iout(1):Iout(Iindex-1) 1 Iother(Iindex:end)];
+                    obj.N=permute(obj.N,Iout);
+                end
+
             end
         
             
@@ -613,7 +673,11 @@ classdef MatrixND
                 matrixx=log10(double(matrixx));
             end
             
-            
+            if isdatetime(xplot)
+                xplot=datenum(xplot);
+            elseif isdatetime(yplot)
+                yplot=datenum(yplot);
+            end
             switch plot_chc
                 case 'image'
                     
