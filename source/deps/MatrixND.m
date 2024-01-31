@@ -470,7 +470,7 @@ classdef MatrixND
             Nbins_out=Nbins_out+1;
 
             %%%Check that I am 2D
-            if length(obj.labels)>3
+            if length(obj.labels)>4
                 disp('MatrixND: accumulate_slice: can''t accumulate a 4-D matrix or higher');
                 return
             end
@@ -525,7 +525,7 @@ classdef MatrixND
 %                     end
 %                     obj.N=obj.N(:,:,1:Nbins_out);
 %                 end
-            elseif length(Iother)==3 %%3-D array
+            elseif length(Iother)==3 %%4-D array
 
                 obj.N=permute(obj.N,[Iindex Iother]);
                 for I=1:Nbins_out

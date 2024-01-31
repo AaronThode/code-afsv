@@ -990,7 +990,8 @@ if ~done
     end  %if SQUALLE
 end
 
-%%%Check if sensor name is in WAV file (e.g. DURIP device)
+%%%%DURIP TIDAL DEVICE
+%%%Check if sensor name is in WAV file (e.g. DURIP TIDAL device)
 if ~done && (contains(myfile,'AnalogData') && contains(myfile,'sensor'))
     Istart=strfind(myfile,'_');Istart=Istart(end)+1;
     Iend=strfind(myfile,'sensor')-1;
