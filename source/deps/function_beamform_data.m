@@ -624,8 +624,8 @@ write_CSDM;
 
         end
         colorbar
-        
-         figure(22);clf;
+
+        figure(22);clf;
         pcolor(tt*1000,angles,20*log10(Bsum));shading flat;axis('ij')
         caxis([-20 0]);
         % colorbar
@@ -719,21 +719,22 @@ write_CSDM;
             caxis('auto');
             set(gca,'fontweight','bold','fontsize',14);
             xlabel('Frequency (kHz)');ylabel('Angle from horizontal (deg)');grid on;
-            title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
+            ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
+            titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
+            title(titstr);
             %set(gcf,'colormap',cmap(1:4:64,:));
 
 
 
             figure(100);
-           
+
             %%%Plot summed beampattern
             df=Ksout.freq(2)-Ksout.freq(1);
             Bsum=sum(10*log10((B{Ifig})))/length(Ksout.freq);
             plot(Bsum,angles,clr(Ifig));hold on
             set(gca,'fontweight','bold','fontsize',14);axis('ij');
             xlabel('Mean dB Beampower ');ylabel('Angle from horizontal (deg)');grid on;
-            title(sprintf('%s, %i FFT, %i elements',datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
-        end
+            title(titstr);end
         if ~peak_picking
             return
         end

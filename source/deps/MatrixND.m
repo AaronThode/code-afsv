@@ -541,8 +541,7 @@ classdef MatrixND
                 end
 
             end
-        
-            
+             
         end
         
         %%%%%%%%%%%%%%%%%%image_2D_slice%%%%%%%%%%%%%%%%%%%%%%
@@ -558,6 +557,7 @@ classdef MatrixND
             %           MaxnormPerY:  plot(X and Y) divided by maxicumm
             %           value of X along Y
             %           conditional cumulative:  plot cumulative
+
             %           distribution of p(Y|X);
             % is_log, if true plot on log scale
             %plot_chc: 'contourf','image'
