@@ -10,6 +10,14 @@ Ichan='all';  %Hardwire first channel
 %set(handles.togglebutton_ChannelBeam,'String','Channel');
 [x,t,Fs,~,~,head,Ichan]=load_data(handles.filetype, tdate_start,tlen,Ichan,handles,app);
 
+
+%%%%Feb. 6, 2024:  change definition of geom.rd so that a positive
+%%%%    elevation angle points toward surface, and a negative elevation angle
+%%%%    points to bottom.
+
+local_rd=-head.geom.rd;
+
+
 %If not multichannel data, return
 if isempty(x)||~head.multichannel||~head.array
     uiwait(msgbox('CSDM requires multichannel data or non-zero x value'));
@@ -115,7 +123,7 @@ switch beam_process_chc
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
         if strcmp(beamchc,'freqvspwr')
-            B{1}=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
+            B{1}=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,local_rd(Igood_el),cc);
 
             figure(20);
             imagesc(Ksout.freq,[],10*log10(abs(Ksout.EE)));xlabel('frequency (Hz)');ylabel('Eigenvalue');colorbar
@@ -126,7 +134,7 @@ switch beam_process_chc
                 for If=1:length(Ksout.freq)
                     Ksout.Kstot_eig(:,:,If)=V1(:,If)*V1(:,If)';
                 end
-                B_eig=conventional_beamforming(Ksout.Kstot_eig(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
+                B_eig=conventional_beamforming(Ksout.Kstot_eig(Igood_el,Igood_el,:),angles,Ksout.freq,local_rd(Igood_el),cc);
                 yes_eigen=1;
             else
                 close(20);
@@ -146,7 +154,7 @@ switch beam_process_chc
 
             for Isnap=1:length(Ksout.t)
                 if rem(Isnap,10)==0,disp(Isnap);end
-                B=conventional_beamforming(squeeze(Ksout.Kstot(Igood_el,Igood_el,:,Isnap)),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
+                B=conventional_beamforming(squeeze(Ksout.Kstot(Igood_el,Igood_el,:,Isnap)),angles,Ksout.freq,local_rd(Igood_el),cc);
                 %Bsum(:,Isnap)=10*log10(sum(abs(B)))/length(Ksout.freq);
                 Bsum(:,Isnap)=(sum(10*log10(abs(B))))/length(Ksout.freq);
             end
@@ -187,17 +195,17 @@ switch beam_process_chc
     case 'Minimum Variance'
         beam_str='MV';
 
-        B{1}=MV_beamforming(app, Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
+        B{1}=MV_beamforming(app, Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,local_rd(Igood_el),cc);
     case 'Both'
         beam_str='CVnMV';
 
-        B{1}=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
+        B{1}=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,local_rd(Igood_el),cc);
 
-        B{2}=MV_beamforming(app, Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
+        B{2}=MV_beamforming(app, Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,local_rd(Igood_el),cc);
     case 'Relection Coefficient estimation'
         beam_str='RC';
 
-        R=derive_reflection_coefficient2(app, Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,head.geom.rd(Igood_el),cc);
+        R=derive_reflection_coefficient2(app, Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,local_rd(Igood_el),cc);
     case 'Matched Field Processing'
 
         matched_field_processing;
@@ -328,10 +336,10 @@ write_CSDM;
             error('Cannot select multiple environmental models during MFP');
         end
 
-        %head.geom.rd=get_VA_2010_depths_and_offset(2010,handles.myfile,MFP_replica_file{1});
-        head.geom.rd=head.geom.rd;
+        %local_rd=get_VA_2010_depths_and_offset(2010,handles.myfile,MFP_replica_file{1});
+        %head.geom.rd=head.geom.rd;
 
-        def1={MFP_replica_file{1}, default_tilt{1},range_str{1},'1:1:55','0','2048',['[' num2str(default_SNR{1}) ']'],'yes',num2str(head.geom.rd)};
+        def1={MFP_replica_file{1}, default_tilt{1},range_str{1},'1:1:55','0','2048',['[' num2str(default_SNR{1}) ']'],'yes',num2str(local_rd)};
         answer=inputdlg(prompt1,dlgTitle1,1,def1);
         model_name=answer{1};
         tilt_offset=str2num(answer{2});
@@ -340,7 +348,7 @@ write_CSDM;
         plot_chc=str2num(answer{5});
         Nfft2=str2num(answer{6});
         SNRmin=str2num(answer{7});  %May also be frequency
-        head.geom.rd=str2num(answer{9});
+        local_rd=str2num(answer{9});
         Ksout.Nfft=Nfft;
         Ksout.ovlap=ovlap;
 
@@ -358,18 +366,18 @@ write_CSDM;
         srcname=sprintf('CSDM_Nfft%i_%s',Nfft,datestr(tdate_start,30));
 
         if strcmp(answer{8},'yes')&&~isempty(Ksout.VV)
-            save_result=matched_field_processor(app, model_name,tilt_offset,ranges,depths,Ksout.Kstot_eig,Ksout.freq,10*log10(Ksout.SNR),head.geom.rd,SNRmin,srcname);
+            save_result=matched_field_processor(app, model_name,tilt_offset,ranges,depths,Ksout.Kstot_eig,Ksout.freq,10*log10(Ksout.SNR),local_rd,SNRmin,srcname);
         else
-            save_result=matched_field_processor(app, model_name,tilt_offset,ranges,depths,Ksout.Kstot,Ksout.freq,10*log10(Ksout.SNR),head.geom.rd,SNRmin,srcname);
+            save_result=matched_field_processor(app, model_name,tilt_offset,ranges,depths,Ksout.Kstot,Ksout.freq,10*log10(Ksout.SNR),local_rd,SNRmin,srcname);
         end
 
 
         if ~isempty(save_result)
             save(srcname,'Ksout','head','tdate_start','tlen');
-            write_covmat(app, Ksout.freq,Ksout.Kstot,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
+            write_covmat(app, Ksout.freq,Ksout.Kstot,local_rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
             if ~isempty(Ksout.VV)
                 srcname=sprintf('CSDM_Nfft%i_%s_eigenvector',Nfft,datestr(tdate_start,30));
-                write_covmat(app, Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
+                write_covmat(app, Ksout.freq,Ksout.Kstot_eig,local_rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
             end
         end
     end %function matched_field_processing
@@ -446,7 +454,7 @@ write_CSDM;
         prompt1={'Vector of angles (deg)','Vector of sin angles (deg) ', ...
             'hydrophone indicies [all]','sound speed (m/sec)', 'matched filter? (1=yes, 0=no)' ...
             };
-        def1={'-90:2:90', '',sprintf('[1:%i]',length(chann)),'1480','0'};
+        def1={'-90:0.2:90', '',sprintf('[1:%i]',length(chann)),'1480','0'};
 
         answer=inputdlg(prompt1,'Beamforming parameters',1,def1);
         try
@@ -492,7 +500,7 @@ write_CSDM;
         fprintf('frange: %6.2f to %6.2f Hz\n',frange);
         prompt1={'Min Freq (Hz)', 'Max Freq (Hz)','Max delay (msec)', ...
             'scale option [biased, unbiased, coeff]'};
-        spacing=abs(head.geom.rd(1)-head.geom.rd(end));
+        spacing=abs(local_rd(1)-local_rd(end));
         def1={num2str(frange(1)),num2str(frange(2)),num2str(1000*2*spacing/1500),'unbiased'};
         answer=inputdlg(prompt1,'Check Xcorr selections',1,def1);
 
@@ -558,7 +566,7 @@ write_CSDM;
         x=filter(bpFilt,x);
 
         Bsum=zeros(length(angles),size(x,1));
-        rd=head.geom.rd(Igood_el);
+        rd=local_rd(Igood_el);
 
         for Isnap=1:length(angles)
             if rem(Isnap,10)==0,disp(Isnap);end
@@ -608,11 +616,11 @@ write_CSDM;
 
         %plot migration angle...
         figure(21);clf;
-        pcolor(tt*1000,angles,Bsum);shading flat;axis('ij')
+        pcolor(tt*1000,angles,Bsum);shading flat;axis('xy')
         %caxis([-20 0]);
         % colorbar
         set(gca,'fontweight','bold','fontsize',14)
-        xlabel('Time (msec)');ylabel('Elevation angle (deg)');
+        xlabel('Time (msec)');ylabel({'Elevation angle (deg)';'Surface positive'});
         ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
         titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
         title(titstr);grid on;orient landscape
@@ -626,11 +634,11 @@ write_CSDM;
         colorbar
 
         figure(22);clf;
-        pcolor(tt*1000,angles,20*log10(Bsum));shading flat;axis('ij')
+        pcolor(tt*1000,angles,20*log10(Bsum));shading flat;axis('xy')
         caxis([-20 0]);
         % colorbar
         set(gca,'fontweight','bold','fontsize',14)
-        xlabel('Time (msec)');ylabel('Elevation angle (deg)');
+        xlabel('Time (msec)');ylabel({'Elevation angle (deg)';'Surface positive'});
         ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
         titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
         title(titstr);grid on;orient landscape
@@ -718,10 +726,12 @@ write_CSDM;
             caxis([60 100])
             caxis('auto');
             set(gca,'fontweight','bold','fontsize',14);
-            xlabel('Frequency (kHz)');ylabel('Angle from horizontal (deg)');grid on;
+            xlabel('Frequency (kHz)');
+            ylabel({'Angle from horizontal (deg)'; 'surface positive'});grid on;
             ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
             titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
             title(titstr);
+            axis('xy')
             %set(gcf,'colormap',cmap(1:4:64,:));
 
 
@@ -732,8 +742,9 @@ write_CSDM;
             df=Ksout.freq(2)-Ksout.freq(1);
             Bsum=sum(10*log10((B{Ifig})))/length(Ksout.freq);
             plot(Bsum,angles,clr(Ifig));hold on
-            set(gca,'fontweight','bold','fontsize',14);axis('ij');
-            xlabel('Mean dB Beampower ');ylabel('Angle from horizontal (deg)');grid on;
+            set(gca,'fontweight','bold','fontsize',14);axis('xy');
+            xlabel('Mean dB Beampower ');
+            ylabel({'Angle from horizontal (deg)'; 'surface positive'});grid on;
             title(titstr);end
         if ~peak_picking
             return
@@ -812,7 +823,7 @@ write_CSDM;
         %%save ray angles, sorted by power
 
         if length(ray_angles)>1
-            [Bshift,dt_data]=conventional_beam_timedelay(Ksout.Kstot(Igood_el,Igood_el,:),ray_angles,Ksout.freq,head.geom.rd(Igood_el),cc,Nfft,Fs);
+            [Bshift,dt_data]=conventional_beam_timedelay(Ksout.Kstot(Igood_el,Igood_el,:),ray_angles,Ksout.freq,local_rd(Igood_el),cc,Nfft,Fs);
             prep_ray_trace(ray_angles,dt_data);
         end
 
@@ -835,7 +846,7 @@ write_CSDM;
             plot(angles,sum(10*log10((B2)))/length(Ksout.freq),'k');
             set(gca,'fontweight','bold','fontsize',14);
             ylabel('Mean Beampower (dB)');xlabel('Angle from horizontal (deg)');grid on;
-            title(sprintf(' %s, %i FFT, %i elements',datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
+            title(sprintf(' %s, %i FFT, %i elements',datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(local_rd)));
 
         elseif yes_eigen*yes==2
             figure(1)
@@ -847,7 +858,7 @@ write_CSDM;
             caxis('auto');
             set(gca,'fontweight','bold','fontsize',14);
             xlabel('Frequency (Hz)');ylabel('Angle from horizontal (deg)');grid on;
-            title(sprintf('Eigenvector %i only: %s, %i FFT, %i elements',Ieig,datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
+            title(sprintf('Eigenvector %i only: %s, %i FFT, %i elements',Ieig,datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(local_rd)));
             %set(gcf,'colormap',cmap(1:4:64,:));
 
             figure(2);
@@ -855,7 +866,7 @@ write_CSDM;
             plot(angles,sum(10*log10((B_eig)))/length(Ksout.freq),'k');
             set(gca,'fontweight','bold','fontsize',14);
             ylabel('Mean dB Beampower ');xlabel('Angle from horizontal (deg)');grid on;
-            title(sprintf('Eigenvector %i only: %s, %i FFT, %i elements',Ieig,datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(head.geom.rd)));
+            title(sprintf('Eigenvector %i only: %s, %i FFT, %i elements',Ieig,datestr(tdate_start,'dd-mmm-yyyy HH:MM:SS.FFF'),Nfft,length(local_rd)));
 
         end
 
@@ -889,7 +900,7 @@ write_CSDM;
             end
 
             %     srcname=sprintf('CSDM_Nfft%i_%s_flipped',Nfft,datestr(tdate_start,30));
-            %     write_covmat(Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
+            %     write_covmat(Ksout.freq,Ksout.Kstot_eig,local_rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
             %
             figure
             imagesc(Ksout.freq,[],10*log10(abs(Ksout.EE)));
@@ -904,10 +915,10 @@ write_CSDM;
             end
             srcname=sprintf('CSDM_Nfft%i_%s',Nfft,datestr(tdate_start,30));
             save(srcname,'Ksout','head','tdate_start','tlen');
-            write_covmat(app, Ksout.freq,Ksout.Kstot,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
+            write_covmat(app, Ksout.freq,Ksout.Kstot,local_rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
 
             srcname=sprintf('CSDM_Nfft%i_%s_eigenvector',Nfft,datestr(tdate_start,30));
-            write_covmat(app, Ksout.freq,Ksout.Kstot_eig,head.geom.rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
+            write_covmat(app, Ksout.freq,Ksout.Kstot_eig,local_rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
 
         end
     end

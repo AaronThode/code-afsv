@@ -941,16 +941,18 @@ if ~done
                 head.array=false;
                 head.instrument{1}=sprintf('%s_%ssensor',instrument_base,TI.sensor_type{Ichan(1)});
             case 'Vector sensor'
-                Igood=TI.Channel(contains(TI.sensor_type,'VS'));
+                Igood=TI.Channel(contains(TI.sensor_type,'VS')|contains(TI.sensor_type,'M-35'));
                 %%%sensor type should be of form 'VS-XXX-omni,X/Y/Z
                 sensor_type=TI.sensor_type(Igood);
                 Ichan=[];
                 Ichan(1)=Igood(contains(sensor_type,'omni'));
                 Ichan(2)=Igood(contains(sensor_type,'X')|contains(sensor_type,'EW'));
                 Ichan(3)=Igood(contains(sensor_type,'Y')|contains(sensor_type,'NS'));
-                Ichan(4)=Igood(contains(sensor_type,'Z')|contains(sensor_type,'UD'));
-                head.Nchan=4;
-                if isempty(Ichan(4))
+                if ~isempty(Igood(contains(sensor_type,'Z')|contains(sensor_type,'UD')))
+                    Ichan(4)=Igood(contains(sensor_type,'Z')|contains(sensor_type,'UD'));
+                    head.Nchan=4;
+                else
+
                     Ichan=Ichan(1:3);
                     head.Nchan=3;
                 end
