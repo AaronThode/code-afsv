@@ -1,21 +1,21 @@
-function [Ksout, Ns, EE_sort, VV] = extractKsbest_contour(app, x, ovlap, Nfft, chann, frange, fr, fbad, Fs, M, keep_zeros, nowin)
+function [Ksout, Ns, EE_sort, VV] = extractKsbest_contour(app, x, ovlap, Nfft, chann, frange, fr, fbad, Fs, M, keep_zeros, nowin)   
 %%%%%%%%%%%%%%%%%%%%%%%extractKsbest_contour.m%%%%%%%%%%%
 % [Ksout,Ns]=extractKsbest_contour(x,ovlap,Nfft,goodel,frange,fr,fbad,Fs,M,nowin);
 %  Aaron Thode
 %  April 2, 2004
 %  Generates averaged cross-spectral outputs
-%    from an FM contour
+%    from an FM contour that lasts over duration of window...
 % INPUT:
-%x=array of data, rows are time, columns are channels
+%  x=array of data, rows are time, columns are channels
 %  ovlap=overlap of time samples
 %  Nfft-number of points used in FFT
 %  chann-vector containing element indicies: referenced to *bottom* element
 %  frange-Vector of frequencies: first is initial start of contour,
 %   second is the start of second harmonic, etc.
-%  fr-Search space in terms of +-freq
+%  fr-Search space around local bandwidth in terms of +-freq
 %  fbad-frequencies of constant interference, etc.
 % M time window
-% nowin-if exists, don't window the data before using fft.used for source signatureestimates
+% nowin-if exists, don't window the data before using fft. Used for source signatureestimates
 % keep_zeros: if exists, keep frequency bins that have no samples.  Useful for plotting...
 % OUTPUT:
 %    Ksout: structure array containing
@@ -30,7 +30,7 @@ function [Ksout, Ns, EE_sort, VV] = extractKsbest_contour(app, x, ovlap, Nfft, c
 % April 1, 2004-normalize by Fs*Nfft to put units as power spectral density
 EE_sort=[];VV=[];
 figure;
-if ~exist('nowin', 'var'),
+if ~exist('nowin', 'var')
     nowin=0;
 elseif  nowin==1
     nowin=1;
@@ -57,7 +57,7 @@ Kstot=zeros(Nel,Nel,length(f));
 %Kstot=zeros(Nel,Nel,length(findex));
 
 %Select appropriate frequency bin
-for I=1:length(frange),
+for I=1:length(frange)
     [junk,findex(I)]=min(abs(f-frange(I)));
     frange(I)=f(findex(I));
 end
@@ -67,7 +67,7 @@ for I=1:length(fbad)
     fbad(I)=f(findexjunk(I));
 end
 
-if Ns<0,
+if Ns<0
     disp('Signal too short for one shapnot, will center pad for FFT:');
     %pause;
     Ns=1;Nx=size(x,1);
@@ -88,12 +88,12 @@ end
 %Determine the frequency with greatest average power near your bin!
 Pt=[];
 t=[];
-for I=0:(Ns-1),
+for I=0:(Ns-1)
     index=round(I*M*(1-ovlap)+1);
     t(I+1)=index(1)/Fs;
     xindex=(index:(index+M-1));
     xh=x(xindex,chann);
-    for Ic=1:size(xh,2),
+    for Ic=1:size(xh,2)
         xh(:,Ic)=xh(:,Ic)-mean(xh(:,Ic));
         xh(:,Ic)=xh(:,Ic).*win;
     end
@@ -108,7 +108,7 @@ for I=0:(Ns-1),
     %Pt=cat(2,Pt,Pwr);
     %end
     %Pt=sum(Pt,2);
-    for If=1:length(findex),
+    for If=1:length(findex)
         subplot(length(findex),1,If);
 
         %plot(f(findex(If)+bins),Pt(findex(If)+bins));
@@ -147,7 +147,7 @@ Kstot=Kstot(:,:,Igood);
 
 %Normalize by sample size, if necessary
 Iavg=find(fcount>1);
-for I=1:length(Iavg),
+for I=1:length(Iavg)
     Kstot(:,:,Iavg(I))=Kstot(:,:,Iavg(I))/fcount(Iavg(I));
     fpower(Iavg(I))=fpower(Iavg(I))/fcount(Iavg(I));
 end

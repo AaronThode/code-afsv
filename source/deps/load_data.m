@@ -936,10 +936,14 @@ if ~done
        
         switch instrument_chc
             case 'Individual Channel'
-                %%Don't to anything, simply us inputted Ichan
+                %%Don't to anything, simply use inputted Ichan
                 head.multichannel=true;
                 head.array=false;
-                head.instrument{1}=sprintf('%s_%ssensor',instrument_base,TI.sensor_type{Ichan(1)});
+                if ~strcmp(Ichan,'all')
+                    head.instrument{1}=sprintf('%s_%ssensor',instrument_base,TI.sensor_type{Ichan(1)});
+                else
+                    head.instrument{1}=sprintf('%s_%ssensor',instrument_base,TI.sensor_type{1});
+                end
             case 'Vector sensor'
                 Igood=TI.Channel(contains(TI.sensor_type,'VS')|contains(TI.sensor_type,'M-35'));
                 %%%sensor type should be of form 'VS-XXX-omni,X/Y/Z

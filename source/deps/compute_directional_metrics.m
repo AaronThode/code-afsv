@@ -18,7 +18,9 @@
 %     param.brefa=(Batch_vars.brefa);
 %     param.alg=Batch_vars.alg;
 %     param.phase_calibration='Arctic5G_2014';
-%     param.instrument{1} = 'drifterM35sensor' or 'DIFARsensor'
+%     param.instrument{1} = 'drifterM35sensor' or 'DIFARsensor' or
+%     '_VS-209-omnisensor'; needs to start with '_' and end with 'sensor'
+%           Each channel needs its own string.
 %
 % Output:
 %  TT,FF, output_array{Nwant}:  TT vector of times and FF vector of Hz for

@@ -125,19 +125,22 @@ switch beam_process_chc
         if strcmp(beamchc,'freqvspwr')
             B{1}=conventional_beamforming(Ksout.Kstot(Igood_el,Igood_el,:),angles,Ksout.freq,local_rd(Igood_el),cc);
 
-            figure(20);
-            imagesc(Ksout.freq,[],10*log10(abs(Ksout.EE)));xlabel('frequency (Hz)');ylabel('Eigenvalue');colorbar
+            yes_eigen=false;
+            if isfield('Ksout','EE')
+                figure(20);
+                imagesc(Ksout.freq,[],10*log10(abs(Ksout.EE)));xlabel('frequency (Hz)');ylabel('Eigenvalue');colorbar
 
-            Ieig=input('Pick eigenvector [return yields none]:');
-            if ~isempty(Ieig)
-                V1=squeeze(Ksout.VV(:,Ieig,:));
-                for If=1:length(Ksout.freq)
-                    Ksout.Kstot_eig(:,:,If)=V1(:,If)*V1(:,If)';
+                Ieig=input('Pick eigenvector [return yields none]:');
+                if ~isempty(Ieig)
+                    V1=squeeze(Ksout.VV(:,Ieig,:));
+                    for If=1:length(Ksout.freq)
+                        Ksout.Kstot_eig(:,:,If)=V1(:,If)*V1(:,If)';
+                    end
+                    B_eig=conventional_beamforming(Ksout.Kstot_eig(Igood_el,Igood_el,:),angles,Ksout.freq,local_rd(Igood_el),cc);
+                    yes_eigen=true;
+                else
+                    close(20);
                 end
-                B_eig=conventional_beamforming(Ksout.Kstot_eig(Igood_el,Igood_el,:),angles,Ksout.freq,local_rd(Igood_el),cc);
-                yes_eigen=1;
-            else
-                close(20);
             end
 
             ray_angles=plot_beamforming_results(true); % peakpicking
@@ -223,27 +226,31 @@ write_CSDM;
 
         switch freq_process_chc
             case 'Trace T-F Contour'
-                Nf=input('Enter number of harmonics:');
+                Nf=input('Enter number of contours to trace:');
                 if isempty(Nf)
                     Nf=1;
                 end
 
-                ftmp=ginput(Nf);
-                frange=ftmp(:,2)*1000;
-
-                Nbad=input('Enter number of bad frequencies: ');
+                Nbad=input('Enter number of bad frequencies (e.g. tones): ');
                 if ~isempty(Nbad)
                     fbad=ginput(Nbad);
                     fbad=fbad(:,2)*1000;
                 else
                     fbad=[];
                 end
-                fr=input('Enter frequency band to search (10):');
+                fr=input('Enter local bandwidth of contour (100):');
                 if isempty(fr)
-                    fr=10;
+                    fr=100;
+                end
+                for Iff=1:Nf
+                    ftmp=ginput(2);
+                    frange(Iff)=ftmp(1,2)*1000;
+                    Ibounds=round(Fs*ftmp(:,1));
                 end
 
-                [Ksout,Ns]=extractKsbest_contour(app, x,ovlap,Nfft,chann, frange,fr,fbad,Fs,Nfft,'keep_zeros');
+             
+
+                [Ksout,Ns]=extractKsbest_contour(app, x(Ibounds(1):Ibounds(2),:),ovlap,Nfft,chann, frange,fr,fbad,Fs,Nfft);%%%Only keep frequencies with power.
                 %    Ksout: structure array containing
                 %     Kstot CSDM size(Nel,Nel,Nfreq)
                 %     freq: frequencies corresponding to Ks in third dimension
@@ -253,9 +260,11 @@ write_CSDM;
 
                 %[Kstot,Ks_eig,Nsnap,freq_all,pwr_est,SNRest]=extractKsexact_MDAT(x,ovlap,Nfft,chann,1000*[fmin fmax],Fs,-1,Nfft);
 
-                axes(handles.axes1)
+                %axes(handles.axes1)
+                figure
                 hold on
                 plot(Ksout.tcontour,Ksout.fcontour/1000,'o');
+                xlabel('Time (sec)');ylabel('Contour frequency (kHz)');
                 hold off
 
 
@@ -721,6 +730,8 @@ write_CSDM;
 
             %Image of beamform output vs look angle and frequency.
             imagesc(Ksout.freq/1000,angles,10*log10(B{Ifig}'));
+
+            
             colorbar
             cmap=colormap;
             caxis([60 100])
