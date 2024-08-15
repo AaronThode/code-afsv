@@ -487,26 +487,7 @@ update_button_visibility;
         
     end %display_spectrogram
 
-%%%%%%%%%%%
-%     function senss=getSensitivity_wrapper(Ichan,FF,instrument)
-%         
-%         switch instrument
-%             case 'drifterM35'
-%                 if Ichan>=1 & Ichan<=8
-%                     senss=getSensitivity(FF,'HTI-92WB');
-%                 elseif Ichan==9
-%                     senss=getSensitivity(FF,'GTI-M35-300-omni');
-%                 elseif Ichan>=10 || Ichan<=11
-%                     senss=getSensitivity(FF,'GTI-M35-300-directional');
-%                 end
-%                 senss=senss.^2;
-%             case 'DASAR'
-%                 senss=1;
-%             otherwise
-%                 senss=1;
-%                 
-%         end
-%     end %function get_spectral_sensitivity
+
 
     function format_spectrogram_image
         grid on
