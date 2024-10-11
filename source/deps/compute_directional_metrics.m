@@ -1,5 +1,5 @@
 %%%%compute_directional_metrics.m%%%%%%%%%%%%%%%%%%%
-%function [TT,FF,output_array,PdB,param, Ix,Iy]=compute_directional_metrics(x,metric_type, ...
+%function [TT,FF,output_array,PdB,param, Ix,Iy,Iz]=compute_directional_metrics(x,metric_type, ...
 %   Fs,Nfft, ovlap, param,filetype,reactive_flag)
 % x:  array of vector data, each row is a separate channel
 % metric_type{Iwant}:'Azimuth','Elevation','ItoERatio','KEtoPERatio',
@@ -31,14 +31,15 @@
 %  param:  altered parameters of input param
 %  Ix, Iy:  x and y active intensity
 
-function [TT,FF,output_array,PdB,param,Ix,Iy]=compute_directional_metrics(x,metric_type, ...
+function [TT,FF,output_array,PdB,param,Ix,Iy,Iz]=compute_directional_metrics(x,metric_type, ...
     Fs,Nfft, ovlap, param,reactive_flag)
 
-TT=[];FF=[];output_array=[];PdB=[];Ix=[];Iy=[];
+TT=[];FF=[];output_array=[];PdB=[];Ix=[];Iy=[];Iz=[];
 if ~iscell(metric_type)
     temp=metric_type;clear metric_type
     metric_type{1}=temp;
 end
+metric_type=lower(metric_type);
 
 if ~exist('reactive_flag','var')
     reactive_flag=zeros(1,length(metric_type));
@@ -243,7 +244,7 @@ end
 % Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, 'Vector Sensor Processing');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%Average Ix and Iy, if needed
+%%%%%Average Ix, Iy, and Iz, if needed
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if ischar(param.sec_avg)
     sec_avg=str2double(param.sec_avg);
@@ -301,24 +302,24 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%Correct for phase misalignment in Ix and Iy
+%%%%%%%%%Correct for phase misalignment in Ix and Iy and Iz
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%AARON fix to allow VS-209
-[Ix,Iy]=correct_phase(Ix,Iy,FF,param.instrument);
+[Ix,Iy,Iz]=correct_phase(Ix,Iy,Iz,FF,param.instrument);
 
 
 for J=1:length(metric_type)  %%for each request
     
     switch metric_type{J}
-        case 'Azimuth'
+        case lower('Azimuth')
             if ~reactive_flag(J)
                 mu = single(atan2d(real(Ix),real(Iy)));  %Compass convention (usually atan2d(y,x))
             else
-                mu = single(atan2d(imag(Ix),imag(Iy)));
+                mu = single(atan2d(imag(Ix),imag(Iy)));  %Compass convention (usually atan2d(y,x))
             end
             output_array{J}=bnorm((param.brefa)+mu);
             %output_array{J}=bnorm(mu);
-        case 'Elevation'
+        case lower('Elevation')
 
              if ~reactive_flag(J)
                 mu = single(atand(real(Iz)./sqrt((real(Iy)).^2+(real(Ix)).^2)));
@@ -329,7 +330,7 @@ for J=1:length(metric_type)  %%for each request
             output_array{J}=(mu);
      
             
-        case 'ItoERatio'
+        case lower('ItoERatio')
 
             if Nchan>3
                 if ~reactive_flag(J)
@@ -347,27 +348,27 @@ for J=1:length(metric_type)  %%for each request
 
             %%%Effective velocity j/Sp
             output_array{J}=single(intensity./energy_density);
-        case 'KEtoPERatio'
+        case lower('KEtoPERatio')
             output_array{J}=single(normalized_velocity_autospectrum./pressure_autospectrum);
-        case 'Polarization'
+        case lower('Polarization')
            % output_array{J}=(real(Ix).*imag(Iy)-real(Iy).*imag(Ix))./pressure_autospectrum;
             
             output_array{J}=polarization;
-        case 'IntensityPhase'
+        case lower('IntensityPhase')
             if ~reactive_flag(J)
                 output_array{J}=atan2d(sqrt(imag(Ix).^2+imag(Iy).^2),sqrt((real(Ix)).^2+(real(Iy)).^2));
             else
                 output_array{J}=atan2d(sqrt(real(Ix).^2+real(Iy).^2),sqrt((imag(Ix)).^2+(imag(Iy)).^2));
             end
             output_array{J}=single(output_array{J});
-        case 'IntensityPhaseZ'
+        case lower('IntensityPhaseZ')
             if ~reactive_flag(J)
                 output_array{J}=atan2d(imag(Iz),real(Iz));
             else
                 output_array{J}=atan2d(real(Iz),imag(Iz));
             end
             output_array{J}=single(output_array{J});
-        case 'PhaseSpeed'
+        case lower('PhaseSpeed')
             if Nchan>3
                 if ~reactive_flag(J)
                     output_array{J}=1450*pressure_autospectrum./sqrt((real(Ix)).^2+(real(Iy)).^2+(real(Iz)).^2);
@@ -393,10 +394,10 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%function [Ix,Iy]=correct_phase(Ix,Iy,FF,instrument_type,phase_calibration_chc)
+%%function [Ix,Iy,Iz]=correct_phase(Ix,Iy,Iz,FF,instrument_type,phase_calibration_chc)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [Ix,Iy]=correct_phase(Ix,Iy,FF,instrument_type)
+function [Ix,Iy,Iz]=correct_phase(Ix,Iy,Iz,FF,instrument_type)
 phase_calibration_chc='none'; %default choice
 %phase_calibration_chc='none';
 
