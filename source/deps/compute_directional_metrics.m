@@ -29,7 +29,7 @@
 %               output_array grid.
 %  PdB: power spectral density of pressure autospectrum
 %  param:  altered parameters of input param
-%  Ix, Iy:  x and y active intensity
+%  Ix, Iy, Iz:  x and y complex intensity
 
 function [TT,FF,output_array,PdB,param,Ix,Iy,Iz]=compute_directional_metrics(x,metric_type, ...
     Fs,Nfft, ovlap, param,reactive_flag)
