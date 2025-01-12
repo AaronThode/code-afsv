@@ -813,7 +813,7 @@ switch filetype
 
         t	=	(1:length(x))/Fs;
         x			=	double(x)*amplitude_scale;
-end  %switch
+end  %switch filetype
 
 if isempty(tmin) || isempty(tmax)
     disp('load_data: Warning, tmin and tmax should never be empty when exiting..');
@@ -881,6 +881,13 @@ try  %%%Check for SOUNDTRAP INFO by looking for a log.xml file
         amplitude_scale=power(10,cal_dB/20);
         Fs=FsSUDAR;
         done=true;
+
+        %%%Note by Aaron on Dec 17, 2024:  When I look at the calibration
+        %%%tones from 335573046, I get power(not PSD) of 133 dB instead of
+        %%%the predicted 136 dB at 1 kHz.  Thus in addition to the
+        %%%SoundTrap manual lines below, I add an extra factor of 3 dB to
+        %%%the scale (perhaps a peak-peak conversion issue?)
+        amplitude_scale=sqrt(2)*amplitude_scale;
 
         % [y, Fs] = wavread(filename) ; % read wav data from file
         %cal = 173.3; % value from calibration sheet

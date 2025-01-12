@@ -32,7 +32,7 @@ mydir	=	pwd;
 
 want_directionality=strcmp(handles.display_view,'Azimuth')||strcmp(handles.display_view,'Elevation')||strcmpi(handles.display_view,'KEtoPERatio');
 want_directionality=want_directionality||strcmpi(handles.display_view,'ItoERatio')||strcmpi(handles.display_view,'IntensityPhase');
-want_directionality=want_directionality||strcmpi(handles.display_view,'Polarization');
+want_directionality=want_directionality||strcmpi(handles.display_view,'Polarization1')||strcmpi(handles.display_view,'Polarization2')||strcmpi(handles.display_view,'Polarization3');
 
 %%%Also download all channels if pushbutton says 'angle' instead of
 %%%'channel'
@@ -396,7 +396,9 @@ update_button_visibility;
         if ~(strcmp(handles.filetype,'PSD'))
             
             %%% KEY SPECTROGRAM COMMAND
-            [S,FF,TT,PSDD] = spectrogram(x(:,1),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs);
+            [S,FF,TT,PSDD] = spectrogram(x(:,1),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs,'psd');
+
+            %[S,FF,TT,PSDD] = spectrogram(x(:,1),hanning(Nfft_window),round(ovlap*Nfft_window),Nfft,Fs,'power');
 
             
 
@@ -441,7 +443,7 @@ update_button_visibility;
             %%%Display summary statistics of entire window
             if app.checkbox_histogram.Value
                 
-                percentil=fliplr([0.05 0.1 0.5 0.75 0.9 0.998]);
+                percentil=fliplr([0.05 0.25 0.5 0.75 0.9 0.99]);
                 for Ileg=1:length(percentil)
                     legstr{Ileg}=num2str(100*percentil(Ileg));
                 end

@@ -1,5 +1,5 @@
 %%%%compute_directional_metrics.m%%%%%%%%%%%%%%%%%%%
-%function [TT,FF,output_array,PdB,param, Ix,Iy,Iz]=compute_directional_metrics(x,metric_type, ...
+%function [TT,FF,output_array,PdB,param, Ix,Iy,Iz,polarization]=compute_directional_metrics(x,metric_type, ...
 %   Fs,Nfft, ovlap, param,filetype,reactive_flag)
 % x:  array of vector data, each row is a separate channel
 % metric_type{Iwant}:'Azimuth','Elevation','ItoERatio','KEtoPERatio',
@@ -31,10 +31,10 @@
 %  param:  altered parameters of input param
 %  Ix, Iy, Iz:  x and y complex intensity
 
-function [TT,FF,output_array,PdB,param,Ix,Iy,Iz]=compute_directional_metrics(x,metric_type, ...
+function [TT,FF,output_array,PdB,param,Ix,Iy,Iz,polarization]=compute_directional_metrics(x,metric_type, ...
     Fs,Nfft, ovlap, param,reactive_flag)
 
-TT=[];FF=[];output_array=[];PdB=[];Ix=[];Iy=[];Iz=[];
+TT=[];FF=[];output_array=[];PdB=[];Ix=[];Iy=[];Iz=[];polarization=[];
 if ~iscell(metric_type)
     temp=metric_type;clear metric_type
     metric_type{1}=temp;
@@ -81,12 +81,12 @@ end
 
 
 if contains(param.instrument,'DIFAR')
-    
+
     M=floor(1+(max(size(x))-Nfft)/dn);
     [Ix,Iy,TT,FF,PdB]=demultiplex_DIFAR(x,Fs,Nfft,ovlap);
     Nf=length(FF);
     get_newparams=false;
-    
+
     pressure_autospectrum=10.^(PdB/10);
     if ~isfield(param,'brefa')
         get_newparams=true;
@@ -96,13 +96,13 @@ else  %%All other data is coming on on other channels.
         disp('Signal sample shorter than Nfft');
         return
     end
-    
-  %%%%Check if four channels exist if want elevation
+
+    %%%%Check if four channels exist if want elevation
     if use_elevation & Nchan<4
         f = errordlg('Elevation angle requires 4-channels.', 'Elevation button error!', 'modal');
         return
     end
-    
+
     if use_wavelet
         M=size(x,1);
         dn=1;
@@ -124,7 +124,7 @@ else  %%All other data is coming on on other channels.
         Nf=Nfft/2+1;  %Should be the same as length(FF)
         clear x
     end
-    
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%Correct gain as needed
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -138,53 +138,53 @@ else  %%All other data is coming on on other channels.
         Gains(:,IJ)=getSensitivity(FF,sensor_name,'units','uPa/V').';
     end
 
-   % Gains=correct_gain(FF,param.instrument,Nchan);
+    % Gains=correct_gain(FF,param.instrument,Nchan);
     %temp=10*log10(abs(squeeze(B(2,:,:))));
     %myfig=gcf;
     %figure; for III=1:3,subplot(3,1,III);imagesc(TT,FF,temp);ylim([0 2000]);colorbar;end
     %figure(myfig);
-    
+
     for J=1:Nchan
         B(J,:,:)=squeeze(B(J,:,:)).*Gains(:,J);
     end
-    
+
     %%% If AdditiveBeamforming, conduct here and leave...
     if any(strcmpi(metric_type,'AdditiveBeamforming'))
-       % [B(2,:,:),B(3,:,:)]=correct_phase(squeeze(conj(B(2,:,:))),squeeze(conj(B(3,:,:))),FF,param.instrument);
+        % [B(2,:,:),B(3,:,:)]=correct_phase(squeeze(conj(B(2,:,:))),squeeze(conj(B(3,:,:))),FF,param.instrument);
         %B(2:3,:,:)=conj(B(2:3,:,:));
-        
+
         %%%%Additive beamforming
         thta=param.thta-param.brefa;  %%Convert to local reference
         Iout=find(strcmpi(metric_type,'AdditiveBeamforming'));
         output_array{Iout}=squeeze(B(1,:,:)+sind(thta)*B(2,:,:)+cosd(thta)*B(3,:,:));
-        
-        
+
+
         %%%Debug options, including |v|/p
         %output_array{Iout}=squeeze((sqrt(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2))./abs(B(1,:,:)));
         %x0=x(:,1)+sind(thta)*x(:,2)+cosd(thta)*x(:,3);
         return
     end
-    
-   % temp2=10*log10(abs(squeeze(B(2,:,:))));
+
+    % temp2=10*log10(abs(squeeze(B(2,:,:))));
     %rho=1000;c=1500;
-    
+
     %myfig=gcf;
     %figure; for III=1:3,subplot(3,1,III);imagesc(TT,FF,temp2-temp);ylim([0 2000]);colorbar;end
     %figure(myfig);
-    
-   
+
+
     Ix=squeeze(((B(1,:,:).*conj(B(2,:,:)))));
     Iy=squeeze(((B(1,:,:).*conj(B(3,:,:)))));
     if Nchan>3  %%Needed to compute transport velocity
-          Iz=squeeze(((B(1,:,:).*conj(B(4,:,:)))));
-   end
-    
+        Iz=squeeze(((B(1,:,:).*conj(B(4,:,:)))));
+    end
 
-   %%%%Debug
-%    figure
-%    subplot(3,1,1);imagesc(TT,FF/1000,log10(abs(real(Ix)))); colormap(jet);ylim([0 12]);xlim([0 1]);caxis([10 20]);axis xy
-%    subplot(3,1,2);imagesc(TT,FF/1000,log10(abs(real(Iy)))); colormap(jet);ylim([0 12]);xlim([0 1]);caxis([10 20]);axis xy
-%    subplot(3,1,3);imagesc(TT,FF/1000,log10(abs(real(Iz)))); colormap(jet);ylim([0 12]);xlim([0 1]);caxis([10 20]);axis xy
+
+    %%%%Debug
+    %    figure
+    %    subplot(3,1,1);imagesc(TT,FF/1000,log10(abs(real(Ix)))); colormap(jet);ylim([0 12]);xlim([0 1]);caxis([10 20]);axis xy
+    %    subplot(3,1,2);imagesc(TT,FF/1000,log10(abs(real(Iy)))); colormap(jet);ylim([0 12]);xlim([0 1]);caxis([10 20]);axis xy
+    %    subplot(3,1,3);imagesc(TT,FF/1000,log10(abs(real(Iz)))); colormap(jet);ylim([0 12]);xlim([0 1]);caxis([10 20]);axis xy
 
     %time and memory, but need this if trying to use transparency
     pressure_autospectrum=squeeze(abs(B(1,:,:)).^2);
@@ -195,31 +195,38 @@ else  %%All other data is coming on on other channels.
         %normalized_velocity_autospectrum=0.5*param.rho.*squeeze(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2+abs(B(4,:,:)).^2);
         normalized_velocity_autospectrum=squeeze(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2+abs(B(4,:,:)).^2);
     end
-    
+
     energy_density=0.5*abs(normalized_velocity_autospectrum+pressure_autospectrum);
 
-    %%%WARNING! Polarization needs updating to the new formula
-    %%%  Im(v x conj(v))/|Q|
-    if Nchan<4
-        polarization=(real(B(2,:,:)).*imag(B(3,:,:))-real(B(3,:,:)).*imag(B(2,:,:)));
-        polarization=-2*squeeze(polarization./(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2));
-    else
-        p1=(real(B(3,:,:)).*imag(B(4,:,:))-real(B(4,:,:)).*imag(B(3,:,:)));
-        p2=(real(B(4,:,:)).*imag(B(2,:,:))-real(B(2,:,:)).*imag(B(4,:,:)));
-        p3=(real(B(2,:,:)).*imag(B(3,:,:))-real(B(3,:,:)).*imag(B(2,:,:)));
-        polarization=(abs(p1).^2+abs(p2).^2+abs(p3).^2)./(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2+abs(B(4,:,:)).^2);
+    %%Polarization is (vx.*conj(vy))./|Vx|^2+|vy|^2);  Stokes normalized third
+    %%parameter
+    if any(contains(metric_type,'Polarization'))
+        if Nchan<4
+            polarization=(real(B(2,:,:)).*imag(B(3,:,:))-real(B(3,:,:)).*imag(B(2,:,:)));
+            polarization=-2*squeeze(polarization./(abs(B(2,:,:)).^2+abs(B(3,:,:)).^2));
+        else
+            polarization=zeros(Nchan-1,Nfft/2+1,M);
+            polarization(1,:,:)=(real(B(3,:,:)).*imag(B(4,:,:))-real(B(4,:,:)).*imag(B(3,:,:)));
+            polarization(1,:,:)=polarization(1,:,:)./(abs(B(3,:,:)).^2+abs(B(4,:,:)).^2);
+            polarization(2,:,:)=(real(B(4,:,:)).*imag(B(2,:,:))-real(B(2,:,:)).*imag(B(4,:,:)));
+            polarization(2,:,:)=polarization(2,:,:)./(abs(B(2,:,:)).^2+abs(B(4,:,:)).^2);
+            polarization(3,:,:)=(real(B(2,:,:)).*imag(B(3,:,:))-real(B(3,:,:)).*imag(B(2,:,:)));
+            polarization(3,:,:)=polarization(3,:,:)./(abs(B(3,:,:)).^2+abs(B(2,:,:)).^2);
+            polarization=0.5*polarization;
+
+        end
     end
     %end
     %toc
     get_newparams=false;
-    clear B    
-    
+    clear B
+
 end  %if gsi or DIFAR
 
 %sec_avg=input('Enter time to average over (sec; 0 does no averaging):');
 if ~isfield(param,'sec_avg')
     get_newparams=true;
-    
+
 end
 
 if get_newparams
@@ -233,7 +240,7 @@ if get_newparams
     else
         %param.brefa=(Batch_vars.brefa);
         param.brefa=(param.brefa);
-        
+
     end
     param.alg=Batch_vars.alg;
 end
@@ -253,7 +260,7 @@ else
 end
 
 if ~isempty(sec_avg)&&sec_avg>0
-    
+
     Navg=min([M floor(sec_avg*Fs/dn)]);  %Spectrogram samples (columns) per avg
     %fprintf('%i averages per sample.\n',Navg);
     if Navg==0
@@ -309,7 +316,7 @@ end
 
 
 for J=1:length(metric_type)  %%for each request
-    
+
     switch metric_type{J}
         case lower('Azimuth')
             if ~reactive_flag(J)
@@ -321,15 +328,15 @@ for J=1:length(metric_type)  %%for each request
             %output_array{J}=bnorm(mu);
         case lower('Elevation')
 
-             if ~reactive_flag(J)
+            if ~reactive_flag(J)
                 mu = single(atand(real(Iz)./sqrt((real(Iy)).^2+(real(Ix)).^2)));
             else
                 mu = single(atand(imag(Iz)./sqrt((imag(Iy)).^2+(imag(Ix)).^2)));
             end
             %output_array{J}=(param.brefa+mu);
             output_array{J}=(mu);
-     
-            
+
+
         case lower('ItoERatio')
 
             if Nchan>3
@@ -350,10 +357,13 @@ for J=1:length(metric_type)  %%for each request
             output_array{J}=single(intensity./energy_density);
         case lower('KEtoPERatio')
             output_array{J}=single(normalized_velocity_autospectrum./pressure_autospectrum);
-        case lower('Polarization')
-           % output_array{J}=(real(Ix).*imag(Iy)-real(Iy).*imag(Ix))./pressure_autospectrum;
-            
-            output_array{J}=polarization;
+        case lower('PolarizationXY')
+            output_array{J}=squeeze(polarization(3,:,:));
+        case lower('PolarizationZX')
+            output_array{J}=squeeze(polarization(2,:,:));
+        case lower('PolarizationYZ')
+            output_array{J}=squeeze(polarization(1,:,:));
+
         case lower('IntensityPhase')
             if ~reactive_flag(J)
                 output_array{J}=atan2d(sqrt(imag(Ix).^2+imag(Iy).^2),sqrt((real(Ix)).^2+(real(Iy)).^2));
@@ -421,47 +431,47 @@ switch sensor_name
                 phaseex = interp1(fe,pex,FF);
                 phaseex(isnan(phaseex)) = 0;
                 Phasee=exp(1i*(pi/180)*phaseex*ones(1,Np));
-                
-                
+
+
                 Ix=Ix.*Phasee;
                 Iy=Iy.*Phasee;
             case 'Arctic5G_2014'
                 %slopee=4.10e-04;
                 %slopee=1.25*4.1e-04;  %%%radians phase per radians frequency, original bulk run
-                
-                
+
+
                 %%%% slopee measured at 00:06:30 local time on 17 August, 2014 5G
                 %%%%23:57:28  1 seconds 10/1/2014 5G
                 %%% Also checked 04-Oct-2010 02:45:47.4 DASAR 5G, within 10° below
                 %%%     375 Hz.  This signal is lower received level.
                 %slopee=1.1*4.1e-04;  %%%radians phase per radians frequency, for
                 slopee=1.2*4.1e-04;  %%%radians phase per radians frequency, for 1 sec averages
-                
-                
+
+
                 %Phasee=10*pi/180+slopee*2*pi*(FF-75);  %Phase is 10 degrees at 75 Hz, linear
                 Phasee=slopee*2*pi*FF;  %Nearly identical to above (y-intercept is
                 %           -1 degrees in equation above.
-                
-                
+
+
                 Phasee=exp(-1i*Phasee*ones(1,Np));
-                
+
                 Ix=Ix.*Phasee;
                 Iy=Iy.*Phasee;
-              
+
         end
     case 'drifterM35'
-        
+
         %%%Oddly enough, the directional channels seem 90° out of phase...
         %%%  Perhaps the M35 measured pressure gradient (difference between
         %%%  hydrophones) and not velocity?
         Ix=Ix.*exp(1i*pi/2);
         Iy=Iy.*exp(1i*pi/2);
-       
+
         %%%figure;
         % semilogx(FF,HH_omni,FF, HH_vel);grid on;
         return
     otherwise
-        
+
         return
 end
 
