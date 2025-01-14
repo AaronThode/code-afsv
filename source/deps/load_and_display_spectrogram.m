@@ -32,8 +32,7 @@ mydir	=	pwd;
 
 want_directionality=strcmp(handles.display_view,'Azimuth')||strcmp(handles.display_view,'Elevation')||strcmpi(handles.display_view,'KEtoPERatio');
 want_directionality=want_directionality||strcmpi(handles.display_view,'ItoERatio')||strcmpi(handles.display_view,'IntensityPhase');
-want_directionality=want_directionality||strcmpi(handles.display_view,'Polarization1')||strcmpi(handles.display_view,'Polarization2')||strcmpi(handles.display_view,'Polarization3');
-
+want_directionality=want_directionality||strcmpi(handles.display_view,'Polarization');
 %%%Also download all channels if pushbutton says 'angle' instead of
 %%%'channel'
 button_chc=get(handles.togglebutton_ChannelBeam,'String');
