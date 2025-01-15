@@ -139,13 +139,13 @@ else
         fprintf('Selected focal plot to use %s\n',param.polar_desc{Irow,Icol});
 
         if Icol<=2
-            imagesc(TT,FF/1000,10*log10(squeeze(output_array(:,:,Irow,Icol))));
+            hh=imagesc(TT,FF/1000,10*log10(squeeze(output_array(:,:,Irow,Icol))));
         elseif Icol==4
-            imagesc(TT,FF/1000,(squeeze(output_array(:,:,Irow,Icol))));clim([0 1])
+            hh=imagesc(TT,FF/1000,(squeeze(output_array(:,:,Irow,Icol))));clim([0 1])
         elseif choice_stokes==3
-            imagesc(TT,FF/1000,real(squeeze(output_array(:,:,Irow,3))));clim([-1 1])
+            hh=imagesc(TT,FF/1000,real(squeeze(output_array(:,:,Irow,3))));clim([-1 1])
         elseif choice_stokes==4
-            imagesc(TT,FF/1000,imag(squeeze(output_array(:,:,Irow,3))));clim([-1 1])
+            hh=imagesc(TT,FF/1000,imag(squeeze(output_array(:,:,Irow,3))));clim([-1 1])
         end
         
         hbar=colorbar;
@@ -153,7 +153,7 @@ else
         myfig=gcf;
 
         %%%Setting transparency to SPL
-        if handles.checkbox_transparency.Value&~isempty(PdB)&&all(size(PdB)==size(output_array))
+        if handles.checkbox_transparency.Value&~isempty(PdB)&&all(size(PdB)==size(output_array(:,:,1,1)))
             set(hh,'AlphaDataMapping','scaled')
             set(hh,'AlphaData',PdB);
             %set(hh,'FaceAlpha','flat');
@@ -183,6 +183,8 @@ else
         linkaxes(h2,'xy')
         
         figure(myfig)
+
+        keyboard
     elseif strcmpi(handles.display_view,'PhaseSpeed')
         
         %%%Phase speed directly
