@@ -387,26 +387,27 @@ for J=1:length(metric_type)  %%for each request
 
             S0=Vxx+Vyy;
             output_array{J}(:,:,1,1)=single(S0); param.polar_desc{1,1}='S0_xy';
-            output_array{J}(:,:,1,2)=single(Vxx-Vyy./S0);param.polar_desc{1,2}='S1_xy';
+            output_array{J}(:,:,1,2)=single((Vxx-Vyy)./S0);param.polar_desc{1,2}='S1_xy';
             output_array{J}(:,:,1,3)=2*single(Vxy./S0);param.polar_desc{1,3}='S{2,3}_xy';
-            output_array{J}(:,:,1,4)=sqrt(output_array{J}(:,:,1,2).^2+output_array{J}(:,:,1,3).*conj(output_array{J}(:,:,1,3)));
-            output_array{J}(:,:,1,4)=output_array{J}(:,:,1,4)./output_array{J}(:,:,1,1);param.polar_desc{1,4}='DegreePolarization_xy';
+            output_array{J}(:,:,1,4)=single(sqrt(output_array{J}(:,:,1,2).^2+output_array{J}(:,:,1,3).*conj(output_array{J}(:,:,1,3))));
+            %output_array{J}(:,:,1,4)=output_array{J}(:,:,1,4)./output_array{J}(:,:,1,1);
+            param.polar_desc{1,4}='DegreePolarization_xy';
 
             if Nchan>3
                 S0=Vyy+Vzz;
                 output_array{J}(:,:,2,1)=single(S0);param.polar_desc{2,1}='S0_yz';
-                output_array{J}(:,:,2,2)=single(Vyy-Vzz./S0);param.polar_desc{2,2}='S1_yz';
+                output_array{J}(:,:,2,2)=single((Vyy-Vzz)./S0);param.polar_desc{2,2}='S1_yz';
                 output_array{J}(:,:,2,3)=2*single(Vyz./S0);param.polar_desc{2,3}='S{2,3}_yz';
 
 
                 S0=Vzz+Vxx;
                 output_array{J}(:,:,3,1)=single(S0);param.polar_desc{3,1}='S0_zx';
-                output_array{J}(:,:,3,2)=single(Vzz-Vxx./S0);param.polar_desc{3,2}='S1_zx';
+                output_array{J}(:,:,3,2)=single((Vzz-Vxx)./S0);param.polar_desc{3,2}='S1_zx';
                 output_array{J}(:,:,3,3)=2*single(Vzx./S0);param.polar_desc{3,3}='S{2,3}_zx';
 
                 for JJJ=2:3
-                    output_array{J}(:,:,JJJ,4)=sqrt(output_array{J}(:,:,JJJ,2).^2+output_array{J}(:,:,JJJ,3).*conj(output_array{J}(:,:,JJJ,3)));
-                    output_array{J}(:,:,JJJ,4)=output_array{J}(:,:,JJJ,4)./output_array{J}(:,:,JJJ,1);
+                    output_array{J}(:,:,JJJ,4)=single(sqrt(output_array{J}(:,:,JJJ,2).^2+output_array{J}(:,:,JJJ,3).*conj(output_array{J}(:,:,JJJ,3))));
+                    %output_array{J}(:,:,JJJ,4)=output_array{J}(:,:,JJJ,4)./output_array{J}(:,:,JJJ,1);
                 end
                 param.polar_desc{2,4}='DegreePolarization_yz';
                 param.polar_desc{3,4}='DegreePolarization_zx';
