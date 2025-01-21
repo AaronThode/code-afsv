@@ -141,7 +141,7 @@ else
         if Icol<=2
             hh=imagesc(TT,FF/1000,10*log10(squeeze(output_array(:,:,Irow,Icol))));
         elseif Icol==4
-            hh=imagesc(TT,FF/1000,(squeeze(output_array(:,:,Irow,Icol))));clim([0 1])
+            hh=imagesc(TT,FF/1000,(squeeze(output_array(:,:,Irow,4))));clim([0 1])
         elseif choice_stokes==3
             hh=imagesc(TT,FF/1000,real(squeeze(output_array(:,:,Irow,3))));clim([-1 1])
         elseif choice_stokes==4
@@ -160,7 +160,10 @@ else
             alim(str2double(handles.edit_mindB.String) + [0 str2double(handles.edit_dBspread.String)]);
             
         end
-        %%%%Plot full polarization values
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%Plot full polarization values %%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         figure;
         for JJ=1:Ndims
             h1(JJ)=subplot(Ndims,1,JJ);
