@@ -1,10 +1,12 @@
 function Batch_vars=get_Azigram_Callback(param)
 
+%%%allow either manual input of parameters or extract parameters from data
+%%%(e.g. brefa from an orientation file)
 Batch_desc{1}	=	'Seconds to average PSD for long-term display, if "0" no averaging' ;
 Batch_desc{2}='Bearing Range Color Scale';
 Batch_desc{3}='Bearing bias/correction ';
 Batch_desc{4}='Bearing algorithm multiplicative (Default 1)';
-Batch_desc{5}='Bearing Mask?'
+Batch_desc{5}='Bearing Mask?';
 
 Batch_vars.sec_avg	=	'0.1';
 Batch_vars.climm='[0 360]';
@@ -21,6 +23,15 @@ end
 
 if isfield(param,'brefa')
     Batch_vars.brefa=param.brefa;
+    if isfield(param,'myfile')
+        if contains(param.myfile,'drifter')
+            [brefa,prefa]=get_drifter_orientation(param.myfile);
+            Batch_vars.brefa=brefa;
+        %keyboard
+        end
+    end
+else
+    Batch_vars.brefa='0';
 end
 
 if isfield(param,'alg')

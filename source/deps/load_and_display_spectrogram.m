@@ -187,24 +187,28 @@ update_button_visibility;
 
     function display_directional_data
         
+        vector_sensor_parameters.brefa=0;
+        vector_sensor_parameters.myfile=[handles.mydir filesep handles.myfile];
+        %vector_sensor_parameters.filename=;
         if isfield(handles,'azigram')
-            azigram_param=handles.azigram;
+            vector_sensor_parameters=handles.azigram;
         end
         
         if strcmpi(handles.filetype,'gsi')
-            azigram_param.brefa=hdr.brefa;
+            vector_sensor_parameters.brefa=hdr.brefa;
         elseif contains(handles.file_flags.instrument{1},'SQUALLE')
-            azigram_param.brefa=-15.5;
+            %vector_sensor_parameters.brefa=-15.28;  %Now done inside
+            %  get_Azigram_Callback.m
         else
-            azigram_param.brefa=0;
+            vector_sensor_parameters.brefa=0;
         end
         
-        azigram_param.instrument=hdr.instrument;  %%%Inform instrument type
+        vector_sensor_parameters.instrument=hdr.instrument;  %%%Inform instrument type
         
         reactive_flag=handles.checkbox_reactive.Value;
         button_chc=get(handles.togglebutton_ChannelBeam,'String');
         if strcmpi(button_chc,'angle')
-            azigram_param.thta= eval(get(handles.edit_chan,'String'));
+            vector_sensor_parameters.thta= eval(get(handles.edit_chan,'String'));
             handles.display_view='AdditiveBeamforming';
         end
         
@@ -224,14 +228,14 @@ update_button_visibility;
             use_wavelets=false;
         end
         if use_wavelets
-            [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics_wavelet ...
-                (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
+            [TT,FF,output_array,PdB,vector_sensor_parameters]=compute_directional_metrics_wavelet ...
+                (x,handles.display_view,Fs,Nfft,ovlap,vector_sensor_parameters, ...
                 reactive_flag);
             if strcmpi(handles.filetype,'gsi')&&~reactive_flag
                 params.f_transition=300;
                 [~,Icut]=min(abs(FF-params.f_transition));
                 [~,~,temp]=compute_directional_metrics_wavelet ...
-                    (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
+                    (x,handles.display_view,Fs,Nfft,ovlap,vector_sensor_parameters, ...
                     'gsi',true);
                 output_array{1}((Icut+1):end,:)=temp{1}((Icut+1):end,:);
             end
@@ -239,8 +243,8 @@ update_button_visibility;
             %%%%Here is directional metric calculation...
             %handles.display_view='PhaseSpeed';
             %handles.display_view='Polarization';
-            [TT,FF,output_array,PdB,azigram_param]=compute_directional_metrics ...
-                (x,handles.display_view,Fs,Nfft,ovlap,azigram_param, ...
+            [TT,FF,output_array,PdB,vector_sensor_parameters]=compute_directional_metrics ...
+                (x,handles.display_view,Fs,Nfft,ovlap,vector_sensor_parameters, ...
                reactive_flag);
            
         end
@@ -258,10 +262,10 @@ update_button_visibility;
             plot_statistics_histogram(output_array);
         end
 
-        plot_directional_metric(TT,FF,output_array{1},handles,azigram_param,PdB,use_wavelets);
+        plot_directional_metric(TT,FF,output_array{1},handles,vector_sensor_parameters,PdB,use_wavelets);
         % To recover matrix use handles.axes1.Children.CData;
         %handles.azigram.azi=azi;
-        handles.azigram=azigram_param;
+        handles.azigram=vector_sensor_parameters;
         handles.azigram.TT=TT;
         handles.azigram.FF=FF;
         
@@ -487,8 +491,6 @@ update_button_visibility;
         
         
     end %display_spectrogram
-
-
 
     function format_spectrogram_image
         grid on

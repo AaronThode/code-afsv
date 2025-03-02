@@ -22,6 +22,9 @@
 %     param.instrument{1} = 'drifterM35sensor' or 'DIFARsensor' or
 %     '_VS-209-omnisensor'; needs to start with '_' and end with 'sensor'
 %           Each channel needs its own string.
+%     param.myfile:  Name of file that contains time and instrument
+%       identity.  Typically used to determine brefa and other instrument
+%       orientation information.
 % filetype: dead variable, can be empty
 %
 % Output:
@@ -54,8 +57,22 @@ Nchan=size(x,2);
 
 use_elevation=any(contains(metric_type,'Elevation'));
 use_wavelet=any(contains(lower(metric_type),'wavelet'));
+
+
 if ~isfield(param,'instrument')
     param.instrument='DASAR';
+end
+
+%%%Decide whether we need to load parameters (esp. brefa)
+get_newparams=false;
+if ~isfield(param,'brefa')
+    get_newparams=true;
+elseif ischar(param.brefa)
+    param.brefa=str2num(param.brefa);
+end
+
+if ~isfield(param,'sec_avg')
+    get_newparams=true;
 end
 
 if use_wavelet
@@ -72,13 +89,32 @@ if ~exist('reactive_flag','var')
     reactive_flag=false;
 end
 
-if ischar(param.brefa)
-    param.brefa=str2num(param.brefa);
+
+%%%Get newparameters if needed
+if get_newparams
+    Batch_vars=get_Azigram_Callback(param);
+    param.sec_avg=(Batch_vars.sec_avg);
+    param.climm=(Batch_vars.climm);
+    param.mask=(Batch_vars.mask);
+    if ischar(Batch_vars.brefa)
+        param.brefa=eval(Batch_vars.brefa);
+        %%%Don't alter hdr.brefa, which contains the correction.
+    else
+        %param.brefa=(Batch_vars.brefa);
+        param.brefa=(param.brefa);
+
+    end
+    param.alg=Batch_vars.alg;
 end
 
+% Batch_vars.sec_avg	=	'0.1';	Batch_desc{1}	=	'Seconds to average PSD for long-term display, if "0" no averaging' ;
+% Batch_vars.climm='[0 360]'; Batch_desc{2}='Bearing Range Color Scale';
+% Batch_vars.brefa='11.7';Batch_desc{3}='Bearing bias/correction (default is 11.7 degrees)';
+% Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, 'Vector Sensor Processing');
 
-%%%%Two files that can get active intensity directionality: *.gsi and
-%%%%*DIFAR*.wav files.
+
+
+%%%%If a multiplexed DIFAR file, then demultiplex before using.
 
 
 if contains(param.instrument,'DIFAR')
@@ -86,12 +122,9 @@ if contains(param.instrument,'DIFAR')
     M=floor(1+(max(size(x))-Nfft)/dn);
     [Ix,Iy,TT,FF,PdB]=demultiplex_DIFAR(x,Fs,Nfft,ovlap);
     Nf=length(FF);
-    get_newparams=false;
-
+  
     pressure_autospectrum=10.^(PdB/10);
-    if ~isfield(param,'brefa')
-        get_newparams=true;
-    end
+    
 else  %%All other data is coming on on other channels.
     if max(size(x))<Nfft/2
         disp('Signal sample shorter than Nfft');
@@ -172,7 +205,6 @@ else  %%All other data is coming on on other channels.
 
      %time and memory, but need this if trying to use transparency
    
-    
 
     pressure_autospectrum=squeeze(abs(B(1,:,:)).^2);
 
@@ -204,37 +236,10 @@ else  %%All other data is coming on on other channels.
     %    subplot(3,1,2);imagesc(TT,FF/1000,log10(abs(real(Iy)))); colormap(jet);ylim([0 12]);xlim([0 1]);caxis([10 20]);axis xy
     %    subplot(3,1,3);imagesc(TT,FF/1000,log10(abs(real(Iz)))); colormap(jet);ylim([0 12]);xlim([0 1]);caxis([10 20]);axis xy
 
-    get_newparams=false;
     clear B
 
-end  %if gsi or DIFAR
+end  %if DIFAR or other instrument
 
-%sec_avg=input('Enter time to average over (sec; 0 does no averaging):');
-if ~isfield(param,'sec_avg')
-    get_newparams=true;
-
-end
-
-if get_newparams
-    Batch_vars=get_Azigram_Callback(param);
-    param.sec_avg=(Batch_vars.sec_avg);
-    param.climm=(Batch_vars.climm);
-    param.mask=(Batch_vars.mask);
-    if ischar(Batch_vars.brefa)
-        param.brefa=eval(Batch_vars.brefa);
-        %%%Don't alter hdr.brefa, which contains the correction.
-    else
-        %param.brefa=(Batch_vars.brefa);
-        param.brefa=(param.brefa);
-
-    end
-    param.alg=Batch_vars.alg;
-end
-
-% Batch_vars.sec_avg	=	'0.1';	Batch_desc{1}	=	'Seconds to average PSD for long-term display, if "0" no averaging' ;
-% Batch_vars.climm='[0 360]'; Batch_desc{2}='Bearing Range Color Scale';
-% Batch_vars.brefa='11.7';Batch_desc{3}='Bearing bias/correction (default is 11.7 degrees)';
-% Batch_vars	=	input_batchparams(Batch_vars, Batch_desc, 'Vector Sensor Processing');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -347,6 +352,7 @@ for J=1:length(metric_type)  %%for each request
                 mu = single(atan2d(imag(Ix),imag(Iy)));  %Compass convention (usually atan2d(y,x))
             end
             output_array{J}=bnorm((param.brefa)+mu);
+            %keyboard
             %output_array{J}=bnorm(mu);
         case lower('Elevation')
 

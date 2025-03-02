@@ -187,7 +187,7 @@ else
         
         figure(myfig)
 
-        keyboard
+        %keyboard
     elseif strcmpi(handles.display_view,'PhaseSpeed')
         
         %%%Phase speed directly

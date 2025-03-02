@@ -805,6 +805,13 @@ switch filetype
 
         if ~strcmp(Ichan,'all')
             x		=	x(:,Ichan);
+             config_file=dir([mydir filesep 'acoustic_config*']);
+            if contains(myfile,'drifter') & ~isempty(config_file)&size(x,2)==4
+                x(:,3:4)=-x(:,3:4);
+                %%If drifter, flip z axis
+            end
+        else
+           
         end
         head.Nchan	=	size(x,2);
         if head.Nchan>1
@@ -813,6 +820,8 @@ switch filetype
 
         t	=	(1:length(x))/Fs;
         x			=	double(x)*amplitude_scale;
+
+
 end  %switch filetype
 
 if isempty(tmin) || isempty(tmax)
