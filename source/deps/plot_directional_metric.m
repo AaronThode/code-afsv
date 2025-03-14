@@ -131,6 +131,8 @@ else
        
         if Ndims==1
             Irow=1;
+            choice_dimension=1;
+            dim_str={'xy'};
         else
             choice_dimension=menu('Focal plot for which polarization plane?','xy','yz','zx');
             dim_str={'xy','yz','zx'};
