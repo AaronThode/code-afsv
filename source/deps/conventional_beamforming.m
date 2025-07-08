@@ -2,6 +2,7 @@
 function [B,wout]=conventional_beamforming(Ks,angles,freq,Lz,c,yesnorm)
     %Inputs:
     %  Ks:  cross-spectral density matrix [Nel, Nel, Nfreq];
+    %  angles:  angles in degrees
     %  freq: frequencies in Hz
     %  Lz: positions in meters
     %  c: sound speed m/sec

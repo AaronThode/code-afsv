@@ -152,30 +152,40 @@ switch beam_process_chc
             %%%%%Individual snapshots and ray tracing%%%%
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             Bsum=zeros(length(angles),length(Ksout.t));
+            Pwr=zeros(1,length(Ksout.t));
             df=Ksout.freq(2)-Ksout.freq(1);
             %plot(Bsum,angles,'k');
 
             for Isnap=1:length(Ksout.t)
-                if rem(Isnap,10)==0,disp(Isnap);end
+                if rem(Isnap,10)==0,fprintf('%3.1f',Isnap/length(Ksout.t));end
                 B=conventional_beamforming(squeeze(Ksout.Kstot(Igood_el,Igood_el,:,Isnap)),angles,Ksout.freq,local_rd(Igood_el),cc);
                 %Bsum(:,Isnap)=10*log10(sum(abs(B)))/length(Ksout.freq);
                 Bsum(:,Isnap)=(sum(10*log10(abs(B))))/length(Ksout.freq);
+
+                Pwr(Isnap)=sum(diag(sum(squeeze(Ksout.Kstot(Igood_el,Igood_el,:,Isnap)),3)));
             end
 
             %plot vs sin angle
 
-            figure
-            imagesc((Ksout.t-min(Ksout.t))*1000,sin(angles*pi/180),Bsum)
-            set(gca,'fontweight','bold','fontsize',14)
-            xlabel('Time (msec)');ylabel('sine of Elevation angle');
-            ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
-            titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
-            title(titstr);grid on;orient landscape
-            xlimm=xlim;
-            set(gca,'xtick',0:5:xlimm(2));
+%             figure
+%             imagesc((Ksout.t-min(Ksout.t))*1000,sin(angles*pi/180),Bsum)
+%             set(gca,'fontweight','bold','fontsize',14)
+%             xlabel('Time (msec)');ylabel('sine of Elevation angle');
+%             ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
+%             titstr=sprintf('%s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
+%             title(titstr);grid on;orient landscape
+%             xlimm=xlim;
+%             set(gca,'xtick',0:5:xlimm(2));
 
+
+            %%% Extract power from first elementfor display purposes
             %plot migration angle...
             figure(21)
+            subplot(3,1,1)
+            plot((Ksout.t-min(Ksout.t))*1000,10*log10(Pwr));grid on
+            
+           
+            subplot(3,1,2)
             imagesc((Ksout.t-min(Ksout.t))*1000,angles,Bsum)
             set(gca,'fontweight','bold','fontsize',14)
             xlabel('Time (msec)');ylabel('Elevation angle (deg)');
@@ -184,14 +194,29 @@ switch beam_process_chc
             title(titstr);grid on;orient landscape
             xlimm=xlim;
             set(gca,'xtick',0:5:xlimm(2));
+            axis xy
             printstr=sprintf('AngleVsTime_%s_%ito%ikHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),floor(min(frange)/1000),floor(max(frange)/1000));
-            print(gcf,'-djpeg','-r300',[printstr '.jpg']);
-            saveas(gcf,[printstr '.fig'],'fig')
 
-
+            subplot(3,1,3)
+            imagesc((Ksout.t-min(Ksout.t))*1000,angles,Bsum-max(Bsum))
+            set(gca,'fontweight','bold','fontsize',14)
+            xlabel('Time (msec)');ylabel('Elevation angle (deg)');
+            ttt=tdate_start+datenum(0,0,0,0,0,min(ftmp(:,1)));
+            titstr=sprintf('Normalized: %s: Nfft: %i, %6.2f to %6.2f kHz',datestr(ttt,'yyyymmddTHHMMSS.FFF'),Nfft,min(frange)/1000,max(frange)/1000);
+            title(titstr);grid on;orient landscape
+            xlimm=xlim;
+            set(gca,'xtick',0:5:xlimm(2));
+            %print(gcf,'-djpeg','-r300',[printstr '.jpg']);
+            %saveas(gcf,[printstr '.fig'],'fig')
+            axis xy
+            
+            subplot(3,1,1)
+            xlim(xlimm)
+            set(gca,'xtick',0:5:xlimm(2));
+            ylabel('Sum power (dB)')
             %%Permit ray tracing if desired
             prep_ray_trace;
-
+            return
         end
 
 
@@ -463,7 +488,7 @@ write_CSDM;
         prompt1={'Vector of angles (deg)','Vector of sin angles (deg) ', ...
             'hydrophone indicies [all]','sound speed (m/sec)', 'matched filter? (1=yes, 0=no)' ...
             };
-        def1={'-90:0.2:90', '',sprintf('[1:%i]',length(chann)),'1480','0'};
+        def1={'-90:0.2:90', '',sprintf('[1:%i]',length(chann)),'1500','0'};
 
         answer=inputdlg(prompt1,'Beamforming parameters',1,def1);
         try
@@ -909,22 +934,25 @@ write_CSDM;
                 Ksout.Kstot_eig(:,:,If)=V1(:,If)*V1(:,If)';
 
             end
+            srcname=sprintf('CSDM_Nfft%i_%s',Nfft,datestr(tdate_start,30));
 
             %     srcname=sprintf('CSDM_Nfft%i_%s_flipped',Nfft,datestr(tdate_start,30));
             %     write_covmat(Ksout.freq,Ksout.Kstot_eig,local_rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
             %
-            figure
-            imagesc(Ksout.freq,[],10*log10(abs(Ksout.EE)));
-            xlabel('frequency (Hz)')
-            ylabel('eigenvalue:')
-            title(sprintf('eigenvectors of %s',srcname))
-            orient landscape
-            for I=1:3
-                figure(I+1)
-                imagesc(abs(squeeze(Ksout.VV(:,I,:))));
 
-            end
-            srcname=sprintf('CSDM_Nfft%i_%s',Nfft,datestr(tdate_start,30));
+            %%Plot eigenvectors of matrix
+%             figure
+%             imagesc(Ksout.freq,[],10*log10(abs(Ksout.EE)));
+%             xlabel('frequency (Hz)')
+%             ylabel('eigenvalue:')
+%             title(sprintf('eigenvectors of %s',srcname))
+%             orient landscape
+%             for I=1:3
+%                 figure(I+1)
+%                 imagesc(abs(squeeze(Ksout.VV(:,I,:))));
+% 
+%             end
+            Ksout.rd=local_rd(Igood_el);
             save(srcname,'Ksout','head','tdate_start','tlen');
             write_covmat(app, Ksout.freq,Ksout.Kstot,local_rd,srcname,sprintf('Nfft: %i ovlap %6.2f chann: %s',Nfft,ovlap,mat2str(chann)));
 

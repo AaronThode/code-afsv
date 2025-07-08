@@ -46,7 +46,7 @@ sintilt=sin(tiltdata.tilt*pi/180);
 if ~exist('nowin','var')
     nowin=0;
     disp('The signal will be windowed');
-elseif nowin==1,
+elseif nowin==1
     nowin=1;
     disp('The signal will NOT be windowed');
 else
@@ -75,7 +75,7 @@ if	~exist('Isnap', 'var')|| Isnap<0
     Isnap=0:Ns-1; %average all
 end
 
-if Ns<=0,
+if Ns<=0
     disp('Signal too short for one shapnot, will center pad for FFT:');
     %pause;
     Ns=1;Isnap=0;Nx=size(x,1);
@@ -87,7 +87,7 @@ if Ns<=0,
     clear x0
     M=size(x,1);
 end
-if nowin==0,
+if nowin==0
     win=kaiser(M,2.5);
 else
     win=ones(M,1);
@@ -108,19 +108,19 @@ for I=Isnap
     %pgoal=conj(pgoal);   %Test to see if conjugation is the problem
     pgoal=pgoal.';        %Columns are now single-frequency array snapshots
     %pgoal=flipud(pgoal);  %Puts topmost element first, according to lewis
-    
-    
+
+
     power(I+1)=(Fs/Nfft)*sum(sum(abs(pgoal).^2))/(Fs*Nfft);
-    
+
     if length(findex)<MAXF&&threshold<=10*log10(abs(power(I+1)))
         for J=1:Nf
             %disp(f(J));
-            
+
             tiltvec=exp(1i*2*pi*f(J)*sintilt*tiltdata.rd/1500);
             ptemp=pgoal(:,J).*tiltvec;
             Kstemp=ptemp*ptemp'; %Top LH cornertop element autocor
             Kstot(:,:,J)=Kstot(:,:,J)+Kstemp;
-            
+
         end
     else
         power(I+1)=NaN;
@@ -139,7 +139,7 @@ if length(power)>2
     xlabel('Time (s)');ylabel('dB power');
 end
 
-if length(findex)>MAXF,
+if length(findex)>MAXF
     Kstot=[];
 end
 
@@ -159,7 +159,7 @@ if Ns>1
         EE=diag(EE);
         [EE_sort(:,If),Isort]=sort(EE,1,'descend');
         VV(:,:,If)=VV0(:,Isort);
-        
+
     end
 end
 

@@ -1,7 +1,7 @@
-function [Kstot,f,t]=extractKsframes(x,ovlap,Nfft,chann,frange,Fs,M,nowin,threshold,tiltdata)
+function [Kstot,f,t,power]=extractKsframes(x,ovlap,Nfft,chann,frange,Fs,M,vector_only_flag,nowin,threshold,tiltdata,normalize_Ks_flag)
 
 %%%%%%%%%%%%%%%%%%%%%%%extractKsframes.m%%%%%%%%%%%
-%function [Kstot,f,t]=extractKsframes(x,ovlap,Nfft,chann,frange,Fs,M,nowin,threshold,tiltdata);
+%function [Kstot,f,t,pwr]=extractKsframes(x,ovlap,Nfft,chann,frange,Fs,M,vector_only_flag,nowin,threshold,tiltdata,normalize_Ks_flag);
 %  Aaron Thode
 %  July 3, 1996
 %  Generates averaged cross-spectral outputs
@@ -16,27 +16,43 @@ function [Kstot,f,t]=extractKsframes(x,ovlap,Nfft,chann,frange,Fs,M,nowin,thresh
 %	element is bin spacing (i.e.) evaluate every other bin
 % Fs: sampling rate in Hz
 % M amount of dataused for the fft snapshot
-% nowin-if exists, don't window the data before using fft.used for source signature estimates
+%
+% vector_only:  if 'true' only provide the sum of the squared FFT
+%   amplitude, not the CSDM
+% nowin-if exists, don't window the data before using fft....used for source signature estimates
 % threshold-dB threshold of power (sum of energy across all frequencies and channels) to reject a snapshot.
-%    Set to Inf to ensure all snapshots used.
+%    Set to -Inf to ensure all snapshots used.
 % tiltdata: tilt: estimated vertical tilt of array in degrees.
 %           rd: element depths in m
+% normalize_Ks_flag:  If true, divide the CSDM by its trace (keep only
+%           phase information)
 % Output: Kstot-CSDM (Nel,Nel,freq,time)
 %          % t: times in second for each snapshot
 %          % f: vector of frequencies
-%         
+%         However, if 'vector_only_flag' is true
+%           Kstot is (Nel, freq, time);
+%          % power:  power of signal summed across all channels
 %  April 1, 2004: normalize CSDM to have units of power spectral density:
 %  |X(f)|^2/(Fs*Nfft), Power/Hz
 
 
 MAXF=Inf;
-if ~exist('threshold','var')
+
+if ~exist('normalize_Ks_flag','var')
+    normalize_Ks_flag=false;
+end
+
+if ~exist('vector_only_flag','var')
+    vector_only_flag=false;
+end
+
+if ~exist('threshold','var')||isempty(threshold)
     threshold = -Inf;
 end
 
 
 %%Fix tilt
-if ~exist('tilt','var')
+if ~exist('tiltdata','var')||isempty(tiltdata)
     tiltdata.tilt=0; %
     tiltdata.rd=ones(length(chann),1);
 end
@@ -49,7 +65,7 @@ sintilt=sin(tiltdata.tilt*pi/180);
 if ~exist('nowin','var')
     nowin=0;
     disp('The signal will be windowed');
-elseif nowin==1,
+elseif nowin==1
     nowin=1;
     disp('The signal will NOT be windowed');
 else
@@ -67,16 +83,18 @@ frange=round((Nfft/Fs)*frange);
 findex=max([1 frange(1)]):min([Nfft/2 frange(2)]);
 f=findex*(Fs/Nfft);
 
-if length(findex)<MAXF
+if length(findex)<MAXF & ~vector_only_flag
     Kstot=zeros(Nel,Nel,length(findex),Ns);
 else
-    disp('frange too long to make Kstot\n just making pgoal');
+    disp('just making vectors, not matricies');
+    Kstot=zeros(Nel,length(findex),Ns);
+
 end
 power=zeros(Ns,1);
 Nf=length(findex);
 
- Isnap=0:Ns-1; %average all
- t=zeros(1,Ns);
+Isnap=0:Ns-1; %average all
+t=zeros(1,Ns);
 
 if Ns<=0
     disp('Signal too short for one shapnot, will center pad for FFT:');
@@ -103,6 +121,7 @@ for I=Isnap
     xh=x(xindex,chann);
     for Ic=1:length(chann)
         xh(:,Ic)=xh(:,Ic)-mean(xh(:,Ic));
+
         xh(:,Ic)=xh(:,Ic).*win;
     end
     Xh=fft(xh,Nfft);
@@ -112,45 +131,72 @@ for I=Isnap
     %pgoal=conj(pgoal);   %Test to see if conjugation is the problem
     pgoal=pgoal.';        %Columns are now single-frequency array snapshots
     %pgoal=flipud(pgoal);  %Puts topmost element first, according to lewis
-    
-    
-    power(I+1)=(Fs/Nfft)*sum(sum(abs(pgoal).^2))/(Fs*Nfft);
-    
+
+    power(I+1)=sum(sum(abs(pgoal).^2));
+
+    if normalize_Ks_flag
+        pgoal=pgoal./sqrt(sum(abs(pgoal).^2));
+    end
+
     if length(findex)<MAXF&&threshold<=10*log10(abs(power(I+1)))
-        for J=1:Nf
-            %disp(f(J));
-            
-            tiltvec=exp(1i*2*pi*f(J)*sintilt*tiltdata.rd/1500);
-            ptemp=pgoal(:,J).*tiltvec;
-            Kstot(:,:,J,I+1)=ptemp*ptemp'; %Top LH cornertop element autocor
-            
+        if vector_only_flag  %%Return only FFT vector
+            for J=1:Nf
+                %disp(f(J));
+
+                tiltvec=exp(1i*2*pi*f(J)*sintilt*tiltdata.rd/1500);
+                ptemp=pgoal(:,J).*tiltvec;
+                Kstot(:,J,I+1)=ptemp'; %Top LH cornertop element autocor
+
+            end
+
+        else
+
+            for J=1:Nf
+                %disp(f(J));
+
+                tiltvec=exp(1i*2*pi*f(J)*sintilt*tiltdata.rd/1500);
+                ptemp=pgoal(:,J).*tiltvec;
+                Kstot(:,:,J,I+1)=ptemp*ptemp'; %Top LH cornertop element autocor
+
+            end
+
+
         end
     else
-        power(I+1)=NaN;
+        power(I+1)=-1;
     end
 end  %I=Isnap
 
-if length(power)>2
-    figure
-    tt=Isnap*(1-ovlap)*Nfft/Fs;
-    plot(tt,10*log10(abs(power)));
-    grid on
-    if ~isinf(threshold)
-        hold on
-        line([min(tt) max(tt)],threshold*[1 1]);
+%Normalize to have units of power spectral density...pwr per Hz
+
+power=power./(Fs*Nfft);
+
+if ~normalize_Ks_flag
+    if vector_only_flag  %%Return only FFT vector
+        Kstot=Kstot/sqrt(Fs*Nfft);
+    else
+        Kstot=Kstot/(Fs*Nfft);
     end
-    xlabel('Time (s)');ylabel('dB power');
 end
+
+
+% if length(power)>2
+%     figure
+%     tt=Isnap*(1-ovlap)*Nfft/Fs;
+%     plot(tt,10*log10(abs(power)));
+%     grid on
+%     if ~isinf(threshold)
+%         hold on
+%         line([min(tt) max(tt)],threshold*[1 1]);
+%     end
+%     xlabel('Time (s)');ylabel('dB power');
+% end
 
 if length(findex)>MAXF
     Kstot=[];
 end
 
-%Normalize to have units of power spectral density...pwr per Hz
-Kstot=Kstot/(Fs*Nfft);
 
-%Compute eigenvalues of CSDM, and the ratio of the high-power to the
-%low-power sound be like SNR
 
 
 end

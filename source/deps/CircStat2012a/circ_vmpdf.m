@@ -5,7 +5,7 @@ function [p alpha] = circ_vmpdf(alpha, thetahat, kappa)
 %   and concentration kappa at each of the angles in alpha
 %
 %   The vmpdf is given by f(phi) =
-%   (1/(2pi*I0(kappa))*exp(kappa*cos(phi-thetahat)
+%   (1/(2pi*I0(kappa))*exp(kappa*cos(phi-thetahat))
 %
 %   Input:
 %     alpha     angles to evaluate pdf at, if empty alphas are chosen to
